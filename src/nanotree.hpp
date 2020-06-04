@@ -233,6 +233,7 @@ class RangeTree2d {
   }
 
   // TODO(jbr): Generalize interface
+  //! Perform range search in O(log_2 n) time.
   inline void SearchRangeNd(
       Scalar const min_x,
       Scalar const min_y,
@@ -330,7 +331,7 @@ class RangeTree2d {
           indices->push_back(track->data.leaf.index);
         }
       } else {
-        // We never found a split node and ended up in a leave.
+        // We never found a split node and ended up in a leaf.
         if (min_x <= points_(split->data.leaf.index, 0) &&
             min_y <= points_(split->data.leaf.index, 1) &&
             max_x >= points_(split->data.leaf.index, 0) &&
@@ -352,7 +353,7 @@ class RangeTree2d {
  private:
   inline Scalar operator()(Index i, Index d) const { return points_(i, d); }
 
-  // Builds the tree in O(3 * n log n) time.
+  //! Builds the tree in O(3 * n log n) time.
   inline Node* MakeTree() {
     auto const& points = points_;
 
