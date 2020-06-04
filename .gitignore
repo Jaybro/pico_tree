@@ -1,0 +1,14 @@
+# General
+build/
+_clang-format
+.clang-format
+
+# Visual Studio Code
+.vscode/
+
+# Eclipse
+Debug/
+Release/
+.settings/
+.cproject
+.project
