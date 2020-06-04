@@ -77,6 +77,10 @@ template <typename Index, typename Scalar, int Dim, typename Points>
 class RangeLayer {
  public:
   struct Item {
+    inline std::pair<Index, Index> range() const {
+      return std::make_pair(left, right);
+    }
+
     Index index;
     Index left;
     Index right;
@@ -251,80 +255,91 @@ class RangeTree2d {
           split = split->right;
         } while (split->IsBranch() && min_x > split->data.branch.split);
       }
-    }
 
-    // TODO(jbr): else forgotten
-    // std::cout << "split: " << split->data.branch.split << std::endl;
+      // std::cout << "split: " << split->data.branch.split << std::endl;
 
-    if (split->IsBranch()) {
-      auto const it_lower = split->layer->LowerBound(min_y);
-      Item const c_lower = *it_lower;
-      Item const c_upper = *split->layer->UpperBound(it_lower, max_y);
-      // We follow the left track to the bottom.
-      Node* track;
-      Item lower;
-      Item upper;
-      track = split->left;
-      lower = track->layer->data()[c_lower.left];
-      upper = track->layer->data()[c_upper.left];
+      if (split->IsBranch()) {
+        auto const it_lower = split->layer->LowerBound(min_y);
+        Item const c_lower = *it_lower;
+        Item const c_upper = *split->layer->UpperBound(it_lower, max_y);
+        // We follow the left track to the bottom.
+        Node* track = split->left;
+        std::pair<Index, Index> track_c_lower =
+            track->layer->data()[c_lower.left].range();
+        std::pair<Index, Index> track_c_upper =
+            track->layer->data()[c_upper.left].range();
 
-      while (track->IsBranch()) {
-        if (min_x <= track->data.branch.split) {
-          // std::cout << "left give: " << track->data.branch.split <<
+        while (track->IsBranch()) {
+          if (min_x <= track->data.branch.split) {
+            // std::cout << "left give: " << track->data.branch.split <<
+            // std::endl;
+            ReportIndices(
+                track->right->layer->data(),
+                track_c_lower.second,
+                track_c_upper.second,
+                indices);
+            track = track->left;
+            track_c_lower = track->layer->data()[track_c_lower.first].range();
+            track_c_upper = track->layer->data()[track_c_upper.first].range();
+          } else {
+            // std::cout << "left move: " << track->data.branch.split <<
+            // std::endl;
+            track = track->right;
+            track_c_lower = track->layer->data()[track_c_lower.second].range();
+            track_c_upper = track->layer->data()[track_c_upper.second].range();
+          }
+        }
+        // Last left leaf
+        if (min_x <= points_(track->data.leaf.index, 0) &&
+            min_y <= points_(track->data.leaf.index, 1)) {
+          // std::cout << "left leaf: " << track->data.leaf.index << std::endl;
+          indices->push_back(track->data.leaf.index);
+        }
+
+        // We follow the right track to the bottom.
+        track = split->right;
+        track_c_lower = track->layer->data()[c_lower.right].range();
+        track_c_upper = track->layer->data()[c_upper.right].range();
+
+        while (track->IsBranch()) {
+          if (max_x >= track->data.branch.split) {
+            // std::cout << "right give: " << track->data.branch.split <<
+            // std::endl;
+            ReportIndices(
+                track->left->layer->data(),
+                track_c_lower.first,
+                track_c_upper.first,
+                indices);
+            track = track->right;
+            track_c_lower = track->layer->data()[track_c_lower.second].range();
+            track_c_upper = track->layer->data()[track_c_upper.second].range();
+          } else {
+            // std::cout << "right move: " << track->data.branch.split <<
+            // std::endl;
+            track = track->left;
+            track_c_lower = track->layer->data()[track_c_lower.first].range();
+            track_c_upper = track->layer->data()[track_c_upper.first].range();
+          }
+        }
+
+        // Last right leaf
+        if (max_x >= points_(track->data.leaf.index, 0) &&
+            max_y >= points_(track->data.leaf.index, 1)) {
+          // std::cout << "right leaf: " << left->data.leaf.index <<
           // std::endl;
-          ReportIndices(
-              track->right->layer->data(), lower.right, upper.right, indices);
-          track = track->left;
-          lower = track->layer->data()[lower.left];
-          upper = track->layer->data()[upper.left];
-        } else {
-          // std::cout << "left move: " << track->data.branch.split <<
-          // std::endl;
-          track = track->right;
-          lower = track->layer->data()[lower.right];
-          upper = track->layer->data()[upper.right];
+          indices->push_back(track->data.leaf.index);
+        }
+      } else {
+        // We never found a split node and ended up in a leave.
+        if (min_x <= points_(split->data.leaf.index, 0) &&
+            min_y <= points_(split->data.leaf.index, 1) &&
+            max_x >= points_(split->data.leaf.index, 0) &&
+            max_y >= points_(split->data.leaf.index, 1)) {
+          indices->push_back(split->data.leaf.index);
         }
       }
-      // Last left leaf
-      if (min_x <= points_(track->data.leaf.index, 0) &&
-          min_y <= points_(track->data.leaf.index, 1)) {
-        // std::cout << "left leaf: " << track->data.leaf.index << std::endl;
-        indices->push_back(track->data.leaf.index);
-      }
-
-      // We follow the right track to the bottom.
-      track = split->right;
-      lower = track->layer->data()[c_lower.right];
-      upper = track->layer->data()[c_upper.right];
-
-      while (track->IsBranch()) {
-        if (max_x >= track->data.branch.split) {
-          // std::cout << "right give: " << track->data.branch.split <<
-          // std::endl;
-          ReportIndices(
-              track->left->layer->data(), lower.left, upper.left, indices);
-          track = track->right;
-          lower = track->layer->data()[lower.right];
-          upper = track->layer->data()[upper.right];
-        } else {
-          // std::cout << "right move: " << track->data.branch.split <<
-          // std::endl;
-          track = track->left;
-          lower = track->layer->data()[lower.left];
-          upper = track->layer->data()[upper.left];
-        }
-      }
-
-      // Last right leaf
-      if (max_x >= points_(track->data.leaf.index, 0) &&
-          max_y >= points_(track->data.leaf.index, 1)) {
-        // std::cout << "right leaf: " << left->data.leaf.index <<
-        // std::endl;
-        indices->push_back(track->data.leaf.index);
-      }
-
     } else {
-      // We never found a split node and ended up in a leave.
+      // The root is a leaf.
       if (min_x <= points_(split->data.leaf.index, 0) &&
           min_y <= points_(split->data.leaf.index, 1) &&
           max_x >= points_(split->data.leaf.index, 0) &&
@@ -337,48 +352,15 @@ class RangeTree2d {
  private:
   inline Scalar operator()(Index i, Index d) const { return points_(i, d); }
 
-  // Recursive while holding about 3 times the memory of the tree of running
-  // data.
+  // Builds the tree in O(3 * n log n) time.
   inline Node* MakeTree() {
     auto const& points = points_;
-    // BARE
-    // std::vector<Index> index_p_sorted_by_x(points_.num_points());
-    // std::iota(index_p_sorted_by_x.begin(), index_p_sorted_by_x.end(), 0);
-    // std::sort(
-    //     index_p_sorted_by_x.begin(),
-    //     index_p_sorted_by_x.end(),
-    //     [&points](Index i, Index j) -> bool {
-    //       return points(i, 0) < points(j, 0);
-    //     });
-    // MID
-    // std::vector<Index> index_p_sorted_by_x{internal::SortPermutation(
-    //     points.num_points(), [& points = points_](Index i, Index j) -> bool {
-    //       return points(i, 0) < points(j, 0);
-    //     })};
-    // ORG
+
     std::vector<Index> index_p_sorted_by_x{internal::SortPermutation(
         points.num_points(), [this](Index i, Index j) -> bool {
           return operator()(i, 0) < operator()(j, 0);
         })};
 
-    // BARE
-    // std::vector<Index> index_x_by_sorted_y(points_.num_points());
-    // std::iota(index_x_by_sorted_y.begin(), index_x_by_sorted_y.end(), 0);
-    // std::sort(
-    //     index_x_by_sorted_y.begin(),
-    //     index_x_by_sorted_y.end(),
-    //     [&points, &index_p_sorted_by_x](Index i, Index j) -> bool {
-    //       return points(index_p_sorted_by_x[i], 1) <
-    //              points(index_p_sorted_by_x[j], 1);
-    //     });
-    // MID
-    // std::vector<Index> index_x_by_sorted_y{internal::SortPermutation(
-    //     points.num_points(),
-    //     [&points, &index_p_sorted_by_x](Index i, Index j) -> bool {
-    //       return points(index_p_sorted_by_x[i], 1) <
-    //              points(index_p_sorted_by_x[j], 1);
-    //     })};
-    // ORG
     std::vector<Index> index_x_by_sorted_y{internal::SortPermutation(
         points.num_points(),
         [this, &index_p_sorted_by_x](Index i, Index j) -> bool {
@@ -386,7 +368,7 @@ class RangeTree2d {
                  operator()(index_p_sorted_by_x[j], 1);
         })};
 
-    std::vector<Item> items(index_p_sorted_by_x.size());
+    std::vector<Item> items(points.num_points());
     for (Index i = 0; i < points.num_points(); ++i) {
       items[i].index = index_p_sorted_by_x[index_x_by_sorted_y[i]];
     }
@@ -395,17 +377,17 @@ class RangeTree2d {
     return SplitIndices(
         index_p_sorted_by_x,
         index_p_sorted_by_x.size() / 2,
+        std::move(items),
         &index_x_by_sorted_y,
-        &buffer,
-        std::move(items));
+        &buffer);
   }
 
   inline Node* SplitIndices(
       std::vector<Index> const& index_p_sorted_by_x,
       Index const split,
+      std::vector<Item>&& parent,
       std::vector<Index>* p_front,
-      std::vector<Index>* p_back,
-      std::vector<Item>&& parent) {
+      std::vector<Index>* p_back) {
     // std::cout << "c split, size: " << split << ", " << parent.size()
     //           << std::endl;
 
@@ -449,7 +431,6 @@ class RangeTree2d {
       // We move the sorted y values into the left or right node based on the
       // sorted x indices while keeping their relative ordering.
       // Split is the first index on the right side.
-      // Index const index_prev_dim = *(front_p++);
       Index const index_prev_dim = front[left_offset + i];
       // std::cout << index_prev_dim << ",";
       if (index_prev_dim < right_offset) {
@@ -477,15 +458,15 @@ class RangeTree2d {
     node->left = SplitIndices(
         index_p_sorted_by_x,
         left_offset + left_size / 2,
+        std::move(left),
         p_back,
-        p_front,
-        std::move(left));
+        p_front);
     node->right = SplitIndices(
         index_p_sorted_by_x,
         right_offset + right_size / 2,
+        std::move(right),
         p_back,
-        p_front,
-        std::move(right));
+        p_front);
     return node;
   }
 
