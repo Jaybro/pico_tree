@@ -476,17 +476,19 @@ class RangeTree2d {
       Index const lower_bound,
       Index const upper_bound,
       std::vector<Index>* indices) const {
+    // For MingW GCC 9.2.0, this was hands down the fastest for
+    // copying indices. Vs. for_each, or any other type of for/while loop.
     std::transform(
         items.cbegin() + lower_bound,
         items.cbegin() + upper_bound,
         std::back_inserter(*indices),
-        [](Item const i) { return i.index; });
+        [](Item const& i) { return i.index; });
   }
 
   Points const& points_;
   internal::ItemBuffer<Node> nodes_;
   internal::ItemBuffer<Layer> layers_;
   Node* root_;
-};  // namespace nanotree
+};
 
 }  // namespace nanotree
