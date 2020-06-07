@@ -91,26 +91,33 @@ class RangeLayer {
         dim_(points.num_dimensions() - 1),
         items_{static_cast<std::size_t>(num_points)} {}
 
-  inline typename std::vector<Item>::const_iterator LowerBound(
-      Scalar value) const {
+  inline Index LowerBound(Scalar value) const {
     return std::lower_bound(
-        items_.cbegin(),
-        items_.cend(),
-        value,
-        [this](Item const& a, Scalar const b) { return operator()(a) < b; });
+               items_.cbegin(),
+               items_.cend(),
+               value,
+               [this](Item const& a, Scalar const b) {
+                 return operator()(a) < b;
+               }) -
+           items_.cbegin();
   }
 
-  inline typename std::vector<Item>::const_iterator UpperBound(
-      typename std::vector<Item>::const_iterator const& it_lower,
-      Scalar value) const {
+  inline Index UpperBound(Index lower_bound, Scalar value) const {
     return std::upper_bound(
-        it_lower, items_.cend(), value, [this](Scalar const a, Item const& b) {
-          return a < operator()(b);
-        });
+               items_.cbegin() + lower_bound,
+               items_.cend(),
+               value,
+               [this](Scalar const a, Item const& b) {
+                 return a < operator()(b);
+               }) -
+           items_.cbegin();
   }
 
   inline std::vector<Item> const& data() const { return items_; }
   inline std::vector<Item>& data() { return items_; }
+  inline std::pair<Index, Index> range(Index i) const {
+    return items_[i].range();
+  }
 
  private:
   //! Returns the value of a point having sorted index \p i .
@@ -261,15 +268,16 @@ class RangeTree2d {
       // std::cout << "split: " << split->data.branch.split << std::endl;
 
       if (split->IsBranch()) {
-        auto const it_lower = split->layer->LowerBound(min_y);
-        Item const c_lower = *it_lower;
-        Item const c_upper = *split->layer->UpperBound(it_lower, max_y);
+        auto const lower_bound = split->layer->LowerBound(min_y);
+        std::pair<Index, Index> c_lower = split->layer->range(lower_bound);
+        std::pair<Index, Index> c_upper =
+            split->layer->range(split->layer->UpperBound(lower_bound, max_y));
         // We follow the left track to the bottom.
         Node* track = split->left;
         std::pair<Index, Index> track_c_lower =
-            track->layer->data()[c_lower.left].range();
+            track->layer->range(c_lower.first);
         std::pair<Index, Index> track_c_upper =
-            track->layer->data()[c_upper.left].range();
+            track->layer->range(c_upper.first);
 
         while (track->IsBranch()) {
           if (min_x <= track->data.branch.split) {
@@ -281,14 +289,14 @@ class RangeTree2d {
                 track_c_upper.second,
                 indices);
             track = track->left;
-            track_c_lower = track->layer->data()[track_c_lower.first].range();
-            track_c_upper = track->layer->data()[track_c_upper.first].range();
+            track_c_lower = track->layer->range(track_c_lower.first);
+            track_c_upper = track->layer->range(track_c_upper.first);
           } else {
             // std::cout << "left move: " << track->data.branch.split <<
             // std::endl;
             track = track->right;
-            track_c_lower = track->layer->data()[track_c_lower.second].range();
-            track_c_upper = track->layer->data()[track_c_upper.second].range();
+            track_c_lower = track->layer->range(track_c_lower.second);
+            track_c_upper = track->layer->range(track_c_upper.second);
           }
         }
         // Last left leaf
@@ -300,8 +308,8 @@ class RangeTree2d {
 
         // We follow the right track to the bottom.
         track = split->right;
-        track_c_lower = track->layer->data()[c_lower.right].range();
-        track_c_upper = track->layer->data()[c_upper.right].range();
+        track_c_lower = track->layer->range(c_lower.second);
+        track_c_upper = track->layer->range(c_upper.second);
 
         while (track->IsBranch()) {
           if (max_x >= track->data.branch.split) {
@@ -313,14 +321,14 @@ class RangeTree2d {
                 track_c_upper.first,
                 indices);
             track = track->right;
-            track_c_lower = track->layer->data()[track_c_lower.second].range();
-            track_c_upper = track->layer->data()[track_c_upper.second].range();
+            track_c_lower = track->layer->range(track_c_lower.second);
+            track_c_upper = track->layer->range(track_c_upper.second);
           } else {
             // std::cout << "right move: " << track->data.branch.split <<
             // std::endl;
             track = track->left;
-            track_c_lower = track->layer->data()[track_c_lower.first].range();
-            track_c_upper = track->layer->data()[track_c_upper.first].range();
+            track_c_lower = track->layer->range(track_c_lower.first);
+            track_c_upper = track->layer->range(track_c_upper.first);
           }
         }
 
