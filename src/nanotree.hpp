@@ -407,7 +407,7 @@ class RangeTree2d {
     // Leaf
     if (parent->data().size() == 1) {
       Node* node = nodes_.MakeItem();
-      node->data.leaf.index = operator()(direct_p_by_x[split], 0);
+      node->data.leaf.index = direct_p_by_x[split];
       node->layer = parent;
       node->left = nullptr;
       node->right = nullptr;
