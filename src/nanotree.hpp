@@ -232,7 +232,7 @@ class RangeTree2d {
     assert(points_.num_points() > 0);
   }
 
-  // TODO(jbr): Generalize interface
+  // TODO Generalize interface
   //! Perform range search in O(log_2 n) time.
   inline void SearchRangeNd(
       Scalar const min_x,
@@ -389,9 +389,6 @@ class RangeTree2d {
       std::vector<Item>&& parent,
       std::vector<Index>* p_front,
       std::vector<Index>* p_back) {
-    // std::cout << "c split, size: " << split << ", " << parent.size()
-    //           << std::endl;
-
     // Leaf
     if (parent.size() == 1) {
       Node* node = nodes_.MakeItem();
@@ -405,7 +402,7 @@ class RangeTree2d {
     std::vector<Index> const& front = *p_front;
     std::vector<Index>& back = *p_back;
 
-    // Right may be one bigger than right
+    // Right may be one bigger than left
     Index const parent_size = parent.size();
     Index const left_size = parent_size / 2;
     Index const right_size = parent_size - left_size;
@@ -418,12 +415,11 @@ class RangeTree2d {
 
     // Cascade to the next layer.
     for (Index i = 0; i < parent_size; ++i) {
-      // std::cout << front[left_offset + i] << ",";
       // Index in the next layer to the smallest value which is greater or
       // equal to the current one. Since the sequence is ordened, the current
       // value to be inserted must be the smallest one. The index will be the
       // next to be inserted.
-      // TODO(jbr): Test this later =D
+      // TODO Test this later =D
       // NOTE: In case there is an equals range, we should check the last
       // existing entry for equality. Practically, this gains us nothing as we
       // should always arrive at the start of the equals range (or the end).
@@ -433,7 +429,6 @@ class RangeTree2d {
       // sorted x indices while keeping their relative ordering.
       // Split is the first index on the right side.
       Index const index_prev_dim = front[left_offset + i];
-      // std::cout << index_prev_dim << ",";
       if (index_prev_dim < right_offset) {
         left[left_count].index = parent[i].index;
         back[left_offset + left_count] = index_prev_dim;
@@ -444,14 +439,6 @@ class RangeTree2d {
         ++right_count;
       }
     }
-    // std::cout << std::endl;
-
-    // std::cout << "left_size, right_size: " << left_size << ", " << right_size
-    //           << std::endl;
-    // std::cout << "left_offset, right_offset: " << left_offset << ", "
-    //           << right_offset << std::endl;
-    // std::cout << "left_count, right_count: " << left_count << ", "
-    //          << right_count << std::endl;
 
     Node* node = nodes_.MakeItem();
     node->data.branch.split = operator()(index_p_sorted_by_x[split], 0);
