@@ -86,10 +86,10 @@ class RangeLayer {
     Index right;
   };
 
-  RangeLayer(Points const& points, std::vector<Item>&& vector)
+  RangeLayer(Points const& points, Index num_points)
       : points_{points},
         dim_(points.num_dimensions() - 1),
-        items_{std::move(vector)} {}
+        items_{static_cast<std::size_t>(num_points)} {}
 
   inline typename std::vector<Item>::const_iterator LowerBound(
       Scalar value) const {
@@ -110,6 +110,7 @@ class RangeLayer {
   }
 
   inline std::vector<Item> const& data() const { return items_; }
+  inline std::vector<Item>& data() { return items_; }
 
  private:
   //! Returns the value of a point having sorted index \p i .
@@ -369,16 +370,16 @@ class RangeTree2d {
                  operator()(index_p_sorted_by_x[j], 1);
         })};
 
-    std::vector<Item> items(points.num_points());
+    Layer* parent = layers_.MakeItem(points_, points.num_points());
     for (Index i = 0; i < points.num_points(); ++i) {
-      items[i].index = index_p_sorted_by_x[index_x_by_sorted_y[i]];
+      parent->data()[i].index = index_p_sorted_by_x[index_x_by_sorted_y[i]];
     }
 
     std::vector<Index> buffer(index_x_by_sorted_y.size());
     return SplitIndices(
         index_p_sorted_by_x,
         index_p_sorted_by_x.size() / 2,
-        std::move(items),
+        parent,
         &index_x_by_sorted_y,
         &buffer);
   }
@@ -386,14 +387,14 @@ class RangeTree2d {
   inline Node* SplitIndices(
       std::vector<Index> const& index_p_sorted_by_x,
       Index const split,
-      std::vector<Item>&& parent,
+      Layer* parent,
       std::vector<Index>* p_front,
       std::vector<Index>* p_back) {
     // Leaf
-    if (parent.size() == 1) {
+    if (parent->data().size() == 1) {
       Node* node = nodes_.MakeItem();
-      node->data.leaf.index = parent[0].index;
-      node->layer = layers_.MakeItem(points_, std::move(parent));
+      node->data.leaf.index = parent->data()[0].index;
+      node->layer = parent;
       node->left = nullptr;
       node->right = nullptr;
       return node;
@@ -403,13 +404,13 @@ class RangeTree2d {
     std::vector<Index>& back = *p_back;
 
     // Right may be one bigger than left
-    Index const parent_size = parent.size();
+    Index const parent_size = parent->data().size();
     Index const left_size = parent_size / 2;
     Index const right_size = parent_size - left_size;
     Index const left_offset = split - left_size;
     Index const right_offset = split;
-    std::vector<Item> left(left_size);
-    std::vector<Item> right(right_size);
+    Layer* left = layers_.MakeItem(points_, left_size);
+    Layer* right = layers_.MakeItem(points_, right_size);
     Index left_count = 0;
     Index right_count = 0;
 
@@ -423,18 +424,18 @@ class RangeTree2d {
       // NOTE: In case there is an equals range, we should check the last
       // existing entry for equality. Practically, this gains us nothing as we
       // should always arrive at the start of the equals range (or the end).
-      parent[i].left = left_count;
-      parent[i].right = right_count;
+      parent->data()[i].left = left_count;
+      parent->data()[i].right = right_count;
       // We move the sorted y values into the left or right node based on the
       // sorted x indices while keeping their relative ordering.
       // Split is the first index on the right side.
       Index const index_prev_dim = front[left_offset + i];
       if (index_prev_dim < right_offset) {
-        left[left_count].index = parent[i].index;
+        left->data()[left_count].index = parent->data()[i].index;
         back[left_offset + left_count] = index_prev_dim;
         ++left_count;
       } else {
-        right[right_count].index = parent[i].index;
+        right->data()[right_count].index = parent->data()[i].index;
         back[right_offset + right_count] = index_prev_dim;
         ++right_count;
       }
@@ -442,17 +443,17 @@ class RangeTree2d {
 
     Node* node = nodes_.MakeItem();
     node->data.branch.split = operator()(index_p_sorted_by_x[split], 0);
-    node->layer = layers_.MakeItem(points_, std::move(parent));
+    node->layer = parent;
     node->left = SplitIndices(
         index_p_sorted_by_x,
         left_offset + left_size / 2,
-        std::move(left),
+        left,
         p_back,
         p_front);
     node->right = SplitIndices(
         index_p_sorted_by_x,
         right_offset + right_size / 2,
-        std::move(right),
+        right,
         p_back,
         p_front);
     return node;
