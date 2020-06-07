@@ -130,7 +130,7 @@ class RangeLayer {
   std::vector<Item> items_;
 };
 
-template <typename Index, typename Scalar, typename Points>
+template <typename Derived, typename Index, typename Scalar>
 struct Node {
   union Data {
     struct Branch {
@@ -149,9 +149,8 @@ struct Node {
   inline bool IsBranch() const { return left != nullptr && right != nullptr; }
 
   Data data;
-  Node* left;
-  Node* right;
-  RangeLayer<Index, Scalar, 1, Points>* layer;
+  Derived* left;
+  Derived* right;
 };
 
 }  // namespace internal
@@ -227,9 +226,14 @@ class RangeTree1d {
 template <typename Index, typename Scalar, typename Points>
 class RangeTree2d {
  private:
-  using Node = internal::Node<Index, Scalar, Points>;
   using Layer = internal::RangeLayer<Index, Scalar, 1, Points>;
   using Item = typename Layer::Item;
+
+  struct Node2d : public internal::Node<Node2d, Index, Scalar> {
+    Layer* layer;
+  };
+
+  using Node = Node2d;
 
  public:
   RangeTree2d(Points const& points)
@@ -366,34 +370,36 @@ class RangeTree2d {
   inline Node* MakeTree() {
     auto const& points = points_;
 
-    std::vector<Index> index_p_sorted_by_x{internal::SortPermutation(
+    // Sorted x indices that directly refer to a point.
+    std::vector<Index> direct_p_by_x{internal::SortPermutation(
         points.num_points(), [this](Index i, Index j) -> bool {
           return operator()(i, 0) < operator()(j, 0);
         })};
 
-    std::vector<Index> index_x_by_sorted_y{internal::SortPermutation(
-        points.num_points(),
-        [this, &index_p_sorted_by_x](Index i, Index j) -> bool {
-          return operator()(index_p_sorted_by_x[i], 1) <
-                 operator()(index_p_sorted_by_x[j], 1);
+    // Sorted y indices that link to the points via the x dimension.
+    std::vector<Index> linked_x_by_y{internal::SortPermutation(
+        points.num_points(), [this, &direct_p_by_x](Index i, Index j) -> bool {
+          return operator()(direct_p_by_x[i], 1) < operator()(
+                                                       direct_p_by_x[j], 1);
         })};
 
+    // Root associate layer.
     Layer* parent = layers_.MakeItem(points_, points.num_points());
     for (Index i = 0; i < points.num_points(); ++i) {
-      parent->data()[i].index = index_p_sorted_by_x[index_x_by_sorted_y[i]];
+      parent->data()[i].index = direct_p_by_x[linked_x_by_y[i]];
     }
 
-    std::vector<Index> buffer(index_x_by_sorted_y.size());
+    std::vector<Index> buffer(linked_x_by_y.size());
     return SplitIndices(
-        index_p_sorted_by_x,
-        index_p_sorted_by_x.size() / 2,
+        direct_p_by_x,
+        direct_p_by_x.size() / 2,
         parent,
-        &index_x_by_sorted_y,
+        &linked_x_by_y,
         &buffer);
   }
 
   inline Node* SplitIndices(
-      std::vector<Index> const& index_p_sorted_by_x,
+      std::vector<Index> const& direct_p_by_x,
       Index const split,
       Layer* parent,
       std::vector<Index>* p_front,
@@ -401,7 +407,7 @@ class RangeTree2d {
     // Leaf
     if (parent->data().size() == 1) {
       Node* node = nodes_.MakeItem();
-      node->data.leaf.index = parent->data()[0].index;
+      node->data.leaf.index = operator()(direct_p_by_x[split], 0);
       node->layer = parent;
       node->left = nullptr;
       node->right = nullptr;
@@ -450,20 +456,12 @@ class RangeTree2d {
     }
 
     Node* node = nodes_.MakeItem();
-    node->data.branch.split = operator()(index_p_sorted_by_x[split], 0);
+    node->data.branch.split = operator()(direct_p_by_x[split], 0);
     node->layer = parent;
     node->left = SplitIndices(
-        index_p_sorted_by_x,
-        left_offset + left_size / 2,
-        left,
-        p_back,
-        p_front);
+        direct_p_by_x, left_offset + left_size / 2, left, p_back, p_front);
     node->right = SplitIndices(
-        index_p_sorted_by_x,
-        right_offset + right_size / 2,
-        right,
-        p_back,
-        p_front);
+        direct_p_by_x, right_offset + right_size / 2, right, p_back, p_front);
     return node;
   }
 
