@@ -56,7 +56,7 @@ inline std::size_t MaxNodesFromDepth(std::size_t depth) { return Sum(depth); }
 
 //! \private  Returns a permutation based on the sorted input.
 template <typename Index, typename Compare>
-std::vector<Index> SortPermutation(Index num_points, Compare compare) {
+inline std::vector<Index> SortPermutation(Index num_points, Compare compare) {
   std::vector<Index> p(num_points);
   std::iota(p.begin(), p.end(), 0);
   std::sort(p.begin(), p.end(), std::move(compare));
@@ -64,13 +64,51 @@ std::vector<Index> SortPermutation(Index num_points, Compare compare) {
 }
 
 template <int Dim>
+struct Dimension {
+  inline static constexpr int Next() { return Dim + 1; }
+  inline static constexpr int d0(int dim) { return Dim; }
+  inline static constexpr int d1(int dim) { return Dim + 1; }
+};
+
+template <>
+struct Dimension<kRuntimeDims> {
+  inline static constexpr int Next() { return kRuntimeDims; }
+  inline static int d0(int dim) { return dim; }
+  inline static int d1(int dim) { return dim + 1; }
+};
+
+template <int Dims>
 struct Dimensions {
-  inline static constexpr int Get(int dim) { return Dim; }
+  inline static constexpr int Back(int dim) { return Dims - dim; }
 };
 
 template <>
 struct Dimensions<kRuntimeDims> {
-  inline static int Get(int dim) { return dim; }
+  inline static constexpr int Back(int dim) { return kRuntimeDims; }
+};
+
+template <typename Derived, typename Index, typename Scalar>
+struct Node {
+  union Data {
+    struct Branch {
+      Scalar split;
+    };
+
+    struct Leaf {
+      // Probably make this begin and end index
+      Index index;
+    };
+
+    Branch branch;
+    Leaf leaf;
+  };
+
+  inline bool IsBranch() const { return left != nullptr && right != nullptr; }
+  inline bool IsLeaf() const { return left == nullptr && right == nullptr; }
+
+  Data data;
+  Derived* left;
+  Derived* right;
 };
 
 template <typename Index, typename Scalar, int Dim, typename Points>
@@ -86,9 +124,9 @@ class RangeLayer {
     Index right;
   };
 
-  RangeLayer(Points const& points, Index num_points)
+  RangeLayer(Points const& points, Index const dimension, Index num_points)
       : points_{points},
-        dim_(points.num_dimensions() - 1),
+        dimension_(dimension),
         items_{static_cast<std::size_t>(num_points)} {}
 
   inline Index LowerBound(Scalar value) const {
@@ -118,39 +156,628 @@ class RangeLayer {
   inline std::pair<Index, Index> range(Index i) const {
     return items_[i].range();
   }
+  inline std::pair<Index, Index> range(Index i, Index l, Index r) const {
+    if (i < items_.size()) {
+      return items_[i].range();
+    } else {
+      return std::make_pair(l, r);
+    }
+  }
+  inline Index size() const { return items_.size(); }
 
  private:
   //! Returns the value of a point having sorted index \p i .
   inline Scalar operator()(Item i) const {
-    return points_(i.index, Dimensions<Dim>::Get(dim_));
+    return points_(i.index, Dimension<Dim>::d0(dimension_));
   }
 
   Points const& points_;
-  int dim_;
+  int dimension_;
   std::vector<Item> items_;
 };
 
-template <typename Derived, typename Index, typename Scalar>
-struct Node {
-  union Data {
-    struct Branch {
-      Scalar split;
-    };
+template <typename Index, typename Scalar, int Dim, typename Points>
+class RangeTree2d_ {
+ private:
+  using Layer = RangeLayer<Index, Scalar, Dimension<Dim>::Next(), Points>;
+  using Item = typename Layer::Item;
 
-    struct Leaf {
-      // Probably make this begin and end index
-      Index index;
-    };
-
-    Branch branch;
-    Leaf leaf;
+  struct Node2d : public Node<Node2d, Index, Scalar> {
+    Layer* layer;
   };
 
-  inline bool IsBranch() const { return left != nullptr && right != nullptr; }
+  using Node = Node2d;
 
-  Data data;
-  Derived* left;
-  Derived* right;
+ public:
+  RangeTree2d_(Points const& points)
+      : points_{points},
+        dimension_{0},
+        nodes_{MaxNodesFromPoints(points_.num_points())},
+        layers_{MaxNodesFromPoints(points_.num_points())},
+        root_{MakeTree()} {
+    assert(points_.num_points() > 0);
+  }
+
+  //! Constructs a 2d tree from the last two dimensions of a higher dimensional
+  //! tree.
+  //! \details Since we may be building a tree for any of the higher dimensional
+  //! sub-trees, the size of this tree can't be determined from the size of the
+  //! point set. Instead, we the size of \p direct_p_by_x.
+  //! Note that the x and y dimensions are considered relative to \p dimension .
+  //! \param points Point set used for building the tree.
+  //! \param dimension First dimension of this 2d tree.
+  //! \param direct_p_by_x Sorted indices for the first dimension.
+  //! \param buffer Memory buffer of minimally direct_p_by_x.size() elments.
+  RangeTree2d_(
+      Points const& points,
+      Index const dimension,
+      std::vector<Index> const& direct_p_by_x,
+      std::vector<Index>* buffer)
+      : points_{points},
+        dimension_{dimension},
+        nodes_{MaxNodesFromPoints(direct_p_by_x.size())},
+        layers_{MaxNodesFromPoints(direct_p_by_x.size())},
+        root_{MakeTree(direct_p_by_x, buffer)} {
+    assert(direct_p_by_x.size() > 0);
+  }
+
+  // TODO Generalize interface
+  //! Perform range search in O(log_2 n) time.
+  inline void SearchRange(
+      Scalar const min_x,
+      Scalar const min_y,
+      Scalar const max_x,
+      Scalar const max_y,
+      std::vector<Index>* indices) const {
+    assert(min_x <= max_x);
+    assert(min_y <= max_y);
+    // Find node where min_x and max_x split.
+    Node* split = root_;
+    if (split->IsBranch()) {
+      do {
+        if (max_x < split->data.branch.split) {
+          do {
+            // std::cout << "split: " << split->data.branch.split << std::endl;
+            split = split->left;
+          } while (split->IsBranch() && max_x < split->data.branch.split);
+        } else if (min_x > split->data.branch.split) {
+          do {
+            // std::cout << "split: " << split->data.branch.split << std::endl;
+            split = split->right;
+          } while (split->IsBranch() && min_x > split->data.branch.split);
+        } else {
+          break;
+        }
+      } while (split->IsBranch());
+
+      // std::cout << "split: " << split->data.branch.split << std::endl;
+
+      if (split->IsBranch()) {
+        auto lower_bound = split->layer->LowerBound(min_y);
+        // Check if there is any data at all.
+        if (lower_bound < split->layer->size()) {
+          auto upper_bound = split->layer->UpperBound(lower_bound, max_y);
+          std::pair<Index, Index> c_lower = split->layer->range(lower_bound);
+          std::pair<Index, Index> c_upper = split->layer->range(
+              upper_bound,
+              split->left->layer->size(),
+              split->right->layer->size());
+
+          // Left side of the split branch.
+          Node* track = split->left;
+          lower_bound = c_lower.first;
+          upper_bound = c_upper.first;
+          while (track->IsBranch() && lower_bound < track->layer->size()) {
+            std::pair<Index, Index> track_c_lower =
+                track->layer->range(lower_bound);
+            std::pair<Index, Index> track_c_upper = track->layer->range(
+                upper_bound,
+                track->left->layer->size(),
+                track->right->layer->size());
+
+            if (min_x <= track->data.branch.split) {
+              // std::cout << "left give: " << track->data.branch.split
+              //           << std::endl;
+              ReportIndices(
+                  track->right->layer->data(),
+                  track_c_lower.second,
+                  track_c_upper.second,
+                  indices);
+
+              track = track->left;
+              lower_bound = track_c_lower.first;
+              upper_bound = track_c_upper.first;
+            } else {
+              // std::cout << "left move: " << track->data.branch.split
+              //           << std::endl;
+              track = track->right;
+              lower_bound = track_c_lower.second;
+              upper_bound = track_c_upper.second;
+            }
+          }
+
+          // Last leaf of the left side.
+          if (track->IsLeaf() &&
+              min_x <=
+                  points_(
+                      track->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
+              min_y <=
+                  points_(
+                      track->data.leaf.index, Dimension<Dim>::d1(dimension_)) &&
+              max_y >=
+                  points_(
+                      track->data.leaf.index, Dimension<Dim>::d1(dimension_))) {
+            // std::cout << "left leaf: "
+            //           << points_(
+            //                  track->data.leaf.index,
+            //                  Dimension<Dim>::d0(dimension_))
+            //           << std::endl;
+            indices->push_back(track->data.leaf.index);
+          }
+
+          // Right side of the split branch.
+          track = split->right;
+          lower_bound = c_lower.second;
+          upper_bound = c_upper.second;
+          while (track->IsBranch() && lower_bound < track->layer->size()) {
+            std::pair<Index, Index> track_c_lower =
+                track->layer->range(lower_bound);
+            std::pair<Index, Index> track_c_upper = track->layer->range(
+                upper_bound,
+                track->left->layer->size(),
+                track->right->layer->size());
+
+            if (max_x >= track->data.branch.split) {
+              // std::cout << "right give: " << track->data.branch.split
+              //           << std::endl;
+              ReportIndices(
+                  track->left->layer->data(),
+                  track_c_lower.first,
+                  track_c_upper.first,
+                  indices);
+
+              track = track->right;
+              lower_bound = track_c_lower.second;
+              upper_bound = track_c_upper.second;
+            } else {
+              // std::cout << "right move: " << track->data.branch.split
+              //           << std::endl;
+              track = track->left;
+              lower_bound = track_c_lower.first;
+              upper_bound = track_c_upper.first;
+            }
+          }
+
+          // Last leaf of the right side.
+          if (track->IsLeaf() &&
+              max_x >=
+                  points_(
+                      track->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
+              min_y <=
+                  points_(
+                      track->data.leaf.index, Dimension<Dim>::d1(dimension_)) &&
+              max_y >=
+                  points_(
+                      track->data.leaf.index, Dimension<Dim>::d1(dimension_))) {
+            // std::cout << "right leaf: "
+            //           << points_(
+            //                  track->data.leaf.index,
+            //                  Dimension<Dim>::d0(dimension_))
+            //           << std::endl;
+            indices->push_back(track->data.leaf.index);
+          }
+        }
+      } else {
+        // We never found a split node and ended up in a leaf.
+        if (min_x <=
+                points_(
+                    split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
+            min_y <=
+                points_(
+                    split->data.leaf.index, Dimension<Dim>::d1(dimension_)) &&
+            max_x >=
+                points_(
+                    split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
+            max_y >=
+                points_(
+                    split->data.leaf.index, Dimension<Dim>::d1(dimension_))) {
+          indices->push_back(split->data.leaf.index);
+        }
+      }
+    } else {
+      // The root is a leaf.
+      if (min_x <=
+              points_(split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
+          min_y <=
+              points_(split->data.leaf.index, Dimension<Dim>::d1(dimension_)) &&
+          max_x >=
+              points_(split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
+          max_y >=
+              points_(split->data.leaf.index, Dimension<Dim>::d1(dimension_))) {
+        indices->push_back(split->data.leaf.index);
+      }
+    }
+  }
+
+ private:
+  //! Builds the tree in O(3 * n log n) time.
+  inline Node* MakeTree() {
+    auto const& points = points_;
+    Index const dimension = dimension_;
+
+    // Sorted x indices that directly refer to a point.
+    std::vector<Index> direct_p_by_x{SortPermutation(
+        points.num_points(), [&points, dimension](Index i, Index j) -> bool {
+          return points(i, Dimension<Dim>::d0(dimension)) <
+                 points(j, Dimension<Dim>::d0(dimension));
+        })};
+
+    std::vector<Index> buffer(direct_p_by_x.size());
+    return MakeTree(direct_p_by_x, &buffer);
+  }
+
+  //! Builds the tree in O(2 * n log n) time using pre-sorted indices.
+  inline Node* MakeTree(
+      std::vector<Index> const& direct_p_by_x, std::vector<Index>* p_buffer) {
+    auto const& points = points_;
+    Index const dimension = dimension_;
+    Index const num_points = direct_p_by_x.size();
+
+    // Sorted y indices that link to the points via the x dimension.
+    std::vector<Index> linked_x_by_y{SortPermutation(
+        num_points,
+        [&points, dimension, &direct_p_by_x](Index i, Index j) -> bool {
+          return points(direct_p_by_x[i], Dimension<Dim>::d1(dimension)) <
+                 points(direct_p_by_x[j], Dimension<Dim>::d1(dimension));
+        })};
+
+    // Root associate layer.
+    Layer* parent =
+        layers_.MakeItem(points_, Dimension<Dim>::d1(dimension_), num_points);
+    for (Index i = 0; i < num_points; ++i) {
+      parent->data()[i].index = direct_p_by_x[linked_x_by_y[i]];
+    }
+
+    return SplitIndices(
+        direct_p_by_x, num_points / 2, parent, &linked_x_by_y, p_buffer);
+  }
+
+  inline Node* SplitIndices(
+      std::vector<Index> const& direct_p_by_x,
+      Index const split,
+      Layer* parent,
+      std::vector<Index>* p_front,
+      std::vector<Index>* p_back) {
+    // std::cout << "split, size: " << split << ", " << parent->data().size()
+    //           << std::endl;
+
+    // Leaf
+    if (parent->data().size() == 1) {
+      Node* node = nodes_.MakeItem();
+      node->layer = parent;
+      node->data.leaf.index = direct_p_by_x[split];
+      node->left = nullptr;
+      node->right = nullptr;
+      return node;
+    }
+
+    std::vector<Index> const& front = *p_front;
+    std::vector<Index>& back = *p_back;
+
+    // Right may be one bigger than left
+    Index const parent_size = parent->data().size();
+    Index const left_size = parent_size / 2;
+    Index const right_size = parent_size - left_size;
+    Index const left_offset = split - left_size;
+    Index const right_offset = split;
+    Layer* left =
+        layers_.MakeItem(points_, Dimension<Dim>::d1(dimension_), left_size);
+    Layer* right =
+        layers_.MakeItem(points_, Dimension<Dim>::d1(dimension_), right_size);
+    Index left_count = 0;
+    Index right_count = 0;
+
+    // Cascade to the next layer.
+    for (Index i = 0; i < parent_size; ++i) {
+      // Index in the next layer to the smallest value which is greater or
+      // equal to the current one. Since the sequence is ordened, the current
+      // value to be inserted must be the smallest one. The index will be the
+      // next to be inserted.
+      // TODO Test this later =D
+      // NOTE: In case there is an equals range, we should check the last
+      // existing entry for equality. Practically, this gains us nothing as we
+      // should always arrive at the start of the equals range (or the end).
+      parent->data()[i].left = left_count;
+      parent->data()[i].right = right_count;
+      // We move the sorted y values into the left or right node based on the
+      // sorted x indices while keeping their relative ordering.
+      // Split is the first index on the right side.
+      Index const index_prev_dim = front[left_offset + i];
+      if (index_prev_dim < right_offset) {
+        left->data()[left_count].index = parent->data()[i].index;
+        back[left_offset + left_count] = index_prev_dim;
+        ++left_count;
+      } else {
+        right->data()[right_count].index = parent->data()[i].index;
+        back[right_offset + right_count] = index_prev_dim;
+        ++right_count;
+      }
+    }
+
+    Node* node = nodes_.MakeItem();
+    node->layer = parent;
+    node->data.branch.split =
+        points_(direct_p_by_x[split], Dimension<Dim>::d0(dimension_));
+    node->left = SplitIndices(
+        direct_p_by_x, left_offset + left_size / 2, left, p_back, p_front);
+    node->right = SplitIndices(
+        direct_p_by_x, right_offset + right_size / 2, right, p_back, p_front);
+    return node;
+  }
+
+  inline void ReportIndices(
+      std::vector<Item> const& items,
+      Index const lower_bound,
+      Index const upper_bound,
+      std::vector<Index>* indices) const {
+    // For MingW GCC 9.2.0, this was hands down the fastest for
+    // copying indices. Vs. for_each, or any other type of for/while loop.
+    std::transform(
+        items.cbegin() + lower_bound,
+        items.cbegin() + upper_bound,
+        std::back_inserter(*indices),
+        [](Item const& i) { return i.index; });
+  }
+
+  Points const& points_;
+  Index dimension_;
+  ItemBuffer<Node> nodes_;
+  ItemBuffer<Layer> layers_;
+  Node* root_;
+};
+
+template <typename Index, typename Scalar, int Dim, typename Points>
+class RangeTreeNd_ {
+ private:
+  // TODO Hardcoded 3 dimensions
+  static constexpr int Dims = 3;
+
+  using RangeTree2d =
+      RangeTree2d_<Index, Scalar, Dimensions<Dims>::Back(2), Points>;
+  using RangeTreeNd = RangeTreeNd_<Index, Scalar, Dim, Points>;
+
+  struct NodeNd : public Node<NodeNd, Index, Scalar> {
+    union Associate {
+      RangeTreeNd* nd;
+      RangeTree2d* td;
+    };
+    Associate sub;
+  };
+
+  using Node = NodeNd;
+
+ public:
+  RangeTreeNd_(Points const& points)
+      : points_{points},
+        dimension_{0},
+        nodes_{MaxNodesFromPoints(points_.num_points())},
+        trees_nd_{0},
+        trees_2d_{MaxNodesFromPoints(points_.num_points())},
+        root_{MakeTree()} {
+    assert(points_.num_points() > 0);
+  }
+
+  // TODO Generalize interface
+  //! Perform range search in O(log_2^max(1, d - 1) n) time.
+  inline void SearchRange(
+      Scalar const min_x,
+      Scalar const min_y,
+      Scalar const min_z,
+      Scalar const max_x,
+      Scalar const max_y,
+      Scalar const max_z,
+      std::vector<Index>* indices) const {
+    assert(min_x <= max_x);
+    assert(min_y <= max_y);
+    assert(min_z <= max_z);
+    // Find node where min_x and max_x split.
+    Node* split = root_;
+    if (split->IsBranch()) {
+      do {
+        if (max_x < split->data.branch.split) {
+          do {
+            // std::cout << "split: " << split->data.branch.split << std::endl;
+            split = split->left;
+          } while (split->IsBranch() && max_x < split->data.branch.split);
+        } else if (min_x > split->data.branch.split) {
+          do {
+            // std::cout << "split: " << split->data.branch.split << std::endl;
+            split = split->right;
+          } while (split->IsBranch() && min_x > split->data.branch.split);
+        } else {
+          break;
+        }
+      } while (split->IsBranch());
+
+      // std::cout << "split: " << split->data.branch.split << std::endl;
+
+      if (split->IsBranch()) {
+        // Left side of the split branch.
+        Node* track = split->left;
+        while (track->IsBranch()) {
+          if (min_x <= track->data.branch.split) {
+            // std::cout << "left give: " << track->data.branch.split
+            //           << std::endl;
+            track->right->sub.td->SearchRange(
+                min_y, min_z, max_y, max_z, indices);
+            track = track->left;
+          } else {
+            // std::cout << "left move: " << track->data.branch.split
+            //           << std::endl;
+            track = track->right;
+          }
+        }
+
+        // Last leaf of the left side.
+        if (min_x <=
+            points_(track->data.leaf.index, Dimension<Dim>::d0(dimension_))) {
+          // std::cout << "left leaf: " << points_(track->data.leaf.index, 1)
+          //           << std::endl;
+          track->sub.td->SearchRange(min_y, min_z, max_y, max_z, indices);
+        }
+
+        // Right side of the split branch.
+        track = split->right;
+        while (track->IsBranch()) {
+          if (max_x >= track->data.branch.split) {
+            // std::cout << "right give: " << track->data.branch.split
+            //           << std::endl;
+            track->left->sub.td->SearchRange(
+                min_y, min_z, max_y, max_z, indices);
+            track = track->right;
+          } else {
+            // std::cout << "right move: " << track->data.branch.split
+            //           << std::endl;
+            track = track->left;
+          }
+        }
+
+        // Last leaf of the right side.
+        if (max_x >=
+            points_(track->data.leaf.index, Dimension<Dim>::d0(dimension_))) {
+          // std::cout << "right leaf: " << points_(track->data.leaf.index, 1)
+          // << std::endl;
+          track->sub.td->SearchRange(min_y, min_z, max_y, max_z, indices);
+        }
+      } else {
+        // We never found a split node and ended up in a leaf.
+        if (min_x <=
+                points_(
+                    split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
+            max_x >=
+                points_(
+                    split->data.leaf.index, Dimension<Dim>::d0(dimension_))) {
+          split->sub.td->SearchRange(min_y, min_z, max_y, max_z, indices);
+        }
+      }
+    } else {
+      // The root is a leaf.
+      if (min_x <=
+              points_(split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
+          max_x >=
+              points_(split->data.leaf.index, Dimension<Dim>::d0(dimension_))) {
+        split->sub.td->SearchRange(min_y, min_z, max_y, max_z, indices);
+      }
+    }
+  }
+
+ private:
+  inline Node* MakeTree() {
+    auto const& points = points_;
+
+    // Sorted x indices that directly refer to a point.
+    std::vector<Index> direct_p_by_x{SortPermutation(
+        points.num_points(), [&points](Index i, Index j) -> bool {
+          return points(i, 0) < points(j, 0);
+        })};
+
+    // Sorted y indices that link to the points via the x dimension.
+    std::vector<Index> linked_x_by_y{SortPermutation(
+        points.num_points(),
+        [&points, &direct_p_by_x](Index i, Index j) -> bool {
+          return points(direct_p_by_x[i], 1) < points(direct_p_by_x[j], 1);
+        })};
+
+    std::vector<Index> parent(points.num_points());
+    for (Index i = 0; i < points.num_points(); ++i) {
+      parent[i] = direct_p_by_x[linked_x_by_y[i]];
+    }
+
+    std::vector<Index> buffer(points.num_points());
+    return SplitIndices(
+        direct_p_by_x,
+        points.num_points() / 2,
+        std::move(parent),
+        &linked_x_by_y,
+        &buffer);
+  }
+
+  inline Node* SplitIndices(
+      std::vector<Index> const& direct_p_by_d,
+      Index const split,
+      std::vector<Index>&& parent,
+      std::vector<Index>* p_front,
+      std::vector<Index>* p_back) {
+    // std::cout << "c split, dim, size: " << split << ", " << dimension << ", "
+    //           << parent.size() << std::endl;
+
+    Node* node = nodes_.MakeItem();
+    node->sub.td = trees_2d_.MakeItem(
+        points_, Dimension<Dim>::d1(dimension_), parent, p_back);
+
+    // Leaf
+    if (parent.size() == 1) {
+      node->data.leaf.index = direct_p_by_d[split];
+      node->left = nullptr;
+      node->right = nullptr;
+    } else {
+      std::vector<Index> const& front = *p_front;
+      std::vector<Index>& back = *p_back;
+
+      // Right may be one bigger than right
+      Index const parent_size = parent.size();
+      Index const left_size = parent_size / 2;
+      Index const right_size = parent_size - left_size;
+      Index const left_offset = split - left_size;
+      Index const right_offset = split;
+      std::vector<Index> left(left_size);
+      std::vector<Index> right(right_size);
+      Index left_count = 0;
+      Index right_count = 0;
+
+      // std::cout << "left_size, right_size: " << left_size << ", " <<
+      // right_size
+      //          << std::endl;
+
+      // Split indices.
+      for (Index i = 0; i < parent_size; ++i) {
+        Index const index_prev_dim = front[left_offset + i];
+        if (index_prev_dim < right_offset) {
+          left[left_count] = parent[i];
+          back[left_offset + left_count] = index_prev_dim;
+          ++left_count;
+        } else {
+          right[right_count] = parent[i];
+          back[right_offset + right_count] = index_prev_dim;
+          ++right_count;
+        }
+      }
+
+      node->data.branch.split =
+          points_(direct_p_by_d[split], Dimension<Dim>::d0(dimension_));
+      node->left = SplitIndices(
+          direct_p_by_d,
+          left_offset + left_size / 2,
+          std::move(left),
+          p_back,
+          p_front);
+      node->right = SplitIndices(
+          direct_p_by_d,
+          right_offset + right_size / 2,
+          std::move(right),
+          p_back,
+          p_front);
+    }
+
+    return node;
+  }
+
+  Points const& points_;
+  Index dimension_;
+  ItemBuffer<Node> nodes_;
+  ItemBuffer<RangeTreeNd> trees_nd_;
+  ItemBuffer<RangeTree2d> trees_2d_;
+  Node* root_;
 };
 
 }  // namespace internal
@@ -183,7 +810,7 @@ class RangeTree1d {
 
   //! Back-inserts the indices into \p indices representing all points
   //! within the range [ \p min ... \p max ].
-  inline void SearchRangeNd(
+  inline void SearchRange(
       Scalar min, Scalar max, std::vector<Index>* indices) const {
     auto it_lower = std::lower_bound(
         sorted_.cbegin(), sorted_.cend(), min, [this](Index a, Scalar b) {
@@ -199,7 +826,7 @@ class RangeTree1d {
   }
 
   //! Returns the index of a point closest to \p value .
-  inline Index SearchNearestNd(Scalar const& value) const {
+  inline Index SearchNearest(Scalar const& value) const {
     auto it = std::lower_bound(
         sorted_.cbegin(), sorted_.cend(), value, [this](Index a, Scalar b) {
           return operator()(a) < b;
@@ -224,265 +851,17 @@ class RangeTree1d {
 };
 
 template <typename Index, typename Scalar, typename Points>
-class RangeTree2d {
- private:
-  using Layer = internal::RangeLayer<Index, Scalar, 1, Points>;
-  using Item = typename Layer::Item;
-
-  struct Node2d : public internal::Node<Node2d, Index, Scalar> {
-    Layer* layer;
-  };
-
-  using Node = Node2d;
-
+class RangeTree2d : public internal::RangeTree2d_<Index, Scalar, 0, Points> {
  public:
   RangeTree2d(Points const& points)
-      : points_{points},
-        nodes_{internal::MaxNodesFromPoints(points_.num_points())},
-        layers_{internal::MaxNodesFromPoints(points_.num_points())},
-        root_{MakeTree()} {
-    assert(points_.num_points() > 0);
-  }
+      : internal::RangeTree2d_<Index, Scalar, 0, Points>(points) {}
+};
 
-  // TODO Generalize interface
-  //! Perform range search in O(log_2 n) time.
-  inline void SearchRangeNd(
-      Scalar const min_x,
-      Scalar const min_y,
-      Scalar const max_x,
-      Scalar const max_y,
-      std::vector<Index>* indices) const {
-    assert(min_x < max_x);
-    assert(min_y < max_y);
-    // Find node where min_x and max_x split.
-    Node* split = root_;
-    if (split->IsBranch()) {
-      if (max_x < split->data.branch.split) {
-        do {
-          // std::cout << "split: " << split->data.branch.split << std::endl;
-          split = split->left;
-        } while (split->IsBranch() && max_x < split->data.branch.split);
-      } else if (min_x > split->data.branch.split) {
-        do {
-          // std::cout << "split: " << split->data.branch.split << std::endl;
-          split = split->right;
-        } while (split->IsBranch() && min_x > split->data.branch.split);
-      }
-
-      // std::cout << "split: " << split->data.branch.split << std::endl;
-
-      if (split->IsBranch()) {
-        auto const lower_bound = split->layer->LowerBound(min_y);
-        std::pair<Index, Index> c_lower = split->layer->range(lower_bound);
-        std::pair<Index, Index> c_upper =
-            split->layer->range(split->layer->UpperBound(lower_bound, max_y));
-        // We follow the left track to the bottom.
-        Node* track = split->left;
-        std::pair<Index, Index> track_c_lower =
-            track->layer->range(c_lower.first);
-        std::pair<Index, Index> track_c_upper =
-            track->layer->range(c_upper.first);
-
-        while (track->IsBranch()) {
-          if (min_x <= track->data.branch.split) {
-            // std::cout << "left give: " << track->data.branch.split <<
-            // std::endl;
-            ReportIndices(
-                track->right->layer->data(),
-                track_c_lower.second,
-                track_c_upper.second,
-                indices);
-            track = track->left;
-            track_c_lower = track->layer->range(track_c_lower.first);
-            track_c_upper = track->layer->range(track_c_upper.first);
-          } else {
-            // std::cout << "left move: " << track->data.branch.split <<
-            // std::endl;
-            track = track->right;
-            track_c_lower = track->layer->range(track_c_lower.second);
-            track_c_upper = track->layer->range(track_c_upper.second);
-          }
-        }
-        // Last left leaf
-        if (min_x <= points_(track->data.leaf.index, 0) &&
-            min_y <= points_(track->data.leaf.index, 1)) {
-          // std::cout << "left leaf: " << track->data.leaf.index << std::endl;
-          indices->push_back(track->data.leaf.index);
-        }
-
-        // We follow the right track to the bottom.
-        track = split->right;
-        track_c_lower = track->layer->range(c_lower.second);
-        track_c_upper = track->layer->range(c_upper.second);
-
-        while (track->IsBranch()) {
-          if (max_x >= track->data.branch.split) {
-            // std::cout << "right give: " << track->data.branch.split <<
-            // std::endl;
-            ReportIndices(
-                track->left->layer->data(),
-                track_c_lower.first,
-                track_c_upper.first,
-                indices);
-            track = track->right;
-            track_c_lower = track->layer->range(track_c_lower.second);
-            track_c_upper = track->layer->range(track_c_upper.second);
-          } else {
-            // std::cout << "right move: " << track->data.branch.split <<
-            // std::endl;
-            track = track->left;
-            track_c_lower = track->layer->range(track_c_lower.first);
-            track_c_upper = track->layer->range(track_c_upper.first);
-          }
-        }
-
-        // Last right leaf
-        if (max_x >= points_(track->data.leaf.index, 0) &&
-            max_y >= points_(track->data.leaf.index, 1)) {
-          // std::cout << "right leaf: " << left->data.leaf.index <<
-          // std::endl;
-          indices->push_back(track->data.leaf.index);
-        }
-      } else {
-        // We never found a split node and ended up in a leaf.
-        if (min_x <= points_(split->data.leaf.index, 0) &&
-            min_y <= points_(split->data.leaf.index, 1) &&
-            max_x >= points_(split->data.leaf.index, 0) &&
-            max_y >= points_(split->data.leaf.index, 1)) {
-          indices->push_back(split->data.leaf.index);
-        }
-      }
-    } else {
-      // The root is a leaf.
-      if (min_x <= points_(split->data.leaf.index, 0) &&
-          min_y <= points_(split->data.leaf.index, 1) &&
-          max_x >= points_(split->data.leaf.index, 0) &&
-          max_y >= points_(split->data.leaf.index, 1)) {
-        indices->push_back(split->data.leaf.index);
-      }
-    }
-  }
-
- private:
-  inline Scalar operator()(Index i, Index d) const { return points_(i, d); }
-
-  //! Builds the tree in O(3 * n log n) time.
-  inline Node* MakeTree() {
-    auto const& points = points_;
-
-    // Sorted x indices that directly refer to a point.
-    std::vector<Index> direct_p_by_x{internal::SortPermutation(
-        points.num_points(), [this](Index i, Index j) -> bool {
-          return operator()(i, 0) < operator()(j, 0);
-        })};
-
-    // Sorted y indices that link to the points via the x dimension.
-    std::vector<Index> linked_x_by_y{internal::SortPermutation(
-        points.num_points(), [this, &direct_p_by_x](Index i, Index j) -> bool {
-          return operator()(direct_p_by_x[i], 1) < operator()(
-                                                       direct_p_by_x[j], 1);
-        })};
-
-    // Root associate layer.
-    Layer* parent = layers_.MakeItem(points_, points.num_points());
-    for (Index i = 0; i < points.num_points(); ++i) {
-      parent->data()[i].index = direct_p_by_x[linked_x_by_y[i]];
-    }
-
-    std::vector<Index> buffer(linked_x_by_y.size());
-    return SplitIndices(
-        direct_p_by_x,
-        direct_p_by_x.size() / 2,
-        parent,
-        &linked_x_by_y,
-        &buffer);
-  }
-
-  inline Node* SplitIndices(
-      std::vector<Index> const& direct_p_by_x,
-      Index const split,
-      Layer* parent,
-      std::vector<Index>* p_front,
-      std::vector<Index>* p_back) {
-    // Leaf
-    if (parent->data().size() == 1) {
-      Node* node = nodes_.MakeItem();
-      node->data.leaf.index = direct_p_by_x[split];
-      node->layer = parent;
-      node->left = nullptr;
-      node->right = nullptr;
-      return node;
-    }
-
-    std::vector<Index> const& front = *p_front;
-    std::vector<Index>& back = *p_back;
-
-    // Right may be one bigger than left
-    Index const parent_size = parent->data().size();
-    Index const left_size = parent_size / 2;
-    Index const right_size = parent_size - left_size;
-    Index const left_offset = split - left_size;
-    Index const right_offset = split;
-    Layer* left = layers_.MakeItem(points_, left_size);
-    Layer* right = layers_.MakeItem(points_, right_size);
-    Index left_count = 0;
-    Index right_count = 0;
-
-    // Cascade to the next layer.
-    for (Index i = 0; i < parent_size; ++i) {
-      // Index in the next layer to the smallest value which is greater or
-      // equal to the current one. Since the sequence is ordened, the current
-      // value to be inserted must be the smallest one. The index will be the
-      // next to be inserted.
-      // TODO Test this later =D
-      // NOTE: In case there is an equals range, we should check the last
-      // existing entry for equality. Practically, this gains us nothing as we
-      // should always arrive at the start of the equals range (or the end).
-      parent->data()[i].left = left_count;
-      parent->data()[i].right = right_count;
-      // We move the sorted y values into the left or right node based on the
-      // sorted x indices while keeping their relative ordering.
-      // Split is the first index on the right side.
-      Index const index_prev_dim = front[left_offset + i];
-      if (index_prev_dim < right_offset) {
-        left->data()[left_count].index = parent->data()[i].index;
-        back[left_offset + left_count] = index_prev_dim;
-        ++left_count;
-      } else {
-        right->data()[right_count].index = parent->data()[i].index;
-        back[right_offset + right_count] = index_prev_dim;
-        ++right_count;
-      }
-    }
-
-    Node* node = nodes_.MakeItem();
-    node->data.branch.split = operator()(direct_p_by_x[split], 0);
-    node->layer = parent;
-    node->left = SplitIndices(
-        direct_p_by_x, left_offset + left_size / 2, left, p_back, p_front);
-    node->right = SplitIndices(
-        direct_p_by_x, right_offset + right_size / 2, right, p_back, p_front);
-    return node;
-  }
-
-  inline void ReportIndices(
-      std::vector<Item> const& items,
-      Index const lower_bound,
-      Index const upper_bound,
-      std::vector<Index>* indices) const {
-    // For MingW GCC 9.2.0, this was hands down the fastest for
-    // copying indices. Vs. for_each, or any other type of for/while loop.
-    std::transform(
-        items.cbegin() + lower_bound,
-        items.cbegin() + upper_bound,
-        std::back_inserter(*indices),
-        [](Item const& i) { return i.index; });
-  }
-
-  Points const& points_;
-  internal::ItemBuffer<Node> nodes_;
-  internal::ItemBuffer<Layer> layers_;
-  Node* root_;
+template <typename Index, typename Scalar, typename Points>
+class RangeTree3d : public internal::RangeTreeNd_<Index, Scalar, 0, Points> {
+ public:
+  RangeTree3d(Points const& points)
+      : internal::RangeTreeNd_<Index, Scalar, 0, Points>(points) {}
 };
 
 }  // namespace nanotree
