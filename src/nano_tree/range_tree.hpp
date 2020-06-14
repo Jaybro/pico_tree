@@ -1,38 +1,15 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <numeric>
-#include <vector>
 
-namespace nanotree {
+#include "core.hpp"
 
-//! Value used for any template Dims parameter to determine the dimensions
-//! compile time.
-constexpr int kRuntimeDims = -1;
+namespace nano_tree {
 
 namespace internal {
-
-//! Simple memory buffer making deletions of recursive elements a bit easier.
-template <typename T>
-class ItemBuffer {
- public:
-  ItemBuffer(std::size_t size) { buffer_.reserve(size); }
-
-  template <typename... Args>
-  inline T* MakeItem(Args&&... args) {
-    buffer_.emplace_back(std::forward<Args>(args)...);
-    return &buffer_.back();
-  }
-
- private:
-  std::vector<T> buffer_;
-};
-
-//! Returns the maximum amount of nodes based on the amount of input points.
-inline std::size_t MaxNodesFromPoints(std::size_t num_points) {
-  return num_points * 2 - 1;
-}
 
 //! Returns a permutation based on the sorted input.
 template <typename Index, typename Compare>
@@ -82,7 +59,7 @@ struct Dimensions<kRuntimeDims> {
 
 //! Node represents a tree node that is meant to be inherited.
 template <typename Derived, typename Index, typename Scalar>
-struct Node {
+struct NodeBase {
   union Data {
     struct Branch {
       Scalar split;
@@ -105,8 +82,7 @@ struct Node {
 };
 
 //! The RangeLayer is the last dimension in any 2+ dimensional range tree to
-//! improve query time by a factor or O(log_2 n) using a technique called
-//! fractional cascading.
+//! improve query time by a factor of O(log_2 n) using fractional cascading.
 //! https://en.wikipedia.org/wiki/Fractional_cascading
 //! Each RangeLayer corresponds to a single sub-tree / array that contains
 //! cascade information using the Item class.
@@ -190,11 +166,9 @@ class RangeTree2d_ {
   using Layer = RangeLayer<Index, Scalar, Dimension<Dim>::Next(), Points>;
   using Item = typename Layer::Item;
 
-  struct Node2d : public Node<Node2d, Index, Scalar> {
+  struct Node : public NodeBase<Node, Index, Scalar> {
     Layer* layer;
   };
-
-  using Node = Node2d;
 
  public:
   RangeTree2d_(Points const& points)
@@ -550,15 +524,13 @@ class RangeTreeNd_ {
       RangeTree2d_<Index, Scalar, Dimensions<Dims>::Back(2), Points>;
   using RangeTreeNd = RangeTreeNd_<Index, Scalar, Dim, Points>;
 
-  struct NodeNd : public Node<NodeNd, Index, Scalar> {
+  struct Node : public NodeBase<Node, Index, Scalar> {
     union Associate {
       RangeTreeNd* nd;
       RangeTree2d* td;
     };
     Associate sub;
   };
-
-  using Node = NodeNd;
 
  public:
   RangeTreeNd_(Points const& points)
@@ -832,4 +804,4 @@ class RangeTree3d : public internal::RangeTreeNd_<Index, Scalar, 0, Points> {
       : internal::RangeTreeNd_<Index, Scalar, 0, Points>(points) {}
 };
 
-}  // namespace nanotree
+}  // namespace nano_tree
