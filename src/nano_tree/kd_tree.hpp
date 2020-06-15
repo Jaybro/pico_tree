@@ -2,16 +2,50 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <numeric>
 
 #include "core.hpp"
 
 namespace nano_tree {
 
+//! L2 metric that calculates the squared distance between two points.
+//! Can be replaced by a custom metric.
 template <typename Index, typename Scalar, int Dims, typename Points>
+class MetricL2 {
+ public:
+  MetricL2(Points const& points) : points_{points} {}
+
+  //! Calculates the difference between two points given an query point and an
+  //! index to a point.
+  //! \tparam P Point type.
+  //! \param p Point.
+  //! \param idx Index.
+  template <typename P>
+  inline Scalar operator()(P const& p, Index idx) const {
+    Scalar d{};
+
+    for (Index i = 0;
+         i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
+         ++i) {
+      d += std::pow(points_(p, i) - points_(idx, i), 2);
+    }
+
+    return d;
+  }
+
+ private:
+  Points const& points_;
+};
+
+template <
+    typename Index,
+    typename Scalar,
+    int Dims,
+    typename Points,
+    typename Metric = MetricL2<Index, Scalar, Dims, Points>>
 class KdTree {
  private:
-  //! Node represents a tree node that is meant to be inherited.
   struct Node {
     union Data {
       struct Branch {
@@ -20,7 +54,7 @@ class KdTree {
       };
 
       struct Leaf {
-        Index index;
+        Index idx;
       };
 
       Branch branch;
@@ -38,10 +72,19 @@ class KdTree {
  public:
   KdTree(Points const& points)
       : points_{points},
+        metric_{points_},
         dimensions_{points_.num_dimensions()},
         nodes_{internal::MaxNodesFromPoints(points_.num_points())},
         root_{MakeTree()} {
     assert(points_.num_points() > 0);
+  }
+
+  template <typename P>
+  inline std::pair<Index, Scalar> SearchNn(P const& p) const {
+    Index idx;
+    Scalar min = std::numeric_limits<Scalar>::max();
+    SearchNn(p, root_, &idx, &min);
+    return {idx, min};
   }
 
  private:
@@ -60,7 +103,7 @@ class KdTree {
     Node* node = nodes_.MakeItem();
     //
     if (size == 1) {
-      node->data.leaf.index = indices[offset];
+      node->data.leaf.idx = indices[offset];
       node->left = nullptr;
       node->right = nullptr;
     } else {
@@ -86,7 +129,36 @@ class KdTree {
     return node;
   }
 
+  template <typename P>
+  inline void SearchNn(
+      P const& p, Node const* const node, Index* idx, Scalar* min) const {
+    if (node->IsBranch()) {
+      Scalar const v = points_(p, node->data.branch.dim);
+      // Go left or right and then check if we should still go down the other
+      // side based on the current minimum distance.
+      if (v <= node->data.branch.split) {
+        SearchNn(p, node->left, idx, min);
+        if (*min > std::pow(v - node->data.branch.split, 2)) {
+          SearchNn(p, node->right, idx, min);
+        }
+      } else {
+        SearchNn(p, node->right, idx, min);
+        if (*min > std::pow(node->data.branch.split - v, 2)) {
+          SearchNn(p, node->left, idx, min);
+        }
+      }
+    } else {
+      Scalar d = metric_(p, node->data.leaf.idx);
+
+      if (d < *min) {
+        *idx = node->data.leaf.idx;
+        *min = d;
+      }
+    }
+  }
+
   Points const& points_;
+  Metric const metric_;
   Index const dimensions_;
   internal::ItemBuffer<Node> nodes_;
   Node* root_;

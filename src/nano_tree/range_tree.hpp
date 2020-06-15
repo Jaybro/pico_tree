@@ -43,20 +43,6 @@ struct Dimension<kRuntimeDims> {
   inline static int d1(int dim) { return dim + 1; }
 };
 
-//! Knowing the dimension count at compile time we can get some added
-//! information.
-template <int Dims>
-struct Dimensions {
-  //! Returns the dimension index of the dim dimension from the back.
-  inline static constexpr int Back(int dim) { return Dims - dim; }
-};
-
-//! At runtime we have know added information.
-template <>
-struct Dimensions<kRuntimeDims> {
-  inline static constexpr int Back(int) { return kRuntimeDims; }
-};
-
 //! Node represents a tree node that is meant to be inherited.
 template <typename Derived, typename Index, typename Scalar>
 struct NodeBase {
