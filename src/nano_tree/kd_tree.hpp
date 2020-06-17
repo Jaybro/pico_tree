@@ -9,6 +9,123 @@
 
 namespace nano_tree {
 
+namespace internal {
+
+template <typename Index, typename Scalar>
+class SearchNn {
+ public:
+  SearchNn() : min_{std::numeric_limits<Scalar>::max()} {}
+
+  //! Visit current point.
+  inline void operator()(Index const idx, Scalar const d) {
+    if (d < min_) {
+      idx_ = idx;
+      min_ = d;
+    }
+  }
+
+  //! Maximum search distance with respect to the query point.
+  inline Scalar max() const { return min_; }
+
+  // Returns the current nearest.
+  inline std::pair<Index, Scalar> nearest() const {
+    return std::make_pair(idx_, min_);
+  }
+
+ private:
+  Index idx_;
+  Scalar min_;
+};
+
+template <typename Index, typename Scalar>
+class SearchKnn {
+ public:
+  SearchKnn(Index const k, std::vector<std::pair<Index, Scalar>>* knn)
+      : k_{k}, knn_{*knn}, min_{std::numeric_limits<Scalar>::max()} {
+    knn_.clear();
+    // Initial search distance.
+    knn_.emplace_back(0, min_);
+  }
+
+  //! \private
+  ~SearchKnn() {
+    // If we couldn't find k neighbors, we remove the max one.
+    if (knn_.back().second == std::numeric_limits<Scalar>::max()) {
+      knn_.pop_back();
+    }
+  }
+
+  //! Visit current point.
+  inline void operator()(Index const idx, Scalar const d) {
+    if (knn_.size() < k_) {
+      knn_.emplace_back();
+      InsertSorted(idx, d);
+    } else if (d < min_) {
+      InsertSorted(idx, d);
+      min_ = knn_.back().second;
+    }
+  }
+
+  //! Maximum search distance with respect to the query point.
+  inline Scalar max() const { return min_; }
+
+ private:
+  //! \brief Inserts an element in O(n) time while keeping the vector the same
+  //! length by replacing the last (furthest) element.
+  //! \details It starts at the 2nd last element and moves to the front of the
+  //! vector until the input distance \p d is no longer smaller than the
+  //! distance being compared. While traversing the vector, each element gets
+  //! copied 1 index upwards (towards end of the vector). This means we have k
+  //! comparisons and k copies, where k is the amount of elements checked. This
+  //! seems to dominate the Knn search time. Alternative strategies have been
+  //! attempted:
+  //!  * std::vector::insert(std::lower_bound).
+  //!  * std::push_heap(std::vector) and std::pop_heap(std::vector).
+  inline void InsertSorted(Index const idx, Scalar const d) {
+    Index i;
+    for (i = knn_.size() - 1; i > 0; --i) {
+      if (knn_[i - 1].second > d) {
+        knn_[i] = knn_[i - 1];
+      } else {
+        break;
+      }
+    }
+    // We update the inserted element outside of the loop. This is done for the
+    // case where we didn't break, simply reaching the end of the loop. For the
+    // last element (first in the list) we can't enter the "else" clause.
+    knn_[i] = std::make_pair(idx, d);
+  }
+
+  Index const k_;
+  std::vector<std::pair<Index, Scalar>>& knn_;
+  Scalar min_;
+};
+
+template <typename Index, typename Scalar>
+class SearchRadius {
+ public:
+  SearchRadius(Scalar const radius, std::vector<std::pair<Index, Scalar>>* n)
+      : radius_{radius}, n_{*n} {
+    n_.clear();
+  }
+
+  //! Visit current point.
+  inline void operator()(Index const idx, Scalar const d) {
+    if (d < radius_) {
+      n_.emplace_back(idx, d);
+    }
+  }
+
+  //! Maximum search distance with respect to the query point.
+  inline Scalar max() const { return radius_; }
+
+ private:
+  Scalar const radius_;
+  std::vector<std::pair<Index, Scalar>>& n_;
+};
+
+}  // namespace internal
+
 //! L2 metric that calculates the squared distance between two points.
 //! Can be replaced by a custom metric.
 template <typename Index, typename Scalar, int Dims, typename Points>
@@ -79,12 +196,36 @@ class KdTree {
     assert(points_.num_points() > 0);
   }
 
+  //! Returns the nearest neighbor of point \p p .
+  //! \tparam P point type.
   template <typename P>
   inline std::pair<Index, Scalar> SearchNn(P const& p) const {
-    Index idx;
-    Scalar min = std::numeric_limits<Scalar>::max();
-    SearchNn(p, root_, &idx, &min);
-    return {idx, min};
+    internal::SearchNn<Index, Scalar> v;
+    SearchNn(p, root_, &v);
+    return v.nearest();
+  }
+
+  //! Returns the \p k nearest neighbors of point \p p .
+  //! \tparam P point type.
+  template <typename P>
+  inline void SearchKnn(
+      P const& p,
+      Index const k,
+      std::vector<std::pair<Index, Scalar>>* knn) const {
+    internal::SearchKnn<Index, Scalar> v(k, knn);
+    SearchNn(p, root_, &v);
+  }
+
+  //! Returns all neighbors to point \p p that are within squared
+  //! radius \p radius .
+  //! \tparam P point type.
+  template <typename P>
+  inline void SearchRadius(
+      P const& p,
+      Scalar const radius,
+      std::vector<std::pair<Index, Scalar>>* n) const {
+    internal::SearchRadius<Index, Scalar> v(radius, n);
+    SearchNn(p, root_, &v);
   }
 
  private:
@@ -129,31 +270,27 @@ class KdTree {
     return node;
   }
 
-  template <typename P>
-  inline void SearchNn(
-      P const& p, Node const* const node, Index* idx, Scalar* min) const {
+  //! Returns the nearest neighbor or neighbors of point \p p depending
+  //! selection by visitor \p visitor for node \p node.
+  template <typename P, typename V>
+  inline void SearchNn(P const& p, Node const* const node, V* visitor) const {
     if (node->IsBranch()) {
       Scalar const v = points_(p, node->data.branch.dim);
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
       if (v <= node->data.branch.split) {
-        SearchNn(p, node->left, idx, min);
-        if (*min > std::pow(v - node->data.branch.split, 2)) {
-          SearchNn(p, node->right, idx, min);
+        SearchNn(p, node->left, visitor);
+        if (visitor->max() > std::pow(v - node->data.branch.split, 2)) {
+          SearchNn(p, node->right, visitor);
         }
       } else {
-        SearchNn(p, node->right, idx, min);
-        if (*min > std::pow(node->data.branch.split - v, 2)) {
-          SearchNn(p, node->left, idx, min);
+        SearchNn(p, node->right, visitor);
+        if (visitor->max() > std::pow(node->data.branch.split - v, 2)) {
+          SearchNn(p, node->left, visitor);
         }
       }
     } else {
-      Scalar d = metric_(p, node->data.leaf.idx);
-
-      if (d < *min) {
-        *idx = node->data.leaf.idx;
-        *min = d;
-      }
+      (*visitor)(node->data.leaf.idx, metric_(p, node->data.leaf.idx));
     }
   }
 
