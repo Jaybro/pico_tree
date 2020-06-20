@@ -1,3 +1,3 @@
-# nanotree
+# NanoTree
 
 Search structures!

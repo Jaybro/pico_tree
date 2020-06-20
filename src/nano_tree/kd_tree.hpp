@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cmath>
 #include <numeric>
 
 #include "core.hpp"
@@ -11,6 +10,7 @@ namespace nano_tree {
 
 namespace internal {
 
+//! KdTree search visitor for finding a single nearest neighbor.
 template <typename Index, typename Scalar>
 class SearchNn {
  public:
@@ -18,16 +18,14 @@ class SearchNn {
 
   //! Visit current point.
   inline void operator()(Index const idx, Scalar const d) {
-    if (d < min_) {
-      idx_ = idx;
-      min_ = d;
-    }
+    idx_ = idx;
+    min_ = d;
   }
 
   //! Maximum search distance with respect to the query point.
   inline Scalar max() const { return min_; }
 
-  // Returns the current nearest.
+  //! Returns the current nearest.
   inline std::pair<Index, Scalar> nearest() const {
     return std::make_pair(idx_, min_);
   }
@@ -37,37 +35,37 @@ class SearchNn {
   Scalar min_;
 };
 
+//! KdTree search visitor for finding k nearest neighbors.
 template <typename Index, typename Scalar>
 class SearchKnn {
  public:
   SearchKnn(Index const k, std::vector<std::pair<Index, Scalar>>* knn)
-      : k_{k}, knn_{*knn}, min_{std::numeric_limits<Scalar>::max()} {
-    knn_.clear();
+      : k_{k}, count_{0}, knn_{*knn} {
+    knn_.resize(k_);
     // Initial search distance.
-    knn_.emplace_back(0, min_);
+    knn_[k_ - 1].second = std::numeric_limits<Scalar>::max();
   }
 
   //! \private
   ~SearchKnn() {
-    // If we couldn't find k neighbors, we remove the max one.
-    if (knn_.back().second == std::numeric_limits<Scalar>::max()) {
-      knn_.pop_back();
-    }
+    // If we couldn't find k neighbors the container gets resized to the amount
+    // of points found.
+    // Making a container smaller doesn't change the capacity and shouldn't
+    // invalidate the content.
+    knn_.resize(count_);
   }
 
   //! Visit current point.
   inline void operator()(Index const idx, Scalar const d) {
-    if (knn_.size() < k_) {
-      knn_.emplace_back();
-      InsertSorted(idx, d);
-    } else if (d < min_) {
-      InsertSorted(idx, d);
-      min_ = knn_.back().second;
+    if (count_ < k_) {
+      count_++;
     }
+
+    InsertSorted(idx, d);
   }
 
   //! Maximum search distance with respect to the query point.
-  inline Scalar max() const { return min_; }
+  inline Scalar max() const { return knn_[k_ - 1].second; }
 
  private:
   //! \brief Inserts an element in O(n) time while keeping the vector the same
@@ -83,7 +81,7 @@ class SearchKnn {
   //!  * std::push_heap(std::vector) and std::pop_heap(std::vector).
   inline void InsertSorted(Index const idx, Scalar const d) {
     Index i;
-    for (i = knn_.size() - 1; i > 0; --i) {
+    for (i = count_ - 1; i > 0; --i) {
       if (knn_[i - 1].second > d) {
         knn_[i] = knn_[i - 1];
       } else {
@@ -97,10 +95,11 @@ class SearchKnn {
   }
 
   Index const k_;
+  Index count_;
   std::vector<std::pair<Index, Scalar>>& knn_;
-  Scalar min_;
 };
 
+//! KdTree search visitor for finding all neighbors within a radius.
 template <typename Index, typename Scalar>
 class SearchRadius {
  public:
@@ -111,9 +110,7 @@ class SearchRadius {
 
   //! Visit current point.
   inline void operator()(Index const idx, Scalar const d) {
-    if (d < radius_) {
-      n_.emplace_back(idx, d);
-    }
+    n_.emplace_back(idx, d);
   }
 
   //! Maximum search distance with respect to the query point.
@@ -126,14 +123,14 @@ class SearchRadius {
 
 }  // namespace internal
 
-//! L2 metric that calculates the squared distance between two points.
+//! \brief L2 metric that calculates the squared distance between two points.
 //! Can be replaced by a custom metric.
 template <typename Index, typename Scalar, int Dims, typename Points>
 class MetricL2 {
  public:
   MetricL2(Points const& points) : points_{points} {}
 
-  //! Calculates the difference between two points given an query point and an
+  //! Calculates the difference between two points given a query point and an
   //! index to a point.
   //! \tparam P Point type.
   //! \param p Point.
@@ -145,7 +142,8 @@ class MetricL2 {
     for (Index i = 0;
          i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
          ++i) {
-      d += std::pow(points_(p, i) - points_(idx, i), 2);
+      Scalar const v = points_(p, i) - points_(idx, i);
+      d += v * v;
     }
 
     return d;
@@ -155,6 +153,8 @@ class MetricL2 {
   Points const& points_;
 };
 
+//! \brief A KdTree is a binary tree that partitions space using hyper planes.
+//! \details https://en.wikipedia.org/wiki/K-d_tree
 template <
     typename Index,
     typename Scalar,
@@ -163,15 +163,21 @@ template <
     typename Metric = MetricL2<Index, Scalar, Dims, Points>>
 class KdTree {
  private:
+  //! KdTree Node.
   struct Node {
+    //! Data is used to either store branch or leaf information. Which union
+    //! member is used can be tested with IsBranch() or IsLeaf().
     union Data {
+      //! Tree branch.
       struct Branch {
         Scalar split;
         Index dim;
       };
 
+      //! Tree leaf.
       struct Leaf {
-        Index idx;
+        Index begin_idx;
+        Index end_idx;
       };
 
       Branch branch;
@@ -187,16 +193,18 @@ class KdTree {
   };
 
  public:
-  KdTree(Points const& points)
+  KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
         metric_{points_},
         dimensions_{points_.num_dimensions()},
-        nodes_{internal::MaxNodesFromPoints(points_.num_points())},
-        root_{MakeTree()} {
+        nodes_{
+            internal::MaxNodesFromPoints(points_.num_points(), max_leaf_size)},
+        indices_(points_.num_points()),
+        root_{MakeTree(max_leaf_size)} {
     assert(points_.num_points() > 0);
   }
 
-  //! Returns the nearest neighbor of point \p p .
+  //! Returns the nearest neighbor of point \p p in O(log n) time.
   //! \tparam P point type.
   template <typename P>
   inline std::pair<Index, Scalar> SearchNn(P const& p) const {
@@ -229,13 +237,17 @@ class KdTree {
   }
 
  private:
-  inline Node* MakeTree() {
-    std::vector<Index> indices(points_.num_points());
-    std::iota(indices.begin(), indices.end(), 0);
-    return SplitIndices(0, points_.num_points(), 0, &indices);
+  //! Builds a tree given a \p max_leaf_size in O(n log n) time.
+  inline Node* MakeTree(Index const max_leaf_size) {
+    std::iota(indices_.begin(), indices_.end(), 0);
+    return SplitIndices(max_leaf_size, 0, points_.num_points(), 0, &indices_);
   }
 
+  //! Creates a tree node for a range of indices, splits the range in two and
+  //! recursively does the same for each sub set of indices until the index
+  //! range \p size is less than or equal to \p max_leaf_size .
   inline Node* SplitIndices(
+      Index const max_leaf_size,
       Index const offset,
       Index const size,
       Index const dim,
@@ -243,8 +255,9 @@ class KdTree {
     std::vector<Index>& indices = *p_indices;
     Node* node = nodes_.MakeItem();
     //
-    if (size == 1) {
-      node->data.leaf.idx = indices[offset];
+    if (size <= max_leaf_size) {
+      node->data.leaf.begin_idx = offset;
+      node->data.leaf.end_idx = offset + size;
       node->left = nullptr;
       node->right = nullptr;
     } else {
@@ -263,34 +276,47 @@ class KdTree {
       Index const next_dim = ((dim + 1) < dimensions_) ? (dim + 1) : 0;
       node->data.branch.split = points(indices[split], dim);
       node->data.branch.dim = dim;
-      node->left = SplitIndices(offset, left_size, next_dim, p_indices);
-      node->right = SplitIndices(split, right_size, next_dim, p_indices);
+      node->left =
+          SplitIndices(max_leaf_size, offset, left_size, next_dim, p_indices);
+      node->right =
+          SplitIndices(max_leaf_size, split, right_size, next_dim, p_indices);
     }
 
     return node;
   }
 
   //! Returns the nearest neighbor or neighbors of point \p p depending
-  //! selection by visitor \p visitor for node \p node.
+  //! selection by visitor \p visitor for node \p node .
   template <typename P, typename V>
   inline void SearchNn(P const& p, Node const* const node, V* visitor) const {
     if (node->IsBranch()) {
       Scalar const v = points_(p, node->data.branch.dim);
+      Scalar const d = v - node->data.branch.split;
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
       if (v <= node->data.branch.split) {
         SearchNn(p, node->left, visitor);
-        if (visitor->max() > std::pow(v - node->data.branch.split, 2)) {
+        if (visitor->max() > d * d) {
           SearchNn(p, node->right, visitor);
         }
       } else {
         SearchNn(p, node->right, visitor);
-        if (visitor->max() > std::pow(node->data.branch.split - v, 2)) {
+        if (visitor->max() > d * d) {
           SearchNn(p, node->left, visitor);
         }
       }
     } else {
-      (*visitor)(node->data.leaf.idx, metric_(p, node->data.leaf.idx));
+      // TODO If the indices are stored directly in the leaves, perhaps that is
+      // faster than an index to an index.
+      Scalar const max = visitor->max();
+      for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+           ++i) {
+        Index const idx = indices_[i];
+        Scalar const d = metric_(p, idx);
+        if (max > d) {
+          (*visitor)(idx, d);
+        }
+      }
     }
   }
 
@@ -298,6 +324,7 @@ class KdTree {
   Metric const metric_;
   Index const dimensions_;
   internal::ItemBuffer<Node> nodes_;
+  std::vector<Index> indices_;
   Node* root_;
 };
 
