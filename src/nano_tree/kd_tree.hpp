@@ -153,6 +153,43 @@ class MetricL2 {
   Points const& points_;
 };
 
+//! \brief Splits a tree node using the median. Recursing down the tree results
+//! in a median of medians algorithm. This strategy builds a tree in O(n log n)
+//! time on average.
+template <typename Index, typename Scalar, int Dims, typename Points>
+class SplitterMedian {
+ public:
+  SplitterMedian(Points const& points, std::vector<Index>* p_indices)
+      : points_{points}, indices_{*p_indices} {}
+
+  inline void operator()(
+      Index const depth,
+      Index const offset,
+      Index const size,
+      Index* split_dim,
+      Index* split_idx,
+      Scalar* split_val) const {
+    Points const& points = points_;
+    *split_dim =
+        depth % internal::Dimensions<Dims>::Dims(points_.num_dimensions());
+    *split_idx = size / 2 + offset;
+
+    std::nth_element(
+        indices_.begin() + offset,
+        indices_.begin() + *split_idx,
+        indices_.begin() + offset + size,
+        [&points, dim = *split_dim](Index const a, Index const b) -> bool {
+          return points(a, dim) < points(b, dim);
+        });
+
+    *split_val = points(indices_[*split_idx], *split_dim);
+  }
+
+ private:
+  Points const& points_;
+  std::vector<Index>& indices_;
+};
+
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
 template <
@@ -160,7 +197,8 @@ template <
     typename Scalar,
     int Dims,
     typename Points,
-    typename Metric = MetricL2<Index, Scalar, Dims, Points>>
+    typename Metric = MetricL2<Index, Scalar, Dims, Points>,
+    typename Splitter = SplitterMedian<Index, Scalar, Dims, Points>>
 class KdTree {
  private:
   //! KdTree Node.
@@ -170,8 +208,8 @@ class KdTree {
     union Data {
       //! Tree branch.
       struct Branch {
-        Scalar split;
-        Index dim;
+        Index split_dim;
+        Scalar split_val;
       };
 
       //! Tree leaf.
@@ -196,7 +234,6 @@ class KdTree {
   KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
         metric_{points_},
-        dimensions_{points_.num_dimensions()},
         nodes_{
             internal::MaxNodesFromPoints(points_.num_points(), max_leaf_size)},
         indices_(points_.num_points()),
@@ -237,20 +274,25 @@ class KdTree {
   }
 
  private:
-  //! Builds a tree given a \p max_leaf_size in O(n log n) time.
+  //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
+  //! \details Run time may very depending on the split strategy.
   inline Node* MakeTree(Index const max_leaf_size) {
     std::iota(indices_.begin(), indices_.end(), 0);
-    return SplitIndices(max_leaf_size, 0, points_.num_points(), 0, &indices_);
+    Splitter v(points_, &indices_);
+    return SplitIndices(
+        max_leaf_size, 0, 0, points_.num_points(), v, &indices_);
   }
 
   //! Creates a tree node for a range of indices, splits the range in two and
   //! recursively does the same for each sub set of indices until the index
   //! range \p size is less than or equal to \p max_leaf_size .
+  template <typename V>
   inline Node* SplitIndices(
       Index const max_leaf_size,
+      Index const depth,
       Index const offset,
       Index const size,
-      Index const dim,
+      V const& visitor,
       std::vector<Index>* p_indices) {
     std::vector<Index>& indices = *p_indices;
     Node* node = nodes_.MakeItem();
@@ -261,25 +303,22 @@ class KdTree {
       node->left = nullptr;
       node->right = nullptr;
     } else {
-      Points const& points = points_;
-      Index const left_size = size / 2;
+      Index split_idx;
+      visitor(
+          depth,
+          offset,
+          size,
+          &node->data.branch.split_dim,
+          &split_idx,
+          &node->data.branch.split_val);
+      // The split_idx is expected to be the first index of the right branch.
+      Index const left_size = split_idx - offset;
       Index const right_size = size - left_size;
-      Index const split = offset + left_size;
-      std::nth_element(
-          indices.begin() + offset,
-          indices.begin() + split,
-          indices.begin() + offset + size,
-          [&points, dim](Index const a, Index const b) -> bool {
-            return points(a, dim) < points(b, dim);
-          });
 
-      Index const next_dim = ((dim + 1) < dimensions_) ? (dim + 1) : 0;
-      node->data.branch.split = points(indices[split], dim);
-      node->data.branch.dim = dim;
-      node->left =
-          SplitIndices(max_leaf_size, offset, left_size, next_dim, p_indices);
-      node->right =
-          SplitIndices(max_leaf_size, split, right_size, next_dim, p_indices);
+      node->left = SplitIndices(
+          max_leaf_size, depth + 1, offset, left_size, visitor, p_indices);
+      node->right = SplitIndices(
+          max_leaf_size, depth + 1, split_idx, right_size, visitor, p_indices);
     }
 
     return node;
@@ -290,31 +329,30 @@ class KdTree {
   template <typename P, typename V>
   inline void SearchNn(P const& p, Node const* const node, V* visitor) const {
     if (node->IsBranch()) {
-      Scalar const v = points_(p, node->data.branch.dim);
-      Scalar const d = v - node->data.branch.split;
+      Scalar const v = points_(p, node->data.branch.split_dim);
+      Scalar const d = v - node->data.branch.split_val;
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      if (v <= node->data.branch.split) {
+      if (v <= node->data.branch.split_val) {
         SearchNn(p, node->left, visitor);
-        if (visitor->max() > d * d) {
+        if (visitor->max() >= d * d) {
           SearchNn(p, node->right, visitor);
         }
       } else {
         SearchNn(p, node->right, visitor);
-        if (visitor->max() > d * d) {
+        if (visitor->max() >= d * d) {
           SearchNn(p, node->left, visitor);
         }
       }
     } else {
-      // TODO If the indices are stored directly in the leaves, perhaps that is
-      // faster than an index to an index.
-      Scalar const max = visitor->max();
+      Scalar max = visitor->max();
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         Index const idx = indices_[i];
         Scalar const d = metric_(p, idx);
         if (max > d) {
           (*visitor)(idx, d);
+          max = visitor->max();
         }
       }
     }
@@ -322,7 +360,6 @@ class KdTree {
 
   Points const& points_;
   Metric const metric_;
-  Index const dimensions_;
   internal::ItemBuffer<Node> nodes_;
   std::vector<Index> indices_;
   Node* root_;

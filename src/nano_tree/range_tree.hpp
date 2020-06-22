@@ -31,7 +31,7 @@ struct Dimension {
   inline static constexpr int d1(int) { return Dim + 1; }
 };
 
-//! Runtime time dimension information relative to some input dimension.
+//! Run time dimension information relative to some input dimension.
 template <>
 struct Dimension<kRuntimeDims> {
   //! Compile time determination of the next dimension. Unknown in case of
