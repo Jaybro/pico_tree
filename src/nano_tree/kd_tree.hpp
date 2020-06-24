@@ -279,8 +279,7 @@ class KdTree {
   inline Node* MakeTree(Index const max_leaf_size) {
     std::iota(indices_.begin(), indices_.end(), 0);
     Splitter v(points_, &indices_);
-    return SplitIndices(
-        max_leaf_size, 0, 0, points_.num_points(), v, &indices_);
+    return SplitIndices(max_leaf_size, 0, 0, points_.num_points(), v);
   }
 
   //! Creates a tree node for a range of indices, splits the range in two and
@@ -292,9 +291,7 @@ class KdTree {
       Index const depth,
       Index const offset,
       Index const size,
-      V const& visitor,
-      std::vector<Index>* p_indices) {
-    std::vector<Index>& indices = *p_indices;
+      V const& visitor) {
     Node* node = nodes_.MakeItem();
     //
     if (size <= max_leaf_size) {
@@ -315,10 +312,10 @@ class KdTree {
       Index const left_size = split_idx - offset;
       Index const right_size = size - left_size;
 
-      node->left = SplitIndices(
-          max_leaf_size, depth + 1, offset, left_size, visitor, p_indices);
+      node->left =
+          SplitIndices(max_leaf_size, depth + 1, offset, left_size, visitor);
       node->right = SplitIndices(
-          max_leaf_size, depth + 1, split_idx, right_size, visitor, p_indices);
+          max_leaf_size, depth + 1, split_idx, right_size, visitor);
     }
 
     return node;
