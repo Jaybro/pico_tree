@@ -25,7 +25,7 @@ class SearchNn {
   //! Maximum search distance with respect to the query point.
   inline Scalar max() const { return min_; }
 
-  //! Returns the current nearest.
+  //! Returns the current nearest neighbor.
   inline std::pair<Index, Scalar> nearest() const {
     return std::make_pair(idx_, min_);
   }
@@ -35,67 +35,36 @@ class SearchNn {
   Scalar min_;
 };
 
-//! KdTree search visitor for finding k nearest neighbors.
+//! \brief KdTree search visitor for finding k nearest neighbors using a max
+//! heap.
 template <typename Index, typename Scalar>
 class SearchKnn {
  public:
   SearchKnn(Index const k, std::vector<std::pair<Index, Scalar>>* knn)
-      : k_{k}, count_{0}, knn_{*knn} {
-    knn_.resize(k_);
-    // Initial search distance.
-    knn_[k_ - 1].second = std::numeric_limits<Scalar>::max();
-  }
-
-  //! \private
-  ~SearchKnn() {
-    // If we couldn't find k neighbors the container gets resized to the amount
-    // of points found.
-    // Making a container smaller doesn't change the capacity and shouldn't
-    // invalidate the content.
-    knn_.resize(count_);
+      : k_{k}, knn_{*knn} {
+    // Initial search distances for the heap. All values will be replaced unless
+    // point coordinates somehow have extreme values. In this case bad things
+    // will happen anyway.
+    knn_.assign(k_, {0, std::numeric_limits<Scalar>::max()});
   }
 
   //! Visit current point.
-  inline void operator()(Index const idx, Scalar const d) {
-    if (count_ < k_) {
-      count_++;
-    }
-
-    InsertSorted(idx, d);
+  inline void operator()(Index const idx, Scalar const d) const {
+    // Replace the current maximum.
+    knn_[0] = std::make_pair(idx, d);
+    // Repair the heap property.
+    ReplaceFrontHeap(
+        knn_.begin(),
+        knn_.end(),
+        [](std::pair<Index, Scalar> const& a, std::pair<Index, Scalar> const& b)
+            -> bool { return a.second < b.second; });
   }
 
   //! Maximum search distance with respect to the query point.
-  inline Scalar max() const { return knn_[k_ - 1].second; }
+  inline Scalar max() const { return knn_[0].second; }
 
  private:
-  //! \brief Inserts an element in O(n) time while keeping the vector the same
-  //! length by replacing the last (furthest) element.
-  //! \details It starts at the 2nd last element and moves to the front of the
-  //! vector until the input distance \p d is no longer smaller than the
-  //! distance being compared. While traversing the vector, each element gets
-  //! copied 1 index upwards (towards end of the vector). This means we have k
-  //! comparisons and k copies, where k is the amount of elements checked. This
-  //! seems to dominate the Knn search time. Alternative strategies have been
-  //! attempted:
-  //!  * std::vector::insert(std::lower_bound).
-  //!  * std::push_heap(std::vector) and std::pop_heap(std::vector).
-  inline void InsertSorted(Index const idx, Scalar const d) {
-    Index i;
-    for (i = count_ - 1; i > 0; --i) {
-      if (knn_[i - 1].second > d) {
-        knn_[i] = knn_[i - 1];
-      } else {
-        break;
-      }
-    }
-    // We update the inserted element outside of the loop. This is done for the
-    // case where we didn't break, simply reaching the end of the loop. For the
-    // last element (first in the list) we can't enter the "else" clause.
-    knn_[i] = std::make_pair(idx, d);
-  }
-
   Index const k_;
-  Index count_;
   std::vector<std::pair<Index, Scalar>>& knn_;
 };
 
@@ -123,8 +92,11 @@ class SearchRadius {
 
 }  // namespace internal
 
-//! \brief L2 metric that calculates the squared distance between two points.
-//! Can be replaced by a custom metric.
+//! \brief L2 metric using the squared L2 norm for measuring distances between
+//! points.
+//! \details For more details:
+//! * https://en.wikipedia.org/wiki/Metric_space
+//! * https://en.wikipedia.org/wiki/Lp_space
 template <typename Index, typename Scalar, int Dims, typename Points>
 class MetricL2 {
  public:
@@ -136,7 +108,7 @@ class MetricL2 {
   //! \param p Point.
   //! \param idx Index.
   template <typename P>
-  inline Scalar operator()(P const& p, Index idx) const {
+  inline Scalar operator()(P const& p, Index const idx) const {
     Scalar d{};
 
     for (Index i = 0;
@@ -148,6 +120,15 @@ class MetricL2 {
 
     return d;
   }
+
+  //! Calculates the difference between two points for a single dimension.
+  inline Scalar operator()(Scalar const x, Scalar const y) const {
+    Scalar const d = x - y;
+    return d * d;
+  }
+
+  //! Returns the squared distance of \p x.
+  inline Scalar operator()(Scalar const x) const { return x * x; }
 
  private:
   Points const& points_;
@@ -192,6 +173,8 @@ class SplitterMedian {
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
+//! \tparam Dims The amount of spatial dimensions of the tree and points.
+//! nano_tree::Dynamic in case of run time dimensions.
 template <
     typename Index,
     typename Scalar,
@@ -231,6 +214,11 @@ class KdTree {
   };
 
  public:
+  //! Creates a KdTree given \p points and \p max_leaf_size. Each duplication of
+  //! \p max_leaf_size reduces the height of the tree by one. This means that
+  //! increasing \p max_leaf_size from, for example, 8 to 14 has little effect
+  //! on the contents of the leaves (it may reducing the tree size by a single
+  //! node).
   KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
         metric_{points_},
@@ -239,9 +227,10 @@ class KdTree {
         indices_(points_.num_points()),
         root_{MakeTree(max_leaf_size)} {
     assert(points_.num_points() > 0);
+    assert(max_leaf_size > 0);
   }
 
-  //! Returns the nearest neighbor of point \p p in O(log n) time.
+  //! Returns the nearest neighbor of point \p p in O(log n) average time.
   //! \tparam P point type.
   template <typename P>
   inline std::pair<Index, Scalar> SearchNn(P const& p) const {
@@ -257,12 +246,15 @@ class KdTree {
       P const& p,
       Index const k,
       std::vector<std::pair<Index, Scalar>>* knn) const {
-    internal::SearchKnn<Index, Scalar> v(k, knn);
+    // If it happens that the point set is has less points than k we just return
+    // all points in the set.
+    internal::SearchKnn<Index, Scalar> v(
+        std::min(k, points_.num_points()), knn);
     SearchNn(p, root_, &v);
   }
 
-  //! Returns all neighbors to point \p p that are within squared
-  //! radius \p radius .
+  //! Returns all neighbors to point \p p that are within squared radius \p
+  //! radius.
   //! \tparam P point type.
   template <typename P>
   inline void SearchRadius(
@@ -275,7 +267,7 @@ class KdTree {
 
  private:
   //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
-  //! \details Run time may very depending on the split strategy.
+  //! \details Run time may vary depending on the split strategy.
   inline Node* MakeTree(Index const max_leaf_size) {
     std::iota(indices_.begin(), indices_.end(), 0);
     Splitter v(points_, &indices_);
@@ -308,7 +300,7 @@ class KdTree {
           &node->data.branch.split_dim,
           &split_idx,
           &node->data.branch.split_val);
-      // The split_idx is expected to be the first index of the right branch.
+      // The split_idx is used as the first index of the right branch.
       Index const left_size = split_idx - offset;
       Index const right_size = size - left_size;
 
@@ -327,21 +319,23 @@ class KdTree {
   inline void SearchNn(P const& p, Node const* const node, V* visitor) const {
     if (node->IsBranch()) {
       Scalar const v = points_(p, node->data.branch.split_dim);
-      Scalar const d = v - node->data.branch.split_val;
+      Scalar const d = metric_(node->data.branch.split_val, v);
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
       if (v <= node->data.branch.split_val) {
         SearchNn(p, node->left, visitor);
-        if (visitor->max() >= d * d) {
+        if (visitor->max() >= d) {
           SearchNn(p, node->right, visitor);
         }
       } else {
         SearchNn(p, node->right, visitor);
-        if (visitor->max() >= d * d) {
+        if (visitor->max() >= d) {
           SearchNn(p, node->left, visitor);
         }
       }
     } else {
+      // TODO The radius search has a stable max(). Perhaps template this point
+      // visitation.
       Scalar max = visitor->max();
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
