@@ -277,13 +277,12 @@ class KdTree {
   //! Creates a tree node for a range of indices, splits the range in two and
   //! recursively does the same for each sub set of indices until the index
   //! range \p size is less than or equal to \p max_leaf_size .
-  template <typename V>
   inline Node* SplitIndices(
       Index const max_leaf_size,
       Index const depth,
       Index const offset,
       Index const size,
-      V const& visitor) {
+      Splitter const& visitor) {
     Node* node = nodes_.MakeItem();
     //
     if (size <= max_leaf_size) {
