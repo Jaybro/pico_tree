@@ -2,7 +2,7 @@
 # XxxConfig.cmake or FindXxx.cmake are the same for Win, Lin, etc.
 cmake_minimum_required(VERSION 3.11)
 
-project(nano_tree LANGUAGES CXX)
+project(pico_tree LANGUAGES CXX)
 
 find_package(glog REQUIRED)
 find_package(Eigen3 REQUIRED)

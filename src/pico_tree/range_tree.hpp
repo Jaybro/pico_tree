@@ -7,7 +7,7 @@
 
 #include "core.hpp"
 
-namespace nano_tree {
+namespace pico_tree {
 
 namespace internal {
 
@@ -790,4 +790,4 @@ class RangeTree3d : public internal::RangeTreeNd_<Index, Scalar, 0, Points> {
       : internal::RangeTreeNd_<Index, Scalar, 0, Points>(points) {}
 };
 
-}  // namespace nano_tree
+}  // namespace pico_tree

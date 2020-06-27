@@ -6,7 +6,7 @@
 
 #include "core.hpp"
 
-namespace nano_tree {
+namespace pico_tree {
 
 namespace internal {
 
@@ -180,7 +180,7 @@ class SplitterMedian {
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
 //! \tparam Dims The amount of spatial dimensions of the tree and points.
-//! nano_tree::Dynamic in case of run time dimensions.
+//! pico_tree::Dynamic in case of run time dimensions.
 template <
     typename Index,
     typename Scalar,
@@ -422,4 +422,4 @@ class KdTree {
   Node* root_;
 };
 
-}  // namespace nano_tree
+}  // namespace pico_tree

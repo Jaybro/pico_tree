@@ -6,7 +6,7 @@
 #include <cmath>
 #include <vector>
 
-namespace nano_tree {
+namespace pico_tree {
 
 //! Value used for any template Dims parameter to determine the dimensions
 //! compile time.
@@ -56,11 +56,11 @@ inline void ReplaceFrontHeap(
       parent = child;
     }
   }
-  // Everything below (but for replaceing the last child) is the same as
+  // Everything below (but for replacing the last child) is the same as
   // inside the loop. The only difference is that for even sized vectors we
   // can't compare with the second child of the last parent.
   //
-  // Assuming not doing the check in the loop is better?
+  // Assuming doing the check once outside of the loop is better?
   auto child = 2 * parent + 1;
   if ((size & 1) == 1 && comp(first[child], first[child + 1])) {
     ++child;
@@ -94,9 +94,8 @@ class Sequence {
  public:
   //! \brief Return type of the Move() member function.
   //! \details An std::array is movable, which is useful if its contents are
-  //! also movable. Because we store a Scalar type (float or double), that would
-  //! mean the move results in a copy. In some cases we can prevent an unwanted
-  //! copy. The run time version of Sequence can always make use of std::move().
+  //! also movable. But because we store Scalars (float or double) the move
+  //! results in a copy. In some cases we can prevent an unwanted copy.
   using MoveReturnType = Sequence const&;
 
   inline constexpr Scalar& operator[](std::size_t const i) {
@@ -185,4 +184,4 @@ inline std::size_t MaxNodesFromPoints(
 
 }  // namespace internal
 
-}  // namespace nano_tree
+}  // namespace pico_tree
