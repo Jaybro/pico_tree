@@ -213,6 +213,53 @@ class KdTree {
     Node* right;
   };
 
+  //! KdTree builder.
+  class Builder {
+   public:
+    Builder(
+        Index const max_leaf_size,
+        Splitter const& splitter,
+        internal::ItemBuffer<Node>* nodes)
+        : max_leaf_size_{max_leaf_size}, splitter_{splitter}, nodes_{*nodes} {}
+
+    //! Creates a tree node for a range of indices, splits the range in two and
+    //! recursively does the same for each sub set of indices until the index
+    //! range \p size is less than or equal to \p max_leaf_size .
+    inline Node* SplitIndices(
+        Index const depth, Index const offset, Index const size) const {
+      Node* node = nodes_.MakeItem();
+      //
+      if (size <= max_leaf_size_) {
+        node->data.leaf.begin_idx = offset;
+        node->data.leaf.end_idx = offset + size;
+        node->left = nullptr;
+        node->right = nullptr;
+      } else {
+        Index split_idx;
+        splitter_(
+            depth,
+            offset,
+            size,
+            &node->data.branch.split_dim,
+            &split_idx,
+            &node->data.branch.split_val);
+        // The split_idx is used as the first index of the right branch.
+        Index const left_size = split_idx - offset;
+        Index const right_size = size - left_size;
+
+        node->left = SplitIndices(depth + 1, offset, left_size);
+        node->right = SplitIndices(depth + 1, split_idx, right_size);
+      }
+
+      return node;
+    }
+
+   private:
+    Index const max_leaf_size_;
+    Splitter const& splitter_;
+    internal::ItemBuffer<Node>& nodes_;
+  };
+
  public:
   //! Creates a KdTree given \p points and \p max_leaf_size. Each duplication of
   //! \p max_leaf_size reduces the height of the tree by one. This means that
@@ -270,46 +317,10 @@ class KdTree {
   //! \details Run time may vary depending on the split strategy.
   inline Node* MakeTree(Index const max_leaf_size) {
     std::iota(indices_.begin(), indices_.end(), 0);
-    Splitter v(points_, &indices_);
-    return SplitIndices(max_leaf_size, 0, 0, points_.num_points(), v);
-  }
+    Splitter splitter(points_, &indices_);
 
-  //! Creates a tree node for a range of indices, splits the range in two and
-  //! recursively does the same for each sub set of indices until the index
-  //! range \p size is less than or equal to \p max_leaf_size .
-  inline Node* SplitIndices(
-      Index const max_leaf_size,
-      Index const depth,
-      Index const offset,
-      Index const size,
-      Splitter const& visitor) {
-    Node* node = nodes_.MakeItem();
-    //
-    if (size <= max_leaf_size) {
-      node->data.leaf.begin_idx = offset;
-      node->data.leaf.end_idx = offset + size;
-      node->left = nullptr;
-      node->right = nullptr;
-    } else {
-      Index split_idx;
-      visitor(
-          depth,
-          offset,
-          size,
-          &node->data.branch.split_dim,
-          &split_idx,
-          &node->data.branch.split_val);
-      // The split_idx is used as the first index of the right branch.
-      Index const left_size = split_idx - offset;
-      Index const right_size = size - left_size;
-
-      node->left =
-          SplitIndices(max_leaf_size, depth + 1, offset, left_size, visitor);
-      node->right = SplitIndices(
-          max_leaf_size, depth + 1, split_idx, right_size, visitor);
-    }
-
-    return node;
+    return Builder{max_leaf_size, splitter, &nodes_}.SplitIndices(
+        0, 0, points_.num_points());
   }
 
   //! Returns the nearest neighbor or neighbors of point \p p depending
