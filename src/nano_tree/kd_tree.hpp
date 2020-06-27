@@ -139,6 +139,10 @@ class MetricL2 {
 //! time on average.
 template <typename Index, typename Scalar, int Dims, typename Points>
 class SplitterMedian {
+ private:
+  //! Either an array or vector (compile time vs. run time).
+  using Sequence = typename internal::Sequence<Scalar, Dims>;
+
  public:
   SplitterMedian(Points const& points, std::vector<Index>* p_indices)
       : points_{points}, indices_{*p_indices} {}
@@ -147,6 +151,8 @@ class SplitterMedian {
       Index const depth,
       Index const offset,
       Index const size,
+      Sequence const& bbox_min,
+      Sequence const& bbox_max,
       Index* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
@@ -184,6 +190,9 @@ template <
     typename Splitter = SplitterMedian<Index, Scalar, Dims, Points>>
 class KdTree {
  private:
+  //! Either an array or vector (compile time vs. run time).
+  using Sequence = typename internal::Sequence<Scalar, Dims>;
+
   //! KdTree Node.
   struct Node {
     //! Data is used to either store branch or leaf information. Which union
@@ -209,6 +218,8 @@ class KdTree {
     inline bool IsLeaf() const { return left == nullptr && right == nullptr; }
 
     Data data;
+    Sequence bbox_min;
+    Sequence bbox_max;
     Node* left;
     Node* right;
   };
@@ -226,12 +237,18 @@ class KdTree {
     //! recursively does the same for each sub set of indices until the index
     //! range \p size is less than or equal to \p max_leaf_size .
     inline Node* SplitIndices(
-        Index const depth, Index const offset, Index const size) const {
+        Index const depth,
+        Index const offset,
+        Index const size,
+        typename Sequence::MoveReturnType bbox_min,
+        typename Sequence::MoveReturnType bbox_max) const {
       Node* node = nodes_.MakeItem();
       //
       if (size <= max_leaf_size_) {
         node->data.leaf.begin_idx = offset;
         node->data.leaf.end_idx = offset + size;
+        node->bbox_min = bbox_min.Move();
+        node->bbox_max = bbox_max.Move();
         node->left = nullptr;
         node->right = nullptr;
       } else {
@@ -240,6 +257,8 @@ class KdTree {
             depth,
             offset,
             size,
+            bbox_min,
+            bbox_max,
             &node->data.branch.split_dim,
             &split_idx,
             &node->data.branch.split_val);
@@ -247,8 +266,26 @@ class KdTree {
         Index const left_size = split_idx - offset;
         Index const right_size = size - left_size;
 
-        node->left = SplitIndices(depth + 1, offset, left_size);
-        node->right = SplitIndices(depth + 1, split_idx, right_size);
+        Sequence left_bbox_max = bbox_max;
+        left_bbox_max[node->data.branch.split_dim] =
+            node->data.branch.split_val;
+
+        Sequence right_bbox_min = bbox_min;
+        right_bbox_min[node->data.branch.split_dim] =
+            node->data.branch.split_val;
+
+        node->left = SplitIndices(
+            depth + 1,
+            offset,
+            left_size,
+            bbox_min.Move(),
+            left_bbox_max.Move());
+        node->right = SplitIndices(
+            depth + 1,
+            split_idx,
+            right_size,
+            right_bbox_min.Move(),
+            bbox_max.Move());
       }
 
       return node;
@@ -264,7 +301,7 @@ class KdTree {
   //! Creates a KdTree given \p points and \p max_leaf_size. Each duplication of
   //! \p max_leaf_size reduces the height of the tree by one. This means that
   //! increasing \p max_leaf_size from, for example, 8 to 14 has little effect
-  //! on the contents of the leaves (it may reducing the tree size by a single
+  //! on the contents of the leaves (it may reduce the tree size by a single
   //! node).
   KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
@@ -272,10 +309,7 @@ class KdTree {
         nodes_{
             internal::MaxNodesFromPoints(points_.num_points(), max_leaf_size)},
         indices_(points_.num_points()),
-        root_{MakeTree(max_leaf_size)} {
-    assert(points_.num_points() > 0);
-    assert(max_leaf_size > 0);
-  }
+        root_{MakeTree(max_leaf_size)} {}
 
   //! Returns the nearest neighbor of point \p p in O(log n) average time.
   //! \tparam P point type.
@@ -316,11 +350,33 @@ class KdTree {
   //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
   //! \details Run time may vary depending on the split strategy.
   inline Node* MakeTree(Index const max_leaf_size) {
-    std::iota(indices_.begin(), indices_.end(), 0);
-    Splitter splitter(points_, &indices_);
+    assert(points_.num_points() > 0);
+    assert(max_leaf_size > 0);
 
+    std::iota(indices_.begin(), indices_.end(), 0);
+
+    Sequence bbox_min, bbox_max;
+    bbox_min.Fill(points_.num_dimensions(), std::numeric_limits<Scalar>::max());
+    bbox_max.Fill(
+        points_.num_dimensions(), std::numeric_limits<Scalar>::lowest());
+
+    for (Index j = 0; j < points_.num_points(); ++j) {
+      for (Index i = 0;
+           i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
+           ++i) {
+        Scalar const v = points_(j, i);
+        if (v < bbox_min[i]) {
+          bbox_min[i] = v;
+        }
+        if (v > bbox_max[i]) {
+          bbox_max[i] = v;
+        }
+      }
+    }
+
+    Splitter splitter(points_, &indices_);
     return Builder{max_leaf_size, splitter, &nodes_}.SplitIndices(
-        0, 0, points_.num_points());
+        0, 0, points_.num_points(), bbox_min.Move(), bbox_max.Move());
   }
 
   //! Returns the nearest neighbor or neighbors of point \p p depending

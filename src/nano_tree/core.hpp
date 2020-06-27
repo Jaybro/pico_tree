@@ -88,6 +88,65 @@ struct Dimensions<kRuntimeDims> {
   inline static int Dims(int dims) { return dims; }
 };
 
+//! Compile time sequence. A lot faster than the run time version.
+template <typename Scalar, int Dims_>
+class Sequence {
+ public:
+  //! \brief Return type of the Move() member function.
+  //! \details An std::array is movable, which is useful if its contents are
+  //! also movable. Because we store a Scalar type (float or double), that would
+  //! mean the move results in a copy. In some cases we can prevent an unwanted
+  //! copy. The run time version of Sequence can always make use of std::move().
+  using MoveReturnType = Sequence const&;
+
+  inline constexpr Scalar& operator[](std::size_t const i) {
+    return sequence_[i];
+  }
+
+  inline constexpr Scalar const& operator[](std::size_t const i) const {
+    return sequence_[i];
+  }
+
+  inline constexpr void Fill(std::size_t const, Scalar const value) {
+    sequence_.fill(value);
+  }
+
+  //! Returns a const reference to the current object.
+  inline constexpr MoveReturnType Move() const { return *this; }
+
+ private:
+  std::array<Scalar, Dims_> sequence_;
+};
+
+//! Run time sequence. More flexible than the compile time one.
+template <typename Scalar>
+class Sequence<Scalar, kRuntimeDims> {
+ public:
+  //! \brief Return type of the Move() member function.
+  //! \details Moving a vector is quite a bit cheaper than copying it. The
+  //! std::array version of Sequence cannot be moved and this return type allows
+  //! the using code to be agnostic to the actual storage type.
+  using MoveReturnType = Sequence&&;
+
+  inline constexpr Scalar& operator[](std::size_t const i) {
+    return sequence_[i];
+  }
+
+  inline constexpr Scalar const& operator[](std::size_t const i) const {
+    return sequence_[i];
+  }
+
+  inline void Fill(std::size_t const s, Scalar const value) {
+    sequence_.assign(s, value);
+  }
+
+  //! Moves the current object.
+  inline constexpr MoveReturnType Move() { return std::move(*this); }
+
+ private:
+  std::vector<Scalar> sequence_;
+};
+
 //! Simple memory buffer making deletions of recursive elements a bit easier.
 template <typename T>
 class ItemBuffer {
