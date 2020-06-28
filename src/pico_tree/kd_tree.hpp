@@ -182,7 +182,8 @@ class SplitterMedian {
 //! that contains it.
 //! \details Bases on the paper "It's okay to be skinny, if your friends are
 //! fat". The aspect ratio of the split is at most 2:1 unless that results in an
-//! empty leaf. Then at one point is moved into the empty leaf.
+//! empty leaf. Then at one point is moved into the empty leaf and the split is
+//! adjusted.
 //!
 //! * http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf
 //!
