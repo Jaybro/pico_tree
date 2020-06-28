@@ -178,15 +178,16 @@ class SplitterMedian {
   std::vector<Index>& indices_;
 };
 
-//! \brief Splits a tree node halfway the "fattest" dimension of the bounding
-//! box that contains it.
+//! \brief Splits a tree node halfway the "fattest" axis of the bounding box
+//! that contains it.
 //! \details Bases on the paper "It's okay to be skinny, if your friends are
-//! fat".
+//! fat". The aspect ratio of the split is at most 2:1 unless that results in an
+//! empty leaf. Then at one point is moved into the empty leaf.
 //!
 //! * http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf
 //!
-//! The tree is build in O(n log n) time and in practice faster than using
-//! SplitterMedian.
+//! The tree is build in O(n log n) time and tree creation is in practice faster
+//! than using SplitterMedian.
 template <typename Index, typename Scalar, int Dims, typename Points>
 class SplitterSlidingMidpoint {
  private:
@@ -232,12 +233,15 @@ class SplitterSlidingMidpoint {
                      comp) -
                  indices_.cbegin();
 
-    // If it happens that either all points are on the left or right side, one
-    // point has to go to the other side.
+    // If it happens that either all points are on the left side or right side,
+    // one point slides to the other side and we split on the first right value
+    // instead of the middle split.
     if ((*split_idx - offset) == size) {
       (*split_idx)--;
+      (*split_val) = points(indices_[*split_idx], *split_dim);
     } else if ((*split_idx - offset) == 0) {
       (*split_idx)++;
+      (*split_val) = points(indices_[*split_idx], *split_dim);
     }
   }
 
