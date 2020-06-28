@@ -134,8 +134,9 @@ class MetricL2 {
   Points const& points_;
 };
 
-//! \brief Splits a tree node using the median. Recursing down the tree results
-//! in a median of medians algorithm. This strategy builds a tree in O(n log n)
+//! \brief Splits a tree node on the median of the active dimension.
+//! \details The dimension is cycled while recursing down the tree. These steps
+//! result in a median of medians algorithm. The tree is build in O(n log n)
 //! time on average.
 template <typename Index, typename Scalar, int Dims, typename Points>
 class SplitterMedian {
@@ -177,6 +178,74 @@ class SplitterMedian {
   std::vector<Index>& indices_;
 };
 
+//! \brief Splits a tree node halfway the "fattest" dimension of the bounding
+//! box that contains it.
+//! \details Bases on the paper "It's okay to be skinny, if your friends are
+//! fat".
+//!
+//! * http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf
+//!
+//! The tree is build in O(n log n) time and in practice faster than using
+//! SplitterMedian.
+template <typename Index, typename Scalar, int Dims, typename Points>
+class SplitterSlidingMidpoint {
+ private:
+  //! Either an array or vector (compile time vs. run time).
+  using Sequence = typename internal::Sequence<Scalar, Dims>;
+
+ public:
+  SplitterSlidingMidpoint(Points const& points, std::vector<Index>* p_indices)
+      : points_{points}, indices_{*p_indices} {}
+
+  inline void operator()(
+      Index const depth,
+      Index const offset,
+      Index const size,
+      Sequence const& box_min,
+      Sequence const& box_max,
+      Index* split_dim,
+      Index* split_idx,
+      Scalar* split_val) const {
+    // TODO Is starting from 1 useful?
+    // See which dimension of the box is the "fattest".
+    Scalar max_delta = std::numeric_limits<Scalar>::lowest();
+    for (Index i = 0;
+         i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
+         ++i) {
+      Scalar const delta = box_max[i] - box_min[i];
+      if (delta > max_delta) {
+        max_delta = delta;
+        *split_dim = i;
+      }
+    }
+    *split_val = max_delta / Scalar(2.0) + box_min[*split_dim];
+
+    // Everything smaller than split_val goes left, the rest right.
+    Points const& points = points_;
+    auto comp = [&points, dim = *split_dim, val = *split_val](
+                    Index const a) -> bool { return points(a, dim) < val; };
+    std::partition(
+        indices_.begin() + offset, indices_.begin() + offset + size, comp);
+    *split_idx = std::partition_point(
+                     indices_.cbegin() + offset,
+                     indices_.cbegin() + offset + size,
+                     comp) -
+                 indices_.cbegin();
+
+    // If it happens that either all points are on the left or right side, one
+    // point has to go to the other side.
+    if ((*split_idx - offset) == size) {
+      (*split_idx)--;
+    } else if ((*split_idx - offset) == 0) {
+      (*split_idx)++;
+    }
+  }
+
+ private:
+  Points const& points_;
+  std::vector<Index>& indices_;
+};
+
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
 //! \tparam Dims The amount of spatial dimensions of the tree and points.
@@ -187,7 +256,7 @@ template <
     int Dims,
     typename Points,
     typename Metric = MetricL2<Index, Scalar, Dims, Points>,
-    typename Splitter = SplitterMedian<Index, Scalar, Dims, Points>>
+    typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dims, Points>>
 class KdTree {
  private:
   //! Either an array or vector (compile time vs. run time).
@@ -230,7 +299,7 @@ class KdTree {
     Builder(
         Index const max_leaf_size,
         Splitter const& splitter,
-        internal::ItemBuffer<Node>* nodes)
+        internal::DynamicBuffer<Node>* nodes)
         : max_leaf_size_{max_leaf_size}, splitter_{splitter}, nodes_{*nodes} {}
 
     //! Creates a tree node for a range of indices, splits the range in two and
@@ -289,24 +358,24 @@ class KdTree {
    private:
     Index const max_leaf_size_;
     Splitter const& splitter_;
-    internal::ItemBuffer<Node>& nodes_;
+    internal::DynamicBuffer<Node>& nodes_;
   };
 
  public:
-  //! Creates a KdTree given \p points and \p max_leaf_size. Each duplication of
-  //! \p max_leaf_size reduces the height of the tree by one. This means that
-  //! increasing \p max_leaf_size from, for example, 8 to 14 has little effect
-  //! on the contents of the leaves (it may reduce the tree size by a single
-  //! node).
+  //! \brief Creates a KdTree given \p points and \p max_leaf_size.
+  //! \details Each duplication of \p max_leaf_size reduces the height of the
+  //! tree by one. This means that increasing \p max_leaf_size from, for
+  //! example, 8 to 14 has little effect on the contents of the leaves (it may
+  //! reduce the tree size by a single node).
   KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
         metric_{points_},
-        nodes_{
-            internal::MaxNodesFromPoints(points_.num_points(), max_leaf_size)},
+        nodes_{},
         indices_(points_.num_points()),
         root_{MakeTree(max_leaf_size)} {}
 
-  //! Returns the nearest neighbor of point \p p in O(log n) average time.
+  //! \brief Returns the nearest neighbor of point \p p in O(log n) average
+  //! time.
   //! \tparam P point type.
   template <typename P>
   inline std::pair<Index, Scalar> SearchNn(P const& p) const {
@@ -315,7 +384,7 @@ class KdTree {
     return v.nearest();
   }
 
-  //! Returns the \p k nearest neighbors of point \p p .
+  //! \brief Returns the \p k nearest neighbors of point \p p .
   //! \tparam P point type.
   template <typename P>
   inline void SearchKnn(
@@ -329,8 +398,8 @@ class KdTree {
     SearchNn(root_, p, &v);
   }
 
-  //! Returns all neighbors to point \p p that are within squared radius \p
-  //! radius.
+  //! \brief Returns all neighbors to point \p p that are within squared radius
+  //! \p radius.
   //! \tparam P point type.
   template <typename P>
   inline void SearchRadius(
@@ -341,7 +410,7 @@ class KdTree {
     SearchNn(root_, p, &v);
   }
 
-  //! Returns all points within the box defined by \p min and \p max.
+  //! \brief Returns all points within the box defined by \p min and \p max.
   template <typename P>
   inline void SearchRange(
       P const& min, P const& max, std::vector<Index>* i) const {
@@ -501,7 +570,7 @@ class KdTree {
 
   Points const& points_;
   Metric const metric_;
-  internal::ItemBuffer<Node> nodes_;
+  internal::DynamicBuffer<Node> nodes_;
   std::vector<Index> indices_;
   Node* root_;
 };

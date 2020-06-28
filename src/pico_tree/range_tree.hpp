@@ -494,8 +494,8 @@ class RangeTree2d_ {
 
   Points const& points_;
   Index dimension_;
-  ItemBuffer<Node> nodes_;
-  ItemBuffer<Layer> layers_;
+  StaticBuffer<Node> nodes_;
+  StaticBuffer<Layer> layers_;
   Node* root_;
 };
 
@@ -714,9 +714,9 @@ class RangeTreeNd_ {
 
   Points const& points_;
   Index dimension_;
-  ItemBuffer<Node> nodes_;
-  ItemBuffer<RangeTreeNd> trees_nd_;
-  ItemBuffer<RangeTree2d> trees_2d_;
+  StaticBuffer<Node> nodes_;
+  StaticBuffer<RangeTreeNd> trees_nd_;
+  StaticBuffer<RangeTree2d> trees_2d_;
   Node* root_;
 };
 

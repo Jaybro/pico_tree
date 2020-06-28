@@ -3,7 +3,9 @@
 //! \file core.hpp
 //! \brief Contains various common utilities.
 
+#include <array>
 #include <cmath>
+#include <deque>
 #include <vector>
 
 namespace pico_tree {
@@ -98,11 +100,14 @@ class Sequence {
   //! results in a copy. In some cases we can prevent an unwanted copy.
   using MoveReturnType = Sequence const&;
 
-  inline constexpr Scalar& operator[](std::size_t const i) {
+  //! Access data contained in the Sequence.
+  inline constexpr Scalar& operator[](std::size_t const i) noexcept {
     return sequence_[i];
   }
 
-  inline constexpr Scalar const& operator[](std::size_t const i) const {
+  //! Access data contained in the Sequence.
+  inline constexpr Scalar const& operator[](
+      std::size_t const i) const noexcept {
     return sequence_[i];
   }
 
@@ -111,9 +116,12 @@ class Sequence {
   }
 
   //! Returns a const reference to the current object.
-  inline constexpr MoveReturnType Move() const { return *this; }
+  inline constexpr MoveReturnType Move() const noexcept { return *this; }
 
-  inline constexpr std::size_t size() const { return sequence_.size(); }
+  //! Returns the size of the sequence.
+  inline constexpr std::size_t size() const noexcept {
+    return sequence_.size();
+  }
 
  private:
   std::array<Scalar, Dims_> sequence_;
@@ -129,11 +137,14 @@ class Sequence<Scalar, kRuntimeDims> {
   //! the using code to be agnostic to the actual storage type.
   using MoveReturnType = Sequence&&;
 
-  inline constexpr Scalar& operator[](std::size_t const i) {
+  //! Access data contained in the Sequence.
+  inline constexpr Scalar& operator[](std::size_t const i) noexcept {
     return sequence_[i];
   }
 
-  inline constexpr Scalar const& operator[](std::size_t const i) const {
+  //! Access data contained in the Sequence.
+  inline constexpr Scalar const& operator[](
+      std::size_t const i) const noexcept {
     return sequence_[i];
   }
 
@@ -142,29 +153,51 @@ class Sequence<Scalar, kRuntimeDims> {
   }
 
   //! Moves the current object.
-  inline constexpr MoveReturnType Move() { return std::move(*this); }
+  inline constexpr MoveReturnType Move() noexcept { return std::move(*this); }
 
-  inline constexpr std::size_t size() const { return sequence_.size(); }
+  //! Returns the size of the sequence.
+  inline constexpr std::size_t size() const noexcept {
+    return sequence_.size();
+  }
 
  private:
   std::vector<Scalar> sequence_;
 };
 
 //! Simple memory buffer making deletions of recursive elements a bit easier.
-template <typename T>
-class ItemBuffer {
+//! The buffer owns all memory returned by MakeItem() and all memory is released
+//! when the buffer is destroyed.
+template <typename Container>
+class MemoryBuffer {
  public:
-  ItemBuffer(std::size_t const size) { buffer_.reserve(size); }
-
+  //! Creates an item and returns a pointer to it. The buffer retains ownership
+  //! of the memory. All memory gets released when the buffer is destroyed.
   template <typename... Args>
-  inline T* MakeItem(Args&&... args) {
+  inline typename Container::value_type* MakeItem(Args&&... args) {
     buffer_.emplace_back(std::forward<Args>(args)...);
     return &buffer_.back();
   }
 
- private:
-  std::vector<T> buffer_;
+ protected:
+  //! Memory buffer.
+  Container buffer_;
 };
+
+//! Static MemoryBuffer using a vector. The buffer owns all memory returned by
+//! MakeItem() and all memory is released when the buffer is destroyed.
+template <typename T>
+class StaticBuffer : public MemoryBuffer<std::vector<T>> {
+ public:
+  //! Creates a StaticBuffer having space for \p size elements.
+  inline StaticBuffer(std::size_t const size) {
+    MemoryBuffer<std::vector<T>>::buffer_.reserve(size);
+  }
+};
+
+//! Dynamic MemoryBuffer using a deque. The buffer owns all memory returned by
+//! MakeItem() and all memory is released when the buffer is destroyed.
+template <typename T>
+class DynamicBuffer : public MemoryBuffer<std::deque<T>> {};
 
 //! Returns the maximum amount of leaves given \p num_points and \p
 //! max_leaf_size.
