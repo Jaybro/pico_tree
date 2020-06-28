@@ -113,6 +113,8 @@ class Sequence {
   //! Returns a const reference to the current object.
   inline constexpr MoveReturnType Move() const { return *this; }
 
+  inline constexpr std::size_t size() const { return sequence_.size(); }
+
  private:
   std::array<Scalar, Dims_> sequence_;
 };
@@ -141,6 +143,8 @@ class Sequence<Scalar, kRuntimeDims> {
 
   //! Moves the current object.
   inline constexpr MoveReturnType Move() { return std::move(*this); }
+
+  inline constexpr std::size_t size() const { return sequence_.size(); }
 
  private:
   std::vector<Scalar> sequence_;
