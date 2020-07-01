@@ -78,7 +78,7 @@ class SearchRadius {
   }
 
   //! Visit current point.
-  inline void operator()(Index const idx, Scalar const d) {
+  inline void operator()(Index const idx, Scalar const d) const {
     n_.emplace_back(idx, d);
   }
 
@@ -380,7 +380,7 @@ class KdTree {
         root_{MakeTree(max_leaf_size)} {}
 
   //! \brief Returns the nearest neighbor of point \p p in O(log n) average
-  //! time.
+  //! time for randomly distributed points.
   //! \tparam P point type.
   template <typename P>
   inline std::pair<Index, Scalar> SearchNn(P const& p) const {
@@ -416,6 +416,7 @@ class KdTree {
   }
 
   //! \brief Returns all points within the box defined by \p min and \p max.
+  //! Query time is bounded by O(n^(1-1/Dims)+k).
   template <typename P>
   inline void SearchRange(
       P const& min, P const& max, std::vector<Index>* i) const {
@@ -496,6 +497,8 @@ class KdTree {
     }
   }
 
+  //! Checks if \p p is contained in the box defined by \p min and \p max. A
+  //! point on the edge considered inside the box.
   template <typename P>
   inline bool PointInBox(Sequence const& p, P const& min, P const& max) const {
     for (Index i = 0;
@@ -508,6 +511,8 @@ class KdTree {
     return true;
   }
 
+  //! Checks if the point refered to by \p idx is contained in the box defined
+  //! by \p min and \p max. A point on the edge considered inside the box.
   template <typename P>
   inline bool PointInBox(Index const idx, P const& min, P const& max) const {
     for (Index i = 0;
@@ -521,10 +526,11 @@ class KdTree {
     return true;
   }
 
-  // TODO It is probably faster if the begin_idx and end_idx are available in
-  // all nodes at the price of memory by removing the union.
+  //! Reports all indices contained by \p node.
   inline void ReportRange(
       Node const* const node, std::vector<Index>* idxs) const {
+    // TODO It is probably faster if the begin_idx and end_idx are available in
+    // all nodes at the price of memory by removing the union.
     if (node->IsLeaf()) {
       std::copy(
           indices_.cbegin() + node->data.leaf.begin_idx,
@@ -573,10 +579,15 @@ class KdTree {
     }
   }
 
+  //! Point set adapter used for querying point data.
   Points const& points_;
+  //! Metric used for comparing distances.
   Metric const metric_;
+  //! Memory buffer for tree nodes.
   internal::DynamicBuffer<Node> nodes_;
+  //! Sorted indices that refer to points inside points_.
   std::vector<Index> indices_;
+  //! Root of the KdTree.
   Node* root_;
 };
 
