@@ -5,7 +5,8 @@
 
 #include "point.hpp"
 
-//! Demo point set adapter for a vector of points.
+//! Demo point set adapter for a vector of points. Only the functions are
+//! required.
 template <typename Index_, typename Point_>
 class PicoPointSet {
  public:
