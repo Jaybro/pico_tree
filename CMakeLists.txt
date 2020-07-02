@@ -4,36 +4,32 @@ cmake_minimum_required(VERSION 3.11)
 
 project(pico_tree LANGUAGES CXX)
 
-find_package(glog REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(nanoflann REQUIRED)
-
-set(PROJECT_LIBS 
-    glog::glog
-    Eigen3::Eigen
-    nanoflann::nanoflann
-)
-
 set(PROJECT_SOURCE_RELATIVE "src")
 set(PROJECT_SOURCE_ABSOLUTE
     "${CMAKE_CURRENT_LIST_DIR}/${PROJECT_SOURCE_RELATIVE}"
 )
-# Most things come from the linked targets. Not the following includes.
-set(PROJECT_INCLUDES 
-    ${PROJECT_SOURCE_ABSOLUTE}
-)
 
 add_library(${PROJECT_NAME} INTERFACE)
-add_subdirectory(${PROJECT_SOURCE_RELATIVE})
-target_include_directories(${PROJECT_NAME} INTERFACE ${PROJECT_INCLUDES})
-target_link_libraries(${PROJECT_NAME} INTERFACE ${PROJECT_LIBS})
+target_include_directories(${PROJECT_NAME} INTERFACE ${PROJECT_SOURCE_ABSOLUTE})
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
+add_subdirectory(${PROJECT_SOURCE_RELATIVE})
+
+option(BUILD_EXAMPLES "Enable the creation of pico_tree examples." ON)
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
 
 include(CMakeDependentOption)
 find_package(GTest)
-CMAKE_DEPENDENT_OPTION(BUILD_DOCUMENTATION "Build unit tests with GTest." ON "GTEST_FOUND" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_TESTING "Build unit tests with GTest." ON "GTEST_FOUND" OFF)
 include(CTest)
 if(BUILD_TESTING)
+    # Tests are dependent on some common code.
+    if(NOT TARGET pico_common)
+        add_subdirectory(examples/pico_common)
+    endif()
+
+    # Unit tests
     set(TEST_TARGET_NAME ${PROJECT_NAME}_test)
     enable_testing()
     include(GoogleTest)
@@ -44,7 +40,8 @@ if(BUILD_TESTING)
         TARGET ${TEST_TARGET_NAME}
         TEST_LIST ${TEST_TARGET_NAME}_list
     )
-    target_link_libraries(${TEST_TARGET_NAME} ${PROJECT_NAME} GTest::GTest GTest::Main)
+
+    target_link_libraries(${TEST_TARGET_NAME} ${PROJECT_NAME} pico_common GTest::GTest GTest::Main)
 endif()
 
 find_package(Doxygen)
