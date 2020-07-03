@@ -1,5 +1,12 @@
 #pragma once
 
+//! \mainpage PicoTree is a small C++11 header only library that provides
+//! several data structures that can be used for range searches and nearest
+//! neighbor searches. It is only dependent on the C++ Standard Library. The
+//! following search structures are provided:
+//! \li <a href="https://en.wikipedia.org/wiki/K-d_tree">Kd Tree</a>.
+//! \li <a href="https://en.wikipedia.org/wiki/Fractional_cascading">Layered</a>
+//! <a href="https://en.wikipedia.org/wiki/Range_tree">Range Tree</a>.
 //! \file core.hpp
 //! \brief Contains various common utilities.
 
