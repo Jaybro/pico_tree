@@ -157,7 +157,7 @@ class RangeTree2d_ {
   };
 
  public:
-  RangeTree2d_(Points const& points)
+  explicit RangeTree2d_(Points const& points)
       : points_{points},
         dimension_{0},
         nodes_{MaxNodesFromPoints(points_.num_points())},
@@ -364,6 +364,8 @@ class RangeTree2d_ {
     }
   }
 
+  inline Points const& points() const { return points_; }
+
  private:
   //! Builds the tree in O(3 * n log_2 n) time.
   inline Node* MakeTree() {
@@ -519,7 +521,7 @@ class RangeTreeNd_ {
   };
 
  public:
-  RangeTreeNd_(Points const& points)
+  explicit RangeTreeNd_(Points const& points)
       : points_{points},
         dimension_{0},
         nodes_{MaxNodesFromPoints(points_.num_points())},
@@ -617,6 +619,8 @@ class RangeTreeNd_ {
       }
     }
   }
+
+  inline Points const& points() const { return points_; }
 
  private:
   inline Node* MakeTree() {
@@ -725,7 +729,7 @@ class RangeTreeNd_ {
 template <typename Index, typename Scalar, typename Points>
 class RangeTree1d {
  public:
-  RangeTree1d(Points const& points)
+  explicit RangeTree1d(Points const& points)
       : points_{points},
         sorted_{internal::SortPermutation(
             points_.num_points(), [this](int i, int j) -> bool {
@@ -768,6 +772,8 @@ class RangeTree1d {
     return *it;
   }
 
+  inline Points const& points() const { return points_; }
+
  private:
   //! Returns the value of a point having sorted index \p i .
   inline Scalar operator()(Index i) const { return points_(i, 0); }
@@ -779,15 +785,8 @@ class RangeTree1d {
 template <typename Index, typename Scalar, typename Points>
 class RangeTree2d : public internal::RangeTree2d_<Index, Scalar, 0, Points> {
  public:
-  RangeTree2d(Points const& points)
+  explicit RangeTree2d(Points const& points)
       : internal::RangeTree2d_<Index, Scalar, 0, Points>(points) {}
-};
-
-template <typename Index, typename Scalar, typename Points>
-class RangeTree3d : public internal::RangeTreeNd_<Index, Scalar, 0, Points> {
- public:
-  RangeTree3d(Points const& points)
-      : internal::RangeTreeNd_<Index, Scalar, 0, Points>(points) {}
 };
 
 }  // namespace pico_tree

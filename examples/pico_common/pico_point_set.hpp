@@ -5,8 +5,7 @@
 
 #include "point.hpp"
 
-//! Demo point set adapter for a vector of points. Only the functions are
-//! required.
+//! Example point set adapter that shows which functions need to be implemented.
 template <typename Index_, typename Point_>
 class PicoPointSet {
  public:
@@ -15,7 +14,7 @@ class PicoPointSet {
   using Scalar = typename Point::Scalar;
   static constexpr int Dims = Point::Dims;
 
-  PicoPointSet(std::vector<Point> const& points) : points_(points) {}
+  explicit PicoPointSet(std::vector<Point> const& points) : points_(points) {}
 
   //! Returns dimension \p dim of point \p idx.
   inline Scalar operator()(Index const idx, Index const dim) const {
@@ -54,7 +53,3 @@ using KdTreeRt = pico_tree::KdTree<
 template <typename PointSet>
 using RangeTree2d = pico_tree::
     RangeTree2d<typename PointSet::Index, typename PointSet::Scalar, PointSet>;
-
-using PicoPointSet1d = PicoPointSet<Index, Point1d>;
-using PicoPointSet2d = PicoPointSet<Index, Point2d>;
-using PicoPointSet3d = PicoPointSet<Index, Point3d>;

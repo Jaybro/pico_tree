@@ -49,7 +49,3 @@ using NanoflannKdTreeRt = nanoflann::KDTreeSingleIndexAdaptor<
     PointSet_,
     -1,
     typename PointSet_::Index>;
-
-using NanoPointSet1d = NanoPointSet<Index, Point1d>;
-using NanoPointSet2d = NanoPointSet<Index, Point2d>;
-using NanoPointSet3d = NanoPointSet<Index, Point3d>;

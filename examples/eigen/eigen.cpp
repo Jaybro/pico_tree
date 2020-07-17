@@ -5,6 +5,9 @@
 
 #include "eigen_adapter.hpp"
 
+using Index = int;
+using Scalar = double;
+
 std::size_t const kRunCount = 1024 * 1024;
 int const kNumPoints = 1024 * 1024;
 double const kArea = 1000.0;

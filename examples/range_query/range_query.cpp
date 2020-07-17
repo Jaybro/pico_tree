@@ -4,40 +4,41 @@
 #include <scoped_timer.hpp>
 
 int main() {
-  using PointXd = Point2d;
-  using PicoPointSetXd = PicoPointSet<Index, PointXd>;
+  using PointX = Point2f;
+  using Index = int;
+  using Scalar = typename PointX::Scalar;
+  using PicoPointSetX = PicoPointSet<Index, PointX>;
 
   int run_count = 1024 * 1024;
   Index max_leaf_count = 1;
   Index point_count = 1024 * 1024;
   Scalar const area_size = 1000;
-  std::vector<PointXd> random =
-      GenerateRandomN<PointXd>(point_count, area_size);
-  PicoPointSetXd points(random);
+  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
+  PicoPointSetX points(random);
 
   Scalar const min_v = 15.1f;
   Scalar const max_v = 34.9f;
-  PointXd min, max;
+  PointX min, max;
   min.Fill(min_v);
   max.Fill(max_v);
 
   std::vector<Index> idxs;
 
   {
-    KdTree<PicoPointSetXd> rt(points, max_leaf_count);
+    KdTree<PicoPointSetX> tree(points, max_leaf_count);
 
     ScopedTimer t("tree rq kd_tree", run_count);
     for (std::size_t i = 0; i < run_count; ++i) {
-      rt.SearchRange(min, max, &idxs);
+      tree.SearchRange(min, max, &idxs);
     }
   }
 
   {
-    RangeTree2d<PicoPointSetXd> rt(points);
+    RangeTree2d<PicoPointSetX> tree(points);
 
     ScopedTimer t("tree rq rg_tree", run_count);
     for (std::size_t i = 0; i < run_count; ++i) {
-      rt.SearchRange(min, max, &idxs);
+      tree.SearchRange(min, max, &idxs);
     }
   }
 

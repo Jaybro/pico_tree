@@ -23,11 +23,12 @@ class Point {
   Scalar data[Dims];
 };
 
-using Index = int;
-using Scalar = float;
-using Point1d = Point<Scalar, 1>;
-using Point2d = Point<Scalar, 2>;
-using Point3d = Point<Scalar, 3>;
+using Point1f = Point<float, 1>;
+using Point2f = Point<float, 2>;
+using Point3f = Point<float, 3>;
+using Point1d = Point<double, 1>;
+using Point2d = Point<double, 2>;
+using Point3d = Point<double, 3>;
 
 template <typename Point>
 inline Point GenerateRandomP(typename Point::Scalar size) {

@@ -56,6 +56,7 @@ class SearchKnn {
     ReplaceFrontHeap(
         knn_.begin(),
         knn_.end(),
+        // TODO Perhaps store local object?
         [](std::pair<Index, Scalar> const& a, std::pair<Index, Scalar> const& b)
             -> bool { return a.second < b.second; });
   }
@@ -182,8 +183,8 @@ class SplitterMedian {
 //! that contains it.
 //! \details Bases on the paper "It's okay to be skinny, if your friends are
 //! fat". The aspect ratio of the split is at most 2:1 unless that results in an
-//! empty leaf. Then at one point is moved into the empty leaf and the split is
-//! adjusted.
+//! empty leaf. Then at least one point is moved into the empty leaf and the
+//! split is adjusted.
 //!
 //! * http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf
 //!
@@ -369,9 +370,8 @@ class KdTree {
  public:
   //! \brief Creates a KdTree given \p points and \p max_leaf_size.
   //! \details Each duplication of \p max_leaf_size reduces the height of the
-  //! tree by one. This means that increasing \p max_leaf_size from, for
-  //! example, 8 to 14 has little effect on the contents of the leaves (it may
-  //! reduce the tree size by a single node).
+  //! tree by one. The effect it has for anything in-between depends on the tree
+  //! splitting mechanism.
   KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
         metric_{points_},
@@ -427,6 +427,12 @@ class KdTree {
     // is no point in adding it.
     SearchRange(root_, min, max, i);
   }
+
+  //! \brief Point set used by the tree.
+  inline Points const& points() const { return points_; }
+
+  //! \brief Metric used for search queries.
+  inline Metric const& metric() const { return metric_; }
 
  private:
   //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
