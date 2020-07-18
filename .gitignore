@@ -1,14 +1,24 @@
 # General
-build/
+[Bb]uild/
 _clang-format
 .clang-format
 
 # Visual Studio Code
 .vscode/
-
-# Eclipse
-Debug/
-Release/
 .settings/
 .cproject
 .project
+
+# Visual Studio
+x64/
+x86/
+[Ww][Ii][Nn]32/
+*.suo
+*.user
+
+# CLion
+cmake-build-*/
+
+# Eclipse
+[Dd]ebug/
+[Rr]elease/
