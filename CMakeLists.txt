@@ -81,36 +81,37 @@ if(BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-include(CMakeDependentOption)
 find_package(GTest QUIET)
-CMAKE_DEPENDENT_OPTION(BUILD_TESTING "Build unit tests with GTest." ON "GTEST_FOUND" OFF)
-include(CTest)
-if(BUILD_TESTING)
-    # Tests are dependent on some common code.
-    if(NOT TARGET pico_common)
-        add_subdirectory(examples/pico_common)
+if(GTEST_FOUND)
+    include(CTest)
+    if(BUILD_TESTING)
+        # Tests are dependent on some common code.
+        if(NOT TARGET pico_common)
+            add_subdirectory(examples/pico_common)
+        endif()
+
+        # Unit tests
+        set(TEST_TARGET_NAME ${PROJECT_NAME}_test)
+        enable_testing()
+        include(GoogleTest)
+        add_executable(${TEST_TARGET_NAME})
+        set_target_properties(${TEST_TARGET_NAME}
+            PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        )
+        add_subdirectory(test)
+        include_directories(${CMAKE_CURRENT_LIST_DIR}/test)
+        gtest_add_tests(
+            TARGET ${TEST_TARGET_NAME}
+            TEST_LIST ${TEST_TARGET_NAME}_list
+        )
+
+        target_link_libraries(${TEST_TARGET_NAME} ${PROJECT_NAME} pico_common GTest::GTest GTest::Main)
     endif()
-
-    # Unit tests
-    set(TEST_TARGET_NAME ${PROJECT_NAME}_test)
-    enable_testing()
-    include(GoogleTest)
-    add_executable(${TEST_TARGET_NAME})
-    set_target_properties(${TEST_TARGET_NAME}
-        PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-    )
-    add_subdirectory(test)
-    include_directories(${CMAKE_CURRENT_LIST_DIR}/test)
-    gtest_add_tests(
-        TARGET ${TEST_TARGET_NAME}
-        TEST_LIST ${TEST_TARGET_NAME}_list
-    )
-
-    target_link_libraries(${TEST_TARGET_NAME} ${PROJECT_NAME} pico_common GTest::GTest GTest::Main)
 endif()
 
 find_package(Doxygen QUIET)
+include(CMakeDependentOption)
 CMAKE_DEPENDENT_OPTION(BUILD_DOCUMENTATION "Build documentation with Doxygen." ON "DOXYGEN_FOUND" OFF)
 if(BUILD_DOCUMENTATION)
     set(DOC_TARGET_NAME ${PROJECT_NAME}_doc)

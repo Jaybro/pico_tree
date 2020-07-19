@@ -35,8 +35,9 @@ class SearchNn {
   Scalar min_;
 };
 
+//! Compares neighbors by distance.
 template <typename Index, typename Scalar>
-struct NeighborCompare {
+struct NeighborComparator {
   inline bool operator()(
       std::pair<Index, Scalar> const& a,
       std::pair<Index, Scalar> const& b) const {
@@ -63,13 +64,14 @@ class SearchKnn {
     knn_[0] = std::make_pair(idx, d);
     // Repair the heap property.
     ReplaceFrontHeap(
-        knn_.begin(), knn_.end(), NeighborCompare<Index, Scalar>());
+        knn_.begin(), knn_.end(), NeighborComparator<Index, Scalar>());
   }
 
   //! Sort the neighbors by distance from the query point. Can be used after the
   //! search has ended.
   inline void Sort() const {
-    std::sort_heap(knn_.begin(), knn_.end(), NeighborCompare<Index, Scalar>());
+    std::sort_heap(
+        knn_.begin(), knn_.end(), NeighborComparator<Index, Scalar>());
   }
 
   //! Maximum search distance with respect to the query point.
@@ -97,7 +99,7 @@ class SearchRadius {
   //! Sort the neighbors by distance from the query point. Can be used after the
   //! search has ended.
   inline void Sort() const {
-    std::sort(n_.begin(), n_.end(), NeighborCompare<Index, Scalar>());
+    std::sort(n_.begin(), n_.end(), NeighborComparator<Index, Scalar>());
   }
 
   //! Maximum search distance with respect to the query point.
@@ -226,7 +228,6 @@ class SplitterSlidingMidpoint {
       Index* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
-    // TODO Is starting from 1 useful?
     // See which dimension of the box is the "fattest".
     Scalar max_delta = std::numeric_limits<Scalar>::lowest();
     for (Index i = 0;
@@ -242,8 +243,10 @@ class SplitterSlidingMidpoint {
 
     // Everything smaller than split_val goes left, the rest right.
     Points const& points = points_;
-    auto comp = [&points, dim = *split_dim, val = *split_val](
-                    Index const a) -> bool { return points(a, dim) < val; };
+    auto const comp =
+        [&points, dim = *split_dim, val = *split_val](Index const a) -> bool {
+      return points(a, dim) < val;
+    };
     std::partition(
         indices_.begin() + offset, indices_.begin() + offset + size, comp);
     *split_idx = std::partition_point(
