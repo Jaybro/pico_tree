@@ -35,6 +35,15 @@ class SearchNn {
   Scalar min_;
 };
 
+template <typename Index, typename Scalar>
+struct NeighborCompare {
+  inline bool operator()(
+      std::pair<Index, Scalar> const& a,
+      std::pair<Index, Scalar> const& b) const {
+    return a.second < b.second;
+  }
+};
+
 //! \brief KdTree search visitor for finding k nearest neighbors using a max
 //! heap.
 template <typename Index, typename Scalar>
@@ -54,11 +63,13 @@ class SearchKnn {
     knn_[0] = std::make_pair(idx, d);
     // Repair the heap property.
     ReplaceFrontHeap(
-        knn_.begin(),
-        knn_.end(),
-        // TODO Perhaps store local object?
-        [](std::pair<Index, Scalar> const& a, std::pair<Index, Scalar> const& b)
-            -> bool { return a.second < b.second; });
+        knn_.begin(), knn_.end(), NeighborCompare<Index, Scalar>());
+  }
+
+  //! Sort the neighbors by distance from the query point. Can be used after the
+  //! search has ended.
+  inline void Sort() const {
+    std::sort_heap(knn_.begin(), knn_.end(), NeighborCompare<Index, Scalar>());
   }
 
   //! Maximum search distance with respect to the query point.
@@ -81,6 +92,12 @@ class SearchRadius {
   //! Visit current point.
   inline void operator()(Index const idx, Scalar const d) const {
     n_.emplace_back(idx, d);
+  }
+
+  //! Sort the neighbors by distance from the query point. Can be used after the
+  //! search has ended.
+  inline void Sort() const {
+    std::sort(n_.begin(), n_.end(), NeighborCompare<Index, Scalar>());
   }
 
   //! Maximum search distance with respect to the query point.
@@ -395,12 +412,17 @@ class KdTree {
   inline void SearchKnn(
       P const& p,
       Index const k,
-      std::vector<std::pair<Index, Scalar>>* knn) const {
+      std::vector<std::pair<Index, Scalar>>* knn,
+      bool const sort = false) const {
     // If it happens that the point set is has less points than k we just return
     // all points in the set.
     internal::SearchKnn<Index, Scalar> v(
         std::min(k, points_.num_points()), knn);
     SearchNn(root_, p, &v);
+
+    if (sort) {
+      v.Sort();
+    }
   }
 
   //! \brief Returns all neighbors to point \p p that are within squared radius
@@ -410,9 +432,14 @@ class KdTree {
   inline void SearchRadius(
       P const& p,
       Scalar const radius,
-      std::vector<std::pair<Index, Scalar>>* n) const {
+      std::vector<std::pair<Index, Scalar>>* n,
+      bool const sort = false) const {
     internal::SearchRadius<Index, Scalar> v(radius, n);
     SearchNn(root_, p, &v);
+
+    if (sort) {
+      v.Sort();
+    }
   }
 
   //! \brief Returns all points within the box defined by \p min and \p max.
