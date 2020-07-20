@@ -6,7 +6,11 @@ project(pico_tree
     LANGUAGES CXX
     VERSION 0.1.0
     DESCRIPTION "PicoTree is a small C++11 header only library that provides several data structures that can be used for range searches and nearest neighbor searches."
-    HOMEPAGE_URL "https://github.com/")
+    HOMEPAGE_URL "https://github.com/Jaybro/pico_tree")
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
 
 set(PROJECT_PACKAGE_NAME "PicoTree")
 set(PROJECT_SOURCE_RELATIVE "src")
@@ -16,12 +20,17 @@ set(PROJECT_SOURCE_ABSOLUTE
 include(GNUInstallDirs)
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_PACKAGE_NAME}::${PROJECT_PACKAGE_NAME} ALIAS ${PROJECT_NAME})
-target_include_directories(${PROJECT_NAME} INTERFACE
+target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_ABSOLUTE}>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 # Language standard above 11 should also be fine.
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME ${PROJECT_PACKAGE_NAME})
+target_compile_options(${PROJECT_NAME} INTERFACE
+     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+          -Wall>
+     $<$<CXX_COMPILER_ID:MSVC>:
+          /W4>)
 # The subdirectory contains target_sources. These always seem to be made
 # absolute and cannot be used for exporting the interface library.
 # Error: "INTERFACE_SOURCES property contains path"
@@ -108,6 +117,9 @@ if(GTEST_FOUND)
 
         target_link_libraries(${TEST_TARGET_NAME} ${PROJECT_NAME} pico_common GTest::GTest GTest::Main)
     endif()
+    message(STATUS "GTest found. Unit test build: ${BUILD_TESTING}.")
+else()
+    message(STATUS "GTest not found. Unit tests will not be build.")
 endif()
 
 find_package(Doxygen QUIET)
@@ -121,4 +133,8 @@ if(BUILD_DOCUMENTATION)
     doxygen_add_docs(
         ${DOC_TARGET_NAME}
         ${PROJECT_SOURCE_ABSOLUTE})
+
+    message(STATUS "Doxygen found. Documentation can be build as: make ${DOC_TARGET_NAME}")
+else()
+    message(STATUS "Doxygen not found. Documentation cannot be build.")
 endif()
