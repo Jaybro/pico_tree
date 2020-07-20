@@ -25,7 +25,7 @@ void BuildTree() {
 
   {
     ScopedTimer t("tree gen nanoflann ct", run_count);
-    for (std::size_t i = 0; i < run_count; ++i) {
+    for (Index i = 0; i < run_count; ++i) {
       NanoflannKdTree<NanoPointSetX> kt(
           PointX::Dims,
           nano_points,
@@ -36,7 +36,7 @@ void BuildTree() {
 
   {
     ScopedTimer t("tree gen nanoflann rt", run_count);
-    for (std::size_t i = 0; i < run_count; ++i) {
+    for (Index i = 0; i < run_count; ++i) {
       NanoflannKdTreeRt<NanoPointSetX> kt(
           PointX::Dims,
           nano_points,
@@ -47,14 +47,14 @@ void BuildTree() {
 
   {
     ScopedTimer t("tree gen pico_tree ct", run_count);
-    for (std::size_t i = 0; i < run_count; ++i) {
+    for (Index i = 0; i < run_count; ++i) {
       KdTree<PicoPointSetX> rt(pico_points, max_leaf_count);
     }
   }
 
   {
     ScopedTimer t("tree gen pico_tree rt", run_count);
-    for (std::size_t i = 0; i < run_count; ++i) {
+    for (Index i = 0; i < run_count; ++i) {
       KdTreeRt<PicoPointSetX> rt(pico_points, max_leaf_count);
     }
   }
@@ -95,7 +95,7 @@ void SearchKnn() {
     kt.buildIndex();
 
     ScopedTimer t("tree nn_ nanoflann", run_count);
-    for (std::size_t i = 0; i < run_count; ++i) {
+    for (Index i = 0; i < run_count; ++i) {
       kt.knnSearch(p.data, 1, indices, distances);
       kt.knnSearch(p.data, k, indices, distances);
       kt.radiusSearch(p.data, radius, nf, nanoflann::SearchParams{0, 0, false});
@@ -111,7 +111,7 @@ void SearchKnn() {
     KdTree<PicoPointSetX> rt(pico_points, max_leaf_count);
 
     ScopedTimer t("tree nn_ pico_tree", run_count);
-    for (std::size_t i = 0; i < run_count; ++i) {
+    for (Index i = 0; i < run_count; ++i) {
       nn = rt.SearchNn(p);
       rt.SearchKnn(p, k, &n);
       rt.SearchRadius(p, radius, &n);

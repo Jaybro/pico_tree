@@ -65,7 +65,7 @@ using PicoPointSetXd = typename PtsTraits<PointsX>::PointSet;
 template <typename PointsX>
 using PicoRangeTreeXd = typename PtsTraits<PointsX>::Tree;
 
-TEST(RangeTreeTest, DISABLED_RangeTree1d) {
+TEST(RangeTreeTest, RangeTree1d) {
   std::vector<Point1f> raw{{{0}}, {{1}}, {{5}}, {{4}}, {{3}}, {{6}}};
   PicoPointSetXd<Point1f> points(raw);
   PicoRangeTreeXd<Point1f> rt(points);
@@ -85,7 +85,7 @@ void QueryRange(
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
   PicoPointSetXd<PointX> points(random);
   PicoRangeTreeXd<PointX> tree(points);
-  using Scalar = typename PointX::Scalar;
+
   TestRange(tree, min_v, max_v);
 }
 
@@ -93,10 +93,12 @@ TEST(RangeTreeTest, QuerySubset2d) {
   QueryRange<Point2f>(1024 * 1024, 100, 15.1, 34.9);
 }
 
-TEST(RangeTreeTest, QuerySubset3d) {
+TEST(RangeTreeTest, DISABLED_QuerySubset3d) {
   QueryRange<Point3f>(1024 * 8, 1000, 15.1, 34.9);
 }
 
 TEST(RangeTreeTest, QueryAll2d) { QueryRange<Point2f>(1024, 10.0, 0.0, 10.0); }
 
-TEST(RangeTreeTest, QueryAll3d) { QueryRange<Point3f>(1024, 10.0, 0.0, 10.0); }
+TEST(RangeTreeTest, DISABLED_QueryAll3d) {
+  QueryRange<Point3f>(1024, 10.0, 0.0, 10.0);
+}

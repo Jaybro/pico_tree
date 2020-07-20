@@ -114,12 +114,11 @@ void QueryRange(
     typename PointX::Scalar const min_v,
     typename PointX::Scalar const max_v) {
   using Index = int;
-  using Scalar = typename PointX::Scalar;
   using PointsX = PicoPointSet<Index, PointX>;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
   PointsX points(random);
   KdTree<PointsX> tree(points, 8);
-  using Scalar = typename PointX::Scalar;
+
   TestRange(tree, min_v, max_v);
 }
 

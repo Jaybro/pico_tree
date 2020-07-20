@@ -16,8 +16,8 @@ int main() {
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
   PicoPointSetX points(random);
 
-  Scalar const min_v = 15.1f;
-  Scalar const max_v = 34.9f;
+  Scalar const min_v = 25.1f;
+  Scalar const max_v = 37.9f;
   PointX min, max;
   min.Fill(min_v);
   max.Fill(max_v);
@@ -28,7 +28,7 @@ int main() {
     KdTree<PicoPointSetX> tree(points, max_leaf_count);
 
     ScopedTimer t("tree rq kd_tree", run_count);
-    for (std::size_t i = 0; i < run_count; ++i) {
+    for (Index i = 0; i < run_count; ++i) {
       tree.SearchRange(min, max, &idxs);
     }
   }
@@ -37,7 +37,7 @@ int main() {
     RangeTree2d<PicoPointSetX> tree(points);
 
     ScopedTimer t("tree rq rg_tree", run_count);
-    for (std::size_t i = 0; i < run_count; ++i) {
+    for (Index i = 0; i < run_count; ++i) {
       tree.SearchRange(min, max, &idxs);
     }
   }
