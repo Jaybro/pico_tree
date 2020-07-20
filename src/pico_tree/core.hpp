@@ -108,22 +108,21 @@ class Sequence {
   using MoveReturnType = Sequence const&;
 
   //! Access data contained in the Sequence.
-  inline constexpr Scalar& operator[](std::size_t const i) noexcept {
+  inline Scalar& operator[](std::size_t const i) noexcept {
     return sequence_[i];
   }
 
   //! Access data contained in the Sequence.
-  inline constexpr Scalar const& operator[](
-      std::size_t const i) const noexcept {
+  inline Scalar const& operator[](std::size_t const i) const noexcept {
     return sequence_[i];
   }
 
-  inline constexpr void Fill(std::size_t const, Scalar const value) {
+  inline void Fill(std::size_t const, Scalar const value) {
     sequence_.fill(value);
   }
 
   //! Returns a const reference to the current object.
-  inline constexpr MoveReturnType Move() const noexcept { return *this; }
+  inline MoveReturnType Move() const noexcept { return *this; }
 
   //! Returns the size of the sequence.
   inline constexpr std::size_t size() const noexcept {
@@ -145,13 +144,12 @@ class Sequence<Scalar, kRuntimeDims> {
   using MoveReturnType = Sequence&&;
 
   //! Access data contained in the Sequence.
-  inline constexpr Scalar& operator[](std::size_t const i) noexcept {
+  inline Scalar& operator[](std::size_t const i) noexcept {
     return sequence_[i];
   }
 
   //! Access data contained in the Sequence.
-  inline constexpr Scalar const& operator[](
-      std::size_t const i) const noexcept {
+  inline Scalar const& operator[](std::size_t const i) const noexcept {
     return sequence_[i];
   }
 
@@ -160,7 +158,7 @@ class Sequence<Scalar, kRuntimeDims> {
   }
 
   //! Moves the current object.
-  inline constexpr MoveReturnType Move() noexcept { return std::move(*this); }
+  inline MoveReturnType Move() noexcept { return std::move(*this); }
 
   //! Returns the size of the sequence.
   inline constexpr std::size_t size() const noexcept {
