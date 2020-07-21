@@ -502,7 +502,20 @@ class KdTree {
   //! their selection by visitor \p visitor for node \p node .
   template <typename P, typename V>
   inline void SearchNn(Node const* const node, P const& p, V* visitor) const {
-    if (node->IsBranch()) {
+    if (node->IsLeaf()) {
+      // TODO The radius search has a stable max(). Perhaps template this point
+      // visitation.
+      Scalar max = visitor->max();
+      for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+           ++i) {
+        Index const idx = indices_[i];
+        Scalar const d = metric_(p, idx);
+        if (max > d) {
+          (*visitor)(idx, d);
+          max = visitor->max();
+        }
+      }
+    } else {
       Scalar const v = points_(p, node->data.branch.split_dim);
       Scalar const d = metric_(node->data.branch.split_val, v);
       // Go left or right and then check if we should still go down the other
@@ -516,19 +529,6 @@ class KdTree {
         SearchNn(node->right, p, visitor);
         if (visitor->max() >= d) {
           SearchNn(node->left, p, visitor);
-        }
-      }
-    } else {
-      // TODO The radius search has a stable max(). Perhaps template this point
-      // visitation.
-      Scalar max = visitor->max();
-      for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
-           ++i) {
-        Index const idx = indices_[i];
-        Scalar const d = metric_(p, idx);
-        if (max > d) {
-          (*visitor)(idx, d);
-          max = visitor->max();
         }
       }
     }
