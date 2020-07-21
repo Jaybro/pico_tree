@@ -4,27 +4,27 @@ namespace internal {
 
 template <int Dims_>
 struct EigenDimensions {
-  static constexpr int Dims(int) { return Dims_; }
+  inline static constexpr int Dims(int) { return Dims_; }
 };
 
 template <>
 struct EigenDimensions<Eigen::Dynamic> {
-  static int Dims(int dims) { return dims; }
+  inline static int Dims(int dims) { return dims; }
 };
 
-template <typename EigenMatrix, typename Index, bool RowMajor>
+template <typename Index, typename EigenMatrix, bool RowMajor>
 class EigenAdapterBase;
 
 //! ColMajor EigenAdapter.
-template <typename EigenMatrix, typename Index_>
-class EigenAdapterBase<EigenMatrix, Index_, false> {
+template <typename Index_, typename EigenMatrix>
+class EigenAdapterBase<Index_, EigenMatrix, false> {
  public:
   using Index = Index_;
   using Scalar = typename EigenMatrix::Scalar;
   static constexpr int Dims = EigenMatrix::RowsAtCompileTime;
   static constexpr bool RowMajor = false;
 
-  EigenAdapterBase(EigenMatrix const& matrix) : matrix_(matrix) {}
+  inline EigenAdapterBase(EigenMatrix const& matrix) : matrix_(matrix) {}
 
   //! Returns dimension \p dim of point \p idx.
   inline Scalar operator()(Index const idx, Index const dim) const {
@@ -51,15 +51,15 @@ class EigenAdapterBase<EigenMatrix, Index_, false> {
 };
 
 //! RowMajor EigenAdapter.
-template <typename EigenMatrix, typename Index_>
-class EigenAdapterBase<EigenMatrix, Index_, true> {
+template <typename Index_, typename EigenMatrix>
+class EigenAdapterBase<Index_, EigenMatrix, true> {
  public:
   using Index = Index_;
   using Scalar = typename EigenMatrix::Scalar;
   static constexpr int Dims = EigenMatrix::ColsAtCompileTime;
   static constexpr bool RowMajor = true;
 
-  EigenAdapterBase(EigenMatrix const& matrix) : matrix_(matrix) {}
+  inline EigenAdapterBase(EigenMatrix const& matrix) : matrix_(matrix) {}
 
   //! Returns dimension \p dim of point \p idx.
   inline Scalar operator()(Index const idx, Index const dim) const {
@@ -87,12 +87,13 @@ class EigenAdapterBase<EigenMatrix, Index_, true> {
 
 }  // namespace internal
 
-template <typename EigenMatrix, typename Index>
+//! Adapts Eigen matrices so they can be used with any of the pico trees.
+template <typename Index, typename EigenMatrix>
 class EigenAdapter
     : public internal::
-          EigenAdapterBase<EigenMatrix, Index, EigenMatrix::IsRowMajor> {
+          EigenAdapterBase<Index, EigenMatrix, EigenMatrix::IsRowMajor> {
  public:
-  EigenAdapter(EigenMatrix const& matrix)
-      : internal::EigenAdapterBase<EigenMatrix, Index, EigenMatrix::IsRowMajor>(
+  inline EigenAdapter(EigenMatrix const& matrix)
+      : internal::EigenAdapterBase<Index, EigenMatrix, EigenMatrix::IsRowMajor>(
             matrix) {}
 };
