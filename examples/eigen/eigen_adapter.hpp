@@ -1,5 +1,7 @@
 #pragma once
 
+namespace pico_tree {
+
 namespace internal {
 
 template <int Dims_>
@@ -97,3 +99,5 @@ class EigenAdapter
       : internal::EigenAdapterBase<Index, EigenMatrix, EigenMatrix::IsRowMajor>(
             matrix) {}
 };
+
+}  // namespace pico_tree

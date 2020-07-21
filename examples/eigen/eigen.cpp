@@ -40,7 +40,7 @@ void ColMajor() {
   constexpr int Dims = Point::RowsAtCompileTime;
   using PointsMap =
       Eigen::Map<Eigen::Matrix<Point::Scalar, Dims, Eigen::Dynamic>>;
-  using PointSet = EigenAdapter<Index, PointsMap>;
+  using PointSet = pico_tree::EigenAdapter<Index, PointsMap>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
   PointsMap points_map(points.data()->data(), Dims, points.size());
@@ -69,7 +69,7 @@ void RowMajor() {
   constexpr int Dims = Point::ColsAtCompileTime;
   using PointsMap = Eigen::Map<
       Eigen::Matrix<Point::Scalar, Eigen::Dynamic, Dims, Eigen::RowMajor>>;
-  using PointSet = EigenAdapter<Index, PointsMap>;
+  using PointSet = pico_tree::EigenAdapter<Index, PointsMap>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
   PointsMap points_map(points.data()->data(), points.size(), Dims);
