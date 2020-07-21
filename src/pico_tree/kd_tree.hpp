@@ -122,8 +122,8 @@ class MetricL2 {
  public:
   MetricL2(Points const& points) : points_{points} {}
 
-  //! Calculates the difference between two points given a query point and an
-  //! index to a point.
+  //! \brief Calculates the difference between two points given a query point
+  //! and an index to a point.
   //! \tparam P Point type.
   //! \param p Point.
   //! \param idx Index.
@@ -141,13 +141,14 @@ class MetricL2 {
     return d;
   }
 
-  //! Calculates the difference between two points for a single dimension.
+  //! \brief Calculates the difference between two points for a single
+  //! dimension.
   inline Scalar operator()(Scalar const x, Scalar const y) const {
     Scalar const d = x - y;
     return d * d;
   }
 
-  //! Returns the squared distance of \p x.
+  //! \brief Returns the squared distance of \p x.
   inline Scalar operator()(Scalar const x) const { return x * x; }
 
  private:
@@ -595,6 +596,9 @@ class KdTree {
         }
       }
     } else {
+      // Check if the left node is fully contained. If true, report all its
+      // indices. Else, if its partially contained, continue the range search
+      // down the left node.
       if (PointInBox(node->left->box_min, min, max) &&
           PointInBox(node->left->box_max, min, max)) {
         ReportRange(node->left, idxs);
@@ -604,6 +608,7 @@ class KdTree {
         SearchRange(node->left, min, max, idxs);
       }
 
+      // Same as the left side.
       if (PointInBox(node->right->box_min, min, max) &&
           PointInBox(node->right->box_max, min, max)) {
         ReportRange(node->right, idxs);
