@@ -120,7 +120,7 @@ class SearchRadius {
 template <typename Index, typename Scalar, int Dims, typename Points>
 class MetricL2 {
  public:
-  MetricL2(Points const& points) : points_{points} {}
+  explicit MetricL2(Points const& points) : points_{points} {}
 
   //! \brief Calculates the difference between two points given a query point
   //! and an index to a point.

@@ -82,22 +82,23 @@ inline void ReplaceFrontHeap(
   first[parent] = std::move(e);
 }
 
-//! Compile time dimension count handling.
+//! \brief Compile time dimension count handling.
 template <int Dims_>
 struct Dimensions {
-  //! Returns the dimension index of the dim dimension from the back.
+  //! \brief Returns the dimension index of the \p dim -th dimension from the
+  //! back.
   inline static constexpr int Back(int dim) { return Dims_ - dim; }
   inline static constexpr int Dims(int) { return Dims_; }
 };
 
-//! Run time dimension count handling.
+//! \brief Run time dimension count handling.
 template <>
 struct Dimensions<kRuntimeDims> {
   inline static constexpr int Back(int) { return kRuntimeDims; }
   inline static int Dims(int dims) { return dims; }
 };
 
-//! Compile time sequence. A lot faster than the run time version.
+//! \brief Compile time sequence. A lot faster than the run time version.
 template <typename Scalar, int Dims_>
 class Sequence {
  public:
@@ -107,33 +108,33 @@ class Sequence {
   //! results in a copy. In some cases we can prevent an unwanted copy.
   using MoveReturnType = Sequence const&;
 
-  //! Access data contained in the Sequence.
+  //! \details Access data contained in the Sequence.
   inline Scalar& operator[](std::size_t const i) noexcept {
     return sequence_[i];
   }
 
-  //! Access data contained in the Sequence.
+  //! \brief Access data contained in the Sequence.
   inline Scalar const& operator[](std::size_t const i) const noexcept {
     return sequence_[i];
   }
 
-  inline void Fill(std::size_t const, Scalar const value) {
-    sequence_.fill(value);
-  }
+  //! \brief Fills the sequence with value \p v.
+  inline void Fill(std::size_t const, Scalar const v) { sequence_.fill(v); }
 
-  //! Returns a const reference to the current object.
+  //! \brief Returns a const reference to the current object.
   inline MoveReturnType Move() const noexcept { return *this; }
 
-  //! Returns the size of the sequence.
+  //! \brief Returns the size of the sequence.
   inline constexpr std::size_t size() const noexcept {
     return sequence_.size();
   }
 
  private:
+  //! Storage.
   std::array<Scalar, Dims_> sequence_;
 };
 
-//! Run time sequence. More flexible than the compile time one.
+//! \brief Run time sequence. More flexible than the compile time one.
 template <typename Scalar>
 class Sequence<Scalar, kRuntimeDims> {
  public:
@@ -143,35 +144,39 @@ class Sequence<Scalar, kRuntimeDims> {
   //! the using code to be agnostic to the actual storage type.
   using MoveReturnType = Sequence&&;
 
-  //! Access data contained in the Sequence.
+  //! \brief Access data contained in the Sequence.
   inline Scalar& operator[](std::size_t const i) noexcept {
     return sequence_[i];
   }
 
-  //! Access data contained in the Sequence.
+  //! \brief Access data contained in the Sequence.
   inline Scalar const& operator[](std::size_t const i) const noexcept {
     return sequence_[i];
   }
 
-  inline void Fill(std::size_t const s, Scalar const value) {
-    sequence_.assign(s, value);
+  //! \brief Changes the size of the sequence to \p s and fills the sequence
+  //! with value \p v.
+  inline void Fill(std::size_t const s, Scalar const v) {
+    sequence_.assign(s, v);
   }
 
-  //! Moves the current object.
+  //! \brief Moves the current object.
   inline MoveReturnType Move() noexcept { return std::move(*this); }
 
-  //! Returns the size of the sequence.
+  //! \brief Returns the size of the sequence.
   inline constexpr std::size_t size() const noexcept {
     return sequence_.size();
   }
 
  private:
+  //! Storage.
   std::vector<Scalar> sequence_;
 };
 
-//! Simple memory buffer making deletions of recursive elements a bit easier.
-//! The buffer owns all memory returned by MakeItem() and all memory is released
-//! when the buffer is destroyed.
+//! \brief Simple memory buffer making deletions of recursive elements a bit
+//! easier.
+//! \details The buffer owns all memory returned by MakeItem() and all memory is
+//! released when the buffer is destroyed.
 template <typename Container>
 class MemoryBuffer {
  public:
@@ -188,8 +193,9 @@ class MemoryBuffer {
   Container buffer_;
 };
 
-//! Static MemoryBuffer using a vector. The buffer owns all memory returned by
-//! MakeItem() and all memory is released when the buffer is destroyed.
+//! \brief Static MemoryBuffer using a vector.
+//! \details The buffer owns all memory returned by MakeItem() and all memory is
+//! released when the buffer is destroyed.
 template <typename T>
 class StaticBuffer : public MemoryBuffer<std::vector<T>> {
  public:
@@ -199,12 +205,13 @@ class StaticBuffer : public MemoryBuffer<std::vector<T>> {
   }
 };
 
-//! Dynamic MemoryBuffer using a deque. The buffer owns all memory returned by
-//! MakeItem() and all memory is released when the buffer is destroyed.
+//! \brief Dynamic MemoryBuffer using a deque.
+//! \details The buffer owns all memory returned by MakeItem() and all memory is
+//! released when the buffer is destroyed.
 template <typename T>
 class DynamicBuffer : public MemoryBuffer<std::deque<T>> {};
 
-//! Returns the maximum amount of leaves given \p num_points and \p
+//! \brief Returns the maximum amount of leaves given \p num_points and \p
 //! max_leaf_size.
 inline std::size_t MaxLeavesFromPoints(
     std::size_t const num_points, std::size_t const max_leaf_size) {
@@ -217,7 +224,7 @@ inline std::size_t MaxLeavesFromPoints(
       std::pow(2.0, std::floor(std::log2(static_cast<double>(max_leaf_size)))));
 }
 
-//! Returns the maximum amount of nodes given \p num_points and \p
+//! \brief Returns the maximum amount of nodes given \p num_points and \p
 //! max_leaf_size.
 inline std::size_t MaxNodesFromPoints(
     std::size_t const num_points, std::size_t const max_leaf_size = 1) {
