@@ -122,5 +122,6 @@ void SearchKnn() {
 int main() {
   BuildTree();
   SearchKnn();
+
   return 0;
 }

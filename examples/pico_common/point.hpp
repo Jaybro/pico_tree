@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <iostream>
 #include <random>
 #include <vector>
 
@@ -22,6 +23,16 @@ class Point {
 
   Scalar data[Dims];
 };
+
+template <typename Scalar_, int Dims_>
+inline std::ostream& operator<<(
+    std::ostream& s, Point<Scalar_, Dims_> const& p) {
+  s << p(0);
+  for (int i = 1; i < Dims_; ++i) {
+    s << " " << p(i);
+  }
+  return s;
+}
 
 using Point1f = Point<float, 1>;
 using Point2f = Point<float, 2>;
