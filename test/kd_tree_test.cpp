@@ -122,8 +122,8 @@ void QueryRange(
   TestRange(tree, min_v, max_v);
 }
 
-TEST(KdTreeTest, QuerySubset3d) {
-  QueryRange<Point3f>(1024 * 1024, 100, 15.1, 34.9);
+TEST(KdTreeTest, QuerySubset2d) {
+  QueryRange<Point2f>(1024 * 1024, 100, 15.1, 34.9);
 }
 
-TEST(KdTreeTest, QueryAll3d) { QueryRange<Point3f>(1024, 10.0, 0.0, 10.0); }
+TEST(KdTreeTest, QueryAll2d) { QueryRange<Point2f>(1024, 10.0, 0.0, 10.0); }
