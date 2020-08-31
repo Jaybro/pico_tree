@@ -259,11 +259,28 @@ class SplitterSlidingMidpoint {
     // If it happens that either all points are on the left side or right side,
     // one point slides to the other side and we split on the first right value
     // instead of the middle split.
+    // In these two cases the split value is unknown and a partial sort is
+    // required to obtain it, but also to rearrange all other indices such that
+    // they are on their corresponding left or right side.
     if ((*split_idx - offset) == size) {
       (*split_idx)--;
+      std::nth_element(
+          indices_.begin() + offset,
+          indices_.begin() + (*split_idx),
+          indices_.begin() + offset + size,
+          [&points, dim = *split_dim](Index const a, Index const b) -> bool {
+            return points(a, dim) < points(b, dim);
+          });
       (*split_val) = points(indices_[*split_idx], *split_dim);
     } else if ((*split_idx - offset) == 0) {
       (*split_idx)++;
+      std::nth_element(
+          indices_.begin() + offset,
+          indices_.begin() + (*split_idx),
+          indices_.begin() + offset + size,
+          [&points, dim = *split_dim](Index const a, Index const b) -> bool {
+            return points(a, dim) < points(b, dim);
+          });
       (*split_val) = points(indices_[*split_idx], *split_dim);
     }
   }
