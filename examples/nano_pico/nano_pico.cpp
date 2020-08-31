@@ -10,8 +10,6 @@
 
 using Index = int;
 
-// Interestingly, at least for MinGW GCC 9.2.0, it has a positive effect on the
-// average build time to be build first.
 void BuildTree() {
   using PointX = Point2f;
   using NanoPointSetX = NanoPointSet<Index, PointX>;
@@ -122,6 +120,5 @@ void SearchKnn() {
 int main() {
   BuildTree();
   SearchKnn();
-
   return 0;
 }
