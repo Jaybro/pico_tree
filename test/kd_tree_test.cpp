@@ -62,7 +62,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   using Scalar = typename PointX::Scalar;
   using PointsX = PicoPointSet<Index, PointX>;
   constexpr auto Dims = PointX::Dims;
-  std::vector<PointX> pts4{{0.0, 1.0}, {0.0, 2.0}, {0.0, 3.0}, {0.0, 4.0}};
+  std::vector<PointX> pts4{{0.0, 2.0}, {0.0, 1.0}, {0.0, 4.0}, {0.0, 3.0}};
   std::vector<Index> idx4{0, 1, 2, 3};
   PointsX ptsx4(pts4);
 
@@ -75,6 +75,9 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   Index split_idx;
   Scalar split_val;
 
+  // Everything is forced to the right leaf. This means we want a single point
+  // to the left (the lowest value) and internally the splitter needs to reorder
+  // the indices such that on index 1 we get value 2.
   min[0] = Scalar{0.0};
   min[1] = Scalar{0.0};
   max[0] = Scalar{0.0};
@@ -83,15 +86,23 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 1);
-  EXPECT_EQ(split_val, pts4[1](1));
+  EXPECT_EQ(split_val, pts4[0](1));
+  EXPECT_EQ(idx4[0], 1);
+  EXPECT_EQ(idx4[1], 0);
 
+  // Everything is forced to the left leaf. This means we want a single point
+  // to the right (the highest value) and internally the splitter needs to
+  // reorder the indices such that on index 3 we get value 4.
   max[1] = Scalar{9.0};
   splitter(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 3);
-  EXPECT_EQ(split_val, pts4[3](1));
+  EXPECT_EQ(split_val, pts4[2](1));
+  EXPECT_EQ(idx4[3], 2);
 
+  // Clean middle split. A general case where the split value falls somewhere
+  // inbetween the range of numbers.
   max[1] = Scalar{5.0};
   splitter(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
 
@@ -99,6 +110,8 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   EXPECT_EQ(split_idx, 2);
   EXPECT_EQ(split_val, (max[1] + min[1]) / Scalar{2.0});
 
+  // On dimension 0 we test what happens when all values are equal. Again
+  // everything moves to the left. So we want to split on index 3.
   max[0] = Scalar{15.0};
   splitter(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
 
