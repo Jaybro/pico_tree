@@ -1,7 +1,6 @@
 add_executable(nano_pico)
 target_sources(nano_pico
     PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/format_bin.cpp
         ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
         ${CMAKE_CURRENT_LIST_DIR}/nano_pico.cpp
 )
@@ -20,7 +19,6 @@ set_target_properties(nano_pico PROPERTIES
 add_executable(uosr_to_bin)
 target_sources(uosr_to_bin
     PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/format_bin.cpp
         ${CMAKE_CURRENT_LIST_DIR}/format_uosr.cpp
         ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
         ${CMAKE_CURRENT_LIST_DIR}/uosr_to_bin.cpp
