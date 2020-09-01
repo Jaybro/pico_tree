@@ -76,6 +76,10 @@ TEST(RangeTreeTest, RangeTree1d) {
   EXPECT_THAT(indices, testing::ElementsAre(0, 1, 4));
 }
 
+// The anonymous namespace gives the function a unique "name" when there is
+// another one with the exact same signature.
+namespace {
+
 template <typename PointX>
 void QueryRange(
     int const point_count,
@@ -89,16 +93,16 @@ void QueryRange(
   TestRange(tree, min_v, max_v);
 }
 
+}  // namespace
+
 TEST(RangeTreeTest, QuerySubset2d) {
   QueryRange<Point2f>(1024 * 1024, 100, 15.1, 34.9);
 }
 
 TEST(RangeTreeTest, QueryAll2d) { QueryRange<Point2f>(1024, 10.0, 0.0, 10.0); }
 
-TEST(RangeTreeTest, DISABLED_QuerySubset3d) {
+TEST(RangeTreeTest, QuerySubset3d) {
   QueryRange<Point3f>(1024 * 8, 1000, 15.1, 34.9);
 }
 
-TEST(RangeTreeTest, DISABLED_QueryAll3d) {
-  QueryRange<Point3f>(1024, 10.0, 0.0, 10.0);
-}
+TEST(RangeTreeTest, QueryAll3d) { QueryRange<Point3f>(1024, 10.0, 0.0, 10.0); }

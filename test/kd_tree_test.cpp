@@ -120,6 +120,10 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   EXPECT_EQ(split_val, pts4[3](0));
 }
 
+// The anonymous namespace gives the function a unique "name" when there is
+// another one with the exact same signature.
+namespace {
+
 template <typename PointX>
 void QueryRange(
     int const point_count,
@@ -134,6 +138,8 @@ void QueryRange(
 
   TestRange(tree, min_v, max_v);
 }
+
+}  // namespace
 
 TEST(KdTreeTest, QuerySubset2d) {
   QueryRange<Point2f>(1024 * 1024, 100, 15.1, 34.9);
