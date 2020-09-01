@@ -334,31 +334,13 @@ class RangeTree2d_ {
         }
       } else {
         // We never found a split node and ended up in a leaf.
-        if (points_(min, Dimension<Dim>::d0(dimension_)) <=
-                points_(
-                    split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
-            points_(min, Dimension<Dim>::d1(dimension_)) <=
-                points_(
-                    split->data.leaf.index, Dimension<Dim>::d1(dimension_)) &&
-            points_(max, Dimension<Dim>::d0(dimension_)) >=
-                points_(
-                    split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
-            points_(max, Dimension<Dim>::d1(dimension_)) >=
-                points_(
-                    split->data.leaf.index, Dimension<Dim>::d1(dimension_))) {
+        if (PointInBox(split->data.leaf.index, min, max)) {
           indices->push_back(split->data.leaf.index);
         }
       }
     } else {
       // The root is a leaf.
-      if (points_(min, Dimension<Dim>::d0(dimension_)) <=
-              points_(split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
-          points_(min, Dimension<Dim>::d1(dimension_)) <=
-              points_(split->data.leaf.index, Dimension<Dim>::d1(dimension_)) &&
-          points_(max, Dimension<Dim>::d0(dimension_)) >=
-              points_(split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
-          points_(max, Dimension<Dim>::d1(dimension_)) >=
-              points_(split->data.leaf.index, Dimension<Dim>::d1(dimension_))) {
+      if (PointInBox(split->data.leaf.index, min, max)) {
         indices->push_back(split->data.leaf.index);
       }
     }
@@ -478,6 +460,23 @@ class RangeTree2d_ {
     node->right = SplitIndices(
         direct_p_by_x, right_offset + right_size / 2, right, p_back, p_front);
     return node;
+  }
+
+  //! Checks if the point refered to by \p idx is contained in the box defined
+  //! by \p min and \p max. A point on the edge considered inside the box.
+  template <typename P>
+  inline bool PointInBox(Index const idx, P const& min, P const& max) const {
+    if (points_(min, Dimension<Dim>::d0(dimension_)) >
+            points_(idx, Dimension<Dim>::d0(dimension_)) ||
+        points_(min, Dimension<Dim>::d1(dimension_)) >
+            points_(idx, Dimension<Dim>::d1(dimension_)) ||
+        points_(max, Dimension<Dim>::d0(dimension_)) <
+            points_(idx, Dimension<Dim>::d0(dimension_)) ||
+        points_(max, Dimension<Dim>::d1(dimension_)) <
+            points_(idx, Dimension<Dim>::d1(dimension_))) {
+      return false;
+    }
+    return true;
   }
 
   inline void ReportRange(
