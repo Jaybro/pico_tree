@@ -258,7 +258,7 @@ class RangeTree2d_ {
 
             if (points_(min, Dimension<Dim>::d0(dimension_)) <=
                 track->data.branch.split) {
-              ReportIndices(
+              ReportRange(
                   track->right->layer->data(),
                   track_c_lower.second,
                   track_c_upper.second,
@@ -302,7 +302,7 @@ class RangeTree2d_ {
 
             if (points_(max, Dimension<Dim>::d0(dimension_)) >=
                 track->data.branch.split) {
-              ReportIndices(
+              ReportRange(
                   track->left->layer->data(),
                   track_c_lower.first,
                   track_c_upper.first,
@@ -480,7 +480,7 @@ class RangeTree2d_ {
     return node;
   }
 
-  inline void ReportIndices(
+  inline void ReportRange(
       std::vector<Item> const& items,
       Index const lower_bound,
       Index const upper_bound,
