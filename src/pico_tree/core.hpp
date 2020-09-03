@@ -70,13 +70,15 @@ inline void ReplaceFrontHeap(
   // can't compare with the second child of the last parent.
   //
   // Assuming doing the check once outside of the loop is better?
-  auto child = 2 * parent + 1;
-  if ((size & 1) == 1 && comp(first[child], first[child + 1])) {
-    ++child;
-  }
-  if (comp(e, first[child])) {
-    first[parent] = std::move(first[child]);
-    parent = child;
+  if (parent == last_parent) {
+    auto child = 2 * parent + 1;
+    if ((size & 1) == 1 && comp(first[child], first[child + 1])) {
+      ++child;
+    }
+    if (comp(e, first[child])) {
+      first[parent] = std::move(first[child]);
+      parent = child;
+    }
   }
   // Last child gets replaced.
   first[parent] = std::move(e);
