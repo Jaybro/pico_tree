@@ -51,11 +51,11 @@ template <typename Index, typename Scalar>
 class SearchKnn {
  public:
   SearchKnn(Index const k, std::vector<std::pair<Index, Scalar>>* knn)
-      : k_{k}, knn_{*knn} {
+      : knn_{*knn} {
     // Initial search distances for the heap. All values will be replaced unless
     // point coordinates somehow have extreme values. In this case bad things
     // will happen anyway.
-    knn_.assign(k_, {0, std::numeric_limits<Scalar>::max()});
+    knn_.assign(k, {0, std::numeric_limits<Scalar>::max()});
   }
 
   //! Visit current point.
@@ -78,7 +78,6 @@ class SearchKnn {
   inline Scalar max() const { return knn_[0].second; }
 
  private:
-  Index const k_;
   std::vector<std::pair<Index, Scalar>>& knn_;
 };
 
@@ -330,11 +329,11 @@ class KdTree {
     inline bool IsBranch() const { return left != nullptr && right != nullptr; }
     inline bool IsLeaf() const { return left == nullptr && right == nullptr; }
 
+    Node* left;
+    Node* right;
     Data data;
     Sequence box_min;
     Sequence box_max;
-    Node* left;
-    Node* right;
   };
 
   //! KdTree builder.
@@ -375,6 +374,8 @@ class KdTree {
             &node->data.branch.split_dim,
             &split_idx,
             &node->data.branch.split_val);
+        node->box_min = box_min;
+        node->box_max = box_max;
         // The split_idx is used as the first index of the right branch.
         Index const left_size = split_idx - offset;
         Index const right_size = size - left_size;
@@ -520,31 +521,29 @@ class KdTree {
   template <typename P, typename V>
   inline void SearchNn(Node const* const node, P const& p, V* visitor) const {
     if (node->IsLeaf()) {
-      // TODO The radius search has a stable max(). Perhaps template this point
-      // visitation.
-      Scalar max = visitor->max();
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        Index const idx = indices_[i];
-        Scalar const d = metric_(p, idx);
-        if (max > d) {
-          (*visitor)(idx, d);
-          max = visitor->max();
+        Scalar const d = metric_(p, indices_[i]);
+        if (visitor->max() > d) {
+          (*visitor)(indices_[i], d);
         }
       }
     } else {
-      Scalar const v = points_(p, node->data.branch.split_dim);
-      Scalar const d = metric_(node->data.branch.split_val, v);
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      if (v <= node->data.branch.split_val) {
+      if (points_(p, node->data.branch.split_dim) <=
+          node->data.branch.split_val) {
         SearchNn(node->left, p, visitor);
-        if (visitor->max() >= d) {
+        if (visitor->max() >= metric_(
+                                  node->data.branch.split_val,
+                                  points_(p, node->data.branch.split_dim))) {
           SearchNn(node->right, p, visitor);
         }
       } else {
         SearchNn(node->right, p, visitor);
-        if (visitor->max() >= d) {
+        if (visitor->max() >= metric_(
+                                  node->data.branch.split_val,
+                                  points_(p, node->data.branch.split_dim))) {
           SearchNn(node->left, p, visitor);
         }
       }
@@ -646,7 +645,7 @@ class KdTree {
   //! Sorted indices that refer to points inside points_.
   std::vector<Index> indices_;
   //! Root of the KdTree.
-  Node* root_;
+  Node const* const root_;
 };
 
 }  // namespace pico_tree
