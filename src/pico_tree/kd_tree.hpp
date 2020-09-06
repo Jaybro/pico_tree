@@ -332,8 +332,6 @@ class KdTree {
     Node* left;
     Node* right;
     Data data;
-    Sequence box_min;
-    Sequence box_max;
   };
 
   //! KdTree builder.
@@ -359,8 +357,6 @@ class KdTree {
       if (size <= max_leaf_size_) {
         node->data.leaf.begin_idx = offset;
         node->data.leaf.end_idx = offset + size;
-        node->box_min = box_min.Move();
-        node->box_max = box_max.Move();
         node->left = nullptr;
         node->right = nullptr;
       } else {
@@ -374,8 +370,6 @@ class KdTree {
             &node->data.branch.split_dim,
             &split_idx,
             &node->data.branch.split_val);
-        node->box_min = box_min;
-        node->box_max = box_max;
         // The split_idx is used as the first index of the right branch.
         Index const left_size = split_idx - offset;
         Index const right_size = size - left_size;
@@ -474,7 +468,8 @@ class KdTree {
     // now it is assumed that this check is not worth it: If there was overlap
     // then the search is slower. So unless many queries don't intersect there
     // is no point in adding it.
-    SearchRange(root_, min, max, i);
+    SearchRange(
+        root_, min, max, Sequence(root_box_min_), Sequence(root_box_max_), i);
   }
 
   //! \brief Point set used by the tree.
@@ -484,6 +479,27 @@ class KdTree {
   inline Metric const& metric() const { return metric_; }
 
  private:
+  inline void CalculateBoundingBox(Sequence* p_min, Sequence* p_max) {
+    Sequence& min = *p_min;
+    Sequence& max = *p_max;
+    min.Fill(points_.num_dimensions(), std::numeric_limits<Scalar>::max());
+    max.Fill(points_.num_dimensions(), std::numeric_limits<Scalar>::lowest());
+
+    for (Index j = 0; j < points_.num_points(); ++j) {
+      for (Index i = 0;
+           i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
+           ++i) {
+        Scalar const v = points_(j, i);
+        if (v < min[i]) {
+          min[i] = v;
+        }
+        if (v > max[i]) {
+          max[i] = v;
+        }
+      }
+    }
+  }
+
   //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
   //! \details Run time may vary depending on the split strategy.
   inline Node* MakeTree(Index const max_leaf_size) {
@@ -492,28 +508,15 @@ class KdTree {
 
     std::iota(indices_.begin(), indices_.end(), 0);
 
-    Sequence box_min, box_max;
-    box_min.Fill(points_.num_dimensions(), std::numeric_limits<Scalar>::max());
-    box_max.Fill(
-        points_.num_dimensions(), std::numeric_limits<Scalar>::lowest());
-
-    for (Index j = 0; j < points_.num_points(); ++j) {
-      for (Index i = 0;
-           i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
-           ++i) {
-        Scalar const v = points_(j, i);
-        if (v < box_min[i]) {
-          box_min[i] = v;
-        }
-        if (v > box_max[i]) {
-          box_max[i] = v;
-        }
-      }
-    }
+    CalculateBoundingBox(&root_box_min_, &root_box_max_);
 
     Splitter splitter(points_, &indices_);
     return Builder{max_leaf_size, splitter, &nodes_}.SplitIndices(
-        0, 0, points_.num_points(), box_min.Move(), box_max.Move());
+        0,
+        0,
+        points_.num_points(),
+        Sequence(root_box_min_),
+        Sequence(root_box_max_));
   }
 
   //! Returns the nearest neighbor (or neighbors) of point \p p depending on
@@ -582,8 +585,6 @@ class KdTree {
   //! Reports all indices contained by \p node.
   inline void ReportRange(
       Node const* const node, std::vector<Index>* idxs) const {
-    // TODO It is probably faster if the begin_idx and end_idx are available in
-    // all nodes at the price of memory by removing the union.
     if (node->IsLeaf()) {
       std::copy(
           indices_.cbegin() + node->data.leaf.begin_idx,
@@ -595,43 +596,63 @@ class KdTree {
     }
   }
 
-  //! Returns all points within the box defined by \p min and \p max for \p
-  //! node.
+  //! Returns all points within the box defined by \p rng_min and \p rng_max for
+  //! \p node.
   template <typename P>
   inline void SearchRange(
       Node const* const node,
-      P const& min,
-      P const& max,
+      P const& rng_min,
+      P const& rng_max,
+      typename Sequence::MoveReturnType box_min,
+      typename Sequence::MoveReturnType box_max,
       std::vector<Index>* idxs) const {
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         Index const idx = indices_[i];
-        if (PointInBox(idx, min, max)) {
+        if (PointInBox(idx, rng_min, rng_max)) {
           idxs->push_back(idx);
         }
       }
     } else {
+      Sequence left_box_max = box_max;
+      left_box_max[node->data.branch.split_dim] = node->data.branch.split_val;
+
       // Check if the left node is fully contained. If true, report all its
       // indices. Else, if its partially contained, continue the range search
       // down the left node.
-      if (PointInBox(node->left->box_min, min, max) &&
-          PointInBox(node->left->box_max, min, max)) {
+      if (PointInBox(box_min, rng_min, rng_max) &&
+          PointInBox(left_box_max, rng_min, rng_max)) {
         ReportRange(node->left, idxs);
       } else if (
-          points_(min, node->data.branch.split_dim) <
+          points_(rng_min, node->data.branch.split_dim) <
           node->data.branch.split_val) {
-        SearchRange(node->left, min, max, idxs);
+        SearchRange(
+            node->left,
+            rng_min,
+            rng_max,
+            box_min.Move(),
+            left_box_max.Move(),
+            idxs);
       }
 
+      Sequence right_box_min = box_min;
+      right_box_min[node->data.branch.split_dim] = node->data.branch.split_val;
+
       // Same as the left side.
-      if (PointInBox(node->right->box_min, min, max) &&
-          PointInBox(node->right->box_max, min, max)) {
+      if (PointInBox(right_box_min, rng_min, rng_max) &&
+          PointInBox(box_max, rng_min, rng_max)) {
         ReportRange(node->right, idxs);
       } else if (
-          points_(max, node->data.branch.split_dim) >
+          points_(rng_max, node->data.branch.split_dim) >
           node->data.branch.split_val) {
-        SearchRange(node->right, min, max, idxs);
+        SearchRange(
+            node->right,
+            rng_min,
+            rng_max,
+            right_box_min.Move(),
+            box_max.Move(),
+            idxs);
       }
     }
   }
@@ -646,6 +667,10 @@ class KdTree {
   std::vector<Index> indices_;
   //! Root of the KdTree.
   Node const* const root_;
+  //! Min coordinate of the root node box.
+  Sequence root_box_min_;
+  //! Max coordinate of the root node box.
+  Sequence root_box_max_;
 };
 
 }  // namespace pico_tree
