@@ -211,7 +211,14 @@ class StaticBuffer : public MemoryBuffer<std::vector<T>> {
 //! \details The buffer owns all memory returned by MakeItem() and all memory is
 //! released when the buffer is destroyed.
 template <typename T>
-class DynamicBuffer : public MemoryBuffer<std::deque<T>> {};
+class DynamicBuffer : public MemoryBuffer<std::deque<T>> {
+ public:
+  //! Creates a DynamicBuffer.
+  inline DynamicBuffer() = default;
+  //! Creates a DynamicBuffer. Ignores the argument in favor of a common
+  //! interface with the StaticBuffer.
+  inline DynamicBuffer(std::size_t const) {}
+};
 
 //! \brief Returns the maximum amount of leaves given \p num_points and \p
 //! max_leaf_size.

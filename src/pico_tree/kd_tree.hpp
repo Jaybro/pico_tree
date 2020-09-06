@@ -165,6 +165,9 @@ class SplitterMedian {
   using Sequence = typename internal::Sequence<Scalar, Dims>;
 
  public:
+  template <typename T>
+  using MemoryBuffer = internal::StaticBuffer<T>;
+
   SplitterMedian(Points const& points, std::vector<Index>* p_indices)
       : points_{points}, indices_{*p_indices} {}
 
@@ -216,6 +219,9 @@ class SplitterSlidingMidpoint {
   using Sequence = typename internal::Sequence<Scalar, Dims>;
 
  public:
+  template <typename T>
+  using MemoryBuffer = internal::DynamicBuffer<T>;
+
   SplitterSlidingMidpoint(Points const& points, std::vector<Index>* p_indices)
       : points_{points}, indices_{*p_indices} {}
 
@@ -302,9 +308,6 @@ template <
     typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dims, Points>>
 class KdTree {
  private:
-  //! Either an array or vector (compile time vs. run time).
-  using Sequence = typename internal::Sequence<Scalar, Dims>;
-
   //! KdTree Node.
   struct Node {
     //! Data is used to either store branch or leaf information. Which union
@@ -334,13 +337,17 @@ class KdTree {
     Data data;
   };
 
+  //! Either an array or vector (compile time vs. run time).
+  using Sequence = typename internal::Sequence<Scalar, Dims>;
+  using MemoryBuffer = typename Splitter::MemoryBuffer<Node>;
+
   //! KdTree builder.
   class Builder {
    public:
     Builder(
         Index const max_leaf_size,
         Splitter const& splitter,
-        internal::DynamicBuffer<Node>* nodes)
+        MemoryBuffer* nodes)
         : max_leaf_size_{max_leaf_size}, splitter_{splitter}, nodes_{*nodes} {}
 
     //! Creates a tree node for a range of indices, splits the range in two and
@@ -397,7 +404,7 @@ class KdTree {
    private:
     Index const max_leaf_size_;
     Splitter const& splitter_;
-    internal::DynamicBuffer<Node>& nodes_;
+    MemoryBuffer& nodes_;
   };
 
  public:
@@ -408,7 +415,7 @@ class KdTree {
   KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
         metric_{points_},
-        nodes_{},
+        nodes_(internal::MaxNodesFromPoints(points_.num_points())),
         indices_(points_.num_points()),
         root_{MakeTree(max_leaf_size)} {}
 
@@ -662,7 +669,7 @@ class KdTree {
   //! Metric used for comparing distances.
   Metric const metric_;
   //! Memory buffer for tree nodes.
-  internal::DynamicBuffer<Node> nodes_;
+  MemoryBuffer nodes_;
   //! Sorted indices that refer to points inside points_.
   std::vector<Index> indices_;
   //! Root of the KdTree.
