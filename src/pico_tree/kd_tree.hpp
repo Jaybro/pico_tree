@@ -14,25 +14,21 @@ namespace internal {
 template <typename Index, typename Scalar>
 class SearchNn {
  public:
-  SearchNn() : min_{std::numeric_limits<Scalar>::max()} {}
+  SearchNn() { nn_.second = std::numeric_limits<Scalar>::max(); }
 
   //! Visit current point.
   inline void operator()(Index const idx, Scalar const d) {
-    idx_ = idx;
-    min_ = d;
+    nn_ = std::make_pair(idx, d);
   }
 
   //! Maximum search distance with respect to the query point.
-  inline Scalar max() const { return min_; }
+  inline Scalar const& max() const { return nn_.second; }
 
   //! Returns the current nearest neighbor.
-  inline std::pair<Index, Scalar> nearest() const {
-    return std::make_pair(idx_, min_);
-  }
+  inline std::pair<Index, Scalar> const& nearest() const { return nn_; }
 
  private:
-  Index idx_;
-  Scalar min_;
+  std::pair<Index, Scalar> nn_;
 };
 
 //! Compares neighbors by distance.
@@ -75,7 +71,7 @@ class SearchKnn {
   }
 
   //! Maximum search distance with respect to the query point.
-  inline Scalar max() const { return knn_[0].second; }
+  inline Scalar const& max() const { return knn_[0].second; }
 
  private:
   std::vector<std::pair<Index, Scalar>>& knn_;
@@ -92,7 +88,7 @@ class SearchRadius {
 
   //! Visit current point.
   inline void operator()(Index const idx, Scalar const d) const {
-    n_.emplace_back(idx, d);
+    n_.push_back(std::make_pair(idx, d));
   }
 
   //! Sort the neighbors by distance from the query point. Can be used after the
@@ -102,7 +98,7 @@ class SearchRadius {
   }
 
   //! Maximum search distance with respect to the query point.
-  inline Scalar max() const { return radius_; }
+  inline Scalar const& max() const { return radius_; }
 
  private:
   Scalar const radius_;
