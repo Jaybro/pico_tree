@@ -672,12 +672,12 @@ class KdTree {
   MemoryBuffer nodes_;
   //! Sorted indices that refer to points inside points_.
   std::vector<Index> indices_;
-  //! Root of the KdTree.
-  Node const* const root_;
   //! Min coordinate of the root node box.
   Sequence root_box_min_;
   //! Max coordinate of the root node box.
   Sequence root_box_max_;
+  //! Root of the KdTree.
+  Node const* const root_;
 };
 
 }  // namespace pico_tree
