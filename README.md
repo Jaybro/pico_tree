@@ -28,7 +28,7 @@ Optional:
 * [Doxygen](https://www.doxygen.nl). Needed for generating documentation.
 * [Google Test](https://github.com/google/googletest). Used for running unit tests.
 * [Eigen](http://eigen.tuxfamily.org). To run the example that shows how Eigen data types can be used in combination with PicoTree.
-* [nanoflann](https://github.com/jlblancoc/nanoflann). There is an example that shows how the KdTree of this library compares to nanoflann.
+* [nanoflann](https://github.com/jlblancoc/nanoflann) and [Google Benchmark](https://github.com/google/benchmark). There is an example that shows how the KdTree of this library compares to nanoflann.
 
 # Build
 
