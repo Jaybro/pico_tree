@@ -4,7 +4,12 @@ target_sources(nano_pico
         ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
         ${CMAKE_CURRENT_LIST_DIR}/nano_pico.cpp
 )
-target_link_libraries(nano_pico PUBLIC pico_common nanoflann::nanoflann)
+target_link_libraries(nano_pico
+    PUBLIC
+        pico_common
+        nanoflann::nanoflann
+        benchmark::benchmark
+)
 set_target_properties(nano_pico
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
@@ -12,8 +17,8 @@ set_target_properties(nano_pico
 # Only a minimum level is set for pico_tree. For this executable we want it to be 11.
 set_target_properties(nano_pico PROPERTIES
     CXX_STANDARD 11
-    CXX_STANDARD_REQUIRED YES
-    CXX_EXTENSIONS NO
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
 )
 
 add_executable(uosr_to_bin)
