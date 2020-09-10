@@ -5,7 +5,7 @@ target_sources(nano_pico
         ${CMAKE_CURRENT_LIST_DIR}/nano_pico.cpp
 )
 target_link_libraries(nano_pico
-    PUBLIC
+    PRIVATE
         pico_common
         nanoflann::nanoflann
         benchmark::benchmark
@@ -28,10 +28,24 @@ target_sources(uosr_to_bin
         ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
         ${CMAKE_CURRENT_LIST_DIR}/uosr_to_bin.cpp
 )
-target_link_libraries(uosr_to_bin PUBLIC pico_common)
+target_link_libraries(uosr_to_bin PRIVATE pico_common)
 # This executable requires <filesystem>
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
+target_compile_features(uosr_to_bin PRIVATE cxx_std_17)
 set_target_properties(uosr_to_bin
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_executable(bin_to_ascii)
+target_sources(bin_to_ascii
+    PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/bin_to_ascii.cpp
+)
+target_link_libraries(bin_to_ascii PRIVATE pico_common)
+# This executable requires <filesystem>
+target_compile_features(bin_to_ascii PRIVATE cxx_std_17)
+set_target_properties(bin_to_ascii
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
