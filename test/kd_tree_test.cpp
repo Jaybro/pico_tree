@@ -139,10 +139,30 @@ void QueryRange(
   TestRange(tree, min_v, max_v);
 }
 
+template <typename PointX>
+void QueryRadius(
+    int const point_count,
+    typename PointX::Scalar const area_size,
+    typename PointX::Scalar const radius) {
+  using Index = int;
+  using PointsX = PicoPointSet<Index, PointX>;
+  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
+  PointsX points(random);
+  KdTree<PointsX> tree(points, 8);
+
+  TestRadius(tree, radius);
+}
+
 }  // namespace
 
-TEST(KdTreeTest, QuerySubset2d) {
+TEST(KdTreeTest, QueryRangeSubset2d) {
   QueryRange<Point2f>(1024 * 1024, 100, 15.1, 34.9);
 }
 
-TEST(KdTreeTest, QueryAll2d) { QueryRange<Point2f>(1024, 10.0, 0.0, 10.0); }
+TEST(KdTreeTest, QueryRangeAll2d) {
+  QueryRange<Point2f>(1024, 10.0, 0.0, 10.0);
+}
+
+TEST(KdTreeTest, QueryRadiusSubset2d) {
+  QueryRadius<Point2f>(1024 * 1024, 100, 2.5);
+}

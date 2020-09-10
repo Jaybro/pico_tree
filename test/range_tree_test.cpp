@@ -95,14 +95,18 @@ void QueryRange(
 
 }  // namespace
 
-TEST(RangeTreeTest, QuerySubset2d) {
+TEST(RangeTreeTest, QueryRangeSubset2d) {
   QueryRange<Point2f>(1024 * 1024, 100, 15.1, 34.9);
 }
 
-TEST(RangeTreeTest, QueryAll2d) { QueryRange<Point2f>(1024, 10.0, 0.0, 10.0); }
+TEST(RangeTreeTest, QueryRangeAll2d) {
+  QueryRange<Point2f>(1024, 10.0, 0.0, 10.0);
+}
 
-TEST(RangeTreeTest, QuerySubset3d) {
+TEST(RangeTreeTest, QueryRangeSubset3d) {
   QueryRange<Point3f>(1024 * 8, 1000, 15.1, 34.9);
 }
 
-TEST(RangeTreeTest, QueryAll3d) { QueryRange<Point3f>(1024, 10.0, 0.0, 10.0); }
+TEST(RangeTreeTest, QueryRangeAll3d) {
+  QueryRange<Point3f>(1024, 10.0, 0.0, 10.0);
+}
