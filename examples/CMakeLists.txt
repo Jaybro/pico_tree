@@ -1,5 +1,7 @@
 add_subdirectory(pico_common)
 
+add_subdirectory(range_query)
+
 find_package(Eigen3 QUIET)
 if(Eigen3_FOUND)
     add_subdirectory(eigen)
@@ -8,13 +10,11 @@ else()
     message(STATUS "Eigen3 not found. Eigen example skipped.")
 endif()
 
-add_subdirectory(range_query)
-
 find_package(nanoflann QUIET)
 find_package(benchmark QUIET)
 if(nanoflann_FOUND AND benchmark_FOUND)
     add_subdirectory(benchmark)
-    message(STATUS "nanoflann and benchmark found. Building benchmark vs. nanoflann example.")
+    message(STATUS "nanoflann and benchmark found. Building PicoTree benchmark.")
 else()
-    message(STATUS "nanoflann and/or benchmark not found. Benchmark vs. nanoflann example skipped.")
+    message(STATUS "nanoflann and/or benchmark not found. PicoTree benchmark skipped.")
 endif()

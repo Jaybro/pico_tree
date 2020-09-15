@@ -1,21 +1,21 @@
-add_executable(nano_pico)
-target_sources(nano_pico
+add_executable(benchmark)
+target_sources(benchmark
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/nano_pico.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/benchmark.cpp
 )
-target_link_libraries(nano_pico
+target_link_libraries(benchmark
     PRIVATE
         pico_common
         nanoflann::nanoflann
         benchmark::benchmark
 )
-set_target_properties(nano_pico
+set_target_properties(benchmark
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 # Only a minimum level is set for pico_tree. For this executable we want it to be 11.
-set_target_properties(nano_pico PROPERTIES
+set_target_properties(benchmark PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
