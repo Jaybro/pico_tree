@@ -57,9 +57,10 @@ void ColMajor() {
     pico_tree::KdTree<Index, Point::Scalar, Dims, PointSet> rt(
         adapter, kMaxLeafCount);
 
+    std::vector<std::pair<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      nn = rt.SearchNn(p);
+      rt.SearchKnn(p, 1, &knn);
     }
   }
 }
@@ -86,9 +87,10 @@ void RowMajor() {
     pico_tree::KdTree<Index, Point::Scalar, Dims, PointSet> rt(
         adapter, kMaxLeafCount);
 
+    std::vector<std::pair<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      nn = rt.SearchNn(p);
+      rt.SearchKnn(p, 1, &knn);
     }
   }
 }

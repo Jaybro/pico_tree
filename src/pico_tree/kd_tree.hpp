@@ -10,27 +10,6 @@ namespace pico_tree {
 
 namespace internal {
 
-//! KdTree search visitor for finding a single nearest neighbor.
-template <typename Index, typename Scalar>
-class SearchNn {
- public:
-  SearchNn() { nn_.second = std::numeric_limits<Scalar>::max(); }
-
-  //! Visit current point.
-  inline void operator()(Index const idx, Scalar const d) {
-    nn_ = std::make_pair(idx, d);
-  }
-
-  //! Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return nn_.second; }
-
-  //! Returns the current nearest neighbor.
-  inline std::pair<Index, Scalar> const& nearest() const { return nn_; }
-
- private:
-  std::pair<Index, Scalar> nn_;
-};
-
 //! Compares neighbors by distance.
 template <typename Index, typename Scalar>
 struct NeighborComparator {
@@ -414,16 +393,6 @@ class KdTree {
         nodes_(internal::MaxNodesFromPoints(points_.num_points())),
         indices_(points_.num_points()),
         root_{MakeTree(max_leaf_size)} {}
-
-  //! \brief Returns the nearest neighbor of point \p p in O(log n) average
-  //! time for randomly distributed points.
-  //! \tparam P point type.
-  template <typename P>
-  inline std::pair<Index, Scalar> SearchNn(P const& p) const {
-    internal::SearchNn<Index, Scalar> v;
-    SearchNn(root_, p, &v);
-    return v.nearest();
-  }
 
   //! \brief Returns the \p k nearest neighbors of point \p p .
   //! \tparam P point type.
