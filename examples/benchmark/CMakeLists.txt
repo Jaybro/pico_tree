@@ -1,8 +1,8 @@
 add_executable(benchmark)
 target_sources(benchmark
     PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
         ${CMAKE_CURRENT_LIST_DIR}/benchmark.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
 )
 target_link_libraries(benchmark
     PRIVATE
