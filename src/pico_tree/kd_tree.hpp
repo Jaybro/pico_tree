@@ -506,21 +506,25 @@ class KdTree {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      if (points_(p, node->data.branch.split_dim) <=
-          node->data.branch.split_val) {
-        SearchNn(node->left, p, visitor);
-        if (visitor->max() >= metric_(
-                                  node->data.branch.split_val,
-                                  points_(p, node->data.branch.split_dim))) {
-          SearchNn(node->right, p, visitor);
-        }
+      Scalar const v = points_(p, node->data.branch.split_dim);
+      Node const* node_1st;
+      Node const* node_2nd;
+
+      // On equals we would possibly need to go left as well. However, this is
+      // handled by the if statement below this one: the check that max search
+      // radius still hits the split value after having traversed the first
+      // branch.
+      if (v < node->data.branch.split_val) {
+        node_1st = node->left;
+        node_2nd = node->right;
       } else {
-        SearchNn(node->right, p, visitor);
-        if (visitor->max() >= metric_(
-                                  node->data.branch.split_val,
-                                  points_(p, node->data.branch.split_dim))) {
-          SearchNn(node->left, p, visitor);
-        }
+        node_1st = node->right;
+        node_2nd = node->left;
+      }
+
+      SearchNn(node_1st, p, visitor);
+      if (visitor->max() >= metric_(node->data.branch.split_val, v)) {
+        SearchNn(node_2nd, p, visitor);
       }
     }
   }
