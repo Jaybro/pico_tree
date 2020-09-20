@@ -1,6 +1,6 @@
 # Benchmark
 
-One of the PicoTree examples is a small [benchmark](./examples/benchmark/) that compares the KdTree of this library with that of [nanoflann](https://github.com/jlblancoc/nanoflann). This page shows several results output by the benchmark and describes how to generate the input that resulted in those results.
+One of the PicoTree examples is a small [benchmark](./examples/benchmark/) that compares the KdTree of this library with that of [nanoflann](https://github.com/jlblancoc/nanoflann). This page describes several results output by the benchmark and how to reproduce the exact same input that was used to generate the results.
 
 # Data sets
 
