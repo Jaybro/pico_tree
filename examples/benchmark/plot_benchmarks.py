@@ -79,10 +79,14 @@ def main():
     plots_knn = get_plots(benchmarks[1], re.compile(re_str_other))
     plots_radius = get_plots(benchmarks[2], re.compile(re_str_other))
 
-    get_figure(plots_build, 'build time')
-    get_figure(plots_knn, 'knn search time')
-    get_figure(plots_radius, 'radius search time')
-
+    # Format is determined by filename extension
+    extension = '.png'
+    get_figure(plots_build, 'build time')[
+        0].savefig(f'./build_time{extension}')
+    get_figure(plots_knn, 'knn search time')[
+        0].savefig(f'./knn_search_time{extension}')
+    get_figure(plots_radius, 'radius search time')[
+        0].savefig(f'./radius_search_time{extension}')
     plt.show()
 
 
