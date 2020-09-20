@@ -51,7 +51,7 @@ def get_plots(benchmarks_subset, pattern):
 
 
 def get_figure(plots, title):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4, 4), tight_layout=True)
 
     for label in plots:
         x = plots[label]['x']
