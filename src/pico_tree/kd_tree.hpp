@@ -86,6 +86,45 @@ class SearchRadius {
 
 }  // namespace internal
 
+//! \brief L1 metric using the L1 norm for measuring distances between points.
+//! \see MetricL2
+template <typename Index, typename Scalar, int Dims, typename Points>
+class MetricL1 {
+ public:
+  explicit MetricL1(Points const& points) : points_{points} {}
+
+  //! \brief Calculates the difference between two points given a query point
+  //! and an index to a point.
+  //! \tparam P Point type.
+  //! \param p Point.
+  //! \param idx Index.
+  template <typename P>
+  inline typename std::enable_if<!std::is_fundamental<P>::value, Scalar>::type
+  operator()(P const& p, Index const idx) const {
+    Scalar d{};
+
+    for (Index i = 0;
+         i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
+         ++i) {
+      d += std::abs(points_(p, i) - points_(idx, i));
+    }
+
+    return d;
+  }
+
+  //! \brief Calculates the difference between two points for a single
+  //! dimension.
+  inline Scalar operator()(Scalar const x, Scalar const y) const {
+    return std::abs(x - y);
+  }
+
+  //! \brief Returns the absolute distance of \p x.
+  inline Scalar operator()(Scalar const x) const { return std::abs(x); }
+
+ private:
+  Points const& points_;
+};
+
 //! \brief L2 metric using the squared L2 norm for measuring distances between
 //! points.
 //! \details For more details:
@@ -102,7 +141,8 @@ class MetricL2 {
   //! \param p Point.
   //! \param idx Index.
   template <typename P>
-  inline Scalar operator()(P const& p, Index const idx) const {
+  inline typename std::enable_if<!std::is_fundamental<P>::value, Scalar>::type
+  operator()(P const& p, Index const idx) const {
     Scalar d{};
 
     for (Index i = 0;

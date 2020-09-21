@@ -6,6 +6,40 @@
 
 #include "common.hpp"
 
+TEST(KdTreeTest, MetricL1) {
+  using PointX = Point2f;
+  using Index = int;
+  using Scalar = typename PointX::Scalar;
+  using PointsX = PicoPointSet<Index, PointX>;
+  constexpr auto Dims = PointX::Dims;
+  std::vector<PointX> pts{{2.0, 4.0}};
+  PointsX ptsx(pts);
+  PointX p{10.0, 1.0};
+
+  pico_tree::MetricL1<Index, Scalar, Dims, PointsX> metric(ptsx);
+
+  EXPECT_FLOAT_EQ(metric(p, 0), 11.0);
+  EXPECT_FLOAT_EQ(metric(-3.1, 8.9), 12.0);
+  EXPECT_FLOAT_EQ(metric(-3.1), 3.1);
+}
+
+TEST(KdTreeTest, MetricL2) {
+  using PointX = Point2f;
+  using Index = int;
+  using Scalar = typename PointX::Scalar;
+  using PointsX = PicoPointSet<Index, PointX>;
+  constexpr auto Dims = PointX::Dims;
+  std::vector<PointX> pts{{2.0, 4.0}};
+  PointsX ptsx(pts);
+  PointX p{10.0, 1.0};
+
+  pico_tree::MetricL2<Index, Scalar, Dims, PointsX> metric(ptsx);
+
+  EXPECT_FLOAT_EQ(metric(p, 0), 73.0);
+  EXPECT_FLOAT_EQ(metric(-3.1, 8.9), 144.0);
+  EXPECT_FLOAT_EQ(metric(-3.1), 9.61);
+}
+
 TEST(KdTreeTest, SplitterMedian) {
   using PointX = Point2f;
   using Index = int;
