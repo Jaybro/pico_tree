@@ -15,7 +15,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 The examples show how PicoTree can be used:
 
-* Basic point cloud [adapter](./examples/pico_common/) and [usage](./examples/range_query/).
+* Basic point cloud [adaptor](./examples/pico_common/pico_adaptor.hpp) and [usage](./examples/range_query/).
 * Using [Eigen](./examples/eigen/).
 
 # Requirements
