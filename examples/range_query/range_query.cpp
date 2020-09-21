@@ -1,4 +1,4 @@
-#include <pico_point_set.hpp>
+#include <pico_adaptor.hpp>
 #include <pico_tree/kd_tree.hpp>
 #include <pico_tree/range_tree.hpp>
 #include <scoped_timer.hpp>

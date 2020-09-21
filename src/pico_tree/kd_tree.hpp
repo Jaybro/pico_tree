@@ -590,8 +590,8 @@ class KdTree {
     for (Index i = 0;
          i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
          ++i) {
-      if (points_(min, i) > points_(idx, i) ||
-          points_(max, i) < points_(idx, i)) {
+      Scalar const v = points_(idx, i);
+      if (points_(min, i) > v || points_(max, i) < v) {
         return false;
       }
     }

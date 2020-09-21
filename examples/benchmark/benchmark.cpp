@@ -1,11 +1,11 @@
 #include <benchmark/benchmark.h>
 
-#include <pico_point_set.hpp>
+#include <pico_adaptor.hpp>
 #include <pico_tree/kd_tree.hpp>
 #include <scoped_timer.hpp>
 
 #include "format_bin.hpp"
-#include "nano_point_set.hpp"
+#include "nano_adaptor.hpp"
 
 class KdTreeBenchmark : public benchmark::Fixture {
  protected:

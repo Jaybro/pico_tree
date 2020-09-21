@@ -3,7 +3,7 @@
 #include <point.hpp>
 #include <scoped_timer.hpp>
 
-#include "eigen_adapter.hpp"
+#include "eigen_adaptor.hpp"
 
 using Index = int;
 using Scalar = double;
