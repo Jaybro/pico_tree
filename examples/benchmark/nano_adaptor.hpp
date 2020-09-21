@@ -3,16 +3,16 @@
 #include <nanoflann.hpp>
 #include <point.hpp>
 
-//! Demo point set adapter for a vector of points.
+//! Demo point set adaptor for a vector of points.
 template <typename Index_, typename Point_>
-class NanoPointSet {
+class NanoAdaptor {
  public:
   using Index = Index_;
   using Point = Point_;
   using Scalar = typename Point::Scalar;
   static constexpr int Dims = Point::Dims;
 
-  NanoPointSet(std::vector<Point> const& points) : points_(points) {}
+  NanoAdaptor(std::vector<Point> const& points) : points_(points) {}
 
   //! Returns the number of points.
   inline Index kdtree_get_point_count() const { return points_.size(); }
@@ -36,16 +36,16 @@ class NanoPointSet {
   std::vector<Point> const& points_;
 };
 
-template <typename PointSet_>
+template <typename NanoAdaptor>
 using NanoflannKdTree = nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<typename PointSet_::Scalar, PointSet_>,
-    PointSet_,
-    PointSet_::Dims,
-    typename PointSet_::Index>;
+    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
+    NanoAdaptor,
+    NanoAdaptor::Dims,
+    typename NanoAdaptor::Index>;
 
-template <typename PointSet_>
+template <typename NanoAdaptor>
 using NanoflannKdTreeRt = nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<typename PointSet_::Scalar, PointSet_>,
-    PointSet_,
+    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
+    NanoAdaptor,
     -1,
-    typename PointSet_::Index>;
+    typename NanoAdaptor::Index>;

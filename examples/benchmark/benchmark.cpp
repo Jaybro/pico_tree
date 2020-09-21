@@ -12,7 +12,7 @@ class KdTreeBenchmark : public benchmark::Fixture {
   using Index = int;
   using Scalar = double;
   using PointX = Point3d;
-  using NanoPointSetX = NanoPointSet<Index, PointX>;
+  using NanoAdaptorX = NanoAdaptor<Index, PointX>;
   using PicoPointSetX = PicoPointSet<Index, PointX>;
 
  public:
@@ -32,11 +32,11 @@ class KdTreeBenchmark : public benchmark::Fixture {
 
 BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoBuildTree)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  NanoPointSetX nano_set(points_);
+  NanoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    NanoflannKdTree<NanoPointSetX> tree(
+    NanoflannKdTree<NanoAdaptorX> tree(
         PointX::Dims,
-        nano_set,
+        adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
     tree.buildIndex();
   }
@@ -52,11 +52,11 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoBuildTree)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(KdTreeBenchmark, RtNanoBuildTree)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  NanoPointSetX nano_set(points_);
+  NanoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    NanoflannKdTreeRt<NanoPointSetX> tree(
+    NanoflannKdTreeRt<NanoAdaptorX> tree(
         PointX::Dims,
-        nano_set,
+        adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
     tree.buildIndex();
   }
@@ -96,10 +96,10 @@ BENCHMARK_REGISTER_F(KdTreeBenchmark, RtPicoBuildTree)
 BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoKnn)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
-  NanoPointSetX nano_set(points_);
-  NanoflannKdTree<NanoPointSetX> tree(
+  NanoAdaptorX adaptor(points_);
+  NanoflannKdTree<NanoAdaptorX> tree(
       PointX::Dims,
-      nano_set,
+      adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
   tree.buildIndex();
 
@@ -195,10 +195,10 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoRadius)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   double radius = static_cast<double>(state.range(1)) / 4.0;
   double squared = radius * radius;
-  NanoPointSetX nano_set(points_);
-  NanoflannKdTree<NanoPointSetX> tree(
+  NanoAdaptorX adaptor(points_);
+  NanoflannKdTree<NanoAdaptorX> tree(
       PointX::Dims,
-      nano_set,
+      adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
   tree.buildIndex();
 
