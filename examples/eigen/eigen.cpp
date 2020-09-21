@@ -28,8 +28,8 @@ std::vector<Point, Eigen::aligned_allocator<Point>> GenerateRandomEigenN(
   return random;
 }
 
-template <typename Adapter>
-void AdapterCout(Adapter const& a, Index idx) {
+template <typename Adaptor>
+void AdaptorCout(Adaptor const& a, Index idx) {
   Index num_dims = a.num_dimensions();
   for (Index i = 0; i < num_dims; ++i) std::cout << a(idx, i) << " ";
   std::cout << std::endl;
@@ -40,22 +40,22 @@ void ColMajor() {
   constexpr int Dims = Point::RowsAtCompileTime;
   using PointsMap =
       Eigen::Map<Eigen::Matrix<Point::Scalar, Dims, Eigen::Dynamic>>;
-  using PointSet = pico_tree::EigenAdapter<Index, PointsMap>;
+  using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
   PointsMap points_map(points.data()->data(), Dims, points.size());
-  PointSet adapter(points_map);
+  Adaptor adaptor(points_map);
 
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
   std::pair<Index, Scalar> nn;
 
   std::cout << points[points.size() - 1].transpose() << std::endl;
-  AdapterCout(adapter, points.size() - 1);
-  std::cout << "RowMajor: " << PointSet::RowMajor << std::endl;
+  AdaptorCout(adaptor, points.size() - 1);
+  std::cout << "RowMajor: " << Adaptor::RowMajor << std::endl;
 
   {
-    pico_tree::KdTree<Index, Point::Scalar, Dims, PointSet> rt(
-        adapter, kMaxLeafCount);
+    pico_tree::KdTree<Index, Point::Scalar, Dims, Adaptor> rt(
+        adaptor, kMaxLeafCount);
 
     std::vector<std::pair<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree", kRunCount);
@@ -70,22 +70,22 @@ void RowMajor() {
   constexpr int Dims = Point::ColsAtCompileTime;
   using PointsMap = Eigen::Map<
       Eigen::Matrix<Point::Scalar, Eigen::Dynamic, Dims, Eigen::RowMajor>>;
-  using PointSet = pico_tree::EigenAdapter<Index, PointsMap>;
+  using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
   PointsMap points_map(points.data()->data(), points.size(), Dims);
-  PointSet adapter(points_map);
+  Adaptor adaptor(points_map);
 
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
   std::pair<Index, Scalar> nn;
 
   std::cout << points[points.size() - 1] << std::endl;
-  AdapterCout(adapter, points.size() - 1);
-  std::cout << "RowMajor: " << PointSet::RowMajor << std::endl;
+  AdaptorCout(adaptor, points.size() - 1);
+  std::cout << "RowMajor: " << Adaptor::RowMajor << std::endl;
 
   {
-    pico_tree::KdTree<Index, Point::Scalar, Dims, PointSet> rt(
-        adapter, kMaxLeafCount);
+    pico_tree::KdTree<Index, Point::Scalar, Dims, Adaptor> rt(
+        adaptor, kMaxLeafCount);
 
     std::vector<std::pair<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree", kRunCount);

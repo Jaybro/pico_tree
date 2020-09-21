@@ -17,18 +17,18 @@ struct EigenDimensions<Eigen::Dynamic> {
 };
 
 template <typename Index, typename EigenMatrix, bool RowMajor>
-class EigenAdapterBase;
+class EigenAdaptorBase;
 
-//! ColMajor EigenAdapter.
+//! ColMajor EigenAdaptor.
 template <typename Index_, typename EigenMatrix>
-class EigenAdapterBase<Index_, EigenMatrix, false> {
+class EigenAdaptorBase<Index_, EigenMatrix, false> {
  public:
   using Index = Index_;
   using Scalar = typename EigenMatrix::Scalar;
   static constexpr int Dims = EigenMatrix::RowsAtCompileTime;
   static constexpr bool RowMajor = false;
 
-  inline EigenAdapterBase(EigenMatrix const& matrix) : matrix_(matrix) {}
+  inline EigenAdaptorBase(EigenMatrix const& matrix) : matrix_(matrix) {}
 
   //! Returns dimension \p dim of point \p idx.
   inline Scalar operator()(Index const idx, Index const dim) const {
@@ -54,16 +54,16 @@ class EigenAdapterBase<Index_, EigenMatrix, false> {
   EigenMatrix matrix_;
 };
 
-//! RowMajor EigenAdapter.
+//! RowMajor EigenAdaptor.
 template <typename Index_, typename EigenMatrix>
-class EigenAdapterBase<Index_, EigenMatrix, true> {
+class EigenAdaptorBase<Index_, EigenMatrix, true> {
  public:
   using Index = Index_;
   using Scalar = typename EigenMatrix::Scalar;
   static constexpr int Dims = EigenMatrix::ColsAtCompileTime;
   static constexpr bool RowMajor = true;
 
-  inline EigenAdapterBase(EigenMatrix const& matrix) : matrix_(matrix) {}
+  inline EigenAdaptorBase(EigenMatrix const& matrix) : matrix_(matrix) {}
 
   //! Returns dimension \p dim of point \p idx.
   inline Scalar operator()(Index const idx, Index const dim) const {
@@ -93,12 +93,12 @@ class EigenAdapterBase<Index_, EigenMatrix, true> {
 
 //! Adapts Eigen matrices so they can be used with any of the pico trees.
 template <typename Index, typename EigenMatrix>
-class EigenAdapter
+class EigenAdaptor
     : public internal::
-          EigenAdapterBase<Index, EigenMatrix, EigenMatrix::IsRowMajor> {
+          EigenAdaptorBase<Index, EigenMatrix, EigenMatrix::IsRowMajor> {
  public:
-  inline EigenAdapter(EigenMatrix const& matrix)
-      : internal::EigenAdapterBase<Index, EigenMatrix, EigenMatrix::IsRowMajor>(
+  inline EigenAdaptor(EigenMatrix const& matrix)
+      : internal::EigenAdaptorBase<Index, EigenMatrix, EigenMatrix::IsRowMajor>(
             matrix) {}
 };
 
