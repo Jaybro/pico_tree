@@ -2,6 +2,8 @@
 
 PicoTree is a small C++11 header only library that provides several data structures that can be used for range searches and nearest neighbor searches. Created simply for fun, the first thing that was added was a [Range Tree](https://en.wikipedia.org/wiki/Range_tree) and a [KdTree](https://en.wikipedia.org/wiki/K-d_tree) soon followed.
 
+See the comparison [benchmark](./docs/benchmark.md) between PicoTree and [nanoflann](https://github.com/jlblancoc/nanoflann) to get an impression of the performance provided by the KdTree of this library.
+
 Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 # Capabilities
@@ -28,7 +30,7 @@ Optional:
 * [Doxygen](https://www.doxygen.nl). Needed for generating documentation.
 * [Google Test](https://github.com/google/googletest). Used for running unit tests.
 * [Eigen](http://eigen.tuxfamily.org). To run the example that shows how Eigen data types can be used in combination with PicoTree.
-* The [benchmark](./docs/benchmark.md) example needs [nanoflann](https://github.com/jlblancoc/nanoflann), [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard (filesystem).
+* [nanoflann](https://github.com/jlblancoc/nanoflann), [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run the comparison [benchmark](./docs/benchmark.md) between nanoflann and PicoTree.
 
 # Build
 

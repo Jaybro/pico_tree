@@ -178,7 +178,7 @@ class SplitterMedian {
 
 //! \brief Splits a tree node halfway the "fattest" axis of the bounding box
 //! that contains it.
-//! \details Bases on the paper "It's okay to be skinny, if your friends are
+//! \details Based on the paper "It's okay to be skinny, if your friends are
 //! fat". The aspect ratio of the split is at most 2:1 unless that results in an
 //! empty leaf. Then at least one point is moved into the empty leaf and the
 //! split is adjusted.
