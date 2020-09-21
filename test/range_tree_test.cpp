@@ -19,23 +19,23 @@ class RangeTree3d : public internal::RangeTreeNd_<Index, Scalar, 0, Points> {
 
 }  // namespace pico_tree
 
-template <typename PointSet1d>
+template <typename Adaptor1d>
 using RangeTree1d = pico_tree::RangeTree1d<
-    typename PointSet1d::Index,
-    typename PointSet1d::Scalar,
-    PointSet1d>;
+    typename Adaptor1d::Index,
+    typename Adaptor1d::Scalar,
+    Adaptor1d>;
 
-template <typename PointSet2d>
+template <typename Adaptor2d>
 using RangeTree2d = pico_tree::RangeTree2d<
-    typename PointSet2d::Index,
-    typename PointSet2d::Scalar,
-    PointSet2d>;
+    typename Adaptor2d::Index,
+    typename Adaptor2d::Scalar,
+    Adaptor2d>;
 
-template <typename PointSet3d>
+template <typename Adaptor3d>
 using RangeTree3d = pico_tree::RangeTree3d<
-    typename PointSet3d::Index,
-    typename PointSet3d::Scalar,
-    PointSet3d>;
+    typename Adaptor3d::Index,
+    typename Adaptor3d::Scalar,
+    Adaptor3d>;
 
 using Index = int;
 
@@ -44,31 +44,31 @@ struct PtsTraits;
 
 template <>
 struct PtsTraits<Point1f> {
-  using PointSet = PicoPointSet<Index, Point1f>;
-  using Tree = RangeTree1d<PointSet>;
+  using Adaptor = PicoAdaptor<Index, Point1f>;
+  using Tree = RangeTree1d<Adaptor>;
 };
 
 template <>
 struct PtsTraits<Point2f> {
-  using PointSet = PicoPointSet<Index, Point2f>;
-  using Tree = RangeTree2d<PointSet>;
+  using Adaptor = PicoAdaptor<Index, Point2f>;
+  using Tree = RangeTree2d<Adaptor>;
 };
 
 template <>
 struct PtsTraits<Point3f> {
-  using PointSet = PicoPointSet<Index, Point3f>;
-  using Tree = RangeTree3d<PointSet>;
+  using Adaptor = PicoAdaptor<Index, Point3f>;
+  using Tree = RangeTree3d<Adaptor>;
 };
 
-template <typename PointsX>
-using PicoPointSetXd = typename PtsTraits<PointsX>::PointSet;
-template <typename PointsX>
-using PicoRangeTreeXd = typename PtsTraits<PointsX>::Tree;
+template <typename PointX>
+using AdaptorXd = typename PtsTraits<PointX>::Adaptor;
+template <typename PointX>
+using RangeTreeXd = typename PtsTraits<PointX>::Tree;
 
 TEST(RangeTreeTest, RangeTree1d) {
   std::vector<Point1f> raw{{{0}}, {{1}}, {{5}}, {{4}}, {{3}}, {{6}}};
-  PicoPointSetXd<Point1f> points(raw);
-  PicoRangeTreeXd<Point1f> rt(points);
+  AdaptorXd<Point1f> adaptor(raw);
+  RangeTreeXd<Point1f> rt(adaptor);
 
   EXPECT_EQ(rt.SearchNearest(4.9f), 2);
   std::vector<int> indices;
@@ -87,8 +87,8 @@ void QueryRange(
     typename PointX::Scalar const min_v,
     typename PointX::Scalar const max_v) {
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  PicoPointSetXd<PointX> points(random);
-  PicoRangeTreeXd<PointX> tree(points);
+  AdaptorXd<PointX> adaptor(random);
+  RangeTreeXd<PointX> tree(adaptor);
 
   TestRange(tree, min_v, max_v);
 }

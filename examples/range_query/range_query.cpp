@@ -7,14 +7,14 @@ int main() {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::Scalar;
-  using PicoPointSetX = PicoPointSet<Index, PointX>;
+  using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 
   int run_count = 1024 * 1024;
   Index max_leaf_count = 1;
   Index point_count = 1024 * 1024;
   Scalar const area_size = 1000;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  PicoPointSetX points(random);
+  PicoAdaptorX adaptor(random);
 
   Scalar const min_v = 25.1f;
   Scalar const max_v = 37.9f;
@@ -25,7 +25,7 @@ int main() {
   std::vector<Index> idxs;
 
   {
-    KdTree<PicoPointSetX> tree(points, max_leaf_count);
+    KdTree<PicoAdaptorX> tree(adaptor, max_leaf_count);
 
     ScopedTimer t("tree rq kd_tree", run_count);
     for (Index i = 0; i < run_count; ++i) {
@@ -34,7 +34,7 @@ int main() {
   }
 
   {
-    RangeTree2d<PicoPointSetX> tree(points);
+    RangeTree2d<PicoAdaptorX> tree(adaptor);
 
     ScopedTimer t("tree rq rg_tree", run_count);
     for (Index i = 0; i < run_count; ++i) {

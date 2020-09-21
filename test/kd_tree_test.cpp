@@ -10,13 +10,13 @@ TEST(KdTreeTest, MetricL1) {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::Scalar;
-  using PointsX = PicoPointSet<Index, PointX>;
+  using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dims = PointX::Dims;
-  std::vector<PointX> pts{{2.0, 4.0}};
-  PointsX ptsx(pts);
+  std::vector<PointX> points{{2.0, 4.0}};
+  AdaptorX adaptor(points);
   PointX p{10.0, 1.0};
 
-  pico_tree::MetricL1<Index, Scalar, Dims, PointsX> metric(ptsx);
+  pico_tree::MetricL1<Index, Scalar, Dims, AdaptorX> metric(adaptor);
 
   EXPECT_FLOAT_EQ(metric(p, 0), 11.0);
   EXPECT_FLOAT_EQ(metric(-3.1, 8.9), 12.0);
@@ -27,13 +27,13 @@ TEST(KdTreeTest, MetricL2) {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::Scalar;
-  using PointsX = PicoPointSet<Index, PointX>;
+  using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dims = PointX::Dims;
-  std::vector<PointX> pts{{2.0, 4.0}};
-  PointsX ptsx(pts);
+  std::vector<PointX> points{{2.0, 4.0}};
+  AdaptorX adaptor(points);
   PointX p{10.0, 1.0};
 
-  pico_tree::MetricL2<Index, Scalar, Dims, PointsX> metric(ptsx);
+  pico_tree::MetricL2<Index, Scalar, Dims, AdaptorX> metric(adaptor);
 
   EXPECT_FLOAT_EQ(metric(p, 0), 73.0);
   EXPECT_FLOAT_EQ(metric(-3.1, 8.9), 144.0);
@@ -44,11 +44,11 @@ TEST(KdTreeTest, SplitterMedian) {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::Scalar;
-  using PointsX = PicoPointSet<Index, PointX>;
+  using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dims = PointX::Dims;
   std::vector<PointX> pts4{{0.0, 4.0}, {0.0, 2.0}, {0.0, 3.0}, {0.0, 1.0}};
   std::vector<Index> idx4{0, 1, 2, 3};
-  PointsX ptsx4(pts4);
+  AdaptorX ptsx4(pts4);
 
   pico_tree::internal::Sequence<Scalar, 2> min;
   pico_tree::internal::Sequence<Scalar, 2> max;
@@ -56,7 +56,7 @@ TEST(KdTreeTest, SplitterMedian) {
   Index split_idx;
   Scalar split_val;
 
-  pico_tree::SplitterMedian<Index, Scalar, Dims, PointsX> splitter4(
+  pico_tree::SplitterMedian<Index, Scalar, Dims, AdaptorX> splitter4(
       ptsx4, &idx4);
   splitter4(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
 
@@ -73,9 +73,9 @@ TEST(KdTreeTest, SplitterMedian) {
       {0.0, 1.0},
       {1.0, 7.0}};
   std::vector<Index> idx7{0, 1, 2, 3, 4, 5, 6};
-  PointsX ptsx7(pts7);
+  AdaptorX ptsx7(pts7);
 
-  pico_tree::SplitterMedian<Index, Scalar, Dims, PointsX> splitter7(
+  pico_tree::SplitterMedian<Index, Scalar, Dims, AdaptorX> splitter7(
       ptsx7, &idx7);
   splitter7(0, 0, 7, min, max, &split_dim, &split_idx, &split_val);
 
@@ -94,13 +94,13 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::Scalar;
-  using PointsX = PicoPointSet<Index, PointX>;
+  using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dims = PointX::Dims;
   std::vector<PointX> pts4{{0.0, 2.0}, {0.0, 1.0}, {0.0, 4.0}, {0.0, 3.0}};
   std::vector<Index> idx4{0, 1, 2, 3};
-  PointsX ptsx4(pts4);
+  AdaptorX ptsx4(pts4);
 
-  pico_tree::SplitterSlidingMidpoint<Index, Scalar, Dims, PointsX> splitter(
+  pico_tree::SplitterSlidingMidpoint<Index, Scalar, Dims, AdaptorX> splitter(
       ptsx4, &idx4);
 
   pico_tree::internal::Sequence<Scalar, 2> min;
@@ -165,10 +165,10 @@ void QueryRange(
     typename PointX::Scalar const min_v,
     typename PointX::Scalar const max_v) {
   using Index = int;
-  using PointsX = PicoPointSet<Index, PointX>;
+  using AdaptorX = PicoAdaptor<Index, PointX>;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  PointsX points(random);
-  KdTree<PointsX> tree(points, 8);
+  AdaptorX adaptor(random);
+  KdTree<AdaptorX> tree(adaptor, 8);
 
   TestRange(tree, min_v, max_v);
 }
@@ -179,10 +179,10 @@ void QueryRadius(
     typename PointX::Scalar const area_size,
     typename PointX::Scalar const radius) {
   using Index = int;
-  using PointsX = PicoPointSet<Index, PointX>;
+  using AdaptorX = PicoAdaptor<Index, PointX>;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  PointsX points(random);
-  KdTree<PointsX> tree(points, 8);
+  AdaptorX adaptor(random);
+  KdTree<AdaptorX> tree(adaptor, 8);
 
   TestRadius(tree, radius);
 }

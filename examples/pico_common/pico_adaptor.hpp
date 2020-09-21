@@ -5,16 +5,16 @@
 
 #include "point.hpp"
 
-//! Example point set adapter that shows which functions need to be implemented.
+//! Example point set adaptor that shows which functions need to be implemented.
 template <typename Index_, typename Point_>
-class PicoPointSet {
+class PicoAdaptor {
  public:
   using Index = Index_;
   using Point = Point_;
   using Scalar = typename Point::Scalar;
   static constexpr int Dims = Point::Dims;
 
-  explicit PicoPointSet(std::vector<Point> const& points) : points_(points) {}
+  explicit PicoAdaptor(std::vector<Point> const& points) : points_(points) {}
 
   //! Returns dimension \p dim of point \p idx.
   inline Scalar operator()(Index const idx, Index const dim) const {
@@ -36,20 +36,22 @@ class PicoPointSet {
   std::vector<Point> const& points_;
 };
 
-template <typename PointSet>
+template <typename PicoAdaptor>
 using KdTree = pico_tree::KdTree<
-    typename PointSet::Index,
-    typename PointSet::Scalar,
-    PointSet::Dims,
-    PointSet>;
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    PicoAdaptor::Dims,
+    PicoAdaptor>;
 
-template <typename PointSet>
+template <typename PicoAdaptor>
 using KdTreeRt = pico_tree::KdTree<
-    typename PointSet::Index,
-    typename PointSet::Scalar,
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
     pico_tree::kRuntimeDims,
-    PointSet>;
+    PicoAdaptor>;
 
-template <typename PointSet>
-using RangeTree2d = pico_tree::
-    RangeTree2d<typename PointSet::Index, typename PointSet::Scalar, PointSet>;
+template <typename PicoAdaptor>
+using RangeTree2d = pico_tree::RangeTree2d<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    PicoAdaptor>;

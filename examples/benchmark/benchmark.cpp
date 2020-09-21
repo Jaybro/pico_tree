@@ -13,7 +13,7 @@ class KdTreeBenchmark : public benchmark::Fixture {
   using Scalar = double;
   using PointX = Point3d;
   using NanoAdaptorX = NanoAdaptor<Index, PointX>;
-  using PicoPointSetX = PicoPointSet<Index, PointX>;
+  using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 
  public:
   KdTreeBenchmark() {
@@ -44,9 +44,9 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoBuildTree)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoBuildTree)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  PicoPointSetX pico_set(points_);
+  PicoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    KdTree<PicoPointSetX> tree(pico_set, max_leaf_size);
+    KdTree<PicoAdaptorX> tree(adaptor, max_leaf_size);
   }
 }
 
@@ -64,9 +64,9 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, RtNanoBuildTree)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(KdTreeBenchmark, RtPicoBuildTree)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  PicoPointSetX pico_set(points_);
+  PicoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    KdTreeRt<PicoPointSetX> tree(pico_set, max_leaf_size);
+    KdTreeRt<PicoAdaptorX> tree(adaptor, max_leaf_size);
   }
 }
 
@@ -118,8 +118,8 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoKnn)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoKnn)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
-  PicoPointSetX pico_set(points_);
-  KdTree<PicoPointSetX> tree(pico_set, max_leaf_size);
+  PicoAdaptorX adaptor(points_);
+  KdTree<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
     std::vector<std::pair<Index, Scalar>> results;
@@ -217,8 +217,8 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoRadius)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   double radius = static_cast<double>(state.range(1)) / 4.0;
   double squared = radius * radius;
-  PicoPointSetX pico_set(points_);
-  KdTree<PicoPointSetX> tree(pico_set, max_leaf_size);
+  PicoAdaptorX adaptor(points_);
+  KdTree<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
     std::vector<std::pair<Index, Scalar>> results;
