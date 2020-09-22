@@ -9,7 +9,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 # Capabilities
 
 * Kd Tree
-  * Nearest neighbor, k nearest neighbors, radius and range searches.
+  * Nearest neighbors, radius and range searches.
 * Range Tree
   * Range searches. Currently only available in 2d (although an experimental version is also available for 3d range searches, but it is very slow).
 
