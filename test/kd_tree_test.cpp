@@ -6,6 +6,13 @@
 
 #include "common.hpp"
 
+template <typename PicoAdaptor>
+using KdTree = pico_tree::KdTree<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    PicoAdaptor::Dims,
+    PicoAdaptor>;
+
 TEST(KdTreeTest, MetricL1) {
   using PointX = Point2f;
   using Index = int;

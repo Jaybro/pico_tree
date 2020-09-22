@@ -3,14 +3,27 @@
 #include <pico_tree/range_tree.hpp>
 #include <scoped_timer.hpp>
 
+template <typename PicoAdaptor>
+using KdTree = pico_tree::KdTree<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    PicoAdaptor::Dims,
+    PicoAdaptor>;
+
+template <typename PicoAdaptor>
+using RangeTree2d = pico_tree::RangeTree2d<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    PicoAdaptor>;
+
 int main() {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::Scalar;
   using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 
-  int run_count = 1024 * 1024;
-  Index max_leaf_count = 1;
+  Index run_count = 1024 * 1024;
+  Index max_leaf_size = 1;
   Index point_count = 1024 * 1024;
   Scalar const area_size = 1000;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
@@ -25,7 +38,7 @@ int main() {
   std::vector<Index> idxs;
 
   {
-    KdTree<PicoAdaptorX> tree(adaptor, max_leaf_count);
+    KdTree<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
     ScopedTimer t("tree rq kd_tree", run_count);
     for (Index i = 0; i < run_count; ++i) {

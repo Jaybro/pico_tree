@@ -35,17 +35,3 @@ class NanoAdaptor {
  private:
   std::vector<Point> const& points_;
 };
-
-template <typename NanoAdaptor>
-using NanoflannKdTree = nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
-    NanoAdaptor,
-    NanoAdaptor::Dims,
-    typename NanoAdaptor::Index>;
-
-template <typename NanoAdaptor>
-using NanoflannKdTreeRt = nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
-    NanoAdaptor,
-    -1,
-    typename NanoAdaptor::Index>;

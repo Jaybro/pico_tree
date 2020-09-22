@@ -1,8 +1,5 @@
 #pragma once
 
-#include <pico_tree/kd_tree.hpp>
-#include <pico_tree/range_tree.hpp>
-
 #include "point.hpp"
 
 //! Example point set adaptor that shows which functions need to be implemented.
@@ -35,23 +32,3 @@ class PicoAdaptor {
  private:
   std::vector<Point> const& points_;
 };
-
-template <typename PicoAdaptor>
-using KdTree = pico_tree::KdTree<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
-    PicoAdaptor::Dims,
-    PicoAdaptor>;
-
-template <typename PicoAdaptor>
-using KdTreeRt = pico_tree::KdTree<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
-    pico_tree::kRuntimeDims,
-    PicoAdaptor>;
-
-template <typename PicoAdaptor>
-using RangeTree2d = pico_tree::RangeTree2d<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
-    PicoAdaptor>;

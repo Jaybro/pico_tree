@@ -7,6 +7,34 @@
 #include "format_bin.hpp"
 #include "nano_adaptor.hpp"
 
+template <typename PicoAdaptor>
+using PicoKdTreeCt = pico_tree::KdTree<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    PicoAdaptor::Dims,
+    PicoAdaptor>;
+
+template <typename PicoAdaptor>
+using PicoKdTreeRt = pico_tree::KdTree<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    pico_tree::kRuntimeDims,
+    PicoAdaptor>;
+
+template <typename NanoAdaptor>
+using NanoKdTreeCt = nanoflann::KDTreeSingleIndexAdaptor<
+    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
+    NanoAdaptor,
+    NanoAdaptor::Dims,
+    typename NanoAdaptor::Index>;
+
+template <typename NanoAdaptor>
+using NanoKdTreeRt = nanoflann::KDTreeSingleIndexAdaptor<
+    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
+    NanoAdaptor,
+    -1,
+    typename NanoAdaptor::Index>;
+
 class KdTreeBenchmark : public benchmark::Fixture {
  protected:
   using Index = int;
@@ -34,7 +62,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoBuildTree)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   NanoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    NanoflannKdTree<NanoAdaptorX> tree(
+    NanoKdTreeCt<NanoAdaptorX> tree(
         PointX::Dims,
         adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
@@ -46,7 +74,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoBuildTree)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   PicoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    KdTree<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    PicoKdTreeCt<PicoAdaptorX> tree(adaptor, max_leaf_size);
   }
 }
 
@@ -54,7 +82,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, RtNanoBuildTree)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   NanoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    NanoflannKdTreeRt<NanoAdaptorX> tree(
+    NanoKdTreeRt<NanoAdaptorX> tree(
         PointX::Dims,
         adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
@@ -66,7 +94,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, RtPicoBuildTree)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   PicoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    KdTreeRt<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    PicoKdTreeRt<PicoAdaptorX> tree(adaptor, max_leaf_size);
   }
 }
 
@@ -97,7 +125,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoKnn)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
   NanoAdaptorX adaptor(points_);
-  NanoflannKdTree<NanoAdaptorX> tree(
+  NanoKdTreeCt<NanoAdaptorX> tree(
       PointX::Dims,
       adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
@@ -119,7 +147,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoKnn)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
   PicoAdaptorX adaptor(points_);
-  KdTree<PicoAdaptorX> tree(adaptor, max_leaf_size);
+  PicoKdTreeCt<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
     std::vector<std::pair<Index, Scalar>> results;
@@ -196,7 +224,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoRadius)(benchmark::State& state) {
   double radius = static_cast<double>(state.range(1)) / 4.0;
   double squared = radius * radius;
   NanoAdaptorX adaptor(points_);
-  NanoflannKdTree<NanoAdaptorX> tree(
+  NanoKdTreeCt<NanoAdaptorX> tree(
       PointX::Dims,
       adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
@@ -218,7 +246,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoRadius)(benchmark::State& state) {
   double radius = static_cast<double>(state.range(1)) / 4.0;
   double squared = radius * radius;
   PicoAdaptorX adaptor(points_);
-  KdTree<PicoAdaptorX> tree(adaptor, max_leaf_size);
+  PicoKdTreeCt<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
     std::vector<std::pair<Index, Scalar>> results;

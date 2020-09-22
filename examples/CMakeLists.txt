@@ -1,6 +1,7 @@
 add_subdirectory(pico_common)
 
-add_subdirectory(range_query)
+add_subdirectory(kd_tree)
+add_subdirectory(range_tree)
 
 find_package(Eigen3 QUIET)
 if(Eigen3_FOUND)
