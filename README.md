@@ -9,14 +9,15 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 # Capabilities
 
 * Kd Tree
-  * Nearest neighbors, radius and range searches.
+  * Nearest neighbors, radius, box and custom searches.
 * Range Tree
-  * Range searches. Currently only available in 2d (although an experimental version is also available for 3d range searches, but it is very slow).
+  * Box searches. Currently only available in 2d (although an experimental version is also available for 3d range searches, but it is very slow).
 
 The examples show how PicoTree can be used:
 
-* Basic point cloud [adaptor](./examples/pico_common/pico_adaptor.hpp) and [usage](./examples/kd_tree/kd_tree.cpp).
-* Using [Eigen](./examples/eigen/).
+* How to create a basic point cloud [adaptor](./examples/pico_common/pico_adaptor.hpp).
+* Performing various searches using the [Kdtree](./examples/kd_tree/kd_tree.cpp) and how to create a custom (approximate nearest neighbor) search visitor.
+* Using [Eigen](./examples/eigen/) data types.
 
 # Requirements
 
