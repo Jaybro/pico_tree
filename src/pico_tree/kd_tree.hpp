@@ -473,14 +473,14 @@ class KdTree {
   //! \brief Returns all points within the box defined by \p min and \p max.
   //! Query time is bounded by O(n^(1-1/Dims)+k).
   template <typename P>
-  inline void SearchRange(
+  inline void SearchBox(
       P const& min, P const& max, std::vector<Index>* i) const {
     i->clear();
     // Note that it's never checked if the bounding box intersects at all. For
     // now it is assumed that this check is not worth it: If there was overlap
     // then the search is slower. So unless many queries don't intersect there
     // is no point in adding it.
-    SearchRange(
+    SearchBox(
         root_, min, max, Sequence(root_box_min_), Sequence(root_box_max_), i);
   }
 
@@ -615,7 +615,7 @@ class KdTree {
   //! Returns all points within the box defined by \p rng_min and \p rng_max for
   //! \p node.
   template <typename P>
-  inline void SearchRange(
+  inline void SearchBox(
       Node const* const node,
       P const& rng_min,
       P const& rng_max,
@@ -643,7 +643,7 @@ class KdTree {
       } else if (
           points_(rng_min, node->data.branch.split_dim) <
           node->data.branch.split_val) {
-        SearchRange(
+        SearchBox(
             node->left,
             rng_min,
             rng_max,
@@ -662,7 +662,7 @@ class KdTree {
       } else if (
           points_(rng_max, node->data.branch.split_dim) >
           node->data.branch.split_val) {
-        SearchRange(
+        SearchBox(
             node->right,
             rng_min,
             rng_max,

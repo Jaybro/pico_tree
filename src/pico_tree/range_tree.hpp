@@ -191,7 +191,7 @@ class RangeTree2d_ {
 
   //! Perform a range search in O(log_2 n) time.
   template <typename P>
-  inline void SearchRange(
+  inline void SearchBox(
       P const& min, P const& max, std::vector<Index>* indices) const {
     assert(
         points_(min, Dimension<Dim>::d0(dimension_)) <=
@@ -532,7 +532,7 @@ class RangeTreeNd_ {
 
   //! Perform range search in O(log_2^max(1, d - 1) n) time.
   template <typename P>
-  inline void SearchRange(
+  inline void SearchBox(
       P const& min, P const& max, std::vector<Index>* indices) const {
     assert(
         points_(min, Dimension<Dim>::d0(dimension_)) <=
@@ -567,7 +567,7 @@ class RangeTreeNd_ {
         while (track->IsBranch()) {
           if (points_(min, Dimension<Dim>::d0(dimension_)) <=
               track->data.branch.split) {
-            track->right->sub.td->SearchRange(min, max, indices);
+            track->right->sub.td->SearchBox(min, max, indices);
             track = track->left;
           } else {
             track = track->right;
@@ -577,7 +577,7 @@ class RangeTreeNd_ {
         // Last leaf of the left side.
         if (points_(min, Dimension<Dim>::d0(dimension_)) <=
             points_(track->data.leaf.index, Dimension<Dim>::d0(dimension_))) {
-          track->sub.td->SearchRange(min, max, indices);
+          track->sub.td->SearchBox(min, max, indices);
         }
 
         // Right side of the split branch.
@@ -585,7 +585,7 @@ class RangeTreeNd_ {
         while (track->IsBranch()) {
           if (points_(max, Dimension<Dim>::d0(dimension_)) >=
               track->data.branch.split) {
-            track->left->sub.td->SearchRange(min, max, indices);
+            track->left->sub.td->SearchBox(min, max, indices);
             track = track->right;
           } else {
             track = track->left;
@@ -595,7 +595,7 @@ class RangeTreeNd_ {
         // Last leaf of the right side.
         if (points_(max, Dimension<Dim>::d0(dimension_)) >=
             points_(track->data.leaf.index, Dimension<Dim>::d0(dimension_))) {
-          track->sub.td->SearchRange(min, max, indices);
+          track->sub.td->SearchBox(min, max, indices);
         }
       } else {
         // We never found a split node and ended up in a leaf.
@@ -605,7 +605,7 @@ class RangeTreeNd_ {
             points_(max, Dimension<Dim>::d0(dimension_)) >=
                 points_(
                     split->data.leaf.index, Dimension<Dim>::d0(dimension_))) {
-          split->sub.td->SearchRange(min, max, indices);
+          split->sub.td->SearchBox(min, max, indices);
         }
       }
     } else {
@@ -614,7 +614,7 @@ class RangeTreeNd_ {
               points_(split->data.leaf.index, Dimension<Dim>::d0(dimension_)) &&
           points_(max, Dimension<Dim>::d0(dimension_)) >=
               points_(split->data.leaf.index, Dimension<Dim>::d0(dimension_))) {
-        split->sub.td->SearchRange(min, max, indices);
+        split->sub.td->SearchBox(min, max, indices);
       }
     }
   }
@@ -739,7 +739,7 @@ class RangeTree1d {
 
   //! Back-inserts the indices into \p indices representing all points
   //! within the range [ \p min ... \p max ].
-  inline void SearchRange(
+  inline void SearchBox(
       Scalar min, Scalar max, std::vector<Index>* indices) const {
     auto it_lower = std::lower_bound(
         sorted_.cbegin(), sorted_.cend(), min, [this](Index a, Scalar b) {

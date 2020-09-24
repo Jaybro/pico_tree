@@ -42,7 +42,7 @@ int main() {
 
     ScopedTimer t("tree rq kd_tree", run_count);
     for (Index i = 0; i < run_count; ++i) {
-      tree.SearchRange(min, max, &idxs);
+      tree.SearchBox(min, max, &idxs);
     }
   }
 
@@ -51,8 +51,8 @@ int main() {
 
     ScopedTimer t("tree rq rg_tree", run_count);
     for (Index i = 0; i < run_count; ++i) {
-      tree.SearchRange(min, max, &idxs);
-      // TODO The KdTree clears the list inside SearchRange. The RangeTree
+      tree.SearchBox(min, max, &idxs);
+      // TODO The KdTree clears the list inside SearchBox. The RangeTree
       // doesn't do this yet.
       idxs.clear();
     }

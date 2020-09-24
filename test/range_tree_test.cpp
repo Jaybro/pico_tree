@@ -72,7 +72,7 @@ TEST(RangeTreeTest, RangeTree1d) {
 
   EXPECT_EQ(rt.SearchNearest(4.9f), 2);
   std::vector<int> indices;
-  rt.SearchRange(-1.0f, 3.1f, &indices);
+  rt.SearchBox(-1.0f, 3.1f, &indices);
   EXPECT_THAT(indices, testing::ElementsAre(0, 1, 4));
 }
 

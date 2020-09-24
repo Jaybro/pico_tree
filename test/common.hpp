@@ -21,7 +21,7 @@ void TestRange(
   max.Fill(max_v);
 
   std::vector<Index> idxs;
-  tree.SearchRange(min, max, &idxs);
+  tree.SearchBox(min, max, &idxs);
 
   for (auto j : idxs) {
     for (int d = 0; d < PointX::Dims; ++d) {

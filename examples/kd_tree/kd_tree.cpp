@@ -73,7 +73,7 @@ void Searches() {
   for (Index i = 0; i < run_count; ++i) {
     tree.SearchKnn(pnn, k, &nn, false);
     tree.SearchRadius(pnn, search_radius_metric, &nn, false);
-    tree.SearchRange(min, max, &idxs);
+    tree.SearchBox(min, max, &idxs);
   }
 }
 
