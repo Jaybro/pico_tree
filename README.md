@@ -1,8 +1,8 @@
 # PicoTree
 
-PicoTree is a small C++11 header only library that provides several data structures that can be used for range searches and nearest neighbor searches. Created simply for fun, the first thing that was added was a [Range Tree](https://en.wikipedia.org/wiki/Range_tree) and a [KdTree](https://en.wikipedia.org/wiki/K-d_tree) soon followed.
+PicoTree is a small C++11 header only library that provides several data structures that can be used for range searches and nearest neighbor searches.
 
-See the comparison [benchmark](./docs/benchmark.md) between PicoTree and [nanoflann](https://github.com/jlblancoc/nanoflann) to get an impression of the performance provided by the KdTree of this library.
+See the comparison [benchmark](./docs/benchmark.md) between PicoTree and [nanoflann](https://github.com/jlblancoc/nanoflann) to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library.
 
 Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
