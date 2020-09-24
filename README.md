@@ -10,8 +10,6 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 * Kd Tree
   * Nearest neighbors, radius, box and custom searches.
-* Range Tree
-  * Box searches. Currently only available in 2d (although an experimental version is also available for 3d range searches, but it is very slow).
 
 The examples show how PicoTree can be used:
 
@@ -57,4 +55,3 @@ target_link_libraries(myexe PUBLIC PicoTree::PicoTree)
 * [Computational Geometry - Algorithms and Applications.](https://www.springer.com/gp/book/9783540779735) Mark de Berg, Otfried Cheong, Marc van Kreveld, and Mark Overmars, Springer-Verlag, third edition, 2008.
 * S. Maneewongvatana and D. M. Mount. [It's okay to be skinny, if your friends are fat.](http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf) 4th Annual CGC Workshop on Computational Geometry, 1999.
 * https://en.wikipedia.org/wiki/K-d_tree
-* https://en.wikipedia.org/wiki/Range_tree
