@@ -227,6 +227,9 @@ class SplitterMedian {
 //!
 //! The tree is build in O(n log n) time and tree creation is in practice faster
 //! than using SplitterMedian.
+//!
+//! This splitter can be used to answer an approximate nearest neighbor query in
+//! O(1/e^d log n) time.
 template <typename Index, typename Scalar, int Dims, typename Points>
 class SplitterSlidingMidpoint {
  private:
@@ -433,6 +436,15 @@ class KdTree {
         nodes_(internal::MaxNodesFromPoints(points_.num_points())),
         indices_(points_.num_points()),
         root_{MakeTree(max_leaf_size)} {}
+
+  //! Returns the nearest neighbor (or neighbors) of point \p p depending on
+  //! their selection by visitor \p visitor .
+  //! \see internal::SearchKnn
+  //! \see internal::SearchRadius
+  template <typename P, typename V>
+  inline void SearchNn(P const& p, V* visitor) const {
+    SearchNn(root_, p, visitor);
+  }
 
   //! \brief Returns the \p k nearest neighbors of point \p p .
   //! \tparam P point type.
