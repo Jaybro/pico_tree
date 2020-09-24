@@ -599,7 +599,7 @@ class KdTree {
   }
 
   //! Reports all indices contained by \p node.
-  inline void ReportRange(
+  inline void ReportNode(
       Node const* const node, std::vector<Index>* idxs) const {
     if (node->IsLeaf()) {
       std::copy(
@@ -607,8 +607,8 @@ class KdTree {
           indices_.cbegin() + node->data.leaf.end_idx,
           std::back_inserter(*idxs));
     } else {
-      ReportRange(node->left, idxs);
-      ReportRange(node->right, idxs);
+      ReportNode(node->left, idxs);
+      ReportNode(node->right, idxs);
     }
   }
 
@@ -639,7 +639,7 @@ class KdTree {
       // down the left node.
       if (PointInBox(box_min, rng_min, rng_max) &&
           PointInBox(left_box_max, rng_min, rng_max)) {
-        ReportRange(node->left, idxs);
+        ReportNode(node->left, idxs);
       } else if (
           points_(rng_min, node->data.branch.split_dim) <
           node->data.branch.split_val) {
@@ -658,7 +658,7 @@ class KdTree {
       // Same as the left side.
       if (PointInBox(right_box_min, rng_min, rng_max) &&
           PointInBox(box_max, rng_min, rng_max)) {
-        ReportRange(node->right, idxs);
+        ReportNode(node->right, idxs);
       } else if (
           points_(rng_max, node->data.branch.split_dim) >
           node->data.branch.split_val) {
