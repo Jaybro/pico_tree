@@ -13,8 +13,8 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 The examples show how PicoTree can be used:
 
-* How to create a basic point cloud [adaptor](./examples/pico_common/pico_adaptor.hpp).
-* Performing various searches using the [Kdtree](./examples/kd_tree/kd_tree.cpp) and how to create a custom (approximate nearest neighbor) search visitor.
+* Creating an [adaptor](./examples/pico_common/pico_adaptor.hpp) to interface with the input point clouds.
+* Searching using the [Kdtree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor (for finding approximate nearest neighbors).
 * Using [Eigen](./examples/eigen/) data types.
 
 # Requirements
