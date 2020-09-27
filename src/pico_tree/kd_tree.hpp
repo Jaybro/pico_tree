@@ -623,8 +623,12 @@ class KdTree {
     }
   }
 
-  //! Returns all points within the box defined by \p rng_min and \p rng_max for
-  //! \p node.
+  //! \brief Returns all points within the box defined by \p rng_min and \p
+  //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dims)+k).
+  //! \details Many tree nodes are excluded by checking if they intersect with
+  //! the box of the query. We don't store the bounding box of each node but
+  //! calculate them at run time. This slows down SearchBox in favor of
+  //! SearchNn.
   template <typename P>
   inline void SearchBox(
       Node const* const node,
