@@ -204,8 +204,8 @@ class SplitterMedian {
         indices_.begin() + offset,
         indices_.begin() + *split_idx,
         indices_.begin() + offset + size,
-        [&points, dim = *split_dim](Index const a, Index const b) -> bool {
-          return points(a, dim) < points(b, dim);
+        [&points, &split_dim](Index const a, Index const b) -> bool {
+          return points(a, *split_dim) < points(b, *split_dim);
         });
 
     *split_val = points(indices_[*split_idx], *split_dim);
@@ -267,9 +267,8 @@ class SplitterSlidingMidpoint {
 
     // Everything smaller than split_val goes left, the rest right.
     Points const& points = points_;
-    auto const comp =
-        [&points, dim = *split_dim, val = *split_val](Index const a) -> bool {
-      return points(a, dim) < val;
+    auto const comp = [&points, &split_dim, &split_val](Index const a) -> bool {
+      return points(a, *split_dim) < *split_val;
     };
     std::partition(
         indices_.begin() + offset, indices_.begin() + offset + size, comp);
@@ -291,8 +290,8 @@ class SplitterSlidingMidpoint {
           indices_.begin() + offset,
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
-          [&points, dim = *split_dim](Index const a, Index const b) -> bool {
-            return points(a, dim) < points(b, dim);
+          [&points, &split_dim](Index const a, Index const b) -> bool {
+            return points(a, *split_dim) < points(b, *split_dim);
           });
       (*split_val) = points(indices_[*split_idx], *split_dim);
     } else if ((*split_idx - offset) == 0) {
@@ -301,8 +300,8 @@ class SplitterSlidingMidpoint {
           indices_.begin() + offset,
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
-          [&points, dim = *split_dim](Index const a, Index const b) -> bool {
-            return points(a, dim) < points(b, dim);
+          [&points, &split_dim](Index const a, Index const b) -> bool {
+            return points(a, *split_dim) < points(b, *split_dim);
           });
       (*split_val) = points(indices_[*split_idx], *split_dim);
     }
