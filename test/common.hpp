@@ -1,9 +1,34 @@
 #pragma once
 
+template <typename P, typename Index, typename Scalar, typename Metric>
+void SearchKnn(
+    P const& p,
+    Index const k,
+    Index const num_points,
+    Metric const& metric,
+    std::vector<std::pair<Index, Scalar>>* knn) {
+  knn->resize(static_cast<std::size_t>(num_points));
+  for (Index i = 0; i < num_points; ++i) {
+    (*knn)[i] = {i, metric(p, i)};
+  }
+
+  Index const max_k = std::min(k, num_points);
+  std::nth_element(
+      knn->begin(),
+      knn->begin() + (max_k - 1),
+      knn->end(),
+      pico_tree::internal::NeighborComparator<Index, Scalar>());
+  knn->resize(static_cast<std::size_t>(max_k));
+  std::sort(
+      knn->begin(),
+      knn->end(),
+      pico_tree::internal::NeighborComparator<Index, Scalar>());
+}
+
 // TODO Perhaps do something more friendly for exposing types.
 // TODO Some traits.
 template <typename Tree>
-void TestRange(
+void TestBox(
     Tree const& tree,
     typename std::remove_reference_t<
         decltype(std::declval<Tree>().points())>::Scalar const min_v,
@@ -89,4 +114,38 @@ void TestRadius(
   }
 
   EXPECT_EQ(count, results.size());
+}
+
+template <typename Tree>
+void TestKnn(
+    Tree const& tree,
+    typename std::remove_reference_t<
+        decltype(std::declval<Tree>().points())>::Index const k) {
+  using PointsX =
+      std::remove_reference_t<decltype(std::declval<Tree>().points())>;
+  using PointX = typename PointsX::Point;
+  using Index = typename PointsX::Index;
+  using Scalar = typename PointsX::Scalar;
+
+  auto const& points = tree.points();
+
+  Index idx = tree.points().num_points() / 2;
+  PointX p;
+
+  for (Index d = 0; d < PointsX::Dims; ++d) {
+    p(d) = points(idx, d);
+  }
+
+  std::vector<std::pair<Index, Scalar>> results;
+  tree.SearchKnn(p, k, &results, true);
+
+  std::vector<std::pair<Index, Scalar>> compare;
+  SearchKnn(p, k, points.num_points(), tree.metric(), &compare);
+
+  ASSERT_EQ(compare.size(), results.size());
+  for (std::size_t i = 0; i < compare.size(); ++i) {
+    // Index is not tested in case it happens points have an equal distance.
+    // TODO Would be nicer to test indices too.
+    EXPECT_FLOAT_EQ(results[i].second, compare[i].second);
+  }
 }
