@@ -10,6 +10,24 @@ namespace pico_tree {
 
 namespace internal {
 
+//! See which axis of the box is the longest.
+template <typename Index, typename Scalar, int Dims>
+inline void LongestAxisBox(
+    Sequence<Scalar, Dims> const& box_min,
+    Sequence<Scalar, Dims> const& box_max,
+    Index* p_max_index,
+    Scalar* p_max_value) {
+  *p_max_value = std::numeric_limits<Scalar>::lowest();
+
+  for (Index i = 0; i < box_min.size(); ++i) {
+    Scalar const delta = box_max[i] - box_min[i];
+    if (delta > *p_max_value) {
+      *p_max_index = i;
+      *p_max_value = delta;
+    }
+  }
+}
+
 //! Compares neighbors by distance.
 template <typename Index, typename Scalar>
 struct NeighborComparator {
@@ -169,12 +187,18 @@ class MetricL2 {
   Points const& points_;
 };
 
-//! \brief Splits a tree node on the median of the active dimension.
-//! \details The dimension is cycled while recursing down the tree. These steps
-//! result in a median of medians algorithm. The tree is build in O(n log n)
-//! time on average.
+//! \brief Splits a tree node on the median of the longest dimension.
+//! \details A version of the median of medians algorithm. The tree is build in
+//! O(n log n) time on average.
+//!
+//! Although it builds the tree slower compared to using
+//! SplitterSlidingMidpoint, it will query a single nearest neighbor faster.
+//! Faster queries can offset the extra build costs in scenarios such as ICP.
+//!
+//! Note that this splitter is not recommended when searching for more than a
+//! single neighbor.
 template <typename Index, typename Scalar, int Dims, typename Points>
-class SplitterMedian {
+class SplitterLongestMedian {
  private:
   //! Either an array or vector (compile time vs. run time).
   using Sequence = typename internal::Sequence<Scalar, Dims>;
@@ -183,7 +207,7 @@ class SplitterMedian {
   template <typename T>
   using MemoryBuffer = internal::StaticBuffer<T>;
 
-  SplitterMedian(Points const& points, std::vector<Index>* p_indices)
+  SplitterLongestMedian(Points const& points, std::vector<Index>* p_indices)
       : points_{points}, indices_{*p_indices} {}
 
   inline void operator()(
@@ -196,8 +220,10 @@ class SplitterMedian {
       Index* split_idx,
       Scalar* split_val) const {
     Points const& points = points_;
-    *split_dim =
-        depth % internal::Dimensions<Dims>::Dims(points_.num_dimensions());
+
+    Scalar max_delta;
+    internal::LongestAxisBox(box_min, box_max, split_dim, &max_delta);
+
     *split_idx = size / 2 + offset;
 
     std::nth_element(
@@ -216,8 +242,8 @@ class SplitterMedian {
   std::vector<Index>& indices_;
 };
 
-//! \brief Splits a tree node halfway the "fattest" axis of the bounding box
-//! that contains it.
+//! \brief Splits a tree node halfway the longest axis of the bounding box that
+//! contains it.
 //! \details Based on the paper "It's okay to be skinny, if your friends are
 //! fat". The aspect ratio of the split is at most 2:1 unless that results in an
 //! empty leaf. Then at least one point is moved into the empty leaf and the
@@ -225,8 +251,8 @@ class SplitterMedian {
 //!
 //! * http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf
 //!
-//! The tree is build in O(n log n) time and tree creation is in practice faster
-//! than using SplitterMedian.
+//! The tree is build in O(n log n) time and tree creation is faster than using
+//! SplitterLongestMedian.
 //!
 //! This splitter can be used to answer an approximate nearest neighbor query in
 //! O(1/e^d log n) time.
@@ -252,17 +278,8 @@ class SplitterSlidingMidpoint {
       Index* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
-    // See which dimension of the box is the "fattest".
-    Scalar max_delta = std::numeric_limits<Scalar>::lowest();
-    for (Index i = 0;
-         i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
-         ++i) {
-      Scalar const delta = box_max[i] - box_min[i];
-      if (delta > max_delta) {
-        max_delta = delta;
-        *split_dim = i;
-      }
-    }
+    Scalar max_delta;
+    internal::LongestAxisBox(box_min, box_max, split_dim, &max_delta);
     *split_val = max_delta / Scalar(2.0) + box_min[*split_dim];
 
     // Everything smaller than split_val goes left, the rest right.
