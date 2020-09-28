@@ -59,11 +59,15 @@ TEST(KdTreeTest, SplitterMedian) {
 
   pico_tree::internal::Sequence<Scalar, 2> min;
   pico_tree::internal::Sequence<Scalar, 2> max;
+  min[0] = 0.0;
+  min[1] = 0.0;
+  max[0] = 1.0;
+  max[1] = 0.0;
   Index split_dim;
   Index split_idx;
   Scalar split_val;
 
-  pico_tree::SplitterMedian<Index, Scalar, Dims, AdaptorX> splitter4(
+  pico_tree::SplitterLongestMedian<Index, Scalar, Dims, AdaptorX> splitter4(
       ptsx4, &idx4);
   splitter4(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
 
@@ -82,7 +86,7 @@ TEST(KdTreeTest, SplitterMedian) {
   std::vector<Index> idx7{0, 1, 2, 3, 4, 5, 6};
   AdaptorX ptsx7(pts7);
 
-  pico_tree::SplitterMedian<Index, Scalar, Dims, AdaptorX> splitter7(
+  pico_tree::SplitterLongestMedian<Index, Scalar, Dims, AdaptorX> splitter7(
       ptsx7, &idx7);
   splitter7(0, 0, 7, min, max, &split_dim, &split_idx, &split_val);
 
@@ -90,6 +94,7 @@ TEST(KdTreeTest, SplitterMedian) {
   EXPECT_EQ(split_idx, 3);
   EXPECT_EQ(split_val, pts7[idx7[3]](0));
 
+  max[1] = 10.0;
   splitter7(1, 3, 4, min, max, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
