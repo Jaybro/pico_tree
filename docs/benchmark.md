@@ -16,21 +16,32 @@ Both have been generated using a LiDAR scanner and represent different types of 
 
 # Results
 
-The KdTree implementations are compared against build time, knn search time and radius search time. All with respect to the tree leaf size. Each algorithm sets the following parameters:
+The KdTree implementations are compared against build time, radius search time and knn search time. All with respect to the tree leaf size. Each algorithm sets the following parameters:
 
-* Build time: Dimensions known at compile time or run time.
-* Knn Search: The mount of neighbors searched.
-* Radius Search: The radius in meters divided by 4 (0.25m and 0.5m).
+* Build (1 time): Dimensions known at compile time or run time.
+* Radius Search (n times): The radius in meters divided by 4 (0.25m and 0.5m).
+* Knn Search (n times): The mount of neighbors searched.
 
 Results were generated on: 20-09-2020
 
+For a "special" case of the knn algorithm, where `k` is set to 1, the search speed is compared with respect to tree building techniques:
+* Nanoflann Midpoint variation.
+* PicoTree Sliding Midpoint (along the longest axis).
+* PicoTree Longest Axis Median.
+
+It is interesting to see that searching for a single nearest neighbor can be quite a bit faster using the Longest Axis Median splitting technique. However, building the tree or querying multiple neighbors is slower. The extra time it takes to build the tree is compensated for when the tree is queried about `2 * n` times. This means the splitting technique can be useful in combination with an algorithm like [ICP](https://en.wikipedia.org/wiki/Iterative_closest_point).
+
+Results were generated on: 01-10-2020
+
 ## #25 - Würzburg marketplace.
 
-![Square Build Time](./images/benchmark_square_build_time.png)![Square Knn Search Time](./images/benchmark_square_knn_search_time.png)![Square Radius Search Time](./images/benchmark_square_radius_search_time.png)
+![Square Build Time](./images/benchmark_square_build_time.png)![Square Radius Search Time](./images/benchmark_square_radius_search_time.png)
+![Square Knn Search Time](./images/benchmark_square_knn_search_time.png)![Square Knn1 Search Time](./images/benchmark_square_knn1_search_time.png)
 
 ## #26 - Maria-Schmerz-Kapelle Randersacker.
 
-![Square Build Time](./images/benchmark_church_build_time.png)![Square Knn Search Time](./images/benchmark_church_knn_search_time.png)![Square Radius Search Time](./images/benchmark_church_radius_search_time.png)
+![Square Build Time](./images/benchmark_church_build_time.png)![Square Radius Search Time](./images/benchmark_church_radius_search_time.png)
+![Square Knn Search Time](./images/benchmark_church_knn_search_time.png)![Square Knn1 Search Time](./images/benchmark_church_knn1_search_time.png)
 
 # Running a new benchmark
 
