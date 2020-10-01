@@ -38,12 +38,12 @@ def get_plots(benchmarks_subset, pattern):
 
     for x in benchmarks_subset:
         m = pattern.match(x['name'])
-        k = m.group('lib') + '_' + m.group('label')
+        k = m.group('tree') + '_' + m.group('label')
         plots[k] = {'x': [], 'y': []}
 
     for x in benchmarks_subset:
         m = pattern.match(x['name'])
-        k = m.group('lib') + '_' + m.group('label')
+        k = m.group('tree') + '_' + m.group('label')
         plots[k]['x'].append(float(m.group('x')))
         plots[k]['y'].append(float(x['cpu_time']))
 
@@ -72,8 +72,8 @@ def main():
 
     benchmarks = get_benchmarks(json.load(args.json_file))
 
-    re_str_build = r'^.+/(?P<label>Ct|Rt)(?P<lib>Nano|Pico).+/(?P<x>\d+).*$'
-    re_str_other = r'^.+/(Ct|Rt)(?P<lib>Nano|Pico).+/(?P<x>\d+)/(?P<label>\d+).*$'
+    re_str_build = r'^.+/(?P<label>Ct|Rt)(?P<tree>Nano|(.+Pico)).+/(?P<x>\d+).*$'
+    re_str_other = r'^.+/(Ct|Rt)(?P<tree>Nano|(.+Pico)).+/(?P<x>\d+)/(?P<label>\d+).*$'
 
     plots_build = get_plots(benchmarks[0], re.compile(re_str_build))
     plots_knn = get_plots(benchmarks[1], re.compile(re_str_other))
