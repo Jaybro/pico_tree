@@ -1,6 +1,6 @@
 # PicoTree
 
-PicoTree is a small C++11 header only library that provides several data structures that can be used for range searches and nearest neighbor searches.
+PicoTree is a small C++ header only library that provides several data structures that can be used for range searches and nearest neighbor searches.
 
 See the comparison [benchmark](./docs/benchmark.md) between PicoTree and [nanoflann](https://github.com/jlblancoc/nanoflann) to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library.
 
@@ -9,11 +9,12 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 # Capabilities
 
 * Kd Tree
-  * Nearest neighbors, radius, box and custom searches.
+  * Nearest neighbors, radius, and box searches.
+  * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
 
 The examples show how PicoTree can be used:
 
-* Creating an [adaptor](./examples/pico_common/pico_adaptor.hpp) to interface with the input point clouds.
+* Creating an [adaptor](./examples/pico_common/pico_adaptor.hpp) to interface with input point clouds.
 * Searching using the [Kdtree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor (for finding approximate nearest neighbors).
 * Using [Eigen](./examples/eigen/) data types.
 
@@ -21,7 +22,7 @@ The examples show how PicoTree can be used:
 
 Minimum:
 
-* A compiler that is compliant with the C++11 standard.
+* A compiler that is compliant with the C++11 standard or higher.
 * [CMake](https://cmake.org/). It is also possible to simply copy and paste the contents of the [src](./src/) directory given that PicoTree is header only.
 
 Optional:
