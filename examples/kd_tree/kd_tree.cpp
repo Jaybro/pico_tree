@@ -71,7 +71,7 @@ class SearchAnn {
 };
 
 // Different search options.
-void Searches() {
+void Search() {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::Scalar;
@@ -125,6 +125,6 @@ void Searches() {
 
 int main() {
   Build();
-  Searches();
+  Search();
   return 0;
 }

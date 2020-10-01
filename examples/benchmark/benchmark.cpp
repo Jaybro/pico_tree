@@ -7,19 +7,51 @@
 #include "format_bin.hpp"
 #include "nano_adaptor.hpp"
 
+template <int Dims, typename PicoAdaptor>
+using MetricL2 = pico_tree::MetricL2<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    Dims,
+    PicoAdaptor>;
+
+template <int Dims, typename PicoAdaptor>
+using SplitterLongestMedian = pico_tree::SplitterLongestMedian<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    Dims,
+    PicoAdaptor>;
+
 template <typename PicoAdaptor>
-using PicoKdTreeCt = pico_tree::KdTree<
+using PicoKdTreeCtSldMid = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
     PicoAdaptor::Dims,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
-using PicoKdTreeRt = pico_tree::KdTree<
+using PicoKdTreeCtLngMed = pico_tree::KdTree<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    PicoAdaptor::Dims,
+    PicoAdaptor,
+    MetricL2<PicoAdaptor::Dims, PicoAdaptor>,
+    SplitterLongestMedian<PicoAdaptor::Dims, PicoAdaptor>>;
+
+template <typename PicoAdaptor>
+using PicoKdTreeRtSldMid = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
     pico_tree::kRuntimeDims,
     PicoAdaptor>;
+
+template <typename PicoAdaptor>
+using PicoKdTreeRtLngMed = pico_tree::KdTree<
+    typename PicoAdaptor::Index,
+    typename PicoAdaptor::Scalar,
+    pico_tree::kRuntimeDims,
+    PicoAdaptor,
+    MetricL2<pico_tree::kRuntimeDims, PicoAdaptor>,
+    SplitterLongestMedian<pico_tree::kRuntimeDims, PicoAdaptor>>;
 
 template <typename NanoAdaptor>
 using NanoKdTreeCt = nanoflann::KDTreeSingleIndexAdaptor<
@@ -70,11 +102,21 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoBuildTree)(benchmark::State& state) {
   }
 }
 
-BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoBuildTree)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoBuildTree)
+(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   PicoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    PicoKdTreeCt<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
+  }
+}
+
+BENCHMARK_DEFINE_F(KdTreeBenchmark, CtLngMedPicoBuildTree)
+(benchmark::State& state) {
+  int max_leaf_size = state.range(0);
+  PicoAdaptorX adaptor(points_);
+  for (auto _ : state) {
+    PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
   }
 }
 
@@ -90,11 +132,21 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, RtNanoBuildTree)(benchmark::State& state) {
   }
 }
 
-BENCHMARK_DEFINE_F(KdTreeBenchmark, RtPicoBuildTree)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(KdTreeBenchmark, RtSldMidPicoBuildTree)
+(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   PicoAdaptorX adaptor(points_);
   for (auto _ : state) {
-    PicoKdTreeRt<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    PicoKdTreeRtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
+  }
+}
+
+BENCHMARK_DEFINE_F(KdTreeBenchmark, RtLngMedPicoBuildTree)
+(benchmark::State& state) {
+  int max_leaf_size = state.range(0);
+  PicoAdaptorX adaptor(points_);
+  for (auto _ : state) {
+    PicoKdTreeRtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
   }
 }
 
@@ -103,7 +155,11 @@ BENCHMARK_REGISTER_F(KdTreeBenchmark, CtNanoBuildTree)
     ->Unit(benchmark::kMillisecond)
     ->Arg(1)
     ->DenseRange(6, 14, 2);
-BENCHMARK_REGISTER_F(KdTreeBenchmark, CtPicoBuildTree)
+BENCHMARK_REGISTER_F(KdTreeBenchmark, CtSldMidPicoBuildTree)
+    ->Unit(benchmark::kMillisecond)
+    ->Arg(1)
+    ->DenseRange(6, 14, 2);
+BENCHMARK_REGISTER_F(KdTreeBenchmark, CtLngMedPicoBuildTree)
     ->Unit(benchmark::kMillisecond)
     ->Arg(1)
     ->DenseRange(6, 14, 2);
@@ -112,7 +168,11 @@ BENCHMARK_REGISTER_F(KdTreeBenchmark, RtNanoBuildTree)
     ->Unit(benchmark::kMillisecond)
     ->Arg(1)
     ->DenseRange(6, 14, 2);
-BENCHMARK_REGISTER_F(KdTreeBenchmark, RtPicoBuildTree)
+BENCHMARK_REGISTER_F(KdTreeBenchmark, RtSldMidPicoBuildTree)
+    ->Unit(benchmark::kMillisecond)
+    ->Arg(1)
+    ->DenseRange(6, 14, 2);
+BENCHMARK_REGISTER_F(KdTreeBenchmark, RtLngMedPicoBuildTree)
     ->Unit(benchmark::kMillisecond)
     ->Arg(1)
     ->DenseRange(6, 14, 2);
@@ -143,11 +203,27 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoKnn)(benchmark::State& state) {
   }
 }
 
-BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoKnn)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoKnn)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
   PicoAdaptorX adaptor(points_);
-  PicoKdTreeCt<PicoAdaptorX> tree(adaptor, max_leaf_size);
+  PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
+
+  for (auto _ : state) {
+    std::vector<std::pair<Index, Scalar>> results;
+    std::size_t sum = 0;
+    for (auto const& p : points_) {
+      tree.SearchKnn(p, knn_count, &results);
+      benchmark::DoNotOptimize(sum += results.size());
+    }
+  }
+}
+
+BENCHMARK_DEFINE_F(KdTreeBenchmark, CtLngMedPicoKnn)(benchmark::State& state) {
+  int max_leaf_size = state.range(0);
+  int knn_count = state.range(1);
+  PicoAdaptorX adaptor(points_);
+  PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
     std::vector<std::pair<Index, Scalar>> results;
@@ -188,7 +264,7 @@ BENCHMARK_REGISTER_F(KdTreeBenchmark, CtNanoKnn)
     ->Args({12, 12})
     ->Args({14, 12});
 
-BENCHMARK_REGISTER_F(KdTreeBenchmark, CtPicoKnn)
+BENCHMARK_REGISTER_F(KdTreeBenchmark, CtSldMidPicoKnn)
     ->Unit(benchmark::kMillisecond)
     ->Args({1, 1})
     ->Args({6, 1})
@@ -214,6 +290,22 @@ BENCHMARK_REGISTER_F(KdTreeBenchmark, CtPicoKnn)
     ->Args({10, 12})
     ->Args({12, 12})
     ->Args({14, 12});
+
+// A single neighbor is faster, more neighbors slower.
+BENCHMARK_REGISTER_F(KdTreeBenchmark, CtLngMedPicoKnn)
+    ->Unit(benchmark::kMillisecond)
+    ->Args({1, 1})
+    ->Args({6, 1})
+    ->Args({8, 1})
+    ->Args({10, 1})
+    ->Args({12, 1})
+    ->Args({14, 1})
+    ->Args({1, 4})
+    ->Args({6, 4})
+    ->Args({8, 4})
+    ->Args({10, 4})
+    ->Args({12, 4})
+    ->Args({14, 4});
 
 // ****************************************************************************
 // Radius
@@ -241,12 +333,13 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoRadius)(benchmark::State& state) {
   }
 }
 
-BENCHMARK_DEFINE_F(KdTreeBenchmark, CtPicoRadius)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoRadius)
+(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   double radius = static_cast<double>(state.range(1)) / 4.0;
   double squared = radius * radius;
   PicoAdaptorX adaptor(points_);
-  PicoKdTreeCt<PicoAdaptorX> tree(adaptor, max_leaf_size);
+  PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
     std::vector<std::pair<Index, Scalar>> results;
@@ -275,7 +368,7 @@ BENCHMARK_REGISTER_F(KdTreeBenchmark, CtNanoRadius)
     ->Args({12, 2})
     ->Args({14, 2});
 
-BENCHMARK_REGISTER_F(KdTreeBenchmark, CtPicoRadius)
+BENCHMARK_REGISTER_F(KdTreeBenchmark, CtSldMidPicoRadius)
     ->Unit(benchmark::kMillisecond)
     ->Args({1, 1})
     ->Args({6, 1})
