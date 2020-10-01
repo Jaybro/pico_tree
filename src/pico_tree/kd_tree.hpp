@@ -462,7 +462,9 @@ class KdTree {
     SearchNn(root_, p, visitor);
   }
 
-  //! \brief Returns the \p k nearest neighbors of point \p p .
+  //! \brief Searches for the \p k nearest neighbors of point \p p . The output
+  //! vector \p knn contains an index and distance pair for each of the search
+  //! results. Interpretation of the distances depends on the Metric.
   //! \tparam P point type.
   template <typename P>
   inline void SearchKnn(
@@ -481,8 +483,16 @@ class KdTree {
     }
   }
 
-  //! \brief Returns all neighbors to point \p p that are within squared radius
-  //! \p radius.
+  //! \brief Searches for all the neighbors of point \p p that are within radius
+  //! \p radius. The output vector \p n contains an index and distance pair for
+  //! each of the search results.
+  //! \details Interpretation of the output distances depend on the Metric. The
+  //! default MetricL2 results in squared distances.
+  //! \param p Input point.
+  //! \param radius Search radius that depends on the Metric used by the KdTree.
+  //! It should be the squared distance when using MetricL2. \code{.cpp} Scalar
+  //! metric_distance = kdtree.metric()(distance); \endcode
+  //! \param n Output points.
   //! \tparam P point type.
   template <typename P>
   inline void SearchRadius(

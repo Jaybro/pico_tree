@@ -8,7 +8,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 # Capabilities
 
-* Kd Tree
+* KdTree
   * Nearest neighbors, radius, and box searches.
   * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
 
