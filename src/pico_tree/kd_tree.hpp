@@ -373,7 +373,7 @@ class KdTree {
 
   //! Either an array or vector (compile time vs. run time).
   using Sequence = typename internal::Sequence<Scalar, Dims>;
-  using MemoryBuffer = typename Splitter::MemoryBuffer<Node>;
+  using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
 
   //! KdTree builder.
   class Builder {
