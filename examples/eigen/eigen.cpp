@@ -47,7 +47,6 @@ void ColMajor() {
   Adaptor adaptor(points_map);
 
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
-  std::pair<Index, Scalar> nn;
 
   std::cout << points[points.size() - 1].transpose() << std::endl;
   AdaptorCout(adaptor, points.size() - 1);
@@ -77,7 +76,6 @@ void RowMajor() {
   Adaptor adaptor(points_map);
 
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
-  std::pair<Index, Scalar> nn;
 
   std::cout << points[points.size() - 1] << std::endl;
   AdaptorCout(adaptor, points.size() - 1);
