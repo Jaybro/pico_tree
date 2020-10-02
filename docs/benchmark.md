@@ -22,16 +22,16 @@ The KdTree implementations are compared against build time, radius search time a
 * Radius Search (n times): The radius in meters divided by 4 (0.25m and 0.5m).
 * Knn Search (n times): The mount of neighbors searched.
 
-Results were generated on: 20-09-2020
+Results were generated on: 20-09-2020 using MinGW GCC 10.2
 
 For a "special" case of the knn algorithm, where `k` is set to 1, the search speed is compared with respect to tree building techniques:
 * Nanoflann Midpoint variation.
 * PicoTree Sliding Midpoint (along the longest axis).
 * PicoTree Longest Axis Median.
 
-It is interesting to see that searching for a single nearest neighbor can be quite a bit faster using the Longest Axis Median splitting technique. However, building the tree or querying multiple neighbors is slower. The extra time it takes to build the tree is compensated for when the tree is queried about `2 * n` times. This means the splitting technique can be useful in combination with an algorithm like [ICP](https://en.wikipedia.org/wiki/Iterative_closest_point).
+It is interesting to see that finding a single nearest neighbor can be quite a bit faster using the Longest Axis Median splitting technique. However, building the tree or querying multiple neighbors is slower. The extra time it takes to build the tree is no longer a factor when the tree is queried multiple times (on the test sets this was about `2n-4n` times). This means the splitting technique can be useful in combination with an algorithm like [ICP](https://en.wikipedia.org/wiki/Iterative_closest_point).
 
-Results were generated on: 01-10-2020
+Results were generated on: 01-10-2020 using MinGW GCC 10.2
 
 ## #25 - Würzburg marketplace.
 
