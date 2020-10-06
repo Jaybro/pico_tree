@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.11)
 
 project(pico_tree
     LANGUAGES CXX
-    VERSION 0.1.0
-    DESCRIPTION "PicoTree is a small C++11 header only library that provides several data structures that can be used for range searches and nearest neighbor searches."
+    VERSION 0.4.0
+    DESCRIPTION "PicoTree is a small C++ header only library that provides several data structures that can be used for range searches and nearest neighbor searches."
     HOMEPAGE_URL "https://github.com/Jaybro/pico_tree")
 
 if (NOT CMAKE_BUILD_TYPE)

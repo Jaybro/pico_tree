@@ -11,6 +11,8 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 * KdTree
   * Nearest neighbors, radius, and box searches.
   * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
+  * Compile time and run time known dimensions.
+  * Static tree builds.
 
 The examples show how PicoTree can be used:
 
