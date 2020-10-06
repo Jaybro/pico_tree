@@ -15,7 +15,7 @@ void WriteBin(std::string const& filename, std::vector<T> const& v) {
 
   std::size_t const element_size = sizeof(T);
   std::fstream stream = OpenStream(filename, std::ios::out | std::ios::binary);
-  stream.write(reinterpret_cast<const char*>(&v[0]), element_size * v.size());
+  stream.write(reinterpret_cast<char const*>(&v[0]), element_size * v.size());
 }
 
 template <typename T>
@@ -23,7 +23,7 @@ void ReadBin(std::string const& filename, std::vector<T>* v) {
   std::fstream stream = OpenStream(filename, std::ios::in | std::ios::binary);
 
   // The four lines below are used when determining the file size.
-  // C++17 is not used here in order to keep nano_pico C++11.
+  // C++17 is not used here in order to keep the benchmark C++11.
   stream.ignore(std::numeric_limits<std::streamsize>::max());
   std::streamsize byte_count = stream.gcount();
   stream.clear();
