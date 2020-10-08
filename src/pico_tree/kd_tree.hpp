@@ -451,7 +451,7 @@ class KdTree {
         metric_{points_},
         nodes_(internal::MaxNodesFromPoints(points_.num_points())),
         indices_(points_.num_points()),
-        root_{MakeTree(max_leaf_size)} {}
+        root_{Build(max_leaf_size)} {}
 
   //! Returns the nearest neighbor (or neighbors) of point \p p depending on
   //! their selection by visitor \p visitor .
@@ -528,7 +528,52 @@ class KdTree {
   //! \brief Metric used for search queries.
   inline Metric const& metric() const { return metric_; }
 
+  //! \brief Loads the tree in binary from file.
+  static KdTree Load(Points const& points, std::string const& filename) {
+    std::fstream stream =
+        internal::OpenStream(filename, std::ios::in | std::ios::binary);
+    return Load(points, &stream);
+  }
+
+  //! \brief Loads the tree in binary from \p stream .
+  //! \details This is considered a convinience function to be able to save and
+  //! load a KdTree on a single machine.
+  //! \li Does not take memory endianness into account.
+  //! \li Does not check if the stored tree structure is valid for the given
+  //! point set. \li Does not check if the stored tree structure is valid for
+  //! the given template arguments.
+  static KdTree Load(Points const& points, std::iostream* stream) {
+    internal::Stream s(stream);
+    return KdTree(points, &s);
+  }
+
+  //! \brief Saves the tree in binary to file.
+  static void Save(KdTree const& tree, std::string const& filename) {
+    std::fstream stream =
+        internal::OpenStream(filename, std::ios::out | std::ios::binary);
+    Save(tree, &stream);
+  }
+
+  //! \brief Saves the tree in binary to \p stream .
+  //! \details This is considered a convinience function to be able to save and
+  //! load a KdTree on a single machine.
+  //! \li Does not take memory endianness into account.
+  //! \li Stores the tree structure but not the points.
+  static void Save(KdTree const& tree, std::iostream* stream) {
+    internal::Stream s(stream);
+    tree.Save(&s);
+  }
+
  private:
+  //! \brief Constructs a KdTree by reading its indexing and leaf information
+  //! from a Stream.
+  KdTree(Points const& points, internal::Stream* stream)
+      : points_{points},
+        metric_{points_},
+        nodes_(internal::MaxNodesFromPoints(points_.num_points())),
+        indices_(points_.num_points()),
+        root_{Load(stream)} {}
+
   inline void CalculateBoundingBox(Sequence* p_min, Sequence* p_max) {
     Sequence& min = *p_min;
     Sequence& max = *p_max;
@@ -552,7 +597,7 @@ class KdTree {
 
   //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
   //! \details Run time may vary depending on the split strategy.
-  inline Node* MakeTree(Index const max_leaf_size) {
+  inline Node* Build(Index const max_leaf_size) {
     assert(points_.num_points() > 0);
     assert(max_leaf_size > 0);
 
@@ -713,6 +758,59 @@ class KdTree {
             idxs);
       }
     }
+  }
+
+  //! \brief Recursively reads the Node and its descendants.
+  inline Node* ReadNode(internal::Stream* stream) {
+    Node* node = nodes_.MakeItem();
+    bool is_leaf;
+    stream->Read(&is_leaf);
+
+    if (is_leaf) {
+      stream->Read(&node->data.leaf.begin_idx);
+      stream->Read(&node->data.leaf.end_idx);
+      node->left = nullptr;
+      node->right = nullptr;
+    } else {
+      stream->Read(&node->data.branch.split_dim);
+      stream->Read(&node->data.branch.split_val);
+      node->left = ReadNode(stream);
+      node->right = ReadNode(stream);
+    }
+
+    return node;
+  }
+
+  //! \brief Recursively writes the Node and its descendants.
+  inline void WriteNode(
+      Node const* const node, internal::Stream* stream) const {
+    if (node->IsLeaf()) {
+      stream->Write(true);
+      stream->Write(node->data.leaf.begin_idx);
+      stream->Write(node->data.leaf.end_idx);
+    } else {
+      stream->Write(false);
+      stream->Write(node->data.branch.split_dim);
+      stream->Write(node->data.branch.split_val);
+      WriteNode(node->left, stream);
+      WriteNode(node->right, stream);
+    }
+  }
+
+  //! \private
+  inline Node* Load(internal::Stream* stream) {
+    stream->Read(&indices_);
+    stream->Read(&root_box_min_);
+    stream->Read(&root_box_max_);
+    return ReadNode(stream);
+  }
+
+  //! \private
+  inline void Save(internal::Stream* stream) const {
+    stream->Write(indices_);
+    stream->Write(root_box_min_);
+    stream->Write(root_box_max_);
+    WriteNode(root_, stream);
   }
 
   //! Point set adapter used for querying point data.
