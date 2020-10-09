@@ -2,7 +2,6 @@ add_executable(benchmark)
 target_sources(benchmark
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/benchmark.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
 )
 target_link_libraries(benchmark
     PRIVATE
@@ -25,7 +24,6 @@ add_executable(uosr_to_bin)
 target_sources(uosr_to_bin
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/format_uosr.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
         ${CMAKE_CURRENT_LIST_DIR}/uosr_to_bin.cpp
 )
 target_link_libraries(uosr_to_bin PRIVATE pico_common)
@@ -39,7 +37,6 @@ set_target_properties(uosr_to_bin
 add_executable(bin_to_ascii)
 target_sources(bin_to_ascii
     PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/open_stream.cpp
         ${CMAKE_CURRENT_LIST_DIR}/bin_to_ascii.cpp
 )
 target_link_libraries(bin_to_ascii PRIVATE pico_common)

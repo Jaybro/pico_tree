@@ -1,9 +1,8 @@
 #pragma once
 
 #include <limits>
+#include <pico_tree/core.hpp>
 #include <point.hpp>
-
-#include "open_stream.hpp"
 
 namespace pico_tree {
 
@@ -14,13 +13,15 @@ void WriteBin(std::string const& filename, std::vector<T> const& v) {
   }
 
   std::size_t const element_size = sizeof(T);
-  std::fstream stream = OpenStream(filename, std::ios::out | std::ios::binary);
+  std::fstream stream =
+      internal::OpenStream(filename, std::ios::out | std::ios::binary);
   stream.write(reinterpret_cast<char const*>(&v[0]), element_size * v.size());
 }
 
 template <typename T>
 void ReadBin(std::string const& filename, std::vector<T>* v) {
-  std::fstream stream = OpenStream(filename, std::ios::in | std::ios::binary);
+  std::fstream stream =
+      internal::OpenStream(filename, std::ios::in | std::ios::binary);
 
   // The four lines below are used when determining the file size.
   // C++17 is not used here in order to keep the benchmark C++11.

@@ -5,10 +5,9 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <pico_tree/core.hpp>
 #include <regex>
 #include <string>
-
-#include "open_stream.hpp"
 
 namespace pico_tree {
 
@@ -66,7 +65,7 @@ class UosrScanReader {
   UosrScanReader(std::filesystem::path const& path_3d)
       : pose_(
             ReadPose(std::filesystem::path(path_3d).replace_extension(kPose))),
-        stream_(OpenStream(path_3d.string(), std::ios::in)) {}
+        stream_(internal::OpenStream(path_3d.string(), std::ios::in)) {}
 
   inline bool ReadNext(Point3d* point) {
     std::string line;
@@ -95,7 +94,7 @@ class UosrScanReader {
 
  private:
   Isometry ReadPose(std::filesystem::path const& path) {
-    std::fstream stream = OpenStream(path.string(), std::ios::in);
+    std::fstream stream = internal::OpenStream(path.string(), std::ios::in);
     std::array<double, 3> e, t;
     stream >> t[0] >> t[1] >> t[2] >> e[0] >> e[1] >> e[2];
 

@@ -1,9 +1,8 @@
 #pragma once
 
 #include <iomanip>
+#include <pico_tree/core.hpp>
 #include <point.hpp>
-
-#include "open_stream.hpp"
 
 namespace pico_tree {
 
@@ -13,7 +12,7 @@ void WriteAscii(std::string const& filename, std::vector<T> const& v) {
     return;
   }
 
-  std::fstream stream = OpenStream(filename, std::ios::out);
+  std::fstream stream = internal::OpenStream(filename, std::ios::out);
   stream << std::setprecision(10);
   for (auto const& p : v) {
     stream << p << '\n';

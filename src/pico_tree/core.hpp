@@ -221,7 +221,7 @@ class DynamicBuffer : public MemoryBuffer<std::deque<T>> {
   inline DynamicBuffer(std::size_t const) {}
 };
 
-std::fstream OpenStream(
+inline std::fstream OpenStream(
     std::string const& filename, std::ios_base::openmode mode) {
   std::fstream stream(filename, mode);
 
