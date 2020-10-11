@@ -1,5 +1,17 @@
 #pragma once
 
+template <typename Tree>
+using TreeIndexType = typename std::remove_reference<decltype(
+    std::declval<Tree>().points())>::type::Index;
+
+template <typename Tree>
+using TreeScalarType = typename std::remove_reference<decltype(
+    std::declval<Tree>().points())>::type::Scalar;
+
+template <typename Tree>
+using TreePointsType = typename std::remove_reference<decltype(
+    std::declval<Tree>().points())>::type;
+
 template <typename P, typename Index, typename Scalar, typename Metric>
 void SearchKnn(
     P const& p,
@@ -30,12 +42,9 @@ void SearchKnn(
 template <typename Tree>
 void TestBox(
     Tree const& tree,
-    typename std::remove_reference_t<
-        decltype(std::declval<Tree>().points())>::Scalar const min_v,
-    typename std::remove_reference_t<
-        decltype(std::declval<Tree>().points())>::Scalar const max_v) {
-  using PointsX =
-      std::remove_reference_t<decltype(std::declval<Tree>().points())>;
+    TreeScalarType<Tree> const min_v,
+    TreeScalarType<Tree> const max_v) {
+  using PointsX = TreePointsType<Tree>;
   using PointX = typename PointsX::Point;
   using Index = typename PointsX::Index;
 
@@ -76,12 +85,8 @@ void TestBox(
 }
 
 template <typename Tree>
-void TestRadius(
-    Tree const& tree,
-    typename std::remove_reference_t<
-        decltype(std::declval<Tree>().points())>::Scalar const radius) {
-  using PointsX =
-      std::remove_reference_t<decltype(std::declval<Tree>().points())>;
+void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
+  using PointsX = TreePointsType<Tree>;
   using PointX = typename PointsX::Point;
   using Index = typename PointsX::Index;
   using Scalar = typename PointsX::Scalar;
@@ -117,12 +122,8 @@ void TestRadius(
 }
 
 template <typename Tree>
-void TestKnn(
-    Tree const& tree,
-    typename std::remove_reference_t<
-        decltype(std::declval<Tree>().points())>::Index const k) {
-  using PointsX =
-      std::remove_reference_t<decltype(std::declval<Tree>().points())>;
+void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
+  using PointsX = TreePointsType<Tree>;
   using PointX = typename PointsX::Point;
   using Index = typename PointsX::Index;
   using Scalar = typename PointsX::Scalar;
