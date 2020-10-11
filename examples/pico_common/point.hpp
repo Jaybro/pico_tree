@@ -45,7 +45,7 @@ template <typename Point>
 inline Point GenerateRandomP(typename Point::Scalar size) {
   std::random_device rd;
   std::mt19937 e2(rd());
-  std::uniform_real_distribution<> dist(0, size);
+  std::uniform_real_distribution<typename Point::Scalar> dist(0, size);
 
   Point p;
   for (int i = 0; i < Point::Dims; ++i) {
@@ -60,7 +60,7 @@ template <typename Point>
 std::vector<Point> GenerateRandomN(int n, typename Point::Scalar size) {
   std::random_device rd;
   std::mt19937 e2(rd());
-  std::uniform_real_distribution<> dist(0, size);
+  std::uniform_real_distribution<typename Point::Scalar> dist(0, size);
 
   std::vector<Point> random(n);
   for (auto& p : random) {

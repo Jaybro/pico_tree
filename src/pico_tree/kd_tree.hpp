@@ -289,11 +289,12 @@ class SplitterSlidingMidpoint {
     };
     std::partition(
         indices_.begin() + offset, indices_.begin() + offset + size, comp);
-    *split_idx = std::partition_point(
-                     indices_.cbegin() + offset,
-                     indices_.cbegin() + offset + size,
-                     comp) -
-                 indices_.cbegin();
+    *split_idx = static_cast<Index>(
+        std::partition_point(
+            indices_.cbegin() + offset,
+            indices_.cbegin() + offset + size,
+            comp) -
+        indices_.cbegin());
 
     // If it happens that either all points are on the left side or right side,
     // one point slides to the other side and we split on the first right value

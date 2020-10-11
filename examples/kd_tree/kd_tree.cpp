@@ -93,13 +93,13 @@ void Search() {
   pnn.Fill((max_v + min_v) / 2.0f);
 
   Index k = 4;
-  Scalar search_radius = 2.0;
+  Scalar search_radius = 2.0f;
   // When building KdTree with default template arguments, this is the squared
   // distance.
   Scalar search_radius_metric = tree.metric()(search_radius);
   // The ann can not be further away than a factor of (1 + max_error_percentage)
   // from the real nn.
-  Scalar max_error_percentage = 0.2;
+  Scalar max_error_percentage = 0.2f;
   // Apply the metric to the max ratio difference.
   Scalar max_error_ratio_metric =
       tree.metric()(Scalar(1.0) + max_error_percentage);

@@ -287,9 +287,10 @@ inline std::size_t MaxLeavesFromPoints(
   // by 1. Each reduction in tree height halves the amount of leaves.
   // Rounding up the number of leaves means that the last one is not fully
   // occupied.
-  return std::ceil(
+  return static_cast<std::size_t>(std::ceil(
       num_points /
-      std::pow(2.0, std::floor(std::log2(static_cast<double>(max_leaf_size)))));
+      std::pow(
+          2.0, std::floor(std::log2(static_cast<double>(max_leaf_size))))));
 }
 
 //! \brief Returns the maximum amount of nodes given \p num_points and \p
