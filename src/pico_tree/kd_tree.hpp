@@ -211,7 +211,7 @@ class SplitterLongestMedian {
       : points_{points}, indices_{*p_indices} {}
 
   inline void operator()(
-      Index const depth,
+      Index const,  // depth
       Index const offset,
       Index const size,
       Sequence const& box_min,
@@ -270,7 +270,7 @@ class SplitterSlidingMidpoint {
       : points_{points}, indices_{*p_indices} {}
 
   inline void operator()(
-      Index const depth,
+      Index const,  // depth
       Index const offset,
       Index const size,
       Sequence const& box_min,

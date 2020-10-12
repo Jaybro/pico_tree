@@ -19,15 +19,15 @@ TEST(KdTreeTest, MetricL1) {
   using Scalar = typename PointX::Scalar;
   using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dims = PointX::Dims;
-  std::vector<PointX> points{{2.0, 4.0}};
+  std::vector<PointX> points{{2.0f, 4.0f}};
   AdaptorX adaptor(points);
-  PointX p{10.0, 1.0};
+  PointX p{10.0f, 1.0f};
 
   pico_tree::MetricL1<Index, Scalar, Dims, AdaptorX> metric(adaptor);
 
-  EXPECT_FLOAT_EQ(metric(p, 0), 11.0);
-  EXPECT_FLOAT_EQ(metric(-3.1, 8.9), 12.0);
-  EXPECT_FLOAT_EQ(metric(-3.1), 3.1);
+  EXPECT_FLOAT_EQ(metric(p, 0), 11.0f);
+  EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 12.0f);
+  EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
 }
 
 TEST(KdTreeTest, MetricL2) {
@@ -36,15 +36,15 @@ TEST(KdTreeTest, MetricL2) {
   using Scalar = typename PointX::Scalar;
   using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dims = PointX::Dims;
-  std::vector<PointX> points{{2.0, 4.0}};
+  std::vector<PointX> points{{2.0f, 4.0f}};
   AdaptorX adaptor(points);
-  PointX p{10.0, 1.0};
+  PointX p{10.0f, 1.0f};
 
   pico_tree::MetricL2<Index, Scalar, Dims, AdaptorX> metric(adaptor);
 
-  EXPECT_FLOAT_EQ(metric(p, 0), 73.0);
-  EXPECT_FLOAT_EQ(metric(-3.1, 8.9), 144.0);
-  EXPECT_FLOAT_EQ(metric(-3.1), 9.61);
+  EXPECT_FLOAT_EQ(metric(p, 0), 73.0f);
+  EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);
+  EXPECT_FLOAT_EQ(metric(-3.1f), 9.61f);
 }
 
 TEST(KdTreeTest, SplitterMedian) {
@@ -53,16 +53,17 @@ TEST(KdTreeTest, SplitterMedian) {
   using Scalar = typename PointX::Scalar;
   using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dims = PointX::Dims;
-  std::vector<PointX> pts4{{0.0, 4.0}, {0.0, 2.0}, {0.0, 3.0}, {0.0, 1.0}};
+  std::vector<PointX> pts4{
+      {0.0f, 4.0f}, {0.0f, 2.0f}, {0.0f, 3.0f}, {0.0f, 1.0f}};
   std::vector<Index> idx4{0, 1, 2, 3};
   AdaptorX ptsx4(pts4);
 
   pico_tree::internal::Sequence<Scalar, 2> min;
   pico_tree::internal::Sequence<Scalar, 2> max;
-  min[0] = 0.0;
-  min[1] = 0.0;
-  max[0] = 1.0;
-  max[1] = 0.0;
+  min[0] = 0.0f;
+  min[1] = 0.0f;
+  max[0] = 1.0f;
+  max[1] = 0.0f;
   Index split_dim;
   Index split_idx;
   Scalar split_val;
@@ -76,13 +77,13 @@ TEST(KdTreeTest, SplitterMedian) {
   EXPECT_EQ(split_val, pts4[2](0));
 
   std::vector<PointX> pts7{
-      {3.0, 6.0},
-      {0.0, 4.0},
-      {0.0, 2.0},
-      {0.0, 5.0},
-      {0.0, 3.0},
-      {0.0, 1.0},
-      {1.0, 7.0}};
+      {3.0f, 6.0f},
+      {0.0f, 4.0f},
+      {0.0f, 2.0f},
+      {0.0f, 5.0f},
+      {0.0f, 3.0f},
+      {0.0f, 1.0f},
+      {1.0f, 7.0f}};
   std::vector<Index> idx7{0, 1, 2, 3, 4, 5, 6};
   AdaptorX ptsx7(pts7);
 
@@ -94,7 +95,7 @@ TEST(KdTreeTest, SplitterMedian) {
   EXPECT_EQ(split_idx, 3);
   EXPECT_EQ(split_val, pts7[idx7[3]](0));
 
-  max[1] = 10.0;
+  max[1] = 10.0f;
   splitter7(1, 3, 4, min, max, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
@@ -216,17 +217,17 @@ void QueryKnn(
 }  // namespace
 
 TEST(KdTreeTest, QueryRangeSubset2d) {
-  QueryRange<Point2f>(1024 * 1024, 100, 15.1, 34.9);
+  QueryRange<Point2f>(1024 * 1024, 100.0f, 15.1f, 34.9f);
 }
 
 TEST(KdTreeTest, QueryRangeAll2d) {
-  QueryRange<Point2f>(1024, 10.0, 0.0, 10.0);
+  QueryRange<Point2f>(1024, 10.0f, 0.0f, 10.0f);
 }
 
 TEST(KdTreeTest, QueryRadiusSubset2d) {
-  QueryRadius<Point2f>(1024 * 1024, 100, 2.5);
+  QueryRadius<Point2f>(1024 * 1024, 100.0f, 2.5f);
 }
 
-TEST(KdTreeTest, QueryKnn1) { QueryKnn<Point2f>(1024 * 1024, 100, 1); }
+TEST(KdTreeTest, QueryKnn1) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 1); }
 
-TEST(KdTreeTest, QueryKnn10) { QueryKnn<Point2f>(1024 * 1024, 100, 10); }
+TEST(KdTreeTest, QueryKnn10) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 10); }
