@@ -1,0 +1,66 @@
+name: build-and-test
+
+on: [push]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Clones to ${{runner.workspace}}/pico_tree
+      - uses: actions/checkout@v2
+
+      - uses: actions/checkout@v2
+        with:
+          repository: google/googletest
+          ref: release-1.8.1
+          # For some reason in windows-latest we can only create directories within pico_tree/pico_tree.
+          path: ${{runner.workspace}}/pico_tree/googletest
+
+      - name: Create Build Environment
+        shell: bash
+        # Within the Windows environment the GITHUB_WORKSPACE variable uses a \ as a separator. MinGW cmake cannot handle this.
+        # ${GITHUB_WORKSPACE//'\'/'/'} replaces \ with / using the bash shell.
+        run: cmake -E make_directory ${GITHUB_WORKSPACE//'\'/'/'}/build && cmake -E make_directory ${GITHUB_WORKSPACE//'\'/'/'}/install
+
+      - name: Configure Google Test
+        working-directory: ${{runner.workspace}}/pico_tree/googletest
+        shell: bash
+        # 1) GTest is build statically but the CMake + Visual Studio combination wants to link against it as being dynamic.
+        #    https://github.com/google/googletest/tree/release-1.8.1/googletest#visual-studio-dynamic-vs-static-runtimes
+        # 2) The installation directory is customized so PicoTree knows where to find it later.
+        # 3) Visual Studio ignores -DCMAKE_BUILD_TYPE=$BUILD_TYPE and will use cmake --config $BUILD_TYPE
+        #    Make like generators will do the opposite.
+        run: cmake . -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE//'\'/'/'}/install -Dgtest_force_shared_crt=ON
+
+      - name: Build Google Test
+        working-directory: ${{runner.workspace}}/pico_tree/googletest
+        shell: bash
+        run: cmake --build . --config $BUILD_TYPE
+
+      - name: Install Google Test
+        working-directory: ${{runner.workspace}}/pico_tree/googletest
+        shell: bash
+        run: cmake --install . --config $BUILD_TYPE
+
+      - name: Configure PicoTree
+        shell: bash
+        working-directory: ${{runner.workspace}}/pico_tree/build
+        run: cmake ${GITHUB_WORKSPACE//'\'/'/'} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE//'\'/'/'}/install
+
+      - name: Build PicoTree
+        working-directory: ${{runner.workspace}}/pico_tree/build
+        shell: bash
+        run: cmake --build . --config $BUILD_TYPE
+
+      - name: Test PicoTree
+        working-directory: ${{runner.workspace}}/pico_tree/build
+        shell: bash
+        run: ctest -C $BUILD_TYPE

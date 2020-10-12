@@ -1,5 +1,7 @@
 # PicoTree
 
+[![build-and-test](https://github.com/Jaybro/pico_tree/workflows/build-and-test/badge.svg)](https://github.com/Jaybro/pico_tree/actions?query=workflow%3Abuild-and-test)
+
 PicoTree is a small C++ header only library that provides several data structures that can be used for range searches and nearest neighbor searches.
 
 See the comparison [benchmark](./docs/benchmark.md) between PicoTree and [nanoflann](https://github.com/jlblancoc/nanoflann) to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library.
