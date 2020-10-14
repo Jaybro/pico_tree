@@ -1,6 +1,6 @@
 # Benchmark
 
-One of the PicoTree examples is a small [benchmark](./examples/benchmark/) that compares the KdTree of this library with that of [nanoflann](https://github.com/jlblancoc/nanoflann). This page describes several results output by the benchmark and how to reproduce the exact same input that was used to generate the results.
+One of the PicoTree examples is a small [benchmark](./examples/benchmark/) that compares the KdTree of this library with that of [nanoflann](https://github.com/jlblancoc/nanoflann). This page describes the benchmark output and how to reproduce the exact same input that was used for benchmarking.
 
 # Data sets
 
@@ -16,15 +16,17 @@ Both have been generated using a LiDAR scanner and represent different types of 
 
 # Results
 
-The KdTree implementations are compared against build time, radius search time and knn search time. All with respect to the tree leaf size. Each algorithm sets the following parameters:
+The different KdTree implementations are compared to each other with respect to the running times of the build, radius search and knn search algorithms, while fixing certain parameters. The speed of each algorithm is plotted against the leaf size of the tree. Each algorithm sets the following parameters:
 
-* Build (1 time): Dimensions known at compile time or run time.
-* Radius Search (n times): The radius in meters divided by 4 (0.25m and 0.5m).
-* Knn Search (n times): The mount of neighbors searched.
+* Build algorithm: Dimensions known at compile time or run time.
+* Radius search algorithm: The radius in meters divided by 4 (0.25m and 0.5m).
+* Knn algorithm: The mount of neighbors searched.
+
+Note that the run time describes a single invocation of the build algorithm and n invocations of the others.
 
 Results were generated on: 20-09-2020 using MinGW GCC 10.1
 
-For a "special" case of the knn algorithm, where `k` is set to 1, the search speed is compared with respect to tree building techniques:
+For a "special" case of the knn algorithm, where `k` is set to `1`, the search speed is compared with respect to different tree building techniques:
 * Nanoflann Midpoint variation.
 * PicoTree Sliding Midpoint (along the longest axis).
 * PicoTree Longest Axis Median.
@@ -36,11 +38,13 @@ Results were generated on: 01-10-2020 using MinGW GCC 10.1
 ## #25 - Würzburg marketplace.
 
 ![Square Build Time](./images/benchmark_square_build_time.png)![Square Radius Search Time](./images/benchmark_square_radius_search_time.png)
+
 ![Square Knn Search Time](./images/benchmark_square_knn_search_time.png)![Square Knn1 Search Time](./images/benchmark_square_knn1_search_time.png)
 
 ## #26 - Maria-Schmerz-Kapelle Randersacker.
 
 ![Square Build Time](./images/benchmark_church_build_time.png)![Square Radius Search Time](./images/benchmark_church_radius_search_time.png)
+
 ![Square Knn Search Time](./images/benchmark_church_knn_search_time.png)![Square Knn1 Search Time](./images/benchmark_church_knn1_search_time.png)
 
 # Running a new benchmark
@@ -54,9 +58,9 @@ The following steps can be taken to reproduce the data sets:
 To get performance statistics:
 
 4. Run the `benchmark` executable as a sibling to the `scans.bin` file and set the output format to `json`.
-5. Run `plot_benchmarks.py` to show and store the statistics plots.
+5. Run `plot_benchmarks.py` to show and store the performance plots.
 
 Note the following:
 
-* The `uosr_to_bin` tool simply combines all pairs of `.3d` and `.pose` into a single `.bin` file. This means a bigger point cloud can be used benchmarking.
+* The `uosr_to_bin` tool simply combines all pairs of `.3d` and `.pose` files into a single `.bin` file. This means a bigger point cloud can be used for benchmarking.
 * A `.txt` file can be generated from the `.bin` file by running the `bin_to_ascii` executable (as a sibling to the binary file). Each line in the output file is a 3D point.
