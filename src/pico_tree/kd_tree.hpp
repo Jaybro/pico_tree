@@ -28,7 +28,7 @@ inline void LongestAxisBox(
   }
 }
 
-//! Compares neighbors by distance.
+//! \brief Compares neighbors by distance.
 template <typename Index, typename Scalar>
 struct NeighborComparator {
   inline bool operator()(
@@ -38,12 +38,34 @@ struct NeighborComparator {
   }
 };
 
+//! \brief KdTree search visitor for finding a single nearest neighbor.
+template <typename Index, typename Scalar>
+class SearchNn {
+ public:
+  //! \private
+  inline SearchNn(std::pair<Index, Scalar>* nn) : nn_{*nn} {
+    nn_.second = std::numeric_limits<Scalar>::max();
+  }
+
+  //! \brief Visit current point.
+  inline void operator()(Index const idx, Scalar const d) const {
+    nn_ = std::make_pair(idx, d);
+  }
+
+  //! \brief Maximum search distance with respect to the query point.
+  inline Scalar const& max() const { return nn_.second; }
+
+ private:
+  std::pair<Index, Scalar>& nn_;
+};
+
 //! \brief KdTree search visitor for finding k nearest neighbors using a max
 //! heap.
 template <typename Index, typename Scalar>
 class SearchKnn {
  public:
-  SearchKnn(Index const k, std::vector<std::pair<Index, Scalar>>* knn)
+  //! \private
+  inline SearchKnn(Index const k, std::vector<std::pair<Index, Scalar>>* knn)
       : knn_{*knn} {
     // Initial search distances for the heap. All values will be replaced unless
     // point coordinates somehow have extreme values. In this case bad things
@@ -51,7 +73,7 @@ class SearchKnn {
     knn_.assign(k, {0, std::numeric_limits<Scalar>::max()});
   }
 
-  //! Visit current point.
+  //! \brief Visit current point.
   inline void operator()(Index const idx, Scalar const d) const {
     // Replace the current maximum.
     knn_[0] = std::make_pair(idx, d);
@@ -60,41 +82,43 @@ class SearchKnn {
         knn_.begin(), knn_.end(), NeighborComparator<Index, Scalar>());
   }
 
-  //! Sort the neighbors by distance from the query point. Can be used after the
-  //! search has ended.
+  //! \brief Sort the neighbors by distance from the query point. Can be used
+  //! after the search has ended.
   inline void Sort() const {
     std::sort_heap(
         knn_.begin(), knn_.end(), NeighborComparator<Index, Scalar>());
   }
 
-  //! Maximum search distance with respect to the query point.
+  //! \brief Maximum search distance with respect to the query point.
   inline Scalar const& max() const { return knn_[0].second; }
 
  private:
   std::vector<std::pair<Index, Scalar>>& knn_;
 };
 
-//! KdTree search visitor for finding all neighbors within a radius.
+//! \brief KdTree search visitor for finding all neighbors within a radius.
 template <typename Index, typename Scalar>
 class SearchRadius {
  public:
-  SearchRadius(Scalar const radius, std::vector<std::pair<Index, Scalar>>* n)
+  //! \private
+  inline SearchRadius(
+      Scalar const radius, std::vector<std::pair<Index, Scalar>>* n)
       : radius_{radius}, n_{*n} {
     n_.clear();
   }
 
-  //! Visit current point.
+  //! \brief Visit current point.
   inline void operator()(Index const idx, Scalar const d) const {
     n_.push_back(std::make_pair(idx, d));
   }
 
-  //! Sort the neighbors by distance from the query point. Can be used after the
-  //! search has ended.
+  //! \brief Sort the neighbors by distance from the query point. Can be used
+  //! after the search has ended.
   inline void Sort() const {
     std::sort(n_.begin(), n_.end(), NeighborComparator<Index, Scalar>());
   }
 
-  //! Maximum search distance with respect to the query point.
+  //! \brief Maximum search distance with respect to the query point.
   inline Scalar const& max() const { return radius_; }
 
  private:
@@ -109,7 +133,7 @@ class SearchRadius {
 template <typename Index, typename Scalar, int Dims, typename Points>
 class MetricL1 {
  public:
-  explicit MetricL1(Points const& points) : points_{points} {}
+  inline explicit MetricL1(Points const& points) : points_{points} {}
 
   //! \brief Calculates the difference between two points given a query point
   //! and an index to a point.
@@ -151,7 +175,7 @@ class MetricL1 {
 template <typename Index, typename Scalar, int Dims, typename Points>
 class MetricL2 {
  public:
-  explicit MetricL2(Points const& points) : points_{points} {}
+  inline explicit MetricL2(Points const& points) : points_{points} {}
 
   //! \brief Calculates the difference between two points given a query point
   //! and an index to a point.
@@ -454,13 +478,21 @@ class KdTree {
         indices_(points_.num_points()),
         root_{Build(max_leaf_size)} {}
 
-  //! Returns the nearest neighbor (or neighbors) of point \p p depending on
-  //! their selection by visitor \p visitor .
+  //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
+  //! on their selection by visitor \p visitor .
+  //! \see internal::SearchNn
   //! \see internal::SearchKnn
   //! \see internal::SearchRadius
   template <typename P, typename V>
   inline void SearchNn(P const& p, V* visitor) const {
     SearchNn(root_, p, visitor);
+  }
+
+  //! \brief Searches for the nearest neighbor of point \p p .
+  template <typename P>
+  inline void SearchNn(P const& p, std::pair<Index, Scalar>* nn) const {
+    internal::SearchNn<Index, Scalar> v(nn);
+    SearchNn(root_, p, &v);
   }
 
   //! \brief Searches for the \p k nearest neighbors of point \p p . The output

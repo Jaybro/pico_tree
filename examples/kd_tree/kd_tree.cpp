@@ -47,22 +47,22 @@ void Build() {
 template <typename Index, typename Scalar>
 class SearchAnn {
  public:
-  //! Creates a visitor for approximate nearest neighbor searching.
+  //! \brief Creates a visitor for approximate nearest neighbor searching.
   //! \param e Maximum distance error ratio.
   //! \param ann Search result.
-  SearchAnn(Scalar const e, std::pair<Index, Scalar>* ann)
+  inline SearchAnn(Scalar const e, std::pair<Index, Scalar>* ann)
       : e_{Scalar(1.0) / e}, ann_{*ann} {
     // Initial search distance.
-    ann_ = {0, std::numeric_limits<Scalar>::max()};
+    ann_.second = std::numeric_limits<Scalar>::max();
   }
 
-  //! Visit current point.
+  //! \brief Visit current point.
   inline void operator()(Index const idx, Scalar const d) const {
     // The distance is scaled to be d = d / e.
     ann_ = std::make_pair(idx, d * e_);
   }
 
-  //! Maximum search distance with respect to the query point.
+  //! \brief Maximum search distance with respect to the query point.
   inline Scalar const& max() const { return ann_.second; }
 
  private:
