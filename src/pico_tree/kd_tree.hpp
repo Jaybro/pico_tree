@@ -17,9 +17,13 @@ inline void LongestAxisBox(
     Sequence<Scalar, Dims> const& box_max,
     Index* p_max_index,
     Scalar* p_max_value) {
+  assert(box_min.size() == box_max.size());
+
   *p_max_value = std::numeric_limits<Scalar>::lowest();
 
-  for (Index i = 0; i < box_min.size(); ++i) {
+  for (Index i = 0;
+       i < Dimensions<Dims>::Dims(static_cast<Index>(box_min.size()));
+       ++i) {
     Scalar const delta = box_max[i] - box_min[i];
     if (delta > *p_max_value) {
       *p_max_index = i;
