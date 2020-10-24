@@ -1,9 +1,8 @@
 #include <Eigen/Dense>
+#include <pico_tree/eigen_adaptor.hpp>
 #include <pico_tree/kd_tree.hpp>
 #include <point.hpp>
 #include <scoped_timer.hpp>
-
-#include "eigen_adaptor.hpp"
 
 using Index = int;
 using Scalar = double;
