@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Eigen/Dense>
-
 namespace pico_tree {
 
 namespace internal {
@@ -26,9 +24,8 @@ class EigenAdaptorBase<Index_, EigenMatrix, false> {
   }
 
   //! Returns dimension \p dim of point \p point.
-  template <typename Derived>
-  inline Scalar operator()(
-      Eigen::MatrixBase<Derived> const& point, Index const dim) const {
+  template <typename Point>
+  inline Scalar operator()(Point const& point, Index const dim) const {
     return point(dim);
   }
 
@@ -59,9 +56,8 @@ class EigenAdaptorBase<Index_, EigenMatrix, true> {
   }
 
   //! Returns dimension \p dim of point \p point.
-  template <typename Derived>
-  inline Scalar operator()(
-      Eigen::MatrixBase<Derived> const& point, Index const dim) const {
+  template <typename Point>
+  inline Scalar operator()(Point const& point, Index const dim) const {
     return point(dim);
   }
 
