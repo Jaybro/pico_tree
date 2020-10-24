@@ -97,9 +97,10 @@ class EigenAdaptor
     : public internal::
           EigenAdaptorBase<Index, EigenMatrix, EigenMatrix::IsRowMajor> {
  public:
-  inline EigenAdaptor(EigenMatrix const& matrix)
-      : internal::EigenAdaptorBase<Index, EigenMatrix, EigenMatrix::IsRowMajor>(
-            matrix) {}
+  using internal::EigenAdaptorBase<
+      Index,
+      EigenMatrix,
+      EigenMatrix::IsRowMajor>::EigenAdaptorBase;
 };
 
 }  // namespace pico_tree
