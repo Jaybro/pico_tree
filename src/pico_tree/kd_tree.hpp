@@ -187,6 +187,8 @@ class MetricL2 {
   //! \param p Point.
   //! \param idx Index.
   template <typename P>
+  // The enable_if forces implicit casts which are handled by
+  // operator()(Scalar, Scalar).
   inline typename std::enable_if<!std::is_fundamental<P>::value, Scalar>::type
   operator()(P const& p, Index const idx) const {
     Scalar d{};
