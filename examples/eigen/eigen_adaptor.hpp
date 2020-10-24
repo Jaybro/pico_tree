@@ -6,16 +6,6 @@ namespace pico_tree {
 
 namespace internal {
 
-template <int Dims_>
-struct EigenDimensions {
-  inline static constexpr int Dims(int) { return Dims_; }
-};
-
-template <>
-struct EigenDimensions<Eigen::Dynamic> {
-  inline static int Dims(int dims) { return dims; }
-};
-
 template <typename Index, typename EigenMatrix, bool RowMajor>
 class EigenAdaptorBase;
 
@@ -43,9 +33,7 @@ class EigenAdaptorBase<Index_, EigenMatrix, false> {
   }
 
   //! Returns the amount of spatial dimensions of the points.
-  inline Index num_dimensions() const {
-    return EigenDimensions<Dims>::Dims(matrix_.rows());
-  };
+  inline Index num_dimensions() const { return matrix_.rows(); };
 
   //! Returns the number of points.
   inline Index num_points() const { return matrix_.cols(); };
@@ -78,9 +66,7 @@ class EigenAdaptorBase<Index_, EigenMatrix, true> {
   }
 
   //! Returns the amount of spatial dimensions of the points.
-  inline Index num_dimensions() const {
-    return EigenDimensions<Dims>::Dims(matrix_.cols());
-  };
+  inline Index num_dimensions() const { return matrix_.cols(); };
 
   //! Returns the number of points.
   inline Index num_points() const { return matrix_.rows(); };
