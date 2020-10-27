@@ -58,7 +58,7 @@ The following steps can be taken to reproduce the data sets:
 To get performance statistics:
 
 4. Run the `benchmark` executable as a sibling to the `scans.bin` file and set the output format to `json`.
-5. Run `plot_benchmarks.py` to show and store the performance plots.
+5. Run `plot_benchmarks.py` to show and store the performance plots (requires Python with [Matplotlib](https://matplotlib.org/)).
 
 Note the following:
 
