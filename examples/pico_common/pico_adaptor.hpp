@@ -30,9 +30,7 @@ class PicoAdaptor {
   inline int sdim() const { return Dim; };
 
   //! Returns the number of points.
-  inline Index num_points() const {
-    return static_cast<Index>(points_.size());
-  };
+  inline Index npts() const { return static_cast<Index>(points_.size()); };
 
  private:
   std::vector<Point> const& points_;

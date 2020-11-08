@@ -34,7 +34,7 @@ class EigenAdaptorBase<Index_, EigenMatrix, false> {
   inline int sdim() const { return matrix_.rows(); };
 
   //! Returns the number of points.
-  inline Index num_points() const { return matrix_.cols(); };
+  inline Index npts() const { return matrix_.cols(); };
 
  private:
   EigenMatrix matrix_;
@@ -67,7 +67,7 @@ class EigenAdaptorBase<Index_, EigenMatrix, true> {
   inline int sdim() const { return matrix_.cols(); };
 
   //! Returns the number of points.
-  inline Index num_points() const { return matrix_.rows(); };
+  inline Index npts() const { return matrix_.rows(); };
 
  private:
   EigenMatrix matrix_;

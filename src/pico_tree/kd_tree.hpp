@@ -475,8 +475,8 @@ class KdTree {
   KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
         metric_{points_},
-        nodes_(internal::MaxNodesFromPoints(points_.num_points())),
-        indices_(points_.num_points()),
+        nodes_(internal::MaxNodesFromPoints(points_.npts())),
+        indices_(points_.npts()),
         root_{Build(max_leaf_size)} {}
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
@@ -508,8 +508,7 @@ class KdTree {
       bool const sort = false) const {
     // If it happens that the point set is has less points than k we just return
     // all points in the set.
-    internal::SearchKnn<Index, Scalar> v(
-        std::min(k, points_.num_points()), knn);
+    internal::SearchKnn<Index, Scalar> v(std::min(k, points_.npts()), knn);
     SearchNn(root_, p, &v);
 
     if (sort) {
@@ -604,8 +603,8 @@ class KdTree {
   KdTree(Points const& points, internal::Stream* stream)
       : points_{points},
         metric_{points_},
-        nodes_(internal::MaxNodesFromPoints(points_.num_points())),
-        indices_(points_.num_points()),
+        nodes_(internal::MaxNodesFromPoints(points_.npts())),
+        indices_(points_.npts()),
         root_{Load(stream)} {}
 
   inline void CalculateBoundingBox(Sequence* p_min, Sequence* p_max) {
@@ -614,7 +613,7 @@ class KdTree {
     min.Fill(points_.sdim(), std::numeric_limits<Scalar>::max());
     max.Fill(points_.sdim(), std::numeric_limits<Scalar>::lowest());
 
-    for (Index j = 0; j < points_.num_points(); ++j) {
+    for (Index j = 0; j < points_.npts(); ++j) {
       for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
         Scalar const v = points_(j, i);
         if (v < min[i]) {
@@ -630,7 +629,7 @@ class KdTree {
   //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
   //! \details Run time may vary depending on the split strategy.
   inline Node* Build(Index const max_leaf_size) {
-    assert(points_.num_points() > 0);
+    assert(points_.npts() > 0);
     assert(max_leaf_size > 0);
 
     std::iota(indices_.begin(), indices_.end(), 0);
@@ -639,11 +638,7 @@ class KdTree {
 
     Splitter splitter(points_, &indices_);
     return Builder{max_leaf_size, splitter, &nodes_}.SplitIndices(
-        0,
-        0,
-        points_.num_points(),
-        Sequence(root_box_min_),
-        Sequence(root_box_max_));
+        0, 0, points_.npts(), Sequence(root_box_min_), Sequence(root_box_max_));
   }
 
   //! Returns the nearest neighbor (or neighbors) of point \p p depending on

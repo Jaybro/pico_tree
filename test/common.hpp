@@ -16,15 +16,15 @@ template <typename P, typename Index, typename Scalar, typename Metric>
 void SearchKnn(
     P const& p,
     Index const k,
-    Index const num_points,
+    Index const npts,
     Metric const& metric,
     std::vector<std::pair<Index, Scalar>>* knn) {
-  knn->resize(static_cast<std::size_t>(num_points));
-  for (Index i = 0; i < num_points; ++i) {
+  knn->resize(static_cast<std::size_t>(npts));
+  for (Index i = 0; i < npts; ++i) {
     (*knn)[i] = {i, metric(p, i)};
   }
 
-  Index const max_k = std::min(k, num_points);
+  Index const max_k = std::min(k, npts);
   std::nth_element(
       knn->begin(),
       knn->begin() + (max_k - 1),
@@ -66,7 +66,7 @@ void TestBox(
 
   std::size_t count = 0;
 
-  for (Index j = 0; j < points.num_points(); ++j) {
+  for (Index j = 0; j < points.npts(); ++j) {
     bool contained = true;
 
     for (int d = 0; d < PointX::Dim; ++d) {
@@ -93,7 +93,7 @@ void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
 
   auto const& points = tree.points();
 
-  Index idx = tree.points().num_points() / 2;
+  Index idx = tree.points().npts() / 2;
   PointX p;
 
   for (Index d = 0; d < PointX::Dim; ++d) {
@@ -112,7 +112,7 @@ void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
 
   std::size_t count = 0;
 
-  for (Index j = 0; j < points.num_points(); ++j) {
+  for (Index j = 0; j < points.npts(); ++j) {
     if (metric(p, j) <= lp_radius) {
       count++;
     }
@@ -130,7 +130,7 @@ void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
 
   auto const& points = tree.points();
 
-  Index idx = tree.points().num_points() / 2;
+  Index idx = tree.points().npts() / 2;
   PointX p;
 
   for (Index d = 0; d < PointX::Dim; ++d) {
@@ -141,7 +141,7 @@ void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
   tree.SearchKnn(p, k, &results, true);
 
   std::vector<std::pair<Index, Scalar>> compare;
-  SearchKnn(p, k, points.num_points(), tree.metric(), &compare);
+  SearchKnn(p, k, points.npts(), tree.metric(), &compare);
 
   ASSERT_EQ(compare.size(), results.size());
   for (std::size_t i = 0; i < compare.size(); ++i) {
