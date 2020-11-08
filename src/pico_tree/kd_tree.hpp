@@ -359,8 +359,8 @@ class SplitterSlidingMidpoint {
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
-//! \tparam Dim The spatial dimension of the tree and points.
-//! pico_tree::Dynamic in case of run time dimensions.
+//! \tparam Dim The spatial dimension of the tree and points. It can be set to
+//! pico_tree::kDynamicDim in case Dim is only known at run-time.
 template <
     typename Index,
     typename Scalar,

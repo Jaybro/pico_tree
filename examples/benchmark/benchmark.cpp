@@ -41,17 +41,17 @@ template <typename PicoAdaptor>
 using PicoKdTreeRtSldMid = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    pico_tree::kRuntimeDims,
+    pico_tree::kDynamicDim,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
 using PicoKdTreeRtLngMed = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    pico_tree::kRuntimeDims,
+    pico_tree::kDynamicDim,
     PicoAdaptor,
-    MetricL2<pico_tree::kRuntimeDims, PicoAdaptor>,
-    SplitterLongestMedian<pico_tree::kRuntimeDims, PicoAdaptor>>;
+    MetricL2<pico_tree::kDynamicDim, PicoAdaptor>,
+    SplitterLongestMedian<pico_tree::kDynamicDim, PicoAdaptor>>;
 
 template <typename NanoAdaptor>
 using NanoKdTreeCt = nanoflann::KDTreeSingleIndexAdaptor<

@@ -13,9 +13,11 @@
 
 namespace pico_tree {
 
-//! Value used for any template Dims parameter to determine the dimensions
-//! compile time.
-constexpr int kRuntimeDims = -1;
+//! \brief This value can be used in any template argument that wants to know
+//! the spatial dimension of the search problem when it can only be known at
+//! run-time. In this case the dimension of the problem is provided by the point
+//! adaptor.
+static constexpr int kDynamicDim = -1;
 
 namespace internal {
 
@@ -88,7 +90,7 @@ struct Dimension {
 
 //! \brief Run time dimension count handling.
 template <>
-struct Dimension<kRuntimeDims> {
+struct Dimension<kDynamicDim> {
   inline static int Dim(int dim) { return dim; }
 };
 
@@ -130,7 +132,7 @@ class Sequence {
 
 //! \brief Run time sequence. More flexible than the compile time one.
 template <typename Scalar>
-class Sequence<Scalar, kRuntimeDims> {
+class Sequence<Scalar, kDynamicDim> {
  public:
   //! \brief Return type of the Move() member function.
   //! \details Moving a vector is quite a bit cheaper than copying it. The
