@@ -58,7 +58,7 @@ void TestBox(
   tree.SearchBox(min, max, &idxs);
 
   for (auto j : idxs) {
-    for (int d = 0; d < PointX::Dims; ++d) {
+    for (int d = 0; d < PointX::Dim; ++d) {
       EXPECT_GE(points(j, d), min_v);
       EXPECT_LE(points(j, d), max_v);
     }
@@ -69,7 +69,7 @@ void TestBox(
   for (Index j = 0; j < points.num_points(); ++j) {
     bool contained = true;
 
-    for (int d = 0; d < PointX::Dims; ++d) {
+    for (int d = 0; d < PointX::Dim; ++d) {
       if ((points(j, d) < min_v) || (points(j, d) > max_v)) {
         contained = false;
         break;

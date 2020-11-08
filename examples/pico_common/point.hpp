@@ -6,29 +6,29 @@
 #include <vector>
 
 //! Demo point type.
-template <typename Scalar_, int Dims_>
+template <typename Scalar_, int Dim_>
 class Point {
  public:
   using Scalar = Scalar_;
-  static constexpr int Dims = Dims_;
+  static constexpr int Dim = Dim_;
 
-  inline Scalar const& operator()(int dim) const { return data[dim]; }
-  inline Scalar& operator()(int dim) { return data[dim]; }
+  inline Scalar const& operator()(int i) const { return data[i]; }
+  inline Scalar& operator()(int i) { return data[i]; }
 
   inline void Fill(Scalar const v) {
-    for (int i = 0; i < Dims; ++i) {
+    for (int i = 0; i < Dim; ++i) {
       data[i] = v;
     }
   }
 
-  Scalar data[Dims];
+  Scalar data[Dim];
 };
 
-template <typename Scalar_, int Dims_>
+template <typename Scalar_, int Dim_>
 inline std::ostream& operator<<(
-    std::ostream& s, Point<Scalar_, Dims_> const& p) {
+    std::ostream& s, Point<Scalar_, Dim_> const& p) {
   s << p(0);
-  for (int i = 1; i < Dims_; ++i) {
+  for (int i = 1; i < Dim_; ++i) {
     s << " " << p(i);
   }
   return s;
@@ -48,7 +48,7 @@ inline Point GenerateRandomP(typename Point::Scalar size) {
   std::uniform_real_distribution<typename Point::Scalar> dist(0, size);
 
   Point p;
-  for (int i = 0; i < Point::Dims; ++i) {
+  for (int i = 0; i < Point::Dim; ++i) {
     p(i) = dist(e2);
   }
 
@@ -64,7 +64,7 @@ std::vector<Point> GenerateRandomN(int n, typename Point::Scalar size) {
 
   std::vector<Point> random(n);
   for (auto& p : random) {
-    for (int i = 0; i < Point::Dims; ++i) {
+    for (int i = 0; i < Point::Dim; ++i) {
       p(i) = dist(e2);
     }
   }

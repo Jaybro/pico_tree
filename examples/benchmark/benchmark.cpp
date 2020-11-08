@@ -95,7 +95,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoBuildTree)(benchmark::State& state) {
   NanoAdaptorX adaptor(points_);
   for (auto _ : state) {
     NanoKdTreeCt<NanoAdaptorX> tree(
-        PointX::Dims,
+        PointX::Dim,
         adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
     tree.buildIndex();
@@ -125,7 +125,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, RtNanoBuildTree)(benchmark::State& state) {
   NanoAdaptorX adaptor(points_);
   for (auto _ : state) {
     NanoKdTreeRt<NanoAdaptorX> tree(
-        PointX::Dims,
+        PointX::Dim,
         adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
     tree.buildIndex();
@@ -186,7 +186,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoKnn)(benchmark::State& state) {
   int knn_count = state.range(1);
   NanoAdaptorX adaptor(points_);
   NanoKdTreeCt<NanoAdaptorX> tree(
-      PointX::Dims,
+      PointX::Dim,
       adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
   tree.buildIndex();
@@ -317,7 +317,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoRadius)(benchmark::State& state) {
   double squared = radius * radius;
   NanoAdaptorX adaptor(points_);
   NanoKdTreeCt<NanoAdaptorX> tree(
-      PointX::Dims,
+      PointX::Dim,
       adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
   tree.buildIndex();

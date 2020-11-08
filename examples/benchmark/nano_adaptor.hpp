@@ -10,7 +10,7 @@ class NanoAdaptor {
   using Index = Index_;
   using Point = Point_;
   using Scalar = typename Point::Scalar;
-  static constexpr int Dims = Point::Dims;
+  static constexpr int Dims = Point::Dim;
 
   NanoAdaptor(std::vector<Point> const& points) : points_(points) {}
 
