@@ -13,7 +13,7 @@ class EigenAdaptorBase<Index_, EigenMatrix, false> {
  public:
   using Index = Index_;
   using Scalar = typename EigenMatrix::Scalar;
-  static constexpr int Dims = EigenMatrix::RowsAtCompileTime;
+  static constexpr int Dim = EigenMatrix::RowsAtCompileTime;
   static constexpr bool RowMajor = false;
 
   inline EigenAdaptorBase(EigenMatrix const& matrix) : matrix_(matrix) {}
@@ -45,7 +45,7 @@ class EigenAdaptorBase<Index_, EigenMatrix, true> {
  public:
   using Index = Index_;
   using Scalar = typename EigenMatrix::Scalar;
-  static constexpr int Dims = EigenMatrix::ColsAtCompileTime;
+  static constexpr int Dim = EigenMatrix::ColsAtCompileTime;
   static constexpr bool RowMajor = true;
 
   inline EigenAdaptorBase(EigenMatrix const& matrix) : matrix_(matrix) {}

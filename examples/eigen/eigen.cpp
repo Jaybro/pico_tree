@@ -36,13 +36,13 @@ void AdaptorCout(Adaptor const& a, Index idx) {
 
 void ColMajor() {
   using Point = Eigen::Vector3d;
-  constexpr int Dims = Point::RowsAtCompileTime;
+  constexpr int Dim = Point::RowsAtCompileTime;
   using PointsMap =
-      Eigen::Map<Eigen::Matrix<Point::Scalar, Dims, Eigen::Dynamic>>;
+      Eigen::Map<Eigen::Matrix<Point::Scalar, Dim, Eigen::Dynamic>>;
   using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
-  PointsMap points_map(points.data()->data(), Dims, points.size());
+  PointsMap points_map(points.data()->data(), Dim, points.size());
   Adaptor adaptor(points_map);
 
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
@@ -52,7 +52,7 @@ void ColMajor() {
   std::cout << "RowMajor: " << Adaptor::RowMajor << std::endl;
 
   {
-    pico_tree::KdTree<Index, Point::Scalar, Dims, Adaptor> rt(
+    pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> rt(
         adaptor, kMaxLeafCount);
 
     std::vector<std::pair<Index, Scalar>> knn;
@@ -65,13 +65,13 @@ void ColMajor() {
 
 void RowMajor() {
   using Point = Eigen::RowVector3d;
-  constexpr int Dims = Point::ColsAtCompileTime;
+  constexpr int Dim = Point::ColsAtCompileTime;
   using PointsMap = Eigen::Map<
-      Eigen::Matrix<Point::Scalar, Eigen::Dynamic, Dims, Eigen::RowMajor>>;
+      Eigen::Matrix<Point::Scalar, Eigen::Dynamic, Dim, Eigen::RowMajor>>;
   using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
-  PointsMap points_map(points.data()->data(), points.size(), Dims);
+  PointsMap points_map(points.data()->data(), points.size(), Dim);
   Adaptor adaptor(points_map);
 
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
@@ -81,7 +81,7 @@ void RowMajor() {
   std::cout << "RowMajor: " << Adaptor::RowMajor << std::endl;
 
   {
-    pico_tree::KdTree<Index, Point::Scalar, Dims, Adaptor> rt(
+    pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> rt(
         adaptor, kMaxLeafCount);
 
     std::vector<std::pair<Index, Scalar>> knn;
