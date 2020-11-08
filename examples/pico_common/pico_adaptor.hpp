@@ -15,17 +15,17 @@ class PicoAdaptor {
   explicit PicoAdaptor(std::vector<Point> const& points) : points_(points) {}
 
   //! Returns dimension \p dim of point \p idx.
-  inline Scalar operator()(Index const idx, Index const dim) const {
+  inline Scalar operator()(Index const idx, int const dim) const {
     return points_[idx](dim);
   }
 
   //! Returns dimension \p dim of point \p point.
-  inline Scalar operator()(Point const& point, Index const dim) const {
+  inline Scalar operator()(Point const& point, int const dim) const {
     return point(dim);
   }
 
   //! Returns the amount of spatial dimensions of the points.
-  inline Index num_dimensions() const { return Dim; };
+  inline int num_dimensions() const { return Dim; };
 
   //! Returns the number of points.
   inline Index num_points() const {

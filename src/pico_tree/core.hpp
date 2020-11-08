@@ -82,14 +82,14 @@ inline void ReplaceFrontHeap(
 
 //! \brief Compile time dimension count handling.
 template <int Dim_>
-struct Dimensions {
-  inline static constexpr int Dims(int) { return Dim_; }
+struct Dimension {
+  inline static constexpr int Dim(int) { return Dim_; }
 };
 
 //! \brief Run time dimension count handling.
 template <>
-struct Dimensions<kRuntimeDims> {
-  inline static int Dims(int dim) { return dim; }
+struct Dimension<kRuntimeDims> {
+  inline static int Dim(int dim) { return dim; }
 };
 
 //! \brief Compile time sequence. A lot faster than the run time version.
