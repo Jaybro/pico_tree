@@ -25,17 +25,17 @@ template <typename PicoAdaptor>
 using PicoKdTreeCtSldMid = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    PicoAdaptor::Dims,
+    PicoAdaptor::Dim,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
 using PicoKdTreeCtLngMed = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    PicoAdaptor::Dims,
+    PicoAdaptor::Dim,
     PicoAdaptor,
-    MetricL2<PicoAdaptor::Dims, PicoAdaptor>,
-    SplitterLongestMedian<PicoAdaptor::Dims, PicoAdaptor>>;
+    MetricL2<PicoAdaptor::Dim, PicoAdaptor>,
+    SplitterLongestMedian<PicoAdaptor::Dim, PicoAdaptor>>;
 
 template <typename PicoAdaptor>
 using PicoKdTreeRtSldMid = pico_tree::KdTree<

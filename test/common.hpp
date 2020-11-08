@@ -96,7 +96,7 @@ void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
   Index idx = tree.points().num_points() / 2;
   PointX p;
 
-  for (Index d = 0; d < PointsX::Dims; ++d) {
+  for (Index d = 0; d < PointX::Dim; ++d) {
     p(d) = points(idx, d);
   }
 
@@ -133,7 +133,7 @@ void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
   Index idx = tree.points().num_points() / 2;
   PointX p;
 
-  for (Index d = 0; d < PointsX::Dims; ++d) {
+  for (Index d = 0; d < PointX::Dim; ++d) {
     p(d) = points(idx, d);
   }
 

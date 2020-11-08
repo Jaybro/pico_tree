@@ -5,7 +5,9 @@
 #include <random>
 #include <vector>
 
-//! Demo point type.
+//! \brief Example point type.
+//! \tparam Scalar_ Coordinate value type.
+//! \tparam Dim_ The dimension of the space in which the point resides.
 template <typename Scalar_, int Dim_>
 class Point {
  public:

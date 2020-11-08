@@ -10,7 +10,7 @@ template <typename PicoAdaptor>
 using KdTree = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    PicoAdaptor::Dims,
+    PicoAdaptor::Dim,
     PicoAdaptor>;
 
 TEST(KdTreeTest, MetricL1) {

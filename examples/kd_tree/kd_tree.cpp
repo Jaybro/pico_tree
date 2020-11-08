@@ -6,7 +6,7 @@ template <typename PicoAdaptor>
 using KdTreeCt = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    PicoAdaptor::Dims,
+    PicoAdaptor::Dim,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
