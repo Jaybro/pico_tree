@@ -148,8 +148,7 @@ class MetricL1 {
   operator()(P const& p, Index const idx) const {
     Scalar d{};
 
-    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.num_dimensions());
-         ++i) {
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
       d += std::abs(points_(p, i) - points_(idx, i));
     }
 
@@ -191,8 +190,7 @@ class MetricL2 {
   operator()(P const& p, Index const idx) const {
     Scalar d{};
 
-    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.num_dimensions());
-         ++i) {
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
       Scalar const v = points_(p, i) - points_(idx, i);
       d += v * v;
     }
@@ -613,13 +611,11 @@ class KdTree {
   inline void CalculateBoundingBox(Sequence* p_min, Sequence* p_max) {
     Sequence& min = *p_min;
     Sequence& max = *p_max;
-    min.Fill(points_.num_dimensions(), std::numeric_limits<Scalar>::max());
-    max.Fill(points_.num_dimensions(), std::numeric_limits<Scalar>::lowest());
+    min.Fill(points_.sdim(), std::numeric_limits<Scalar>::max());
+    max.Fill(points_.sdim(), std::numeric_limits<Scalar>::lowest());
 
     for (Index j = 0; j < points_.num_points(); ++j) {
-      for (int i = 0;
-           i < internal::Dimension<Dim>::Dim(points_.num_dimensions());
-           ++i) {
+      for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
         Scalar const v = points_(j, i);
         if (v < min[i]) {
           min[i] = v;
@@ -692,9 +688,7 @@ class KdTree {
   //! point on the edge considered inside the box.
   template <typename P>
   inline bool PointInBox(Sequence const& p, P const& min, P const& max) const {
-    for (Index i = 0;
-         i < internal::Dimension<Dim>::Dim(points_.num_dimensions());
-         ++i) {
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
       if (points_(min, i) > p[i] || points_(max, i) < p[i]) {
         return false;
       }
@@ -706,9 +700,7 @@ class KdTree {
   //! by \p min and \p max. A point on the edge considered inside the box.
   template <typename P>
   inline bool PointInBox(Index const idx, P const& min, P const& max) const {
-    for (Index i = 0;
-         i < internal::Dimension<Dim>::Dim(points_.num_dimensions());
-         ++i) {
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
       Scalar const v = points_(idx, i);
       if (points_(min, i) > v || points_(max, i) < v) {
         return false;

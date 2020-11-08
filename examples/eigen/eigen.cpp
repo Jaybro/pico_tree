@@ -29,8 +29,9 @@ std::vector<Point, Eigen::aligned_allocator<Point>> GenerateRandomEigenN(
 
 template <typename Adaptor>
 void AdaptorCout(Adaptor const& a, Index idx) {
-  Index num_dims = a.num_dimensions();
-  for (Index i = 0; i < num_dims; ++i) std::cout << a(idx, i) << " ";
+  for (int i = 0; i < a.sdim(); ++i) {
+    std::cout << a(idx, i) << " ";
+  }
   std::cout << std::endl;
 }
 

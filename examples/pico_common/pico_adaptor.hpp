@@ -2,7 +2,8 @@
 
 #include "point.hpp"
 
-//! \brief Example point set adaptor that shows which functions need to be
+//! \brief Example point set. In this case the set is implemented as an adaptor
+//! that wraps a vector of Point. It illustrates which functions need to be
 //! implemented.
 template <typename Index_, typename Point_>
 class PicoAdaptor {
@@ -24,8 +25,9 @@ class PicoAdaptor {
     return point(dim);
   }
 
-  //! Returns the amount of spatial dimensions of the points.
-  inline int num_dimensions() const { return Dim; };
+  //! Returns the dimension of the space in which the points reside. I.e., the
+  //! amount of coordinates each point has.
+  inline int sdim() const { return Dim; };
 
   //! Returns the number of points.
   inline Index num_points() const {

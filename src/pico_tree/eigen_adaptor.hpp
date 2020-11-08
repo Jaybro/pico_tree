@@ -29,8 +29,9 @@ class EigenAdaptorBase<Index_, EigenMatrix, false> {
     return point(dim);
   }
 
-  //! Returns the amount of spatial dimensions of the points.
-  inline Index num_dimensions() const { return matrix_.rows(); };
+  //! Returns the dimension of the space in which the points reside. I.e., the
+  //! amount of coordinates each point has.
+  inline int sdim() const { return matrix_.rows(); };
 
   //! Returns the number of points.
   inline Index num_points() const { return matrix_.cols(); };
@@ -61,8 +62,9 @@ class EigenAdaptorBase<Index_, EigenMatrix, true> {
     return point(dim);
   }
 
-  //! Returns the amount of spatial dimensions of the points.
-  inline Index num_dimensions() const { return matrix_.cols(); };
+  //! Returns the dimension of the space in which the points reside. I.e., the
+  //! amount of coordinates each point has.
+  inline int sdim() const { return matrix_.cols(); };
 
   //! Returns the number of points.
   inline Index num_points() const { return matrix_.rows(); };
