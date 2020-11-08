@@ -57,7 +57,7 @@ template <typename NanoAdaptor>
 using NanoKdTreeCt = nanoflann::KDTreeSingleIndexAdaptor<
     nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
     NanoAdaptor,
-    NanoAdaptor::Dims,
+    NanoAdaptor::Dim,
     typename NanoAdaptor::Index>;
 
 template <typename NanoAdaptor>
