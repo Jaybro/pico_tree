@@ -1,7 +1,7 @@
 #include <Eigen/Dense>
 #include <pico_tree/eigen_adaptor.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <point.hpp>
+#include <random>
 #include <scoped_timer.hpp>
 
 using Index = int;
