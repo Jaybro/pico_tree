@@ -133,23 +133,27 @@ class SearchRadius {
 
 //! \brief L1 metric using the L1 norm for measuring distances between points.
 //! \see MetricL2
-template <typename Index, typename Scalar, int Dim, typename Points>
+template <typename Scalar, int Dim>
 class MetricL1 {
  public:
-  inline explicit MetricL1(Points const& points) : points_{points} {}
+  inline explicit MetricL1(int const dim) : dim_{dim} {}
 
-  //! \brief Calculates the difference between two points given a query point
-  //! and an index to a point.
-  //! \tparam P Point type.
-  //! \param p Point.
-  //! \param idx Index.
-  template <typename P>
-  inline typename std::enable_if<!std::is_fundamental<P>::value, Scalar>::type
-  operator()(P const& p, Index const idx) const {
+  //! \brief Calculates the distance between points \p p0 and \p p1.
+  //! \tparam P0 Point type.
+  //! \tparam P1 Point type.
+  //! \param p0 Point.
+  //! \param p1 Point.
+  template <typename P0, typename P1>
+  // The enable_if is not required but it forces implicit casts which are
+  // handled by operator()(Scalar, Scalar).
+  inline typename std::enable_if<
+      !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
+      Scalar>::type
+  operator()(P0 const& p0, P1 const& p1) const {
     Scalar d{};
 
-    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-      d += std::abs(p(i) - points_(idx)(i));
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(dim_); ++i) {
+      d += std::abs(p0(i) - p1(i));
     }
 
     return d;
@@ -165,33 +169,35 @@ class MetricL1 {
   inline Scalar operator()(Scalar const x) const { return std::abs(x); }
 
  private:
-  Points const& points_;
+  int const dim_;
 };
 
-//! \brief L2 metric using the squared L2 norm for measuring distances between
-//! points.
+//! \brief The L2 metric measures distances between points using the squared L2
+//! norm.
 //! \details For more details:
 //! * https://en.wikipedia.org/wiki/Metric_space
 //! * https://en.wikipedia.org/wiki/Lp_space
-template <typename Index, typename Scalar, int Dim, typename Points>
+template <typename Scalar, int Dim>
 class MetricL2 {
  public:
-  inline explicit MetricL2(Points const& points) : points_{points} {}
+  inline explicit MetricL2(int const dim) : dim_{dim} {}
 
-  //! \brief Calculates the difference between two points given a query point
-  //! and an index to a point.
-  //! \tparam P Point type.
-  //! \param p Point.
-  //! \param idx Index.
-  template <typename P>
-  // The enable_if forces implicit casts which are handled by
-  // operator()(Scalar, Scalar).
-  inline typename std::enable_if<!std::is_fundamental<P>::value, Scalar>::type
-  operator()(P const& p, Index const idx) const {
+  //! \brief Calculates the distance between points \p p0 and \p p1.
+  //! \tparam P0 Point type.
+  //! \tparam P1 Point type.
+  //! \param p0 Point.
+  //! \param p1 Point.
+  template <typename P0, typename P1>
+  // The enable_if is not required but it forces implicit casts which are
+  // handled by operator()(Scalar, Scalar).
+  inline typename std::enable_if<
+      !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
+      Scalar>::type
+  operator()(P0 const& p0, P1 const& p1) const {
     Scalar d{};
 
-    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-      Scalar const v = p(i) - points_(idx)(i);
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(dim_); ++i) {
+      Scalar const v = p0(i) - p1(i);
       d += v * v;
     }
 
@@ -209,7 +215,7 @@ class MetricL2 {
   inline Scalar operator()(Scalar const x) const { return x * x; }
 
  private:
-  Points const& points_;
+  int const dim_;
 };
 
 //! \brief Splits a tree node on the median of the longest dimension.
@@ -357,14 +363,14 @@ class SplitterSlidingMidpoint {
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
-//! \tparam Dim The spatial dimension of the tree and points. It can be set to
+//! \tparam Dim The spatial dimension of the tree. It can be set to
 //! pico_tree::kDynamicDim in case Dim is only known at run-time.
 template <
     typename Index,
     typename Scalar,
     int Dim,
     typename Points,
-    typename Metric = MetricL2<Index, Scalar, Dim, Points>,
+    typename Metric = MetricL2<Scalar, Dim>,
     typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dim, Points>>
 class KdTree {
  private:
@@ -474,7 +480,7 @@ class KdTree {
   //! splitting mechanism.
   KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
-        metric_{points_},
+        metric_{points_.sdim()},
         nodes_(internal::MaxNodesFromPoints(points_.npts())),
         indices_(points_.npts()),
         root_{Build(max_leaf_size)} {}
@@ -490,6 +496,8 @@ class KdTree {
   }
 
   //! \brief Searches for the nearest neighbor of point \p p .
+  //! \details Interpretation of the output distance depends on the Metric. The
+  //! default MetricL2 results in a squared distance.
   template <typename P>
   inline void SearchNn(P const& p, std::pair<Index, Scalar>* nn) const {
     internal::SearchNn<Index, Scalar> v(nn);
@@ -498,7 +506,9 @@ class KdTree {
 
   //! \brief Searches for the \p k nearest neighbors of point \p p . The output
   //! vector \p knn contains an index and distance pair for each of the search
-  //! results. Interpretation of the distances depends on the Metric.
+  //! results.
+  //! \details Interpretation of the output distances depend on the Metric. The
+  //! default MetricL2 results in squared distances.
   //! \tparam P point type.
   template <typename P>
   inline void SearchKnn(
@@ -521,12 +531,13 @@ class KdTree {
   //! each of the search results.
   //! \details Interpretation of the output distances depend on the Metric. The
   //! default MetricL2 results in squared distances.
-  //! \param p Input point.
-  //! \param radius Search radius that depends on the Metric used by the KdTree.
-  //! It should be the squared distance when using MetricL2. \code{.cpp} Scalar
-  //! metric_distance = kdtree.metric()(distance); \endcode
-  //! \param n Output points.
   //! \tparam P point type.
+  //! \param p Input point.
+  //! \param radius Search radius. The interpretation of the radius depends on
+  //! the Metric used by the KdTree. Squared distance are required when using
+  //! MetricL2. \code{.cpp} Scalar metric_distance = kdtree.metric()(distance);
+  //! \endcode
+  //! \param n Output points.
   template <typename P>
   inline void SearchRadius(
       P const& p,
@@ -602,7 +613,7 @@ class KdTree {
   //! from a Stream.
   KdTree(Points const& points, internal::Stream* stream)
       : points_{points},
-        metric_{points_},
+        metric_{points_.sdim()},
         nodes_(internal::MaxNodesFromPoints(points_.npts())),
         indices_(points_.npts()),
         root_{Load(stream)} {}
@@ -649,7 +660,7 @@ class KdTree {
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        Scalar const d = metric_(p, indices_[i]);
+        Scalar const d = metric_(p, points_(indices_[i]));
         if (visitor->max() > d) {
           (*visitor)(indices_[i], d);
         }

@@ -12,16 +12,22 @@ template <typename Tree>
 using TreePointsType = typename std::remove_reference<decltype(
     std::declval<Tree>().points())>::type;
 
-template <typename P, typename Index, typename Scalar, typename Metric>
+template <
+    typename P,
+    typename Points,
+    typename Index,
+    typename Scalar,
+    typename Metric>
 void SearchKnn(
     P const& p,
+    Points const& points,
     Index const k,
-    Index const npts,
     Metric const& metric,
     std::vector<std::pair<Index, Scalar>>* knn) {
+  Index const npts = points.npts();
   knn->resize(static_cast<std::size_t>(npts));
   for (Index i = 0; i < npts; ++i) {
-    (*knn)[i] = {i, metric(p, i)};
+    (*knn)[i] = {i, metric(p, points(i))};
   }
 
   Index const max_k = std::min(k, npts);
@@ -106,14 +112,14 @@ void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
   tree.SearchRadius(p, lp_radius, &results);
 
   for (auto const& r : results) {
-    EXPECT_LE(metric(p, r.first), lp_radius);
-    EXPECT_EQ(metric(p, r.first), r.second);
+    EXPECT_LE(metric(p, points(r.first)), lp_radius);
+    EXPECT_EQ(metric(p, points(r.first)), r.second);
   }
 
   std::size_t count = 0;
 
   for (Index j = 0; j < points.npts(); ++j) {
-    if (metric(p, j) <= lp_radius) {
+    if (metric(p, points(j)) <= lp_radius) {
       count++;
     }
   }
@@ -141,7 +147,7 @@ void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
   tree.SearchKnn(p, k, &results, true);
 
   std::vector<std::pair<Index, Scalar>> compare;
-  SearchKnn(p, k, points.npts(), tree.metric(), &compare);
+  SearchKnn(p, points, k, tree.metric(), &compare);
 
   ASSERT_EQ(compare.size(), results.size());
   for (std::size_t i = 0; i < compare.size(); ++i) {

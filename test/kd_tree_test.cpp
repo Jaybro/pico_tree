@@ -23,9 +23,9 @@ TEST(KdTreeTest, MetricL1) {
   AdaptorX adaptor(points);
   PointX p{10.0f, 1.0f};
 
-  pico_tree::MetricL1<Index, Scalar, Dim, AdaptorX> metric(adaptor);
+  pico_tree::MetricL1<Scalar, Dim> metric(adaptor.sdim());
 
-  EXPECT_FLOAT_EQ(metric(p, 0), 11.0f);
+  EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 11.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 12.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
 }
@@ -40,9 +40,9 @@ TEST(KdTreeTest, MetricL2) {
   AdaptorX adaptor(points);
   PointX p{10.0f, 1.0f};
 
-  pico_tree::MetricL2<Index, Scalar, Dim, AdaptorX> metric(adaptor);
+  pico_tree::MetricL2<Scalar, Dim> metric(adaptor.sdim());
 
-  EXPECT_FLOAT_EQ(metric(p, 0), 73.0f);
+  EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 73.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f), 9.61f);
 }

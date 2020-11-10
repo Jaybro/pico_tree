@@ -7,12 +7,8 @@
 #include "format_bin.hpp"
 #include "nano_adaptor.hpp"
 
-template <int Dims, typename PicoAdaptor>
-using MetricL2 = pico_tree::MetricL2<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
-    Dims,
-    PicoAdaptor>;
+template <int Dim, typename PicoAdaptor>
+using MetricL2 = pico_tree::MetricL2<typename PicoAdaptor::Scalar, Dim>;
 
 template <int Dims, typename PicoAdaptor>
 using SplitterLongestMedian = pico_tree::SplitterLongestMedian<
