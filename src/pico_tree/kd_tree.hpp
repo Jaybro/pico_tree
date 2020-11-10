@@ -11,11 +11,11 @@ namespace pico_tree {
 namespace internal {
 
 //! See which axis of the box is the longest.
-template <typename Index, typename Scalar, int Dim>
+template <typename Scalar, int Dim>
 inline void LongestAxisBox(
     Sequence<Scalar, Dim> const& box_min,
     Sequence<Scalar, Dim> const& box_max,
-    Index* p_max_index,
+    int* p_max_index,
     Scalar* p_max_value) {
   assert(box_min.size() == box_max.size());
 
@@ -25,7 +25,7 @@ inline void LongestAxisBox(
        ++i) {
     Scalar const delta = box_max[i] - box_min[i];
     if (delta > *p_max_value) {
-      *p_max_index = static_cast<Index>(i);
+      *p_max_index = i;
       *p_max_value = delta;
     }
   }
@@ -247,7 +247,7 @@ class SplitterLongestMedian {
       Index const size,
       Sequence const& box_min,
       Sequence const& box_max,
-      Index* split_dim,
+      int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
     Points const& points = points_;
@@ -306,7 +306,7 @@ class SplitterSlidingMidpoint {
       Index const size,
       Sequence const& box_min,
       Sequence const& box_max,
-      Index* split_dim,
+      int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
     Scalar max_delta;
