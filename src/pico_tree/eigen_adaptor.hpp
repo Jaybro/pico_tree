@@ -7,7 +7,7 @@ namespace internal {
 template <typename Index, typename Matrix, bool RowMajor>
 class EigenAdaptorBase;
 
-//! ColMajor EigenAdaptor.
+//! \brief ColMajor EigenAdaptor.
 template <typename Index_, typename Matrix>
 class EigenAdaptorBase<Index_, Matrix, false> {
  public:
@@ -18,29 +18,24 @@ class EigenAdaptorBase<Index_, Matrix, false> {
 
   inline EigenAdaptorBase(Matrix const& matrix) : matrix_(matrix) {}
 
-  //! Returns dimension \p dim of point \p idx.
-  inline Scalar operator()(Index const idx, Index const dim) const {
-    return matrix_(dim, idx);
+  //! \brief Returns the point at index \p idx.
+  inline Eigen::Block<Matrix const, Dim, 1, !RowMajor> const operator()(
+      Index const idx) const {
+    return matrix_.col(idx);
   }
 
-  //! Returns dimension \p dim of point \p point.
-  template <typename Point>
-  inline Scalar operator()(Point const& point, Index const dim) const {
-    return point(dim);
-  }
-
-  //! Returns the dimension of the space in which the points reside. I.e., the
-  //! amount of coordinates each point has.
+  //! \brief Returns the dimension of the space in which the points reside.
+  //! I.e., the amount of coordinates each point has.
   inline int sdim() const { return matrix_.rows(); };
 
-  //! Returns the number of points.
-  inline Index npts() const { return matrix_.cols(); };
+  //! \brief Returns the number of points.
+  inline Index npts() const { return static_cast<Index>(matrix_.cols()); };
 
  private:
   Matrix matrix_;
 };
 
-//! RowMajor EigenAdaptor.
+//! \brief RowMajor EigenAdaptor.
 template <typename Index_, typename Matrix>
 class EigenAdaptorBase<Index_, Matrix, true> {
  public:
@@ -51,23 +46,18 @@ class EigenAdaptorBase<Index_, Matrix, true> {
 
   inline EigenAdaptorBase(Matrix const& matrix) : matrix_(matrix) {}
 
-  //! Returns dimension \p dim of point \p idx.
-  inline Scalar operator()(Index const idx, Index const dim) const {
-    return matrix_(idx, dim);
+  //! \brief Returns the point at index \p idx.
+  inline Eigen::Block<Matrix const, 1, Dim, RowMajor> const operator()(
+      Index const idx) const {
+    return matrix_.row(idx);
   }
 
-  //! Returns dimension \p dim of point \p point.
-  template <typename Point>
-  inline Scalar operator()(Point const& point, Index const dim) const {
-    return point(dim);
-  }
-
-  //! Returns the dimension of the space in which the points reside. I.e., the
-  //! amount of coordinates each point has.
+  //! \brief Returns the dimension of the space in which the points reside.
+  //! I.e., the amount of coordinates each point has.
   inline int sdim() const { return matrix_.cols(); };
 
-  //! Returns the number of points.
-  inline Index npts() const { return matrix_.rows(); };
+  //! \brief Returns the number of points.
+  inline Index npts() const { return static_cast<Index>(matrix_.rows()); };
 
  private:
   Matrix matrix_;

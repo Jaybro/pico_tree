@@ -149,7 +149,7 @@ class MetricL1 {
     Scalar d{};
 
     for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-      d += std::abs(points_(p, i) - points_(idx, i));
+      d += std::abs(p(i) - points_(idx)(i));
     }
 
     return d;
@@ -191,7 +191,7 @@ class MetricL2 {
     Scalar d{};
 
     for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-      Scalar const v = points_(p, i) - points_(idx, i);
+      Scalar const v = p(i) - points_(idx)(i);
       d += v * v;
     }
 
@@ -256,10 +256,10 @@ class SplitterLongestMedian {
         indices_.begin() + *split_idx,
         indices_.begin() + offset + size,
         [&points, &split_dim](Index const a, Index const b) -> bool {
-          return points(a, *split_dim) < points(b, *split_dim);
+          return points(a)(*split_dim) < points(b)(*split_dim);
         });
 
-    *split_val = points(indices_[*split_idx], *split_dim);
+    *split_val = points(indices_[*split_idx])(*split_dim);
   }
 
  private:
@@ -310,7 +310,7 @@ class SplitterSlidingMidpoint {
     // Everything smaller than split_val goes left, the rest right.
     Points const& points = points_;
     auto const comp = [&points, &split_dim, &split_val](Index const a) -> bool {
-      return points(a, *split_dim) < *split_val;
+      return points(a)(*split_dim) < *split_val;
     };
     std::partition(
         indices_.begin() + offset, indices_.begin() + offset + size, comp);
@@ -334,9 +334,9 @@ class SplitterSlidingMidpoint {
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
           [&points, &split_dim](Index const a, Index const b) -> bool {
-            return points(a, *split_dim) < points(b, *split_dim);
+            return points(a)(*split_dim) < points(b)(*split_dim);
           });
-      (*split_val) = points(indices_[*split_idx], *split_dim);
+      (*split_val) = points(indices_[*split_idx])(*split_dim);
     } else if ((*split_idx - offset) == 0) {
       (*split_idx)++;
       std::nth_element(
@@ -344,9 +344,9 @@ class SplitterSlidingMidpoint {
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
           [&points, &split_dim](Index const a, Index const b) -> bool {
-            return points(a, *split_dim) < points(b, *split_dim);
+            return points(a)(*split_dim) < points(b)(*split_dim);
           });
-      (*split_val) = points(indices_[*split_idx], *split_dim);
+      (*split_val) = points(indices_[*split_idx])(*split_dim);
     }
   }
 
@@ -375,7 +375,7 @@ class KdTree {
     union Data {
       //! Tree branch.
       struct Branch {
-        Index split_dim;
+        int split_dim;
         Scalar split_val;
       };
 
@@ -614,8 +614,9 @@ class KdTree {
     max.Fill(points_.sdim(), std::numeric_limits<Scalar>::lowest());
 
     for (Index j = 0; j < points_.npts(); ++j) {
+      auto const& p = points_(j);
       for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-        Scalar const v = points_(j, i);
+        Scalar const v = p(i);
         if (v < min[i]) {
           min[i] = v;
         }
@@ -656,7 +657,7 @@ class KdTree {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      Scalar const v = points_(p, node->data.branch.split_dim);
+      Scalar const v = p(node->data.branch.split_dim);
       Node const* node_1st;
       Node const* node_2nd;
 
@@ -684,7 +685,7 @@ class KdTree {
   template <typename P>
   inline bool PointInBox(Sequence const& p, P const& min, P const& max) const {
     for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-      if (points_(min, i) > p[i] || points_(max, i) < p[i]) {
+      if (min(i) > p[i] || max(i) < p[i]) {
         return false;
       }
     }
@@ -695,9 +696,10 @@ class KdTree {
   //! by \p min and \p max. A point on the edge considered inside the box.
   template <typename P>
   inline bool PointInBox(Index const idx, P const& min, P const& max) const {
+    auto const& p = points_(idx);
     for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-      Scalar const v = points_(idx, i);
-      if (points_(min, i) > v || points_(max, i) < v) {
+      Scalar const v = p(i);
+      if (min(i) > v || max(i) < v) {
         return false;
       }
     }
@@ -751,8 +753,7 @@ class KdTree {
           PointInBox(left_box_max, rng_min, rng_max)) {
         ReportNode(node->left, idxs);
       } else if (
-          points_(rng_min, node->data.branch.split_dim) <
-          node->data.branch.split_val) {
+          rng_min(node->data.branch.split_dim) < node->data.branch.split_val) {
         SearchBox(
             node->left,
             rng_min,
@@ -770,8 +771,7 @@ class KdTree {
           PointInBox(box_max, rng_min, rng_max)) {
         ReportNode(node->right, idxs);
       } else if (
-          points_(rng_max, node->data.branch.split_dim) >
-          node->data.branch.split_val) {
+          rng_max(node->data.branch.split_dim) > node->data.branch.split_val) {
         SearchBox(
             node->right,
             rng_min,

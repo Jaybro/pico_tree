@@ -30,7 +30,7 @@ std::vector<Point, Eigen::aligned_allocator<Point>> GenerateRandomEigenN(
 template <typename Adaptor>
 void AdaptorCout(Adaptor const& a, Index idx) {
   for (int i = 0; i < a.sdim(); ++i) {
-    std::cout << a(idx, i) << " ";
+    std::cout << a(idx)(i) << " ";
   }
   std::cout << std::endl;
 }

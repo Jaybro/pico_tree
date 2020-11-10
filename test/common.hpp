@@ -59,8 +59,8 @@ void TestBox(
 
   for (auto j : idxs) {
     for (int d = 0; d < PointX::Dim; ++d) {
-      EXPECT_GE(points(j, d), min_v);
-      EXPECT_LE(points(j, d), max_v);
+      EXPECT_GE(points(j)(d), min_v);
+      EXPECT_LE(points(j)(d), max_v);
     }
   }
 
@@ -70,7 +70,7 @@ void TestBox(
     bool contained = true;
 
     for (int d = 0; d < PointX::Dim; ++d) {
-      if ((points(j, d) < min_v) || (points(j, d) > max_v)) {
+      if ((points(j)(d) < min_v) || (points(j)(d) > max_v)) {
         contained = false;
         break;
       }
@@ -97,7 +97,7 @@ void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
   PointX p;
 
   for (Index d = 0; d < PointX::Dim; ++d) {
-    p(d) = points(idx, d);
+    p(d) = points(idx)(d);
   }
 
   auto const& metric = tree.metric();
@@ -134,7 +134,7 @@ void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
   PointX p;
 
   for (Index d = 0; d < PointX::Dim; ++d) {
-    p(d) = points(idx, d);
+    p(d) = points(idx)(d);
   }
 
   std::vector<std::pair<Index, Scalar>> results;
