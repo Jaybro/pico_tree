@@ -6,6 +6,10 @@
 #include <vector>
 
 //! \brief Example point type.
+//! \details A point should at least implement the parenthesis operator:
+//! \code{.cpp}
+//! inline Scalar const& operator()(int i) const;
+//! \endcode
 //! \tparam Scalar_ Coordinate value type.
 //! \tparam Dim_ The dimension of the space in which the point resides.
 template <typename Scalar_, int Dim_>

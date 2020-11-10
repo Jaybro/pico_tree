@@ -3,8 +3,13 @@
 #include "point.hpp"
 
 //! \brief Example point set. In this case the set is implemented as an adaptor
-//! that wraps a vector of Point. It illustrates which functions need to be
-//! implemented.
+//! that wraps a vector of Point.
+//! \details The following methods need to be implemented:
+//! \code{.cpp}
+//! inline Point const& operator()(Index const idx) const;
+//! inline int sdim() const;
+//! inline Index npts() const;
+//! \endcode
 template <typename Index_, typename Point_>
 class PicoAdaptor {
  public:
