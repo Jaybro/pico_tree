@@ -18,8 +18,8 @@ class Point {
   using Scalar = Scalar_;
   static constexpr int Dim = Dim_;
 
-  inline Scalar const& operator()(int i) const { return data[i]; }
-  inline Scalar& operator()(int i) { return data[i]; }
+  inline Scalar const& operator()(int const i) const { return data[i]; }
+  inline Scalar& operator()(int const i) { return data[i]; }
 
   inline void Fill(Scalar const v) {
     for (int i = 0; i < Dim; ++i) {
