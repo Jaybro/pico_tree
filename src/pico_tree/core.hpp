@@ -1,12 +1,7 @@
 #pragma once
 
-//! \mainpage PicoTree is a small C++11 header only library that provides
-//! several data structures that can be used for range searches and nearest
-//! neighbor searches. It is only dependent on the C++ Standard Library. The
-//! following search structures are provided:
-//! \li <a href="https://en.wikipedia.org/wiki/K-d_tree">Kd Tree</a>.
-//! \li <a href="https://en.wikipedia.org/wiki/Fractional_cascading">Layered</a>
-//! <a href="https://en.wikipedia.org/wiki/Range_tree">Range Tree</a>.
+//! \mainpage PicoTree is a small C++ header only library for range searches and
+//! nearest neighbor searches using a KdTree.
 //! \file core.hpp
 //! \brief Contains various common utilities.
 
@@ -18,9 +13,11 @@
 
 namespace pico_tree {
 
-//! Value used for any template Dims parameter to determine the dimensions
-//! compile time.
-constexpr int kRuntimeDims = -1;
+//! \brief This value can be used in any template argument that wants to know
+//! the spatial dimension of the search problem when it can only be known at
+//! run-time. In this case the dimension of the problem is provided by the point
+//! adaptor.
+static constexpr int kDynamicDim = -1;
 
 namespace internal {
 
@@ -86,23 +83,19 @@ inline void ReplaceFrontHeap(
 }
 
 //! \brief Compile time dimension count handling.
-template <int Dims_>
-struct Dimensions {
-  //! \brief Returns the dimension index of the \p dim -th dimension from the
-  //! back.
-  inline static constexpr int Back(int dim) { return Dims_ - dim; }
-  inline static constexpr int Dims(int) { return Dims_; }
+template <int Dim_>
+struct Dimension {
+  inline static constexpr int Dim(int) { return Dim_; }
 };
 
 //! \brief Run time dimension count handling.
 template <>
-struct Dimensions<kRuntimeDims> {
-  inline static constexpr int Back(int) { return kRuntimeDims; }
-  inline static int Dims(int dims) { return dims; }
+struct Dimension<kDynamicDim> {
+  inline static int Dim(int dim) { return dim; }
 };
 
 //! \brief Compile time sequence. A lot faster than the run time version.
-template <typename Scalar, int Dims_>
+template <typename Scalar, int Dim_>
 class Sequence {
  public:
   //! \brief Return type of the Move() member function.
@@ -134,12 +127,12 @@ class Sequence {
 
  private:
   //! Storage.
-  std::array<Scalar, Dims_> sequence_;
+  std::array<Scalar, Dim_> sequence_;
 };
 
 //! \brief Run time sequence. More flexible than the compile time one.
 template <typename Scalar>
-class Sequence<Scalar, kRuntimeDims> {
+class Sequence<Scalar, kDynamicDim> {
  public:
   //! \brief Return type of the Move() member function.
   //! \details Moving a vector is quite a bit cheaper than copying it. The

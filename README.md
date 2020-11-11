@@ -15,10 +15,11 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
   * Compile time and run time known dimensions.
   * Static tree builds.
+  * Thread safe queries.
 
 The examples show how PicoTree can be used:
 
-* Creating an [adaptor](./examples/pico_common/pico_adaptor.hpp) to interface with input point clouds.
+* Creating the expected [point](./examples/pico_common/point.hpp) and [point set](./examples/pico_common/pico_adaptor.hpp) interfaces.
 * Searching using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor (for finding approximate nearest neighbors).
 * Using [Eigen](./examples/eigen/) data types.
 

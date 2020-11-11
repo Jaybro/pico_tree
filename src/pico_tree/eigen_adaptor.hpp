@@ -4,85 +4,74 @@ namespace pico_tree {
 
 namespace internal {
 
-template <typename Index, typename EigenMatrix, bool RowMajor>
+template <typename Index, typename Matrix, bool RowMajor>
 class EigenAdaptorBase;
 
-//! ColMajor EigenAdaptor.
-template <typename Index_, typename EigenMatrix>
-class EigenAdaptorBase<Index_, EigenMatrix, false> {
+//! \brief ColMajor EigenAdaptor.
+template <typename Index_, typename Matrix>
+class EigenAdaptorBase<Index_, Matrix, false> {
  public:
   using Index = Index_;
-  using Scalar = typename EigenMatrix::Scalar;
-  static constexpr int Dims = EigenMatrix::RowsAtCompileTime;
+  using Scalar = typename Matrix::Scalar;
+  static constexpr int Dim = Matrix::RowsAtCompileTime;
   static constexpr bool RowMajor = false;
 
-  inline EigenAdaptorBase(EigenMatrix const& matrix) : matrix_(matrix) {}
+  inline EigenAdaptorBase(Matrix const& matrix) : matrix_(matrix) {}
 
-  //! Returns dimension \p dim of point \p idx.
-  inline Scalar operator()(Index const idx, Index const dim) const {
-    return matrix_(dim, idx);
+  //! \brief Returns the point at index \p idx.
+  inline Eigen::Block<Matrix const, Dim, 1, !RowMajor> const operator()(
+      Index const idx) const {
+    return matrix_.col(idx);
   }
 
-  //! Returns dimension \p dim of point \p point.
-  template <typename Point>
-  inline Scalar operator()(Point const& point, Index const dim) const {
-    return point(dim);
-  }
+  //! \brief Returns the dimension of the space in which the points reside.
+  //! I.e., the amount of coordinates each point has.
+  inline int sdim() const { return matrix_.rows(); };
 
-  //! Returns the amount of spatial dimensions of the points.
-  inline Index num_dimensions() const { return matrix_.rows(); };
-
-  //! Returns the number of points.
-  inline Index num_points() const { return matrix_.cols(); };
+  //! \brief Returns the number of points.
+  inline Index npts() const { return static_cast<Index>(matrix_.cols()); };
 
  private:
-  EigenMatrix matrix_;
+  Matrix matrix_;
 };
 
-//! RowMajor EigenAdaptor.
-template <typename Index_, typename EigenMatrix>
-class EigenAdaptorBase<Index_, EigenMatrix, true> {
+//! \brief RowMajor EigenAdaptor.
+template <typename Index_, typename Matrix>
+class EigenAdaptorBase<Index_, Matrix, true> {
  public:
   using Index = Index_;
-  using Scalar = typename EigenMatrix::Scalar;
-  static constexpr int Dims = EigenMatrix::ColsAtCompileTime;
+  using Scalar = typename Matrix::Scalar;
+  static constexpr int Dim = Matrix::ColsAtCompileTime;
   static constexpr bool RowMajor = true;
 
-  inline EigenAdaptorBase(EigenMatrix const& matrix) : matrix_(matrix) {}
+  inline EigenAdaptorBase(Matrix const& matrix) : matrix_(matrix) {}
 
-  //! Returns dimension \p dim of point \p idx.
-  inline Scalar operator()(Index const idx, Index const dim) const {
-    return matrix_(idx, dim);
+  //! \brief Returns the point at index \p idx.
+  inline Eigen::Block<Matrix const, 1, Dim, RowMajor> const operator()(
+      Index const idx) const {
+    return matrix_.row(idx);
   }
 
-  //! Returns dimension \p dim of point \p point.
-  template <typename Point>
-  inline Scalar operator()(Point const& point, Index const dim) const {
-    return point(dim);
-  }
+  //! \brief Returns the dimension of the space in which the points reside.
+  //! I.e., the amount of coordinates each point has.
+  inline int sdim() const { return matrix_.cols(); };
 
-  //! Returns the amount of spatial dimensions of the points.
-  inline Index num_dimensions() const { return matrix_.cols(); };
-
-  //! Returns the number of points.
-  inline Index num_points() const { return matrix_.rows(); };
+  //! \brief Returns the number of points.
+  inline Index npts() const { return static_cast<Index>(matrix_.rows()); };
 
  private:
-  EigenMatrix matrix_;
+  Matrix matrix_;
 };
 
 }  // namespace internal
 
 //! Adapts Eigen matrices so they can be used with any of the pico trees.
-template <typename Index, typename EigenMatrix>
+template <typename Index, typename Matrix>
 class EigenAdaptor
-    : public internal::
-          EigenAdaptorBase<Index, EigenMatrix, EigenMatrix::IsRowMajor> {
+    : public internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor> {
  public:
-  using internal::EigenAdaptorBase<
-      Index,
-      EigenMatrix,
-      EigenMatrix::IsRowMajor>::EigenAdaptorBase;
+  using internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>::
+      EigenAdaptorBase;
 };
 
 }  // namespace pico_tree

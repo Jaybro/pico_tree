@@ -7,12 +7,8 @@
 #include "format_bin.hpp"
 #include "nano_adaptor.hpp"
 
-template <int Dims, typename PicoAdaptor>
-using MetricL2 = pico_tree::MetricL2<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
-    Dims,
-    PicoAdaptor>;
+template <int Dim, typename PicoAdaptor>
+using MetricL2 = pico_tree::MetricL2<typename PicoAdaptor::Scalar, Dim>;
 
 template <int Dims, typename PicoAdaptor>
 using SplitterLongestMedian = pico_tree::SplitterLongestMedian<
@@ -25,39 +21,39 @@ template <typename PicoAdaptor>
 using PicoKdTreeCtSldMid = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    PicoAdaptor::Dims,
+    PicoAdaptor::Dim,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
 using PicoKdTreeCtLngMed = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    PicoAdaptor::Dims,
+    PicoAdaptor::Dim,
     PicoAdaptor,
-    MetricL2<PicoAdaptor::Dims, PicoAdaptor>,
-    SplitterLongestMedian<PicoAdaptor::Dims, PicoAdaptor>>;
+    MetricL2<PicoAdaptor::Dim, PicoAdaptor>,
+    SplitterLongestMedian<PicoAdaptor::Dim, PicoAdaptor>>;
 
 template <typename PicoAdaptor>
 using PicoKdTreeRtSldMid = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    pico_tree::kRuntimeDims,
+    pico_tree::kDynamicDim,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
 using PicoKdTreeRtLngMed = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    pico_tree::kRuntimeDims,
+    pico_tree::kDynamicDim,
     PicoAdaptor,
-    MetricL2<pico_tree::kRuntimeDims, PicoAdaptor>,
-    SplitterLongestMedian<pico_tree::kRuntimeDims, PicoAdaptor>>;
+    MetricL2<pico_tree::kDynamicDim, PicoAdaptor>,
+    SplitterLongestMedian<pico_tree::kDynamicDim, PicoAdaptor>>;
 
 template <typename NanoAdaptor>
 using NanoKdTreeCt = nanoflann::KDTreeSingleIndexAdaptor<
     nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
     NanoAdaptor,
-    NanoAdaptor::Dims,
+    NanoAdaptor::Dim,
     typename NanoAdaptor::Index>;
 
 template <typename NanoAdaptor>
@@ -95,7 +91,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoBuildTree)(benchmark::State& state) {
   NanoAdaptorX adaptor(points_);
   for (auto _ : state) {
     NanoKdTreeCt<NanoAdaptorX> tree(
-        PointX::Dims,
+        PointX::Dim,
         adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
     tree.buildIndex();
@@ -125,7 +121,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, RtNanoBuildTree)(benchmark::State& state) {
   NanoAdaptorX adaptor(points_);
   for (auto _ : state) {
     NanoKdTreeRt<NanoAdaptorX> tree(
-        PointX::Dims,
+        PointX::Dim,
         adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
     tree.buildIndex();
@@ -186,7 +182,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoKnn)(benchmark::State& state) {
   int knn_count = state.range(1);
   NanoAdaptorX adaptor(points_);
   NanoKdTreeCt<NanoAdaptorX> tree(
-      PointX::Dims,
+      PointX::Dim,
       adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
   tree.buildIndex();
@@ -317,7 +313,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtNanoRadius)(benchmark::State& state) {
   double squared = radius * radius;
   NanoAdaptorX adaptor(points_);
   NanoKdTreeCt<NanoAdaptorX> tree(
-      PointX::Dims,
+      PointX::Dim,
       adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
   tree.buildIndex();

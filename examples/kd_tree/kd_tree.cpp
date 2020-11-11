@@ -6,14 +6,14 @@ template <typename PicoAdaptor>
 using KdTreeCt = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    PicoAdaptor::Dims,
+    PicoAdaptor::Dim,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
 using KdTreeRt = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    pico_tree::kRuntimeDims,
+    pico_tree::kDynamicDim,
     PicoAdaptor>;
 
 // Compile time or run time known dimensions.

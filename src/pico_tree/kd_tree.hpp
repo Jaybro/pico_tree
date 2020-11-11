@@ -11,18 +11,17 @@ namespace pico_tree {
 namespace internal {
 
 //! See which axis of the box is the longest.
-template <typename Index, typename Scalar, int Dims>
+template <typename Scalar, int Dim>
 inline void LongestAxisBox(
-    Sequence<Scalar, Dims> const& box_min,
-    Sequence<Scalar, Dims> const& box_max,
-    Index* p_max_index,
+    Sequence<Scalar, Dim> const& box_min,
+    Sequence<Scalar, Dim> const& box_max,
+    int* p_max_index,
     Scalar* p_max_value) {
   assert(box_min.size() == box_max.size());
 
   *p_max_value = std::numeric_limits<Scalar>::lowest();
 
-  for (Index i = 0;
-       i < Dimensions<Dims>::Dims(static_cast<Index>(box_min.size()));
+  for (int i = 0; i < Dimension<Dim>::Dim(static_cast<int>(box_min.size()));
        ++i) {
     Scalar const delta = box_max[i] - box_min[i];
     if (delta > *p_max_value) {
@@ -134,25 +133,27 @@ class SearchRadius {
 
 //! \brief L1 metric using the L1 norm for measuring distances between points.
 //! \see MetricL2
-template <typename Index, typename Scalar, int Dims, typename Points>
+template <typename Scalar, int Dim>
 class MetricL1 {
  public:
-  inline explicit MetricL1(Points const& points) : points_{points} {}
+  inline explicit MetricL1(int const dim) : dim_{dim} {}
 
-  //! \brief Calculates the difference between two points given a query point
-  //! and an index to a point.
-  //! \tparam P Point type.
-  //! \param p Point.
-  //! \param idx Index.
-  template <typename P>
-  inline typename std::enable_if<!std::is_fundamental<P>::value, Scalar>::type
-  operator()(P const& p, Index const idx) const {
+  //! \brief Calculates the distance between points \p p0 and \p p1.
+  //! \tparam P0 Point type.
+  //! \tparam P1 Point type.
+  //! \param p0 Point.
+  //! \param p1 Point.
+  template <typename P0, typename P1>
+  // The enable_if is not required but it forces implicit casts which are
+  // handled by operator()(Scalar, Scalar).
+  inline typename std::enable_if<
+      !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
+      Scalar>::type
+  operator()(P0 const& p0, P1 const& p1) const {
     Scalar d{};
 
-    for (Index i = 0;
-         i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
-         ++i) {
-      d += std::abs(points_(p, i) - points_(idx, i));
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(dim_); ++i) {
+      d += std::abs(p0(i) - p1(i));
     }
 
     return d;
@@ -168,35 +169,35 @@ class MetricL1 {
   inline Scalar operator()(Scalar const x) const { return std::abs(x); }
 
  private:
-  Points const& points_;
+  int const dim_;
 };
 
-//! \brief L2 metric using the squared L2 norm for measuring distances between
-//! points.
+//! \brief The L2 metric measures distances between points using the squared L2
+//! norm.
 //! \details For more details:
 //! * https://en.wikipedia.org/wiki/Metric_space
 //! * https://en.wikipedia.org/wiki/Lp_space
-template <typename Index, typename Scalar, int Dims, typename Points>
+template <typename Scalar, int Dim>
 class MetricL2 {
  public:
-  inline explicit MetricL2(Points const& points) : points_{points} {}
+  inline explicit MetricL2(int const dim) : dim_{dim} {}
 
-  //! \brief Calculates the difference between two points given a query point
-  //! and an index to a point.
-  //! \tparam P Point type.
-  //! \param p Point.
-  //! \param idx Index.
-  template <typename P>
-  // The enable_if forces implicit casts which are handled by
-  // operator()(Scalar, Scalar).
-  inline typename std::enable_if<!std::is_fundamental<P>::value, Scalar>::type
-  operator()(P const& p, Index const idx) const {
+  //! \brief Calculates the distance between points \p p0 and \p p1.
+  //! \tparam P0 Point type.
+  //! \tparam P1 Point type.
+  //! \param p0 Point.
+  //! \param p1 Point.
+  template <typename P0, typename P1>
+  // The enable_if is not required but it forces implicit casts which are
+  // handled by operator()(Scalar, Scalar).
+  inline typename std::enable_if<
+      !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
+      Scalar>::type
+  operator()(P0 const& p0, P1 const& p1) const {
     Scalar d{};
 
-    for (Index i = 0;
-         i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
-         ++i) {
-      Scalar const v = points_(p, i) - points_(idx, i);
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(dim_); ++i) {
+      Scalar const v = p0(i) - p1(i);
       d += v * v;
     }
 
@@ -214,7 +215,7 @@ class MetricL2 {
   inline Scalar operator()(Scalar const x) const { return x * x; }
 
  private:
-  Points const& points_;
+  int const dim_;
 };
 
 //! \brief Splits a tree node on the median of the longest dimension.
@@ -227,11 +228,11 @@ class MetricL2 {
 //!
 //! Note that this splitter is not recommended when searching for more than a
 //! single neighbor.
-template <typename Index, typename Scalar, int Dims, typename Points>
+template <typename Index, typename Scalar, int Dim, typename Points>
 class SplitterLongestMedian {
  private:
   //! Either an array or vector (compile time vs. run time).
-  using Sequence = typename internal::Sequence<Scalar, Dims>;
+  using Sequence = typename internal::Sequence<Scalar, Dim>;
 
  public:
   template <typename T>
@@ -246,7 +247,7 @@ class SplitterLongestMedian {
       Index const size,
       Sequence const& box_min,
       Sequence const& box_max,
-      Index* split_dim,
+      int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
     Points const& points = points_;
@@ -261,10 +262,10 @@ class SplitterLongestMedian {
         indices_.begin() + *split_idx,
         indices_.begin() + offset + size,
         [&points, &split_dim](Index const a, Index const b) -> bool {
-          return points(a, *split_dim) < points(b, *split_dim);
+          return points(a)(*split_dim) < points(b)(*split_dim);
         });
 
-    *split_val = points(indices_[*split_idx], *split_dim);
+    *split_val = points(indices_[*split_idx])(*split_dim);
   }
 
  private:
@@ -286,11 +287,11 @@ class SplitterLongestMedian {
 //!
 //! This splitter can be used to answer an approximate nearest neighbor query in
 //! O(1/e^d log n) time.
-template <typename Index, typename Scalar, int Dims, typename Points>
+template <typename Index, typename Scalar, int Dim, typename Points>
 class SplitterSlidingMidpoint {
  private:
   //! Either an array or vector (compile time vs. run time).
-  using Sequence = typename internal::Sequence<Scalar, Dims>;
+  using Sequence = typename internal::Sequence<Scalar, Dim>;
 
  public:
   template <typename T>
@@ -305,7 +306,7 @@ class SplitterSlidingMidpoint {
       Index const size,
       Sequence const& box_min,
       Sequence const& box_max,
-      Index* split_dim,
+      int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
     Scalar max_delta;
@@ -315,7 +316,7 @@ class SplitterSlidingMidpoint {
     // Everything smaller than split_val goes left, the rest right.
     Points const& points = points_;
     auto const comp = [&points, &split_dim, &split_val](Index const a) -> bool {
-      return points(a, *split_dim) < *split_val;
+      return points(a)(*split_dim) < *split_val;
     };
     std::partition(
         indices_.begin() + offset, indices_.begin() + offset + size, comp);
@@ -339,9 +340,9 @@ class SplitterSlidingMidpoint {
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
           [&points, &split_dim](Index const a, Index const b) -> bool {
-            return points(a, *split_dim) < points(b, *split_dim);
+            return points(a)(*split_dim) < points(b)(*split_dim);
           });
-      (*split_val) = points(indices_[*split_idx], *split_dim);
+      (*split_val) = points(indices_[*split_idx])(*split_dim);
     } else if ((*split_idx - offset) == 0) {
       (*split_idx)++;
       std::nth_element(
@@ -349,9 +350,9 @@ class SplitterSlidingMidpoint {
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
           [&points, &split_dim](Index const a, Index const b) -> bool {
-            return points(a, *split_dim) < points(b, *split_dim);
+            return points(a)(*split_dim) < points(b)(*split_dim);
           });
-      (*split_val) = points(indices_[*split_idx], *split_dim);
+      (*split_val) = points(indices_[*split_idx])(*split_dim);
     }
   }
 
@@ -362,15 +363,15 @@ class SplitterSlidingMidpoint {
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
-//! \tparam Dims The amount of spatial dimensions of the tree and points.
-//! pico_tree::Dynamic in case of run time dimensions.
+//! \tparam Dim The spatial dimension of the tree. It can be set to
+//! pico_tree::kDynamicDim in case Dim is only known at run-time.
 template <
     typename Index,
     typename Scalar,
-    int Dims,
+    int Dim,
     typename Points,
-    typename Metric = MetricL2<Index, Scalar, Dims, Points>,
-    typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dims, Points>>
+    typename Metric = MetricL2<Scalar, Dim>,
+    typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dim, Points>>
 class KdTree {
  private:
   //! KdTree Node.
@@ -380,7 +381,7 @@ class KdTree {
     union Data {
       //! Tree branch.
       struct Branch {
-        Index split_dim;
+        int split_dim;
         Scalar split_val;
       };
 
@@ -403,7 +404,7 @@ class KdTree {
   };
 
   //! Either an array or vector (compile time vs. run time).
-  using Sequence = typename internal::Sequence<Scalar, Dims>;
+  using Sequence = typename internal::Sequence<Scalar, Dim>;
   using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
 
   //! KdTree builder.
@@ -479,9 +480,9 @@ class KdTree {
   //! splitting mechanism.
   KdTree(Points const& points, Index const max_leaf_size)
       : points_{points},
-        metric_{points_},
-        nodes_(internal::MaxNodesFromPoints(points_.num_points())),
-        indices_(points_.num_points()),
+        metric_{points_.sdim()},
+        nodes_(internal::MaxNodesFromPoints(points_.npts())),
+        indices_(points_.npts()),
         root_{Build(max_leaf_size)} {}
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
@@ -495,6 +496,8 @@ class KdTree {
   }
 
   //! \brief Searches for the nearest neighbor of point \p p .
+  //! \details Interpretation of the output distance depends on the Metric. The
+  //! default MetricL2 results in a squared distance.
   template <typename P>
   inline void SearchNn(P const& p, std::pair<Index, Scalar>* nn) const {
     internal::SearchNn<Index, Scalar> v(nn);
@@ -503,7 +506,9 @@ class KdTree {
 
   //! \brief Searches for the \p k nearest neighbors of point \p p . The output
   //! vector \p knn contains an index and distance pair for each of the search
-  //! results. Interpretation of the distances depends on the Metric.
+  //! results.
+  //! \details Interpretation of the output distances depend on the Metric. The
+  //! default MetricL2 results in squared distances.
   //! \tparam P point type.
   template <typename P>
   inline void SearchKnn(
@@ -513,8 +518,7 @@ class KdTree {
       bool const sort = false) const {
     // If it happens that the point set is has less points than k we just return
     // all points in the set.
-    internal::SearchKnn<Index, Scalar> v(
-        std::min(k, points_.num_points()), knn);
+    internal::SearchKnn<Index, Scalar> v(std::min(k, points_.npts()), knn);
     SearchNn(root_, p, &v);
 
     if (sort) {
@@ -527,12 +531,13 @@ class KdTree {
   //! each of the search results.
   //! \details Interpretation of the output distances depend on the Metric. The
   //! default MetricL2 results in squared distances.
-  //! \param p Input point.
-  //! \param radius Search radius that depends on the Metric used by the KdTree.
-  //! It should be the squared distance when using MetricL2. \code{.cpp} Scalar
-  //! metric_distance = kdtree.metric()(distance); \endcode
-  //! \param n Output points.
   //! \tparam P point type.
+  //! \param p Input point.
+  //! \param radius Search radius. The interpretation of the radius depends on
+  //! the Metric used by the KdTree. Squared distance are required when using
+  //! MetricL2. \code{.cpp} Scalar metric_distance = kdtree.metric()(distance);
+  //! \endcode
+  //! \param n Output points.
   template <typename P>
   inline void SearchRadius(
       P const& p,
@@ -548,7 +553,7 @@ class KdTree {
   }
 
   //! \brief Returns all points within the box defined by \p min and \p max.
-  //! Query time is bounded by O(n^(1-1/Dims)+k).
+  //! Query time is bounded by O(n^(1-1/Dim)+k).
   template <typename P>
   inline void SearchBox(
       P const& min, P const& max, std::vector<Index>* i) const {
@@ -608,22 +613,21 @@ class KdTree {
   //! from a Stream.
   KdTree(Points const& points, internal::Stream* stream)
       : points_{points},
-        metric_{points_},
-        nodes_(internal::MaxNodesFromPoints(points_.num_points())),
-        indices_(points_.num_points()),
+        metric_{points_.sdim()},
+        nodes_(internal::MaxNodesFromPoints(points_.npts())),
+        indices_(points_.npts()),
         root_{Load(stream)} {}
 
   inline void CalculateBoundingBox(Sequence* p_min, Sequence* p_max) {
     Sequence& min = *p_min;
     Sequence& max = *p_max;
-    min.Fill(points_.num_dimensions(), std::numeric_limits<Scalar>::max());
-    max.Fill(points_.num_dimensions(), std::numeric_limits<Scalar>::lowest());
+    min.Fill(points_.sdim(), std::numeric_limits<Scalar>::max());
+    max.Fill(points_.sdim(), std::numeric_limits<Scalar>::lowest());
 
-    for (Index j = 0; j < points_.num_points(); ++j) {
-      for (Index i = 0;
-           i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
-           ++i) {
-        Scalar const v = points_(j, i);
+    for (Index j = 0; j < points_.npts(); ++j) {
+      auto const& p = points_(j);
+      for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
+        Scalar const v = p(i);
         if (v < min[i]) {
           min[i] = v;
         }
@@ -637,7 +641,7 @@ class KdTree {
   //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
   //! \details Run time may vary depending on the split strategy.
   inline Node* Build(Index const max_leaf_size) {
-    assert(points_.num_points() > 0);
+    assert(points_.npts() > 0);
     assert(max_leaf_size > 0);
 
     std::iota(indices_.begin(), indices_.end(), 0);
@@ -646,11 +650,7 @@ class KdTree {
 
     Splitter splitter(points_, &indices_);
     return Builder{max_leaf_size, splitter, &nodes_}.SplitIndices(
-        0,
-        0,
-        points_.num_points(),
-        Sequence(root_box_min_),
-        Sequence(root_box_max_));
+        0, 0, points_.npts(), Sequence(root_box_min_), Sequence(root_box_max_));
   }
 
   //! Returns the nearest neighbor (or neighbors) of point \p p depending on
@@ -660,7 +660,7 @@ class KdTree {
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        Scalar const d = metric_(p, indices_[i]);
+        Scalar const d = metric_(p, points_(indices_[i]));
         if (visitor->max() > d) {
           (*visitor)(indices_[i], d);
         }
@@ -668,7 +668,7 @@ class KdTree {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      Scalar const v = points_(p, node->data.branch.split_dim);
+      Scalar const v = p(node->data.branch.split_dim);
       Node const* node_1st;
       Node const* node_2nd;
 
@@ -695,10 +695,8 @@ class KdTree {
   //! point on the edge considered inside the box.
   template <typename P>
   inline bool PointInBox(Sequence const& p, P const& min, P const& max) const {
-    for (Index i = 0;
-         i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
-         ++i) {
-      if (points_(min, i) > p[i] || points_(max, i) < p[i]) {
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
+      if (min(i) > p[i] || max(i) < p[i]) {
         return false;
       }
     }
@@ -709,11 +707,10 @@ class KdTree {
   //! by \p min and \p max. A point on the edge considered inside the box.
   template <typename P>
   inline bool PointInBox(Index const idx, P const& min, P const& max) const {
-    for (Index i = 0;
-         i < internal::Dimensions<Dims>::Dims(points_.num_dimensions());
-         ++i) {
-      Scalar const v = points_(idx, i);
-      if (points_(min, i) > v || points_(max, i) < v) {
+    auto const& p = points_(idx);
+    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
+      Scalar const v = p(i);
+      if (min(i) > v || max(i) < v) {
         return false;
       }
     }
@@ -735,7 +732,7 @@ class KdTree {
   }
 
   //! \brief Returns all points within the box defined by \p rng_min and \p
-  //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dims)+k).
+  //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dim)+k).
   //! \details Many tree nodes are excluded by checking if they intersect with
   //! the box of the query. We don't store the bounding box of each node but
   //! calculate them at run time. This slows down SearchBox in favor of
@@ -767,8 +764,7 @@ class KdTree {
           PointInBox(left_box_max, rng_min, rng_max)) {
         ReportNode(node->left, idxs);
       } else if (
-          points_(rng_min, node->data.branch.split_dim) <
-          node->data.branch.split_val) {
+          rng_min(node->data.branch.split_dim) < node->data.branch.split_val) {
         SearchBox(
             node->left,
             rng_min,
@@ -786,8 +782,7 @@ class KdTree {
           PointInBox(box_max, rng_min, rng_max)) {
         ReportNode(node->right, idxs);
       } else if (
-          points_(rng_max, node->data.branch.split_dim) >
-          node->data.branch.split_val) {
+          rng_max(node->data.branch.split_dim) > node->data.branch.split_val) {
         SearchBox(
             node->right,
             rng_min,

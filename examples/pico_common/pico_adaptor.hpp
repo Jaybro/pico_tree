@@ -2,34 +2,33 @@
 
 #include "point.hpp"
 
-//! Example point set adaptor that shows which functions need to be implemented.
+//! \brief Example point set. In this case the set is implemented as an adaptor
+//! that wraps a vector of Point.
+//! \details The following methods need to be implemented:
+//! \code{.cpp}
+//! inline Point const& operator()(Index const idx) const;
+//! inline int sdim() const;
+//! inline Index npts() const;
+//! \endcode
 template <typename Index_, typename Point_>
 class PicoAdaptor {
  public:
   using Index = Index_;
   using Point = Point_;
   using Scalar = typename Point::Scalar;
-  static constexpr int Dims = Point::Dims;
+  static constexpr int Dim = Point::Dim;
 
   explicit PicoAdaptor(std::vector<Point> const& points) : points_(points) {}
 
-  //! Returns dimension \p dim of point \p idx.
-  inline Scalar operator()(Index const idx, Index const dim) const {
-    return points_[idx](dim);
-  }
+  //! \brief Returns the point at index \p idx.
+  inline Point const& operator()(Index const idx) const { return points_[idx]; }
 
-  //! Returns dimension \p dim of point \p point.
-  inline Scalar operator()(Point const& point, Index const dim) const {
-    return point(dim);
-  }
+  //! \brief Returns the dimension of the space in which the points reside.
+  //! I.e., the amount of coordinates each point has.
+  inline int sdim() const { return Dim; };
 
-  //! Returns the amount of spatial dimensions of the points.
-  inline Index num_dimensions() const { return Dims; };
-
-  //! Returns the number of points.
-  inline Index num_points() const {
-    return static_cast<Index>(points_.size());
-  };
+  //! \brief Returns the number of points.
+  inline Index npts() const { return static_cast<Index>(points_.size()); };
 
  private:
   std::vector<Point> const& points_;

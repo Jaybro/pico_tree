@@ -20,7 +20,7 @@ The different KdTree implementations are compared to each other with respect to 
 
 * Build algorithm: Dimensions known at compile time or run time.
 * Radius search algorithm: The radius in meters divided by 4 (0.25m and 0.5m).
-* Knn algorithm: The mount of neighbors searched.
+* Knn algorithm: The amount of neighbors searched.
 
 Note that the run time describes a single invocation of the build algorithm and n invocations of the others.
 

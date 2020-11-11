@@ -12,19 +12,25 @@ template <typename Tree>
 using TreePointsType = typename std::remove_reference<decltype(
     std::declval<Tree>().points())>::type;
 
-template <typename P, typename Index, typename Scalar, typename Metric>
+template <
+    typename P,
+    typename Points,
+    typename Index,
+    typename Scalar,
+    typename Metric>
 void SearchKnn(
     P const& p,
+    Points const& points,
     Index const k,
-    Index const num_points,
     Metric const& metric,
     std::vector<std::pair<Index, Scalar>>* knn) {
-  knn->resize(static_cast<std::size_t>(num_points));
-  for (Index i = 0; i < num_points; ++i) {
-    (*knn)[i] = {i, metric(p, i)};
+  Index const npts = points.npts();
+  knn->resize(static_cast<std::size_t>(npts));
+  for (Index i = 0; i < npts; ++i) {
+    (*knn)[i] = {i, metric(p, points(i))};
   }
 
-  Index const max_k = std::min(k, num_points);
+  Index const max_k = std::min(k, npts);
   std::nth_element(
       knn->begin(),
       knn->begin() + (max_k - 1),
@@ -58,19 +64,19 @@ void TestBox(
   tree.SearchBox(min, max, &idxs);
 
   for (auto j : idxs) {
-    for (int d = 0; d < PointX::Dims; ++d) {
-      EXPECT_GE(points(j, d), min_v);
-      EXPECT_LE(points(j, d), max_v);
+    for (int d = 0; d < PointX::Dim; ++d) {
+      EXPECT_GE(points(j)(d), min_v);
+      EXPECT_LE(points(j)(d), max_v);
     }
   }
 
   std::size_t count = 0;
 
-  for (Index j = 0; j < points.num_points(); ++j) {
+  for (Index j = 0; j < points.npts(); ++j) {
     bool contained = true;
 
-    for (int d = 0; d < PointX::Dims; ++d) {
-      if ((points(j, d) < min_v) || (points(j, d) > max_v)) {
+    for (int d = 0; d < PointX::Dim; ++d) {
+      if ((points(j)(d) < min_v) || (points(j)(d) > max_v)) {
         contained = false;
         break;
       }
@@ -93,11 +99,11 @@ void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
 
   auto const& points = tree.points();
 
-  Index idx = tree.points().num_points() / 2;
+  Index idx = tree.points().npts() / 2;
   PointX p;
 
-  for (Index d = 0; d < PointsX::Dims; ++d) {
-    p(d) = points(idx, d);
+  for (Index d = 0; d < PointX::Dim; ++d) {
+    p(d) = points(idx)(d);
   }
 
   auto const& metric = tree.metric();
@@ -106,14 +112,14 @@ void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
   tree.SearchRadius(p, lp_radius, &results);
 
   for (auto const& r : results) {
-    EXPECT_LE(metric(p, r.first), lp_radius);
-    EXPECT_EQ(metric(p, r.first), r.second);
+    EXPECT_LE(metric(p, points(r.first)), lp_radius);
+    EXPECT_EQ(metric(p, points(r.first)), r.second);
   }
 
   std::size_t count = 0;
 
-  for (Index j = 0; j < points.num_points(); ++j) {
-    if (metric(p, j) <= lp_radius) {
+  for (Index j = 0; j < points.npts(); ++j) {
+    if (metric(p, points(j)) <= lp_radius) {
       count++;
     }
   }
@@ -130,18 +136,18 @@ void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
 
   auto const& points = tree.points();
 
-  Index idx = tree.points().num_points() / 2;
+  Index idx = tree.points().npts() / 2;
   PointX p;
 
-  for (Index d = 0; d < PointsX::Dims; ++d) {
-    p(d) = points(idx, d);
+  for (Index d = 0; d < PointX::Dim; ++d) {
+    p(d) = points(idx)(d);
   }
 
   std::vector<std::pair<Index, Scalar>> results;
   tree.SearchKnn(p, k, &results, true);
 
   std::vector<std::pair<Index, Scalar>> compare;
-  SearchKnn(p, k, points.num_points(), tree.metric(), &compare);
+  SearchKnn(p, points, k, tree.metric(), &compare);
 
   ASSERT_EQ(compare.size(), results.size());
   for (std::size_t i = 0; i < compare.size(); ++i) {

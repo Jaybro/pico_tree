@@ -10,7 +10,7 @@ template <typename PicoAdaptor>
 using KdTree = pico_tree::KdTree<
     typename PicoAdaptor::Index,
     typename PicoAdaptor::Scalar,
-    PicoAdaptor::Dims,
+    PicoAdaptor::Dim,
     PicoAdaptor>;
 
 TEST(KdTreeTest, MetricL1) {
@@ -18,14 +18,14 @@ TEST(KdTreeTest, MetricL1) {
   using Index = int;
   using Scalar = typename PointX::Scalar;
   using AdaptorX = PicoAdaptor<Index, PointX>;
-  constexpr auto Dims = PointX::Dims;
+  constexpr auto Dim = PointX::Dim;
   std::vector<PointX> points{{2.0f, 4.0f}};
   AdaptorX adaptor(points);
   PointX p{10.0f, 1.0f};
 
-  pico_tree::MetricL1<Index, Scalar, Dims, AdaptorX> metric(adaptor);
+  pico_tree::MetricL1<Scalar, Dim> metric(adaptor.sdim());
 
-  EXPECT_FLOAT_EQ(metric(p, 0), 11.0f);
+  EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 11.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 12.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
 }
@@ -35,14 +35,14 @@ TEST(KdTreeTest, MetricL2) {
   using Index = int;
   using Scalar = typename PointX::Scalar;
   using AdaptorX = PicoAdaptor<Index, PointX>;
-  constexpr auto Dims = PointX::Dims;
+  constexpr auto Dim = PointX::Dim;
   std::vector<PointX> points{{2.0f, 4.0f}};
   AdaptorX adaptor(points);
   PointX p{10.0f, 1.0f};
 
-  pico_tree::MetricL2<Index, Scalar, Dims, AdaptorX> metric(adaptor);
+  pico_tree::MetricL2<Scalar, Dim> metric(adaptor.sdim());
 
-  EXPECT_FLOAT_EQ(metric(p, 0), 73.0f);
+  EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 73.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f), 9.61f);
 }
@@ -52,7 +52,7 @@ TEST(KdTreeTest, SplitterMedian) {
   using Index = int;
   using Scalar = typename PointX::Scalar;
   using AdaptorX = PicoAdaptor<Index, PointX>;
-  constexpr auto Dims = PointX::Dims;
+  constexpr auto Dim = PointX::Dim;
   std::vector<PointX> pts4{
       {0.0f, 4.0f}, {0.0f, 2.0f}, {0.0f, 3.0f}, {0.0f, 1.0f}};
   std::vector<Index> idx4{0, 1, 2, 3};
@@ -68,7 +68,7 @@ TEST(KdTreeTest, SplitterMedian) {
   Index split_idx;
   Scalar split_val;
 
-  pico_tree::SplitterLongestMedian<Index, Scalar, Dims, AdaptorX> splitter4(
+  pico_tree::SplitterLongestMedian<Index, Scalar, Dim, AdaptorX> splitter4(
       ptsx4, &idx4);
   splitter4(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
 
@@ -87,7 +87,7 @@ TEST(KdTreeTest, SplitterMedian) {
   std::vector<Index> idx7{0, 1, 2, 3, 4, 5, 6};
   AdaptorX ptsx7(pts7);
 
-  pico_tree::SplitterLongestMedian<Index, Scalar, Dims, AdaptorX> splitter7(
+  pico_tree::SplitterLongestMedian<Index, Scalar, Dim, AdaptorX> splitter7(
       ptsx7, &idx7);
   splitter7(0, 0, 7, min, max, &split_dim, &split_idx, &split_val);
 
@@ -108,12 +108,12 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   using Index = int;
   using Scalar = typename PointX::Scalar;
   using AdaptorX = PicoAdaptor<Index, PointX>;
-  constexpr auto Dims = PointX::Dims;
+  constexpr auto Dim = PointX::Dim;
   std::vector<PointX> pts4{{0.0, 2.0}, {0.0, 1.0}, {0.0, 4.0}, {0.0, 3.0}};
   std::vector<Index> idx4{0, 1, 2, 3};
   AdaptorX ptsx4(pts4);
 
-  pico_tree::SplitterSlidingMidpoint<Index, Scalar, Dims, AdaptorX> splitter(
+  pico_tree::SplitterSlidingMidpoint<Index, Scalar, Dim, AdaptorX> splitter(
       ptsx4, &idx4);
 
   pico_tree::internal::Sequence<Scalar, 2> min;
