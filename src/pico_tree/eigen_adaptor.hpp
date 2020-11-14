@@ -32,7 +32,7 @@ class EigenAdaptorBase<Index_, Matrix, false> {
   inline Index npts() const { return static_cast<Index>(matrix_.cols()); };
 
  private:
-  Matrix matrix_;
+  Matrix const& matrix_;
 };
 
 //! \brief RowMajor EigenAdaptor.
@@ -60,7 +60,7 @@ class EigenAdaptorBase<Index_, Matrix, true> {
   inline Index npts() const { return static_cast<Index>(matrix_.rows()); };
 
  private:
-  Matrix matrix_;
+  Matrix const& matrix_;
 };
 
 }  // namespace internal
