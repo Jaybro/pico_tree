@@ -211,7 +211,10 @@ void QueryKnn(
   AdaptorX adaptor(random);
   KdTree<AdaptorX> tree(adaptor, 8);
 
-  TestKnn(tree, static_cast<Index>(k));
+  // This line compile time "tests" the move capability of the tree.
+  auto tree2 = std::move(tree);
+
+  TestKnn(tree2, static_cast<Index>(k));
 }
 
 }  // namespace

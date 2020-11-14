@@ -474,6 +474,14 @@ class KdTree {
   };
 
  public:
+  //! \brief The KdTree uses pointers to refer to tree nodes. These would all be
+  //! invalidated during a deep copy.
+  KdTree(KdTree const&) = delete;
+
+  //! \brief The move constructor is not implicitly created because we deleted
+  //! the copy constructor.
+  KdTree(KdTree&&) = default;
+
   //! \brief Creates a KdTree given \p points and \p max_leaf_size.
   //! \details Each duplication of \p max_leaf_size reduces the height of the
   //! tree by one. The effect it has for anything in-between depends on the tree
