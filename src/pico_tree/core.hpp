@@ -85,12 +85,14 @@ inline void ReplaceFrontHeap(
 //! \brief Compile time dimension count handling.
 template <int Dim_>
 struct Dimension {
+  //! \brief Returns the compile time dimension.
   inline static constexpr int Dim(int) { return Dim_; }
 };
 
 //! \brief Run time dimension count handling.
 template <>
 struct Dimension<kDynamicDim> {
+  //! \brief Returns the run time dimension.
   inline static int Dim(int dim) { return dim; }
 };
 
@@ -214,6 +216,9 @@ class DynamicBuffer : public MemoryBuffer<std::deque<T>> {
   inline DynamicBuffer(std::size_t const) {}
 };
 
+//! \brief Returns an std::fstream given a filename.
+//! \details Convenience function that throws an std::runtime_error in case it
+//! is unable to open the stream.
 inline std::fstream OpenStream(
     std::string const& filename, std::ios_base::openmode mode) {
   std::fstream stream(filename, mode);

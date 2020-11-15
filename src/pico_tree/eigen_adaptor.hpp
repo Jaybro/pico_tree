@@ -4,6 +4,7 @@ namespace pico_tree {
 
 namespace internal {
 
+//! \private
 template <typename Index, typename Matrix, bool RowMajor>
 class EigenAdaptorBase;
 
@@ -11,11 +12,16 @@ class EigenAdaptorBase;
 template <typename Index_, typename Matrix>
 class EigenAdaptorBase<Index_, Matrix, false> {
  public:
+  //! \brief Index type.
   using Index = Index_;
+  //! \brief Scalar type.
   using Scalar = typename Matrix::Scalar;
+  //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
   static constexpr int Dim = Matrix::RowsAtCompileTime;
+  //! \brief RowMajor flag that is true if the data is row-major.
   static constexpr bool RowMajor = false;
 
+  //! \brief Constructs an EigenAdaptorBase from \p matrix.
   inline EigenAdaptorBase(Matrix const& matrix) : matrix_(matrix) {}
 
   //! \brief Returns the point at index \p idx.
@@ -39,11 +45,16 @@ class EigenAdaptorBase<Index_, Matrix, false> {
 template <typename Index_, typename Matrix>
 class EigenAdaptorBase<Index_, Matrix, true> {
  public:
+  //! \brief Index type.
   using Index = Index_;
+  //! \brief Scalar type.
   using Scalar = typename Matrix::Scalar;
+  //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
   static constexpr int Dim = Matrix::ColsAtCompileTime;
+  //! \brief RowMajor flag that is true if the data is row-major.
   static constexpr bool RowMajor = true;
 
+  //! \brief Constructs an EigenAdaptorBase from \p matrix.
   inline EigenAdaptorBase(Matrix const& matrix) : matrix_(matrix) {}
 
   //! \brief Returns the point at index \p idx.

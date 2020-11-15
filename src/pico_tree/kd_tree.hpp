@@ -10,7 +10,7 @@ namespace pico_tree {
 
 namespace internal {
 
-//! See which axis of the box is the longest.
+//! \brief See which axis of the box is the longest.
 template <typename Scalar, int Dim>
 inline void LongestAxisBox(
     Sequence<Scalar, Dim> const& box_min,
@@ -34,6 +34,7 @@ inline void LongestAxisBox(
 //! \brief Compares neighbors by distance.
 template <typename Index, typename Scalar>
 struct NeighborComparator {
+  //! \private
   inline bool operator()(
       std::pair<Index, Scalar> const& a,
       std::pair<Index, Scalar> const& b) const {
@@ -136,6 +137,7 @@ class SearchRadius {
 template <typename Scalar, int Dim>
 class MetricL1 {
  public:
+  //! \brief Creates a MetricL1 given a spatial dimension.
   inline explicit MetricL1(int const dim) : dim_{dim} {}
 
   //! \brief Calculates the distance between points \p p0 and \p p1.
@@ -180,6 +182,7 @@ class MetricL1 {
 template <typename Scalar, int Dim>
 class MetricL2 {
  public:
+  //! \brief Creates a MetricL2 given a spatial dimension.
   inline explicit MetricL2(int const dim) : dim_{dim} {}
 
   //! \brief Calculates the distance between points \p p0 and \p p1.
@@ -560,7 +563,7 @@ class KdTree {
   //! each of the search results.
   //! \details Interpretation of the output distances depend on the Metric. The
   //! default MetricL2 results in squared distances.
-  //! \tparam P point type.
+  //! \tparam P Point type.
   //! \param p Input point.
   //! \param radius Search radius. The interpretation of the radius depends on
   //! the Metric used by the KdTree. Squared distance are required when using
@@ -571,6 +574,8 @@ class KdTree {
   //! Scalar metric_distance = kdtree.metric()(distance);
   //! \endcode
   //! \param n Output points.
+  //! \param sort If true, the result set is sorted from closest to farthest
+  //! distance with respect to the query point.
   template <typename P>
   inline void SearchRadius(
       P const& p,
