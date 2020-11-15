@@ -161,13 +161,12 @@ class MetricL1 {
     return d;
   }
 
-  //! \brief Calculates the difference between two points for a single
-  //! dimension.
+  //! \brief Calculates the difference between two coordinates.
   inline Scalar operator()(Scalar const x, Scalar const y) const {
     return std::abs(x - y);
   }
 
-  //! \brief Returns the absolute distance of \p x.
+  //! \brief Returns the absolute value of \p x.
   inline Scalar operator()(Scalar const x) const { return std::abs(x); }
 
  private:
@@ -207,14 +206,13 @@ class MetricL2 {
     return d;
   }
 
-  //! \brief Calculates the difference between two points for a single
-  //! dimension.
+  //! \brief Calculates the difference between two coordinates.
   inline Scalar operator()(Scalar const x, Scalar const y) const {
     Scalar const d = x - y;
     return d * d;
   }
 
-  //! \brief Returns the squared distance of \p x.
+  //! \brief Returns the squared value of \p x.
   inline Scalar operator()(Scalar const x) const { return x * x; }
 
  private:
