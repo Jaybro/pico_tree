@@ -35,21 +35,20 @@ void ColMajor() {
   using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
-  PointsMap points_map(points.data()->data(), Dim, points.size());
-  Adaptor adaptor(points_map);
+  Adaptor adaptor(PointsMap(points.data()->data(), Dim, points.size()));
 
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
 
   std::cout << "Eigen RowMajor: " << Adaptor::RowMajor << std::endl;
 
   {
-    pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> rt(
+    pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> tree(
         adaptor, kMaxLeafCount);
 
     std::vector<std::pair<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree deflt l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      rt.SearchKnn(p, 1, &knn);
+      tree.SearchKnn(p, 1, &knn);
     }
   }
 }
@@ -62,21 +61,20 @@ void RowMajor() {
   using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
-  PointsMap points_map(points.data()->data(), points.size(), Dim);
-  Adaptor adaptor(points_map);
+  Adaptor adaptor(PointsMap(points.data()->data(), points.size(), Dim));
 
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
 
   std::cout << "Eigen RowMajor: " << Adaptor::RowMajor << std::endl;
 
   {
-    pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> rt(
+    pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> tree(
         adaptor, kMaxLeafCount);
 
     std::vector<std::pair<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree deflt l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      rt.SearchKnn(p, 1, &knn);
+      tree.SearchKnn(p, 1, &knn);
     }
   }
 }
@@ -89,8 +87,7 @@ void Metrics() {
   using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
-  PointsMap points_map(points.data()->data(), Dim, points.size());
-  Adaptor adaptor(points_map);
+  Adaptor adaptor(PointsMap(points.data()->data(), Dim, points.size()));
 
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
 
@@ -102,18 +99,13 @@ void Metrics() {
         Point::Scalar,
         Dim,
         Adaptor,
-        pico_tree::EigenMetricL2<Point::Scalar>>
-        rt(adaptor, kMaxLeafCount);
+        pico_tree::EigenMetricL2<Scalar>>
+        tree(adaptor, kMaxLeafCount);
 
-    {
-      pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> rt(
-          adaptor, kMaxLeafCount);
-
-      std::vector<std::pair<Index, Scalar>> knn;
-      ScopedTimer t("tree nn_ pico_tree eigen l2", kRunCount);
-      for (std::size_t i = 0; i < kRunCount; ++i) {
-        rt.SearchKnn(p, 1, &knn);
-      }
+    std::vector<std::pair<Index, Scalar>> knn;
+    ScopedTimer t("tree nn_ pico_tree eigen l2", kRunCount);
+    for (std::size_t i = 0; i < kRunCount; ++i) {
+      tree.SearchKnn(p, 1, &knn);
     }
   }
 
@@ -123,18 +115,13 @@ void Metrics() {
         Point::Scalar,
         Dim,
         Adaptor,
-        pico_tree::EigenMetricL1<Point::Scalar>>
-        rt(adaptor, kMaxLeafCount);
+        pico_tree::EigenMetricL1<Scalar>>
+        tree(adaptor, kMaxLeafCount);
 
-    {
-      pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> rt(
-          adaptor, kMaxLeafCount);
-
-      std::vector<std::pair<Index, Scalar>> knn;
-      ScopedTimer t("tree nn_ pico_tree eigen l1", kRunCount);
-      for (std::size_t i = 0; i < kRunCount; ++i) {
-        rt.SearchKnn(p, 1, &knn);
-      }
+    std::vector<std::pair<Index, Scalar>> knn;
+    ScopedTimer t("tree nn_ pico_tree eigen l1", kRunCount);
+    for (std::size_t i = 0; i < kRunCount; ++i) {
+      tree.SearchKnn(p, 1, &knn);
     }
   }
 }

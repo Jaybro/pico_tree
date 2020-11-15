@@ -21,8 +21,16 @@ class EigenAdaptorBase<Index_, Matrix, false> {
   //! \brief RowMajor flag that is true if the data is row-major.
   static constexpr bool RowMajor = false;
 
+  //! \brief Default constructor. May be deleted if the Matrix doesn't have a
+  //! default constructor.
+  inline EigenAdaptorBase() = default;
+
   //! \brief Constructs an EigenAdaptorBase from \p matrix.
-  inline EigenAdaptorBase(Matrix const& matrix) : matrix_(matrix) {}
+  //! \details To prevent an unwanted (deep) copy:
+  //! \li Move the matrix if it has dynamic size.
+  //! \li Copy or move an Eigen::Map.
+  //! \li Use the default constructor to initialize a fixed size matrix.
+  inline EigenAdaptorBase(Matrix matrix) : matrix_(std::move(matrix)) {}
 
   //! \brief Returns the point at index \p idx.
   inline Eigen::Block<Matrix const, Dim, 1, !RowMajor> const operator()(
@@ -32,13 +40,14 @@ class EigenAdaptorBase<Index_, Matrix, false> {
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline int sdim() const { return matrix_.rows(); };
+  inline int sdim() const { return matrix_.rows(); }
 
   //! \brief Returns the number of points.
-  inline Index npts() const { return static_cast<Index>(matrix_.cols()); };
+  inline Index npts() const { return static_cast<Index>(matrix_.cols()); }
 
- private:
-  Matrix const& matrix_;
+ protected:
+  //! \private
+  Matrix matrix_;
 };
 
 //! \brief RowMajor EigenAdaptor.
@@ -54,8 +63,16 @@ class EigenAdaptorBase<Index_, Matrix, true> {
   //! \brief RowMajor flag that is true if the data is row-major.
   static constexpr bool RowMajor = true;
 
+  //! \brief Default constructor. May be deleted if the Matrix doesn't have a
+  //! default constructor.
+  inline EigenAdaptorBase() = default;
+
   //! \brief Constructs an EigenAdaptorBase from \p matrix.
-  inline EigenAdaptorBase(Matrix const& matrix) : matrix_(matrix) {}
+  //! \details To prevent an unwanted (deep) copy:
+  //! \li Move the matrix if it has dynamic size.
+  //! \li Copy or move an Eigen::Map.
+  //! \li Use the default constructor to initialize a fixed size matrix.
+  inline EigenAdaptorBase(Matrix matrix) : matrix_(std::move(matrix)) {}
 
   //! \brief Returns the point at index \p idx.
   inline Eigen::Block<Matrix const, 1, Dim, RowMajor> const operator()(
@@ -65,13 +82,14 @@ class EigenAdaptorBase<Index_, Matrix, true> {
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline int sdim() const { return matrix_.cols(); };
+  inline int sdim() const { return matrix_.cols(); }
 
   //! \brief Returns the number of points.
-  inline Index npts() const { return static_cast<Index>(matrix_.rows()); };
+  inline Index npts() const { return static_cast<Index>(matrix_.rows()); }
 
- private:
-  Matrix const& matrix_;
+ protected:
+  //! \private
+  Matrix matrix_;
 };
 
 }  // namespace internal
@@ -81,8 +99,16 @@ template <typename Index, typename Matrix>
 class EigenAdaptor
     : public internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor> {
  public:
-  using internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>::
-      EigenAdaptorBase;
+  //! \private
+  using Base = internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>;
+  using Base::EigenAdaptorBase;
+  using Base::matrix_;
+
+  //! \brief Returns a reference to the Eigen matrix.
+  inline Matrix& matrix() { return matrix_; }
+
+  //! \brief Returns a const reference to the Eigen matrix.
+  inline Matrix const& matrix() const { return matrix_; }
 };
 
 //! \brief L1 metric using the L1 norm for measuring distances between points.
@@ -99,7 +125,7 @@ class EigenMetricL1 {
       Eigen::MatrixBase<Derived1> const& p1) const {
     static_assert(std::is_same<typename Derived0::Scalar, Scalar>::value);
     static_assert(std::is_same<typename Derived1::Scalar, Scalar>::value);
-    return (p0 - p1).abs().sum();
+    return (p0 - p1).cwiseAbs().sum();
   }
 
   //! \brief Calculates the difference between two coordinates.
