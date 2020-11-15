@@ -501,9 +501,7 @@ class KdTree {
   //!
   //! The value of \p max_leaf_size influences the height and performance of the
   //! tree. The splitting mechanism determines data locality within the leafs.
-  //! The tree height reduces by one each time the value of \p max_leaf_size
-  //! doubles. The effect it has for anything in-between depends on the tree
-  //! splitting mechanism.
+  //! The exact effect it has depends on the tree splitting mechanism.
   //!
   //! \param points The input point set (interface).
   //! \param max_leaf_size The maximum amount of points allowed in a leaf node.
