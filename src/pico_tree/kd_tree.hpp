@@ -474,24 +474,45 @@ class KdTree {
   };
 
  public:
-  //! \brief The KdTree uses pointers to refer to tree nodes. These would all be
-  //! invalidated during a deep copy.
+  //! \brief The KdTree cannot be copied.
+  //! \details The KdTree uses pointers to refer to tree nodes. These would all
+  //! be invalidated during a deep copy.
+  //! \private
   KdTree(KdTree const&) = delete;
 
-  //! \brief The move constructor is not implicitly created because we deleted
-  //! the copy constructor.
+  //! \brief Move constructor of the KdTree.
+  //! \details The move constructor is not implicitly created because of the
+  //! deleted copy constructor.
+  //! \private
   KdTree(KdTree&&) = default;
 
   //! \brief Creates a KdTree given \p points and \p max_leaf_size.
-  //! \details Each duplication of \p max_leaf_size reduces the height of the
-  //! tree by one. The effect it has for anything in-between depends on the tree
+  //!
+  //! \details
+  //! The KdTree wants ownership of \p points to avoid problems that may occur
+  //! when keeping a const reference to the data. For example, using std::move()
+  //! on the point set would invalidate the local reference which is then
+  //! unrecoverable.
+  //!
+  //! To avoid a deep copy of the \p points object:
+  //! \li Move it: KdTree tree(std::move(points), max_leaf_size);
+  //! \li Implement its class as an adaptor that keeps a reference to the data.
+  //! \li Points can be wrapped with, for example, std::ref.
+  //!
+  //! The value of \p max_leaf_size influences the height and performance of the
+  //! tree. The splitting mechanism determines data locality within the leafs.
+  //! The tree height reduces by one each time the value of \p max_leaf_size
+  //! doubles. The effect it has for anything in-between depends on the tree
   //! splitting mechanism.
-  KdTree(Points const& points, Index const max_leaf_size)
-      : points_{points},
-        metric_{points_.sdim()},
+  //!
+  //! \param points The input point set (interface).
+  //! \param max_leaf_size The maximum amount of points allowed in a leaf node.
+  KdTree(Points points, Index max_leaf_size)
+      : points_(std::move(points)),
+        metric_(points_.sdim()),
         nodes_(internal::MaxNodesFromPoints(points_.npts())),
         indices_(points_.npts()),
-        root_{Build(max_leaf_size)} {}
+        root_(Build(max_leaf_size)) {}
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
   //! on their selection by visitor \p visitor .
@@ -543,7 +564,11 @@ class KdTree {
   //! \param p Input point.
   //! \param radius Search radius. The interpretation of the radius depends on
   //! the Metric used by the KdTree. Squared distance are required when using
-  //! MetricL2. \code{.cpp} Scalar metric_distance = kdtree.metric()(distance);
+  //! MetricL2.
+  //! \code{.cpp}
+  //! Scalar distance = -2.0;
+  //! // E.g., MetricL1: 2.0, MetricL2: 4.0
+  //! Scalar metric_distance = kdtree.metric()(distance);
   //! \endcode
   //! \param n Output points.
   template <typename P>
@@ -581,10 +606,10 @@ class KdTree {
   inline Metric const& metric() const { return metric_; }
 
   //! \brief Loads the tree in binary from file.
-  static KdTree Load(Points const& points, std::string const& filename) {
+  static KdTree Load(Points points, std::string const& filename) {
     std::fstream stream =
         internal::OpenStream(filename, std::ios::in | std::ios::binary);
-    return Load(points, &stream);
+    return Load(std::move(points), &stream);
   }
 
   //! \brief Loads the tree in binary from \p stream .
@@ -594,9 +619,9 @@ class KdTree {
   //! \li Does not check if the stored tree structure is valid for the given
   //! point set. \li Does not check if the stored tree structure is valid for
   //! the given template arguments.
-  static KdTree Load(Points const& points, std::iostream* stream) {
+  static KdTree Load(Points points, std::iostream* stream) {
     internal::Stream s(stream);
-    return KdTree(points, &s);
+    return KdTree(std::move(points), &s);
   }
 
   //! \brief Saves the tree in binary to file.
@@ -619,12 +644,12 @@ class KdTree {
  private:
   //! \brief Constructs a KdTree by reading its indexing and leaf information
   //! from a Stream.
-  KdTree(Points const& points, internal::Stream* stream)
-      : points_{points},
-        metric_{points_.sdim()},
+  KdTree(Points points, internal::Stream* stream)
+      : points_(std::move(points)),
+        metric_(points_.sdim()),
         nodes_(internal::MaxNodesFromPoints(points_.npts())),
         indices_(points_.npts()),
-        root_{Load(stream)} {}
+        root_(Load(stream)) {}
 
   inline void CalculateBoundingBox(Sequence* p_min, Sequence* p_max) {
     Sequence& min = *p_min;
@@ -856,9 +881,9 @@ class KdTree {
   }
 
   //! Point set adapter used for querying point data.
-  Points const& points_;
+  Points points_;
   //! Metric used for comparing distances.
-  Metric const metric_;
+  Metric metric_;
   //! Memory buffer for tree nodes.
   MemoryBuffer nodes_;
   //! Sorted indices that refer to points inside points_.
