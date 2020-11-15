@@ -498,7 +498,6 @@ class KdTree {
   //! To avoid a deep copy of the \p points object:
   //! \li Move it: KdTree tree(std::move(points), max_leaf_size);
   //! \li Implement its class as an adaptor that keeps a reference to the data.
-  //! \li Points can be wrapped with, for example, std::ref.
   //!
   //! The value of \p max_leaf_size influences the height and performance of the
   //! tree. The splitting mechanism determines data locality within the leafs.

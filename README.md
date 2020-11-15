@@ -19,9 +19,9 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 The examples show how PicoTree can be used:
 
-* Creating the expected [point](./examples/pico_common/point.hpp) and [point set](./examples/pico_common/pico_adaptor.hpp) interfaces.
+* How to create the expected [point](./examples/pico_common/point.hpp) and [point set](./examples/pico_common/pico_adaptor.hpp) interfaces.
 * Searching using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor (for finding approximate nearest neighbors).
-* Using [Eigen](./examples/eigen/) data types.
+* Using [Eigen](./examples/eigen/eigen.cpp) data types.
 
 # Requirements
 
