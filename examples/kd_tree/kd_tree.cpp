@@ -41,14 +41,24 @@ void Build() {
 }
 
 //! \brief Search visitor for finding an approximate nearest neighbor.
-//! \details This visitor updates an approximate nearest neighbor that will at
-//! most be a distance ratio away from the true nearest neighbor once the
-//! search has finished.
+//! \details This visitor will skip points and tree nodes by scaling the max
+//! search distance to a smaller value, possibly not visiting the true nearest
+//! neighbor. An approximate nearest neighbor will at most be a factor of
+//! distance ratio \p e farther from the query point than the true nearest
+//! neighbor: max_ann_distance = true_nn_distance * e.
+//!
+//! \code{.cpp}
+//! // The max error of 15%. I.e. max 15% further away.
+//! Scalar max_error_percentage = Scalar(0.15);
+//! Scalar e = tree.metric()(Scalar(1.0) + max_error_percentage);
+//! std::pair<Index, Scalar> nn;
+//! SearchAnn visitor(e, &nn);
+//! \endcode
 template <typename Index, typename Scalar>
 class SearchAnn {
  public:
   //! \brief Creates a visitor for approximate nearest neighbor searching.
-  //! \param e Maximum distance error ratio.
+  //! \param e Maximum distance error ratio to which a metric is applied.
   //! \param ann Search result.
   inline SearchAnn(Scalar const e, std::pair<Index, Scalar>* ann)
       : e_{Scalar(1.0) / e}, ann_{*ann} {
@@ -101,8 +111,7 @@ void Search() {
   // from the real nn.
   Scalar max_error_percentage = 0.2f;
   // Apply the metric to the max ratio difference.
-  Scalar max_error_ratio_metric =
-      tree.metric()(Scalar(1.0) + max_error_percentage);
+  Scalar max_error_ratio_metric = tree.metric()(1.0f + max_error_percentage);
 
   std::vector<std::pair<Index, Scalar>> nn;
   std::vector<Index> idxs;
