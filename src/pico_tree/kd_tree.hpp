@@ -130,6 +130,59 @@ class SearchRadius {
   std::vector<std::pair<Index, Scalar>>& n_;
 };
 
+//! \brief Search visitor for finding approximate nearest neighbors.
+//! \details Points and tree nodes are skipped by scaling down the search
+//! distance, possibly not visiting the true nearest neighbor. An approximate
+//! nearest neighbor will at most be a factor of distance ratio \p e farther
+//! from the query point than the true nearest neighbor: max_ann_distance =
+//! true_nn_distance * e.
+//!
+//! There are different possible implementations to get an approximate nearest
+//! neighbor but this one is (probably) the cheapest by skipping both points
+//! inside leafs and complete tree nodes. Even though all points are checked
+//! inside a leaf, not all of them are visited. This saves on scaling and heap
+//! updates.
+template <typename Index, typename Scalar>
+class SearchAknn {
+ public:
+  //! \brief Creates a visitor for approximate k nearest neighbor searching.
+  //! \param k The amount of neirest neighbors to track.
+  //! \param e Maximum distance error ratio to which a metric is applied.
+  //! \param knn Search result.
+  inline SearchAknn(
+      Index const k, Scalar const e, std::vector<std::pair<Index, Scalar>>* knn)
+      : re_{Scalar(1.0) / e}, knn_{*knn} {
+    // Initial search distances for the heap. All values will be replaced unless
+    // point coordinates somehow have extreme values. In this case bad things
+    // will happen anyway.
+    knn_.assign(k, {0, std::numeric_limits<Scalar>::max()});
+  }
+
+  //! \brief Visit current point.
+  inline void operator()(Index const idx, Scalar const d) const {
+    // Replace the current maximum for which the distance is scaled to be:
+    // d = d / e.
+    knn_[0] = std::make_pair(idx, d * re_);
+    // Repair the heap property.
+    ReplaceFrontHeap(
+        knn_.begin(), knn_.end(), NeighborComparator<Index, Scalar>());
+  }
+
+  //! \brief Sort the neighbors by distance from the query point. Can be used
+  //! after the search has ended.
+  inline void Sort() const {
+    std::sort_heap(
+        knn_.begin(), knn_.end(), NeighborComparator<Index, Scalar>());
+  }
+
+  //! \brief Maximum search distance with respect to the query point.
+  inline Scalar const& max() const { return knn_[0].second; }
+
+ private:
+  Scalar const re_;
+  std::vector<std::pair<Index, Scalar>>& knn_;
+};
+
 }  // namespace internal
 
 //! \brief L1 metric using the L1 norm for measuring distances between points.
@@ -375,24 +428,27 @@ template <
     typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dim, Points>>
 class KdTree {
  private:
-  //! KdTree Node.
+  //! \brief KdTree Node.
   struct Node {
-    //! Data is used to either store branch or leaf information. Which union
-    //! member is used can be tested with IsBranch() or IsLeaf().
+    //! \brief Data is used to either store branch or leaf information. Which
+    //! union member is used can be tested with IsBranch() or IsLeaf().
     union Data {
-      //! Tree branch.
+      //! \brief Tree branch.
       struct Branch {
+        //! \brief Split coordinate / index of the KdTree spatial dimension.
         int split_dim;
         Scalar split_val;
       };
 
-      //! Tree leaf.
+      //! \brief Tree leaf.
       struct Leaf {
         Index begin_idx;
         Index end_idx;
       };
 
+      //! \brief Union branch data.
       Branch branch;
+      //! \brief Union leaf data.
       Leaf leaf;
     };
 
@@ -517,6 +573,7 @@ class KdTree {
   //! \see internal::SearchNn
   //! \see internal::SearchKnn
   //! \see internal::SearchRadius
+  //! \see internal::SearchAknn
   template <typename P, typename V>
   inline void SearchNn(P const& p, V* visitor) const {
     SearchNn(root_, p, visitor);
@@ -578,6 +635,56 @@ class KdTree {
       std::vector<std::pair<Index, Scalar>>* n,
       bool const sort = false) const {
     internal::SearchRadius<Index, Scalar> v(radius, n);
+    SearchNn(root_, p, &v);
+
+    if (sort) {
+      v.Sort();
+    }
+  }
+
+  //! \brief Searches for the \p k approximate nearest neighbors of point \p p .
+  //! The output vector \p knn contains an index and distance pair for each of
+  //! the search results.
+  //! \details This function can result in faster search queries compared to
+  //! KdTree::SearchKnn by skipping points and tree nodes. This is achieved by
+  //! scaling down the search distance, possibly not visiting the true nearest
+  //! neighbor. An approximate nearest neighbor will at most be a factor of
+  //! distance ratio \p e farther from the query point than the true nearest
+  //! neighbor: max_ann_distance = true_nn_distance * e. This holds true for
+  //! each respective nn index i, 0 <= i < k.
+  //!
+  //! The amount of requested neighbors, \p k, should be sufficiently large to
+  //! get a noticeable speed increase from this method. Within a leaf all points
+  //! are compared to the query anyway, even if they are skipped. These
+  //! calculations can be avoided by skipping leafs completely, which will never
+  //! happen if all requested neighbors reside within a single one.
+  //!
+  //! Interpretation of both the input error ratio and output distances
+  //! depend on the Metric. The default MetricL2 calculates squared
+  //! distances. Using this metric, the input error ratio should be the squared
+  //! error ratio and the output distances will be squared distances scaled by
+  //! the inverse error ratio.
+  //!
+  //! Example:
+  //! \code{.cpp}
+  //! // A max error of 15%. I.e. max 15% farther away from the true nn.
+  //! Scalar max_error = Scalar(0.15);
+  //! Scalar e = tree.metric()(Scalar(1.0) + max_error);
+  //! std::vector<std::pair<Index, Scalar>> knn;
+  //! tree.SearchAknn(p, k, e, &knn);
+  //! // Optionally scale back to the actual metric distance.
+  //! for (auto& nn : knn) { nn.second *= e; }
+  //! \endcode
+  template <typename P>
+  inline void SearchAknn(
+      P const& p,
+      Index const k,
+      Scalar const e,
+      std::vector<std::pair<Index, Scalar>>* knn,
+      bool const sort = false) const {
+    // If it happens that the point set is has less points than k we just return
+    // all points in the set.
+    internal::SearchAknn<Index, Scalar> v(std::min(k, points_.npts()), e, knn);
     SearchNn(root_, p, &v);
 
     if (sort) {

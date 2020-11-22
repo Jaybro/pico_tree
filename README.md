@@ -11,7 +11,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 # Capabilities
 
 * KdTree
-  * Nearest neighbors, radius, and box searches.
+  * Nearest neighbors, approximate nearest neighbors, radius, and box searches.
   * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
   * Compile time and run time known dimensions.
   * Static tree builds.
@@ -20,7 +20,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 The examples show how PicoTree can be used:
 
 * How to create the expected [point](./examples/pico_common/point.hpp) and [point set](./examples/pico_common/pico_adaptor.hpp) interfaces.
-* Searching using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor (for finding approximate nearest neighbors).
+* Searching using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
 * Using [Eigen](./examples/eigen/eigen.cpp) data types.
 
 # Requirements

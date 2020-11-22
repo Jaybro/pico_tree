@@ -40,49 +40,47 @@ void Build() {
   }
 }
 
-//! \brief Search visitor for finding an approximate nearest neighbor.
-//! \details This visitor will skip points and tree nodes by scaling the max
-//! search distance to a smaller value, possibly not visiting the true nearest
-//! neighbor. An approximate nearest neighbor will at most be a factor of
-//! distance ratio \p e farther from the query point than the true nearest
-//! neighbor: max_ann_distance = true_nn_distance * e.
-//!
-//! \code{.cpp}
-//! // The max error of 15%. I.e. max 15% further away.
-//! Scalar max_error_percentage = Scalar(0.15);
-//! Scalar e = tree.metric()(Scalar(1.0) + max_error_percentage);
-//! std::pair<Index, Scalar> nn;
-//! SearchAnn visitor(e, &nn);
-//! \endcode
+//! \brief Search visitor that counts how many points were considered as a
+//! nearest neighbor.
 template <typename Index, typename Scalar>
-class SearchAnn {
+class SearchNnCounter {
  public:
   //! \brief Creates a visitor for approximate nearest neighbor searching.
-  //! \param e Maximum distance error ratio to which a metric is applied.
-  //! \param ann Search result.
-  inline SearchAnn(Scalar const e, std::pair<Index, Scalar>* ann)
-      : e_{Scalar(1.0) / e}, ann_{*ann} {
+  //! \param nn Search result.
+  inline SearchNnCounter(std::pair<Index, Scalar>* nn) : count_(0), nn_(*nn) {
     // Initial search distance.
-    ann_.second = std::numeric_limits<Scalar>::max();
+    nn_.second = std::numeric_limits<Scalar>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const d) const {
-    // The distance is scaled to be d = d / e.
-    ann_ = std::make_pair(idx, d * e_);
+  //! \details This method is required. The KdTree calls this function when it
+  //! finds a point that is closer to the query than the result of this
+  //! visitors' max() function. I.e., it found a new nearest neighbor.
+  //! \param idx Point index.
+  //! \param d Point distance
+  //! (that depends on the metric).
+  inline void operator()(Index const idx, Scalar const d) {
+    count_++;
+    nn_ = std::make_pair(idx, d);
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return ann_.second; }
+  //! \details This method is required.
+  inline Scalar const& max() const { return nn_.second; }
+
+  //! \brief Returns the amount of points that were considered the nearest
+  //! neighbor.
+  //! \details This method is not required.
+  inline Index const& count() const { return count_; }
 
  private:
-  Scalar const e_;
-  std::pair<Index, Scalar>& ann_;
+  Index count_;
+  std::pair<Index, Scalar>& nn_;
 };
 
 // Different search options.
 void Search() {
-  using PointX = Point2f;
+  using PointX = Point3f;
   using Index = int;
   using Scalar = typename PointX::Scalar;
   using PicoAdaptorX = PicoAdaptor<Index, PointX>;
@@ -97,12 +95,11 @@ void Search() {
 
   Scalar min_v = 25.1f;
   Scalar max_v = 37.9f;
-  PointX min, max, pnn;
+  PointX min, max, q;
   min.Fill(min_v);
   max.Fill(max_v);
-  pnn.Fill((max_v + min_v) / 2.0f);
+  q.Fill((max_v + min_v) / 2.0f);
 
-  Index k = 4;
   Scalar search_radius = 2.0f;
   // When building KdTree with default template arguments, this is the squared
   // distance.
@@ -113,23 +110,41 @@ void Search() {
   // Apply the metric to the max ratio difference.
   Scalar max_error_ratio_metric = tree.metric()(1.0f + max_error_percentage);
 
-  std::vector<std::pair<Index, Scalar>> nn;
+  std::pair<Index, Scalar> nn;
+  std::vector<std::pair<Index, Scalar>> knn;
   std::vector<Index> idxs;
-  std::pair<Index, Scalar> ann;
 
-  ScopedTimer t("kd_tree", run_count);
-  for (Index i = 0; i < run_count; ++i) {
-    tree.SearchKnn(pnn, k, &nn, false);
-    tree.SearchRadius(pnn, search_radius_metric, &nn, false);
-    tree.SearchBox(min, max, &idxs);
-
-    // When the KdTree is created with the SlidingMidpointSplitter, ann queries
-    // can be answered in O(1/e^d log n) time.
-    SearchAnn<Index, Scalar> ann_visitor(max_error_ratio_metric, &ann);
-    tree.SearchNn(pnn, &ann_visitor);
-    // The actual distance according to tree.metric().
-    ann.second *= max_error_ratio_metric;
+  {
+    ScopedTimer t("kd_tree nn, radius and box", run_count);
+    for (Index i = 0; i < run_count; ++i) {
+      tree.SearchNn(q, &nn);
+      tree.SearchRadius(q, search_radius_metric, &knn, false);
+      tree.SearchBox(min, max, &idxs);
+    }
   }
+
+  Index k = 8;
+
+  {
+    ScopedTimer t("kd_tree aknn", run_count);
+    for (Index i = 0; i < run_count; ++i) {
+      // When the KdTree is created with the SlidingMidpointSplitter, ann
+      // queries can be answered in O(1/e^d log n) time.
+      tree.SearchAknn(q, k, max_error_ratio_metric, &knn);
+    }
+  }
+
+  {
+    ScopedTimer t("kd_tree knn", run_count);
+    for (Index i = 0; i < run_count; ++i) {
+      tree.SearchKnn(q, k, &knn, false);
+    }
+  }
+
+  SearchNnCounter<Index, Scalar> v(&nn);
+  tree.SearchNn(q, &v);
+
+  std::cout << "Custom visitor # nns considered: " << v.count() << std::endl;
 }
 
 int main() {
