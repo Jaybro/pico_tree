@@ -143,16 +143,25 @@ void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
     p(d) = points(idx)(d);
   }
 
-  std::vector<std::pair<Index, Scalar>> results;
-  tree.SearchKnn(p, k, &results, true);
+  Scalar ratio = tree.metric()(1.5);
+
+  std::vector<std::pair<Index, Scalar>> results_exact;
+  std::vector<std::pair<Index, Scalar>> results_apprx;
+  tree.SearchKnn(p, k, &results_exact, true);
+  tree.SearchAknn(p, k, ratio, &results_apprx, true);
 
   std::vector<std::pair<Index, Scalar>> compare;
   SearchKnn(p, points, k, tree.metric(), &compare);
 
-  ASSERT_EQ(compare.size(), results.size());
+  ASSERT_EQ(compare.size(), results_exact.size());
   for (std::size_t i = 0; i < compare.size(); ++i) {
     // Index is not tested in case it happens points have an equal distance.
     // TODO Would be nicer to test indices too.
-    EXPECT_FLOAT_EQ(results[i].second, compare[i].second);
+    EXPECT_FLOAT_EQ(results_exact[i].second, compare[i].second);
+
+    // Because results_apprx[i] is already scaled: approx = approx / ratio, the
+    // check below is the same as: approx <= exact * ratio
+    EXPECT_PRED_FORMAT2(
+        testing::FloatLE, results_apprx[i].second, results_exact[i].second);
   }
 }
