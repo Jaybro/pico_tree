@@ -68,10 +68,12 @@ class SearchNn {
 template <typename RandomAccessIterator>
 class SearchKnn {
  private:
-  static_assert(std::is_same<
-                typename std::iterator_traits<
-                    RandomAccessIterator>::iterator_category,
-                std::random_access_iterator_tag>::value);
+  static_assert(
+      std::is_same<
+          typename std::iterator_traits<
+              RandomAccessIterator>::iterator_category,
+          std::random_access_iterator_tag>::value,
+      "SEARCH_KNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
   using Pair = typename std::iterator_traits<RandomAccessIterator>::value_type;
   using Index = typename Pair::first_type;
@@ -154,10 +156,12 @@ class SearchRadius {
 template <typename RandomAccessIterator>
 class SearchAknn {
  private:
-  static_assert(std::is_same<
-                typename std::iterator_traits<
-                    RandomAccessIterator>::iterator_category,
-                std::random_access_iterator_tag>::value);
+  static_assert(
+      std::is_same<
+          typename std::iterator_traits<
+              RandomAccessIterator>::iterator_category,
+          std::random_access_iterator_tag>::value,
+      "SEARCH_AKNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
   using Pair = typename std::iterator_traits<RandomAccessIterator>::value_type;
   using Index = typename Pair::first_type;
@@ -304,12 +308,15 @@ class SplitterLongestMedian {
   using Sequence = typename internal::Sequence<Scalar, Dim>;
 
  public:
+  //! \brief Buffer type used with this splitter.
   template <typename T>
   using MemoryBuffer = internal::StaticBuffer<T>;
 
+  //! \private
   SplitterLongestMedian(Points const& points, std::vector<Index>* p_indices)
       : points_{points}, indices_{*p_indices} {}
 
+  //! \brief This function splits a node.
   inline void operator()(
       Index const,  // depth
       Index const offset,
@@ -363,12 +370,15 @@ class SplitterSlidingMidpoint {
   using Sequence = typename internal::Sequence<Scalar, Dim>;
 
  public:
+  //! \brief Buffer type used with this splitter.
   template <typename T>
   using MemoryBuffer = internal::DynamicBuffer<T>;
 
+  //! \private
   SplitterSlidingMidpoint(Points const& points, std::vector<Index>* p_indices)
       : points_{points}, indices_{*p_indices} {}
 
+  //! \brief This function splits a node.
   inline void operator()(
       Index const,  // depth
       Index const offset,
@@ -452,12 +462,15 @@ class KdTree {
       struct Branch {
         //! \brief Split coordinate / index of the KdTree spatial dimension.
         int split_dim;
+        //! \brief Coordinate value used for splitting the children of a node.
         Scalar split_val;
       };
 
       //! \brief Tree leaf.
       struct Leaf {
+        //! \private
         Index begin_idx;
+        //! \private
         Index end_idx;
       };
 
@@ -616,6 +629,12 @@ class KdTree {
       RandomAccessIterator begin,
       RandomAccessIterator end,
       bool const sort = false) const {
+    static_assert(
+        std::is_same<
+            typename std::iterator_traits<RandomAccessIterator>::value_type,
+            std::pair<Index, Scalar>>::value,
+        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_PAIR_INDEX_SCALAR");
+
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
     SearchNn(root_, p, &v);
 
@@ -629,7 +648,7 @@ class KdTree {
   //! results.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void SearchKnn(P
-  //! const&, RandomAccessIterator, RandomAccessIterator, bool const sort) const
+  //! const&, RandomAccessIterator, RandomAccessIterator, bool const) const
   template <typename P>
   inline void SearchKnn(
       P const& p,
@@ -714,6 +733,12 @@ class KdTree {
       RandomAccessIterator begin,
       RandomAccessIterator end,
       bool const sort = false) const {
+    static_assert(
+        std::is_same<
+            typename std::iterator_traits<RandomAccessIterator>::value_type,
+            std::pair<Index, Scalar>>::value,
+        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_PAIR_INDEX_SCALAR");
+
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
     SearchNn(root_, p, &v);
 
@@ -728,7 +753,7 @@ class KdTree {
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void
   //! SearchAknn(P const&, RandomAccessIterator, RandomAccessIterator, bool
-  //! const sort) const
+  //! const) const
   template <typename P>
   inline void SearchAknn(
       P const& p,
