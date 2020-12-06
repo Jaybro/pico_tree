@@ -100,9 +100,10 @@ class EigenAdaptor
     : public internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor> {
  public:
   //! \private
-  using Base = internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>;
-  using Base::EigenAdaptorBase;
-  using Base::matrix_;
+  using internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>::
+      EigenAdaptorBase;
+  //! \private
+  using internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>::matrix_;
 
   //! \brief Returns a reference to the Eigen matrix.
   inline Matrix& matrix() { return matrix_; }
