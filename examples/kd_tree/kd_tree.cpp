@@ -137,7 +137,7 @@ void Search() {
   {
     ScopedTimer t("kd_tree knn", run_count);
     for (Index i = 0; i < run_count; ++i) {
-      tree.SearchKnn(q, k, &knn, false);
+      tree.SearchKnn(q, k, &knn);
     }
   }
 

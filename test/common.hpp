@@ -147,8 +147,8 @@ void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
 
   std::vector<std::pair<Index, Scalar>> results_exact;
   std::vector<std::pair<Index, Scalar>> results_apprx;
-  tree.SearchKnn(p, k, &results_exact, true);
-  tree.SearchAknn(p, k, ratio, &results_apprx, true);
+  tree.SearchKnn(p, k, &results_exact);
+  tree.SearchAknn(p, k, ratio, &results_apprx);
 
   std::vector<std::pair<Index, Scalar>> compare;
   SearchKnn(p, points, k, tree.metric(), &compare);

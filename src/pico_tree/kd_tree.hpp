@@ -63,8 +63,19 @@ class SearchNn {
   std::pair<Index, Scalar>& nn_;
 };
 
-//! \brief KdTree search visitor for finding k nearest neighbors using a max
-//! heap.
+//! \brief KdTree search visitor for finding k nearest neighbors using a running
+//! sort.
+//! \details This rather brute-force method of maintaining a sorted sequence for
+//! keeping track of the k nearest neighbors performs fast in practice. This is
+//! likely due to points being reasonably ordered by the KdTree. The following
+//! strategies have been attempted:
+//!  * std::vector::insert(std::lower_bound) - the predecessor of the current
+//!  version.
+//!  * std::push_heap(std::vector) and std::pop_heap(std::vector).
+//!  * std::push_heap(std::vector) followed by a custom ReplaceFrontHeap once
+//!  the heap reached size k. This is the fastest "priority queue" version so
+//!  far. Even without sorting the heap it is still slower than maintaining a
+//!  sorted sequence.
 template <typename RandomAccessIterator>
 class SearchKnn {
  private:
@@ -82,33 +93,29 @@ class SearchKnn {
  public:
   //! \private
   inline SearchKnn(RandomAccessIterator begin, RandomAccessIterator end)
-      : begin_{begin}, end_{end} {
-    // Initial search distances for the heap. All values will be replaced unless
-    // point coordinates somehow have extreme values. In this case bad things
-    // will happen anyway.
-    std::fill(begin_, end_, Pair(0, std::numeric_limits<Scalar>::max()));
+      : begin_{begin}, end_{end}, active_end_{begin} {
+    // Initial search distance that gets updated once k neighbors have been
+    // found.
+    std::prev(end_)->second = std::numeric_limits<Scalar>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const d) const {
-    // Replace the current maximum.
-    *begin_ = Pair(idx, d);
-    // Repair the heap property.
-    ReplaceFrontHeap(begin_, end_, NeighborComparator<Index, Scalar>());
-  }
+  inline void operator()(Index const idx, Scalar const d) {
+    if (active_end_ < end_) {
+      ++active_end_;
+    }
 
-  //! \brief Sort the neighbors by distance from the query point. Can be used
-  //! after the search has ended.
-  inline void Sort() const {
-    std::sort_heap(begin_, end_, NeighborComparator<Index, Scalar>());
+    InsertSorted(
+        begin_, active_end_, Pair{idx, d}, NeighborComparator<Index, Scalar>());
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return begin_->second; }
+  inline Scalar const& max() const { return std::prev(end_)->second; }
 
  private:
   RandomAccessIterator begin_;
   RandomAccessIterator end_;
+  RandomAccessIterator active_end_;
 };
 
 //! \brief KdTree search visitor for finding all neighbors within a radius.
@@ -153,6 +160,7 @@ class SearchRadius {
 //! inside leafs and complete tree nodes. Even though all points are checked
 //! inside a leaf, not all of them are visited. This saves on scaling and heap
 //! updates.
+//! \see SearchKnn
 template <typename RandomAccessIterator>
 class SearchAknn {
  private:
@@ -171,35 +179,35 @@ class SearchAknn {
   //! \private
   inline SearchAknn(
       Scalar const e, RandomAccessIterator begin, RandomAccessIterator end)
-      : re_{Scalar(1.0) / e}, begin_{begin}, end_{end} {
-    // Initial search distances for the heap. All values will be replaced unless
-    // point coordinates somehow have extreme values. In this case bad things
-    // will happen anyway.
-    std::fill(begin_, end_, Pair(0, std::numeric_limits<Scalar>::max()));
+      : re_{Scalar(1.0) / e}, begin_{begin}, end_{end}, active_end_{begin} {
+    // Initial search distance that gets updated once k neighbors have been
+    // found.
+    std::prev(end_)->second = std::numeric_limits<Scalar>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const d) const {
+  inline void operator()(Index const idx, Scalar const d) {
+    if (active_end_ < end_) {
+      ++active_end_;
+    }
+
     // Replace the current maximum for which the distance is scaled to be:
     // d = d / e.
-    *begin_ = Pair(idx, d * re_);
-    // Repair the heap property.
-    ReplaceFrontHeap(begin_, end_, NeighborComparator<Index, Scalar>());
-  }
-
-  //! \brief Sort the neighbors by distance from the query point. Can be used
-  //! after the search has ended.
-  inline void Sort() const {
-    std::sort_heap(begin_, end_, NeighborComparator<Index, Scalar>());
+    InsertSorted(
+        begin_,
+        active_end_,
+        Pair{idx, d * re_},
+        NeighborComparator<Index, Scalar>());
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return begin_->second; }
+  inline Scalar const& max() const { return std::prev(end_)->second; }
 
  private:
   Scalar re_;
   RandomAccessIterator begin_;
   RandomAccessIterator end_;
+  RandomAccessIterator active_end_;
 };
 
 }  // namespace internal
@@ -625,10 +633,7 @@ class KdTree {
   //! \tparam RandomAccessIterator Iterator type.
   template <typename P, typename RandomAccessIterator>
   inline void SearchKnn(
-      P const& p,
-      RandomAccessIterator begin,
-      RandomAccessIterator end,
-      bool const sort = false) const {
+      P const& p, RandomAccessIterator begin, RandomAccessIterator end) const {
     static_assert(
         std::is_same<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
@@ -637,10 +642,6 @@ class KdTree {
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
     SearchNn(root_, p, &v);
-
-    if (sort) {
-      v.Sort();
-    }
   }
 
   //! \brief Searches for the \p k nearest neighbors of point \p p . The output
@@ -648,17 +649,16 @@ class KdTree {
   //! results.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void SearchKnn(P
-  //! const&, RandomAccessIterator, RandomAccessIterator, bool const) const
+  //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
       P const& p,
       Index const k,
-      std::vector<std::pair<Index, Scalar>>* knn,
-      bool const sort = false) const {
+      std::vector<std::pair<Index, Scalar>>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));
-    SearchKnn(p, knn->begin(), knn->end(), sort);
+    SearchKnn(p, knn->begin(), knn->end());
   }
 
   //! \brief Searches for all the neighbors of point \p p that are within radius
@@ -731,8 +731,7 @@ class KdTree {
       P const& p,
       Scalar const e,
       RandomAccessIterator begin,
-      RandomAccessIterator end,
-      bool const sort = false) const {
+      RandomAccessIterator end) const {
     static_assert(
         std::is_same<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
@@ -741,10 +740,6 @@ class KdTree {
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
     SearchNn(root_, p, &v);
-
-    if (sort) {
-      v.Sort();
-    }
   }
 
   //! \brief Searches for the \p k approximate nearest neighbors of point \p p .
@@ -752,19 +747,17 @@ class KdTree {
   //! the search results.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void
-  //! SearchAknn(P const&, RandomAccessIterator, RandomAccessIterator, bool
-  //! const) const
+  //! SearchAknn(P const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchAknn(
       P const& p,
       Index const k,
       Scalar const e,
-      std::vector<std::pair<Index, Scalar>>* knn,
-      bool const sort = false) const {
+      std::vector<std::pair<Index, Scalar>>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));
-    SearchAknn(p, e, knn->begin(), knn->end(), sort);
+    SearchAknn(p, e, knn->begin(), knn->end());
   }
 
   //! \brief Returns all points within the box defined by \p min and \p max.

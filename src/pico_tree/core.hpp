@@ -21,8 +21,8 @@ static constexpr int kDynamicDim = -1;
 
 namespace internal {
 
-//! \brief Restores the heap property of the range defined by \p first and \p
-//! last, assuming only the top element could have broken it.
+//! \brief Restores the heap property of the range defined by \p begin and \p
+//! end, assuming only the top element could have broken it.
 //! \details Worst case performs O(2 log n) comparisons and O(log n) copies.
 //! Performance will be better in practice because it is possible to "early
 //! out" as soon as the first node is encountered that adheres to the heap
@@ -80,6 +80,34 @@ inline void ReplaceFrontHeap(
   }
   // Last child gets replaced.
   begin[parent] = std::move(front);
+}
+
+//! \brief Inserts \p item in O(n) time at the index for which \p comp
+//! first holds true. The sequence must be sorted and remains sorted after
+//! insertion. The last item in the sequence is "pushed out".
+//! \details The contents of the indices at which \p comp holds true are moved
+//! to the next index. Thus, starting from the end of the sequence, each item[i]
+//! gets replaced by item[i - 1] until \p comp results in false. The worst case
+//! has n comparisons and n copies, traversing the entire sequence.
+template <typename RandomAccessIterator, typename Compare>
+inline void InsertSorted(
+    RandomAccessIterator begin,
+    RandomAccessIterator end,
+    typename std::iterator_traits<RandomAccessIterator>::value_type item,
+    Compare comp) {
+  auto it = std::prev(end);
+  for (; it > begin; --it) {
+    if (comp(item, *std::prev(it))) {
+      *it = std::move(*std::prev(it));
+    } else {
+      break;
+    }
+  }
+  // We update the inserted element outside of the loop. This is done for the
+  // case where we didn't break, simply reaching the end of the loop. This
+  // happens when we need to replace the first element in the sequence (the last
+  // item encountered) and were unable to reach the "else" clause.
+  *it = std::move(item);
 }
 
 //! \brief Compile time dimension count handling.
