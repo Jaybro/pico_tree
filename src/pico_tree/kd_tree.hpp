@@ -704,11 +704,11 @@ class KdTree {
   //! neighbor: max_ann_distance = true_nn_distance * e. This holds true for
   //! each respective nn index i, 0 <= i < k.
   //!
-  //! The amount of requested neighbors, \p k, should be sufficiently large to
-  //! get a noticeable speed increase from this method. Within a leaf all points
-  //! are compared to the query anyway, even if they are skipped. These
-  //! calculations can be avoided by skipping leafs completely, which will never
-  //! happen if all requested neighbors reside within a single one.
+  //! The amount of requested neighbors, k, should be sufficiently large to get
+  //! a noticeable speed increase from this method. Within a leaf all points are
+  //! compared to the query anyway, even if they are skipped. These calculations
+  //! can be avoided by skipping leafs completely, which will never happen if
+  //! all requested neighbors reside within a single one.
   //!
   //! Interpretation of both the input error ratio and output distances
   //! depend on the Metric. The default MetricL2 calculates squared

@@ -39,8 +39,8 @@ namespace internal {
 //! heap is implemented as a binary heap.
 template <typename RandomAccessIterator, typename Compare>
 inline void ReplaceFrontHeap(
-    RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
-  auto const size = last - first;
+    RandomAccessIterator begin, RandomAccessIterator end, Compare comp) {
+  auto const size = end - begin;
 
   if (size < 2) {
     return;
@@ -48,18 +48,18 @@ inline void ReplaceFrontHeap(
 
   typename std::iterator_traits<RandomAccessIterator>::difference_type parent =
       0;
-  auto e = std::move(first[parent]);
+  auto front = std::move(begin[parent]);
   auto const last_parent = (size - 2) / 2;
   while (parent < last_parent) {
     auto child = 2 * parent + 1;
-    if (comp(first[child], first[child + 1])) {
+    if (comp(begin[child], begin[child + 1])) {
       ++child;
     }
-    if (!comp(e, first[child])) {
-      first[parent] = std::move(e);
+    if (!comp(front, begin[child])) {
+      begin[parent] = std::move(front);
       return;
     } else {
-      first[parent] = std::move(first[child]);
+      begin[parent] = std::move(begin[child]);
       parent = child;
     }
   }
@@ -70,16 +70,16 @@ inline void ReplaceFrontHeap(
   // Assuming doing the check once outside of the loop is better?
   if (parent == last_parent) {
     auto child = 2 * parent + 1;
-    if ((size & 1) == 1 && comp(first[child], first[child + 1])) {
+    if ((size & 1) == 1 && comp(begin[child], begin[child + 1])) {
       ++child;
     }
-    if (comp(e, first[child])) {
-      first[parent] = std::move(first[child]);
+    if (comp(front, begin[child])) {
+      begin[parent] = std::move(begin[child]);
       parent = child;
     }
   }
   // Last child gets replaced.
-  first[parent] = std::move(e);
+  begin[parent] = std::move(front);
 }
 
 //! \brief Compile time dimension count handling.
