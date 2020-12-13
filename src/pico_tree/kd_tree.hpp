@@ -65,17 +65,19 @@ class SearchNn {
 
 //! \brief KdTree search visitor for finding k nearest neighbors using an
 //! insertion sort.
-//! \details This rather brute-force method of maintaining a sorted sequence for
-//! keeping track of the k nearest neighbors performs fast in practice. This is
-//! likely due to points being reasonably ordered by the KdTree. The following
-//! strategies have been attempted:
+//! \details Even though insertion sort is a rather brute-force method for
+//! maintaining a sorted sequence, the k nearest neighbors, it performs fast in
+//! practice. This is likely due to points being reasonably ordered by the
+//! KdTree. The following strategies have been attempted:
 //!  * std::vector::insert(std::lower_bound) - the predecessor of the current
 //!  version.
 //!  * std::push_heap(std::vector) and std::pop_heap(std::vector).
 //!  * std::push_heap(std::vector) followed by a custom ReplaceFrontHeap once
 //!  the heap reached size k. This is the fastest "priority queue" version so
 //!  far. Even without sorting the heap it is still slower than maintaining a
-//!  sorted sequence.
+//!  sorted sequence. Unsorted it does come close to the insertion sort.
+//!  * Binary heap plus a heap sort seemed a lot faster than the Leonardo heap
+//!  with smooth sort.
 template <typename RandomAccessIterator>
 class SearchKnn {
  private:

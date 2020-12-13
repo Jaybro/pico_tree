@@ -89,25 +89,24 @@ inline void ReplaceFrontHeap(
 //! to the next index. Thus, starting from the end of the sequence, each item[i]
 //! gets replaced by item[i - 1] until \p comp results in false. The worst case
 //! has n comparisons and n copies, traversing the entire sequence.
+//! <p/>
+//! This algorithm is used as the inner loop of insertion sort:
+//! * https://en.wikipedia.org/wiki/Insertion_sort
 template <typename RandomAccessIterator, typename Compare>
 inline void InsertSorted(
     RandomAccessIterator begin,
     RandomAccessIterator end,
     typename std::iterator_traits<RandomAccessIterator>::value_type item,
     Compare comp) {
-  auto it = std::prev(end);
-  for (; it > begin; --it) {
-    if (comp(item, *std::prev(it))) {
-      *it = std::move(*std::prev(it));
-    } else {
-      break;
-    }
+  std::advance(end, -1);
+  for (; end > begin && comp(item, *std::prev(end)); --end) {
+    *end = std::move(*std::prev(end));
   }
   // We update the inserted element outside of the loop. This is done for the
   // case where we didn't break, simply reaching the end of the loop. This
   // happens when we need to replace the first element in the sequence (the last
-  // item encountered) and were unable to reach the "else" clause.
-  *it = std::move(item);
+  // item encountered).
+  *end = std::move(item);
 }
 
 //! \brief Compile time dimension count handling.
