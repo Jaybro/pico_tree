@@ -1,4 +1,5 @@
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
 #include <pico_tree/eigen.hpp>
 #include <pico_tree/kd_tree.hpp>
 #include <random>
