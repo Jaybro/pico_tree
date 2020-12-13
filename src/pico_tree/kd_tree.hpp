@@ -63,8 +63,8 @@ class SearchNn {
   std::pair<Index, Scalar>& nn_;
 };
 
-//! \brief KdTree search visitor for finding k nearest neighbors using a running
-//! sort.
+//! \brief KdTree search visitor for finding k nearest neighbors using an
+//! insertion sort.
 //! \details This rather brute-force method of maintaining a sorted sequence for
 //! keeping track of the k nearest neighbors performs fast in practice. This is
 //! likely due to points being reasonably ordered by the KdTree. The following

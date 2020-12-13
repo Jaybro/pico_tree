@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.11)
 
 project(pico_tree
     LANGUAGES CXX
-    VERSION 0.5.1
+    VERSION 0.5.2
     DESCRIPTION "PicoTree is a small C++ header only library for range searches and nearest neighbor searches using a KdTree."
     HOMEPAGE_URL "https://github.com/Jaybro/pico_tree")
 
@@ -99,23 +99,7 @@ if(GTEST_FOUND)
             add_subdirectory(examples/pico_common)
         endif()
 
-        # Unit tests
-        set(TEST_TARGET_NAME ${PROJECT_NAME}_test)
-        enable_testing()
-        include(GoogleTest)
-        add_executable(${TEST_TARGET_NAME})
-        set_target_properties(${TEST_TARGET_NAME}
-            PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-        )
         add_subdirectory(test)
-        include_directories(${CMAKE_CURRENT_LIST_DIR}/test)
-        gtest_add_tests(
-            TARGET ${TEST_TARGET_NAME}
-            TEST_LIST ${TEST_TARGET_NAME}_list
-        )
-
-        target_link_libraries(${TEST_TARGET_NAME} ${PROJECT_NAME} pico_common GTest::GTest GTest::Main)
     endif()
     message(STATUS "GTest found. Unit test build: ${BUILD_TESTING}.")
 else()
