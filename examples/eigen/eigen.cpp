@@ -1,12 +1,45 @@
 #include <Eigen/Dense>
-#include <Eigen/StdVector>
+// This example compiles with C++11.
+// Using C++11 and higher don't need the StdVector include (as mentioned inside
+// the include itself).
+//#include <Eigen/StdVector>
+// If we use C++17 there is no need to take care of memory alignment:
+// https://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
 #include <pico_tree/eigen.hpp>
 #include <pico_tree/kd_tree.hpp>
 #include <random>
 #include <scoped_timer.hpp>
 
+// Important! This is not a performance benchmark. So don't take the "elapsed
+// time" numbers too seriously.
+
 using Index = int;
-using Scalar = double;
+// This fixed type size requires us to use aligned memory.
+// https://eigen.tuxfamily.org/dox-devel/group__TopicFixedSizeVectorizable.html
+using PointCm = Eigen::Vector4f;
+using PointRm = Eigen::RowVector4f;
+using Scalar = typename PointCm::Scalar;
+
+template <typename Point>
+using PointsMapCm = Eigen::Map<Eigen::Matrix<
+    typename Point::Scalar,
+    Point::RowsAtCompileTime,
+    Eigen::Dynamic>>;  //, Eigen::AlignedMax>;
+// The alignment used by Eigen equals Eigen::AlignedMax. Note that Eigen can
+// look at the data pointer to know if it is properly aligned.
+
+template <typename Point>
+using PointsMapRm = Eigen::Map<Eigen::Matrix<
+    typename Point::Scalar,
+    Eigen::Dynamic,
+    Point::ColsAtCompileTime,
+    Eigen::RowMajor>>;  //, Eigen::AlignedMax>;
+
+template <typename Point>
+using EigenAdaptorCm = pico_tree::EigenAdaptor<Index, PointsMapCm<Point>>;
+
+template <typename Point>
+using EigenAdaptorRm = pico_tree::EigenAdaptor<Index, PointsMapRm<Point>>;
 
 std::size_t const kRunCount = 1024 * 1024;
 int const kNumPoints = 1024 * 1024;
@@ -29,22 +62,20 @@ std::vector<Point, Eigen::aligned_allocator<Point>> GenerateRandomEigenN(
 }
 
 void ColMajor() {
-  using Point = Eigen::Vector3d;
+  using Point = PointCm;
   constexpr int Dim = Point::RowsAtCompileTime;
-  using PointsMap =
-      Eigen::Map<Eigen::Matrix<Point::Scalar, Dim, Eigen::Dynamic>>;
-  using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
+  using PointsMap = PointsMapCm<Point>;
+  using Adaptor = EigenAdaptorCm<Point>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
-  Adaptor adaptor(PointsMap(points.data()->data(), Dim, points.size()));
-
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
 
   std::cout << "Eigen RowMajor: " << Adaptor::RowMajor << std::endl;
 
   {
     pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> tree(
-        adaptor, kMaxLeafCount);
+        Adaptor(PointsMap(points.data()->data(), Dim, points.size())),
+        kMaxLeafCount);
 
     std::vector<std::pair<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree deflt l2", kRunCount);
@@ -55,22 +86,20 @@ void ColMajor() {
 }
 
 void RowMajor() {
-  using Point = Eigen::RowVector3d;
+  using Point = PointRm;
   constexpr int Dim = Point::ColsAtCompileTime;
-  using PointsMap = Eigen::Map<
-      Eigen::Matrix<Point::Scalar, Eigen::Dynamic, Dim, Eigen::RowMajor>>;
-  using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
+  using PointsMap = PointsMapRm<Point>;
+  using Adaptor = EigenAdaptorRm<Point>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
-  Adaptor adaptor(PointsMap(points.data()->data(), points.size(), Dim));
-
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
 
   std::cout << "Eigen RowMajor: " << Adaptor::RowMajor << std::endl;
 
   {
     pico_tree::KdTree<Index, Point::Scalar, Dim, Adaptor> tree(
-        adaptor, kMaxLeafCount);
+        Adaptor(PointsMap(points.data()->data(), points.size(), Dim)),
+        kMaxLeafCount);
 
     std::vector<std::pair<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree deflt l2", kRunCount);
@@ -81,15 +110,14 @@ void RowMajor() {
 }
 
 void Metrics() {
-  using Point = Eigen::Vector3d;
+  using Point = PointCm;
   constexpr int Dim = Point::RowsAtCompileTime;
-  using PointsMap =
-      Eigen::Map<Eigen::Matrix<Point::Scalar, Dim, Eigen::Dynamic>>;
-  using Adaptor = pico_tree::EigenAdaptor<Index, PointsMap>;
+  using PointsMap = PointsMapCm<Point>;
+  using Adaptor = EigenAdaptorCm<Point>;
 
   auto points = GenerateRandomEigenN<Point>(kNumPoints, kArea);
-  Adaptor adaptor(PointsMap(points.data()->data(), Dim, points.size()));
-
+  PointsMap map(points.data()->data(), Dim, points.size());
+  Adaptor adaptor(map);
   Point p = Point::Random() * kArea / typename Point::Scalar(2.0);
 
   std::cout << "Eigen Metrics: " << std::endl;

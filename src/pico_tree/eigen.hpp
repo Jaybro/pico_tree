@@ -21,15 +21,12 @@ class EigenAdaptorBase<Index_, Matrix, false> {
   //! \brief RowMajor flag that is true if the data is row-major.
   static constexpr bool RowMajor = false;
 
-  //! \brief Default constructor. May be deleted if the Matrix doesn't have a
-  //! default constructor.
-  inline EigenAdaptorBase() = default;
-
-  //! \brief Constructs an EigenAdaptorBase from \p matrix.
+  //! \brief Constructs an EigenAdaptorBase from \p matrix. The matrix must be
+  //! of dynamic size.
   //! \details To prevent an unwanted (deep) copy:
-  //! \li Move the matrix if it has dynamic size.
-  //! \li Copy or move an Eigen::Map.
-  //! \li Use the default constructor to initialize a fixed size matrix.
+  //! \li Move the matrix inside the adaptor.
+  //! \li Copy or move an Eigen::Map. Note that an Eigen::Map can be used as a
+  //! proxy for a matrix.
   inline EigenAdaptorBase(Matrix matrix) : matrix_(std::move(matrix)) {}
 
   //! \brief Returns the point at index \p idx.
@@ -63,15 +60,12 @@ class EigenAdaptorBase<Index_, Matrix, true> {
   //! \brief RowMajor flag that is true if the data is row-major.
   static constexpr bool RowMajor = true;
 
-  //! \brief Default constructor. May be deleted if the Matrix doesn't have a
-  //! default constructor.
-  inline EigenAdaptorBase() = default;
-
-  //! \brief Constructs an EigenAdaptorBase from \p matrix.
+  //! \brief Constructs an EigenAdaptorBase from \p matrix. The matrix must be
+  //! of dynamic size.
   //! \details To prevent an unwanted (deep) copy:
-  //! \li Move the matrix if it has dynamic size.
-  //! \li Copy or move an Eigen::Map.
-  //! \li Use the default constructor to initialize a fixed size matrix.
+  //! \li Move the matrix inside the adaptor.
+  //! \li Copy or move an Eigen::Map. Note that an Eigen::Map can be used as a
+  //! proxy for a matrix.
   inline EigenAdaptorBase(Matrix matrix) : matrix_(std::move(matrix)) {}
 
   //! \brief Returns the point at index \p idx.
@@ -99,6 +93,20 @@ template <typename Index, typename Matrix>
 class EigenAdaptor
     : public internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor> {
  public:
+  // Fixed size Eigen members may need to be aligned in memory:
+  // 1) As members are aligned with respect to the containing class the
+  // EigenAdaptor would need to be aligned as well.
+  // 2) Aligned members cannot be copied or moved (could be misaligned again
+  // after a copy). This requires the interface to work quite differently for
+  // fixed size matrices as compared to dynamic ones.
+  // Combined with the idea that fixed size matrices are mostly useful when they
+  // are small it is also not really worth it to support those through the
+  // adaptor.
+  static_assert(
+      Matrix::RowsAtCompileTime == Eigen::Dynamic ||
+          Matrix::ColsAtCompileTime == Eigen::Dynamic,
+      "EIGEN_ADAPTOR_DOES_NOT_SUPPORT_FIXED_SIZE_MATRICES");
+
   //! \private
   using internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>::
       EigenAdaptorBase;
