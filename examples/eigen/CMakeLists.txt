@@ -10,6 +10,7 @@ set_target_properties(eigen PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
-# TODO Cross platform flag.
+# CMake doesn't detect all SIMD capabilities. The instructions can be enabled
+# by setting a compiler flag as shown here for GCC:
 #    COMPILE_FLAGS "-march=native"
 )
