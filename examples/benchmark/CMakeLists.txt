@@ -12,9 +12,7 @@ target_link_libraries(benchmark
 set_target_properties(benchmark
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
-# Only a minimum level is set for pico_tree. For this executable we want it to be 11.
-set_target_properties(benchmark PROPERTIES
+# For the benchmark demo we want to explicitly use C++11.
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
