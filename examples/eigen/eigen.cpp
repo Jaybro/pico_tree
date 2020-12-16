@@ -1,7 +1,7 @@
 #include <Eigen/Dense>
 // This example compiles with C++11.
-// Using C++11 and higher don't need the StdVector include (as mentioned inside
-// the include itself).
+// C++11 and higher don't need the StdVector include (as mentioned inside the
+// include itself).
 //#include <Eigen/StdVector>
 // If we use C++17 there is no need to take care of memory alignment:
 // https://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
@@ -9,8 +9,8 @@
 #include <pico_tree/kd_tree.hpp>
 #include <scoped_timer.hpp>
 
-// Important! This is not a performance benchmark. So don't take the "elapsed
-// time" numbers too seriously.
+// Important! The Eigen example is not a performance benchmark. So don't take
+// the "elapsed time" numbers too seriously.
 
 using Index = int;
 // Certain fixed size matrices require us to use aligned memory.
@@ -119,20 +119,21 @@ void RowMajor() {
 // Eigen::Vector3f doesn't benefit from vectorization. With Eigen::Vector4f we
 // can, but in this case we have one dimension too many!
 //
-// Luckily we can use a different dimension for the points and the KdTree, but
-// some care needs to be taken:
-// * The default Metrics don't make explicit use of vectorization but the Eigen
-// based Metrics may do so.
+// Luckily, it is possible use a different dimension for both the points and the
+// KdTree, but some care needs to be taken:
+// * The default Metrics don't make explicit use of vectorization (perhaps
+// implicitly through optimization by the compiler) but the Eigen based Metrics
+// may do so.
 // * The extra coordinate of Eigen::Vector4f must be set 0 so it doesn't
-// influence any distance calculations. E.g., the squared distance uses a dot
-// product.
+// influence any of the distance calculations. E.g., the squared distance uses a
+// dot product.
 //
 // See also:
 // http://eigen.tuxfamily.org/index.php?title=UsingVector4fForVector3fOperations
 void Metrics() {
   using Point = Point4f;
   using Scalar = typename Point::Scalar;
-  // Tell the KdTree we use a spatial dimension of 3 instead of 4.
+  // Tell the KdTree to use a spatial dimension of 3 instead of 4.
   constexpr int Dim = Point::RowsAtCompileTime - 1;
   using PointsMap = PointsMapCm<Point>;
   using Adaptor = EigenAdaptorCm<Point>;
