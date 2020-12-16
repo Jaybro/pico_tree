@@ -1,4 +1,3 @@
-enable_testing()
 include(GoogleTest)
 
 set(TEST_TARGET_NAME ${PROJECT_NAME}_test)
