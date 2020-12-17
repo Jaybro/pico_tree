@@ -1,3 +1,9 @@
+include(GNUInstallDirs)
+
+################################################################################
+# PicoTree library.
+################################################################################
+
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_PACKAGE_NAME}::${PROJECT_PACKAGE_NAME} ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE
@@ -22,3 +28,47 @@ target_compile_options(${PROJECT_NAME} INTERFACE
 #         ${CMAKE_CURRENT_LIST_DIR}/pico_tree/eigen.hpp
 #         ${CMAKE_CURRENT_LIST_DIR}/pico_tree/kd_tree.hpp
 # )
+
+################################################################################
+# Generation and installation of Targets.cmake, Config.cmake,
+# ConfigVersion.cmake and PicoTree itself.
+################################################################################
+
+set(PROJECT_PACKAGE_TARGETS_NAME ${PROJECT_PACKAGE_NAME}Targets)
+set(PROJECT_PACKAGE_CONFIG_VERSION_NAME ${PROJECT_PACKAGE_NAME}ConfigVersion)
+set(PROJECT_PACKAGE_CONFIG_NAME ${PROJECT_PACKAGE_NAME}Config)
+
+# Not adding INCLUDE DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+# See target_include_directories
+install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_PACKAGE_TARGETS_NAME})
+
+export(EXPORT ${PROJECT_PACKAGE_TARGETS_NAME}
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_TARGETS_NAME}.cmake"
+    NAMESPACE ${PROJECT_PACKAGE_NAME}::)
+
+set(PACKAGE_INSTALL_DESTINATION
+    ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_PACKAGE_NAME}/cmake)
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_VERSION_NAME}.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion)
+
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_NAME}.cmake"
+    INSTALL_DESTINATION ${PACKAGE_INSTALL_DESTINATION})
+
+install(EXPORT ${PROJECT_PACKAGE_TARGETS_NAME}
+    FILE "${PROJECT_PACKAGE_TARGETS_NAME}.cmake"
+    NAMESPACE ${PROJECT_PACKAGE_NAME}::
+    DESTINATION ${PACKAGE_INSTALL_DESTINATION})
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_VERSION_NAME}.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_NAME}.cmake"
+    DESTINATION ${PACKAGE_INSTALL_DESTINATION})
+
+install(DIRECTORY "${PROJECT_SOURCE_ABSOLUTE}/${PROJECT_NAME}"
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
