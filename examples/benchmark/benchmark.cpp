@@ -231,6 +231,32 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtLngMedPicoKnn)(benchmark::State& state) {
   }
 }
 
+BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoNn)(benchmark::State& state) {
+  int max_leaf_size = state.range(0);
+  PicoAdaptorX adaptor(points_);
+  PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
+
+  for (auto _ : state) {
+    std::pair<Index, Scalar> result;
+    for (auto const& p : points_) {
+      tree.SearchNn(p, &result);
+    }
+  }
+}
+
+BENCHMARK_DEFINE_F(KdTreeBenchmark, CtLngMedPicoNn)(benchmark::State& state) {
+  int max_leaf_size = state.range(0);
+  PicoAdaptorX adaptor(points_);
+  PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
+
+  for (auto _ : state) {
+    std::pair<Index, Scalar> result;
+    for (auto const& p : points_) {
+      tree.SearchNn(p, &result);
+    }
+  }
+}
+
 // Argument 1: Maximum leaf size.
 // Argument 2: K nearest neighbors.
 BENCHMARK_REGISTER_F(KdTreeBenchmark, CtNanoKnn)
@@ -292,18 +318,32 @@ BENCHMARK_REGISTER_F(KdTreeBenchmark, CtSldMidPicoKnn)
 // become slower than both other methods.
 BENCHMARK_REGISTER_F(KdTreeBenchmark, CtLngMedPicoKnn)
     ->Unit(benchmark::kMillisecond)
-    ->Args({1, 1})
-    ->Args({6, 1})
-    ->Args({8, 1})
-    ->Args({10, 1})
-    ->Args({12, 1})
-    ->Args({14, 1})
     ->Args({1, 4})
     ->Args({6, 4})
     ->Args({8, 4})
     ->Args({10, 4})
     ->Args({12, 4})
     ->Args({14, 4});
+
+// The 2nd argument is used to keep plot_benchmarks.py the same.
+BENCHMARK_REGISTER_F(KdTreeBenchmark, CtSldMidPicoNn)
+    ->Unit(benchmark::kMillisecond)
+    ->Args({1, 1})
+    ->Args({6, 1})
+    ->Args({8, 1})
+    ->Args({10, 1})
+    ->Args({12, 1})
+    ->Args({14, 1});
+
+// The 2nd argument is used to keep plot_benchmarks.py the same.
+BENCHMARK_REGISTER_F(KdTreeBenchmark, CtLngMedPicoNn)
+    ->Unit(benchmark::kMillisecond)
+    ->Args({1, 1})
+    ->Args({6, 1})
+    ->Args({8, 1})
+    ->Args({10, 1})
+    ->Args({12, 1})
+    ->Args({14, 1});
 
 // ****************************************************************************
 // Radius

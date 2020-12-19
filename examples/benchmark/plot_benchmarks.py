@@ -28,7 +28,7 @@ def get_benchmarks(json):
 
     return [
         get_benchmark_subset(benchmarks, re.compile(r'.+(Nano|Pico)Build.+')),
-        get_benchmark_subset(benchmarks, re.compile(r'.+(Nano|Pico)Knn.+')),
+        get_benchmark_subset(benchmarks, re.compile(r'.+(Nano|Pico)(Knn|Nn).+')),
         get_benchmark_subset(benchmarks, re.compile(r'.+(Nano|Pico)Radius.+'))
     ]
 
