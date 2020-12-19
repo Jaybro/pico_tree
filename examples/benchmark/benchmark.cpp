@@ -287,7 +287,9 @@ BENCHMARK_REGISTER_F(KdTreeBenchmark, CtSldMidPicoKnn)
     ->Args({12, 12})
     ->Args({14, 12});
 
-// A single neighbor is faster, more neighbors slower.
+// For a single nn this method performs the fasted. Increasing the amount of nns
+// will land it in between sliding midpoint and nanoflann, until it seems to
+// become slower than both other methods.
 BENCHMARK_REGISTER_F(KdTreeBenchmark, CtLngMedPicoKnn)
     ->Unit(benchmark::kMillisecond)
     ->Args({1, 1})
