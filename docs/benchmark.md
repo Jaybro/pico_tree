@@ -18,22 +18,19 @@ Both have been generated using a LiDAR scanner and represent different types of 
 
 The different KdTree implementations are compared to each other with respect to the running times of the build, radius search and knn search algorithms, while fixing certain parameters. The speed of each algorithm is plotted against the leaf size of the tree. Each algorithm sets the following parameters:
 
-* Build algorithm: Dimensions known at compile time or run time.
-* Radius search algorithm: The radius in meters divided by 4 (0.25m and 0.5m).
+* Build algorithm: Compile-time vs. run-time tree dimension for the following building techniques:
+  * Nanoflann Midpoint variation.
+  * PicoTree Sliding Midpoint (along the longest axis).
+  * PicoTree Longest Axis Median.
+* Radius search algorithm: The radius in meters divided by 4 (i.e. 0.25m and 0.5m).
 * Knn algorithm: The amount of neighbors searched.
+  * For a "special" case of the knn algorithm, where `k` is set to `1`, the search speed is compared with respect to the three previously mentioned tree building techniques.
 
-Note that the run time describes a single invocation of the build algorithm and n invocations of the others.
-
-Results were generated on: 20-09-2020 using MinGW GCC 10.1
-
-For a "special" case of the knn algorithm, where `k` is set to `1`, the search speed is compared with respect to different tree building techniques:
-* Nanoflann Midpoint variation.
-* PicoTree Sliding Midpoint (along the longest axis).
-* PicoTree Longest Axis Median.
+Note that the run time describes a single invocation of a build algorithm and n invocations of the others.
 
 It is interesting to see that finding a single nearest neighbor can be quite a bit faster using the Longest Axis Median splitting technique. However, building the tree or querying multiple neighbors is slower. The extra time it takes to build the tree is no longer a factor when the tree is queried multiple times (on the test sets this was about `2n-4n` times). This means the splitting technique can be useful in combination with an algorithm like [ICP](https://en.wikipedia.org/wiki/Iterative_closest_point).
 
-Results were generated on: 01-10-2020 using MinGW GCC 10.1
+Results were generated on: 20-12-2020 using MinGW GCC 10.1.
 
 ## #25 - Würzburg marketplace.
 
