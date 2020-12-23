@@ -78,7 +78,7 @@ void ColMajor() {
         Adaptor(PointsMap(points.data()->data(), Dim, points.size())),
         kMaxLeafCount);
 
-    std::vector<std::pair<Index, Scalar>> knn;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree deflt l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
       tree.SearchKnn(p, 1, &knn);
@@ -103,7 +103,7 @@ void RowMajor() {
         Adaptor(PointsMap(points.data()->data(), points.size(), Dim)),
         kMaxLeafCount);
 
-    std::vector<std::pair<Index, Scalar>> knn;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree deflt l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
       tree.SearchKnn(p, 1, &knn);
@@ -160,7 +160,7 @@ void Metrics() {
         pico_tree::EigenMetricL2<Scalar>>
         tree(adaptor, kMaxLeafCount);
 
-    std::vector<std::pair<Index, Scalar>> knn;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree eigen l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
       tree.SearchKnn(p, 1, &knn);
@@ -176,7 +176,7 @@ void Metrics() {
         pico_tree::EigenMetricL1<Scalar>>
         tree(adaptor, kMaxLeafCount);
 
-    std::vector<std::pair<Index, Scalar>> knn;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("tree nn_ pico_tree eigen l1", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
       tree.SearchKnn(p, 1, &knn);

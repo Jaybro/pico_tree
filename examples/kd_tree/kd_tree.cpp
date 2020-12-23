@@ -42,14 +42,18 @@ void Build() {
 
 //! \brief Search visitor that counts how many points were considered as a
 //! nearest neighbor.
-template <typename Index, typename Scalar>
+template <typename Neighbor>
 class SearchNnCounter {
+ private:
+  using Index = typename Neighbor::Index;
+  using Scalar = typename Neighbor::Scalar;
+
  public:
   //! \brief Creates a visitor for approximate nearest neighbor searching.
   //! \param nn Search result.
-  inline SearchNnCounter(std::pair<Index, Scalar>* nn) : count_(0), nn_(*nn) {
+  inline SearchNnCounter(Neighbor* nn) : count_(0), nn_(*nn) {
     // Initial search distance.
-    nn_.second = std::numeric_limits<Scalar>::max();
+    nn_.distance = std::numeric_limits<Scalar>::max();
   }
 
   //! \brief Visit current point.
@@ -59,14 +63,14 @@ class SearchNnCounter {
   //! \param idx Point index.
   //! \param d Point distance
   //! (that depends on the metric).
-  inline void operator()(Index const idx, Scalar const d) {
+  inline void operator()(Index const idx, Scalar const dst) {
     count_++;
-    nn_ = std::make_pair(idx, d);
+    nn_ = {idx, dst};
   }
 
   //! \brief Maximum search distance with respect to the query point.
   //! \details This method is required.
-  inline Scalar const& max() const { return nn_.second; }
+  inline Scalar const& max() const { return nn_.distance; }
 
   //! \brief Returns the amount of points that were considered the nearest
   //! neighbor.
@@ -75,7 +79,7 @@ class SearchNnCounter {
 
  private:
   Index count_;
-  std::pair<Index, Scalar>& nn_;
+  Neighbor& nn_;
 };
 
 // Different search options.
@@ -110,8 +114,8 @@ void Search() {
   // Apply the metric to the max ratio difference.
   Scalar max_error_ratio_metric = tree.metric()(1.0f + max_error_percentage);
 
-  std::pair<Index, Scalar> nn;
-  std::vector<std::pair<Index, Scalar>> knn;
+  pico_tree::Neighbor<Index, Scalar> nn;
+  std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
   std::vector<Index> idxs;
 
   {
@@ -141,7 +145,7 @@ void Search() {
     }
   }
 
-  SearchNnCounter<Index, Scalar> v(&nn);
+  SearchNnCounter<pico_tree::Neighbor<Index, Scalar>> v(&nn);
   tree.SearchNn(q, &v);
 
   std::cout << "Custom visitor # nns considered: " << v.count() << std::endl;

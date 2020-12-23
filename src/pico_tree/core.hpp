@@ -19,6 +19,42 @@ namespace pico_tree {
 //! adaptor.
 static constexpr int kDynamicDim = -1;
 
+//! \brief A Neighbor is a point reference with a corresponding distance to
+//! another point.
+template <typename Index_, typename Scalar_>
+struct Neighbor {
+  static_assert(std::is_integral<Index_>::value);
+  static_assert(
+      std::is_integral<Scalar_>::value ||
+      std::is_floating_point<Scalar_>::value);
+
+  //! \brief Index type.
+  using Index = Index_;
+  //! \brief Distance type.
+  using Scalar = Scalar_;
+
+  //! \brief Default constructor.
+  //! \details Declaring a custom constructor removes the default one. With
+  //! C++11 we can bring back the default constructor and keep this struct a POD
+  //! type.
+  inline constexpr Neighbor() = default;
+  //! \brief Constructs a Neighbor given an index and distance.
+  inline constexpr Neighbor(Index idx, Scalar dst) noexcept
+      : index(std::forward<Index>(idx)), distance(std::forward<Scalar>(dst)) {}
+
+  //! \brief Point index of the Neighbor.
+  Index index;
+  //! \brief Distance of the Neighbor with respect to another point.
+  Scalar distance;
+};
+
+//! \brief Compares neighbors by distance.
+template <typename Index, typename Scalar>
+inline constexpr bool operator<(
+    Neighbor<Index, Scalar> const& lhs, Neighbor<Index, Scalar> const& rhs) {
+  return lhs.distance < rhs.distance;
+}
+
 namespace internal {
 
 //! \brief Inserts \p item in O(n) time at the index for which \p comp
@@ -31,12 +67,15 @@ namespace internal {
 //! <p/>
 //! This algorithm is used as the inner loop of insertion sort:
 //! * https://en.wikipedia.org/wiki/Insertion_sort
-template <typename RandomAccessIterator, typename Compare>
+template <
+    typename RandomAccessIterator,
+    typename Compare = std::less<
+        typename std::iterator_traits<RandomAccessIterator>::value_type>>
 inline void InsertSorted(
     RandomAccessIterator begin,
     RandomAccessIterator end,
     typename std::iterator_traits<RandomAccessIterator>::value_type item,
-    Compare comp) {
+    Compare comp = Compare()) {
   std::advance(end, -1);
   for (; end > begin && comp(item, *std::prev(end)); --end) {
     *end = std::move(*std::prev(end));

@@ -206,7 +206,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoKnn)(benchmark::State& state) {
   PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::vector<std::pair<Index, Scalar>> results;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_) {
       tree.SearchKnn(p, knn_count, &results);
@@ -222,7 +222,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtLngMedPicoKnn)(benchmark::State& state) {
   PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::vector<std::pair<Index, Scalar>> results;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_) {
       tree.SearchKnn(p, knn_count, &results);
@@ -237,7 +237,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoNn)(benchmark::State& state) {
   PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::pair<Index, Scalar> result;
+    pico_tree::Neighbor<Index, Scalar> result;
     for (auto const& p : points_) {
       tree.SearchNn(p, &result);
     }
@@ -250,7 +250,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtLngMedPicoNn)(benchmark::State& state) {
   PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::pair<Index, Scalar> result;
+    pico_tree::Neighbor<Index, Scalar> result;
     for (auto const& p : points_) {
       tree.SearchNn(p, &result);
     }
@@ -380,7 +380,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoRadius)
   PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::vector<std::pair<Index, Scalar>> results;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_) {
       tree.SearchRadius(p, squared, &results);

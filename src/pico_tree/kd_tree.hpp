@@ -31,36 +31,29 @@ inline void LongestAxisBox(
   }
 }
 
-//! \brief Compares neighbors by distance.
-template <typename Index, typename Scalar>
-struct NeighborComparator {
-  //! \private
-  inline bool operator()(
-      std::pair<Index, Scalar> const& a,
-      std::pair<Index, Scalar> const& b) const {
-    return a.second < b.second;
-  }
-};
-
 //! \brief KdTree search visitor for finding a single nearest neighbor.
-template <typename Index, typename Scalar>
+template <typename Neighbor>
 class SearchNn {
+ private:
+  using Index = typename Neighbor::Index;
+  using Scalar = typename Neighbor::Scalar;
+
  public:
   //! \private
-  inline SearchNn(std::pair<Index, Scalar>* nn) : nn_{*nn} {
-    nn_.second = std::numeric_limits<Scalar>::max();
+  inline SearchNn(Neighbor* nn) : nn_{*nn} {
+    nn_.distance = std::numeric_limits<Scalar>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const d) const {
-    nn_ = std::make_pair(idx, d);
+  inline void operator()(Index const idx, Scalar const dst) const {
+    nn_ = {idx, dst};
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return nn_.second; }
+  inline Scalar const& max() const { return nn_.distance; }
 
  private:
-  std::pair<Index, Scalar>& nn_;
+  Neighbor& nn_;
 };
 
 //! \brief KdTree search visitor for finding k nearest neighbors using an
@@ -88,9 +81,10 @@ class SearchKnn {
           std::random_access_iterator_tag>::value,
       "SEARCH_KNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
-  using Pair = typename std::iterator_traits<RandomAccessIterator>::value_type;
-  using Index = typename Pair::first_type;
-  using Scalar = typename Pair::second_type;
+  using Neighbor =
+      typename std::iterator_traits<RandomAccessIterator>::value_type;
+  using Index = typename Neighbor::Index;
+  using Scalar = typename Neighbor::Scalar;
 
  public:
   //! \private
@@ -98,21 +92,20 @@ class SearchKnn {
       : begin_{begin}, end_{end}, active_end_{begin} {
     // Initial search distance that gets updated once k neighbors have been
     // found.
-    std::prev(end_)->second = std::numeric_limits<Scalar>::max();
+    std::prev(end_)->distance = std::numeric_limits<Scalar>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const d) {
+  inline void operator()(Index const idx, Scalar const dst) {
     if (active_end_ < end_) {
       ++active_end_;
     }
 
-    InsertSorted(
-        begin_, active_end_, Pair{idx, d}, NeighborComparator<Index, Scalar>());
+    InsertSorted(begin_, active_end_, Neighbor{idx, dst});
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return std::prev(end_)->second; }
+  inline Scalar const& max() const { return std::prev(end_)->distance; }
 
  private:
   RandomAccessIterator begin_;
@@ -121,33 +114,34 @@ class SearchKnn {
 };
 
 //! \brief KdTree search visitor for finding all neighbors within a radius.
-template <typename Index, typename Scalar>
+template <typename Neighbor>
 class SearchRadius {
+ private:
+  using Index = typename Neighbor::Index;
+  using Scalar = typename Neighbor::Scalar;
+
  public:
   //! \private
-  inline SearchRadius(
-      Scalar const radius, std::vector<std::pair<Index, Scalar>>* n)
+  inline SearchRadius(Scalar const radius, std::vector<Neighbor>* n)
       : radius_{radius}, n_{*n} {
     n_.clear();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const d) const {
-    n_.push_back(std::make_pair(idx, d));
+  inline void operator()(Index const idx, Scalar const dst) const {
+    n_.push_back({idx, dst});
   }
 
   //! \brief Sort the neighbors by distance from the query point. Can be used
   //! after the search has ended.
-  inline void Sort() const {
-    std::sort(n_.begin(), n_.end(), NeighborComparator<Index, Scalar>());
-  }
+  inline void Sort() const { std::sort(n_.begin(), n_.end()); }
 
   //! \brief Maximum search distance with respect to the query point.
   inline Scalar const& max() const { return radius_; }
 
  private:
   Scalar const radius_;
-  std::vector<std::pair<Index, Scalar>>& n_;
+  std::vector<Neighbor>& n_;
 };
 
 //! \brief Search visitor for finding approximate nearest neighbors.
@@ -173,9 +167,10 @@ class SearchAknn {
           std::random_access_iterator_tag>::value,
       "SEARCH_AKNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
-  using Pair = typename std::iterator_traits<RandomAccessIterator>::value_type;
-  using Index = typename Pair::first_type;
-  using Scalar = typename Pair::second_type;
+  using Neighbor =
+      typename std::iterator_traits<RandomAccessIterator>::value_type;
+  using Index = typename Neighbor::Index;
+  using Scalar = typename Neighbor::Scalar;
 
  public:
   //! \private
@@ -184,26 +179,22 @@ class SearchAknn {
       : re_{Scalar(1.0) / e}, begin_{begin}, end_{end}, active_end_{begin} {
     // Initial search distance that gets updated once k neighbors have been
     // found.
-    std::prev(end_)->second = std::numeric_limits<Scalar>::max();
+    std::prev(end_)->distance = std::numeric_limits<Scalar>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const d) {
+  inline void operator()(Index const idx, Scalar const dst) {
     if (active_end_ < end_) {
       ++active_end_;
     }
 
     // Replace the current maximum for which the distance is scaled to be:
     // d = d / e.
-    InsertSorted(
-        begin_,
-        active_end_,
-        Pair{idx, d * re_},
-        NeighborComparator<Index, Scalar>());
+    InsertSorted(begin_, active_end_, Neighbor{idx, dst * re_});
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return std::prev(end_)->second; }
+  inline Scalar const& max() const { return std::prev(end_)->distance; }
 
  private:
   Scalar re_;
@@ -568,6 +559,8 @@ class KdTree {
     MemoryBuffer& nodes_;
   };
 
+  using Neighbor = Neighbor<Index, Scalar>;
+
  public:
   //! \brief The KdTree cannot be copied.
   //! \details The KdTree uses pointers to refer to tree nodes. These would all
@@ -621,14 +614,14 @@ class KdTree {
   //! \details Interpretation of the output distance depends on the Metric. The
   //! default MetricL2 results in a squared distance.
   template <typename P>
-  inline void SearchNn(P const& p, std::pair<Index, Scalar>* nn) const {
-    internal::SearchNn<Index, Scalar> v(nn);
+  inline void SearchNn(P const& p, Neighbor* nn) const {
+    internal::SearchNn<Neighbor> v(nn);
     SearchNn(root_, p, &v);
   }
 
   //! \brief Searches for the k nearest neighbors of point \p p , where k equals
   //! std::distance(begin, end). It is expected that the value type of the
-  //! iterator equals std::pair<Index, Scalar>.
+  //! iterator equals Neighbor<Index, Scalar>.
   //! \details Interpretation of the output distances depend on the Metric. The
   //! default MetricL2 results in squared distances.
   //! \tparam P Point type.
@@ -639,24 +632,21 @@ class KdTree {
     static_assert(
         std::is_same<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            std::pair<Index, Scalar>>::value,
-        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_PAIR_INDEX_SCALAR");
+            Neighbor>::value,
+        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
     SearchNn(root_, p, &v);
   }
 
-  //! \brief Searches for the \p k nearest neighbors of point \p p . The output
-  //! vector \p knn contains an index and distance pair for each of the search
-  //! results.
+  //! \brief Searches for the \p k nearest neighbors of point \p p and stores
+  //! the results in output vector \p knn.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void SearchKnn(P
   //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
-      P const& p,
-      Index const k,
-      std::vector<std::pair<Index, Scalar>>* knn) const {
+      P const& p, Index const k, std::vector<Neighbor>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));
@@ -664,8 +654,7 @@ class KdTree {
   }
 
   //! \brief Searches for all the neighbors of point \p p that are within radius
-  //! \p radius. The output vector \p n contains an index and distance pair for
-  //! each of the search results.
+  //! \p radius and stores the results in output vector \p n.
   //! \details Interpretation of the output distances depend on the Metric. The
   //! default MetricL2 results in squared distances.
   //! \tparam P Point type.
@@ -685,9 +674,9 @@ class KdTree {
   inline void SearchRadius(
       P const& p,
       Scalar const radius,
-      std::vector<std::pair<Index, Scalar>>* n,
+      std::vector<Neighbor>* n,
       bool const sort = false) const {
-    internal::SearchRadius<Index, Scalar> v(radius, n);
+    internal::SearchRadius<Neighbor> v(radius, n);
     SearchNn(root_, p, &v);
 
     if (sort) {
@@ -697,7 +686,7 @@ class KdTree {
 
   //! \brief Searches for the k approximate nearest neighbors of point \p p ,
   //! where k equals std::distance(begin, end). It is expected that the value
-  //! type of the iterator equals std::pair<Index, Scalar>.
+  //! type of the iterator equals Neighbor<Index, Scalar>.
   //! \details This function can result in faster search queries compared to
   //! KdTree::SearchKnn by skipping points and tree nodes. This is achieved by
   //! scaling down the search distance, possibly not visiting the true nearest
@@ -723,7 +712,7 @@ class KdTree {
   //! // A max error of 15%. I.e. max 15% farther away from the true nn.
   //! Scalar max_error = Scalar(0.15);
   //! Scalar e = tree.metric()(Scalar(1.0) + max_error);
-  //! std::vector<std::pair<Index, Scalar>> knn(k);
+  //! std::vector<Neighbor<Index, Scalar>> knn(k);
   //! tree.SearchAknn(p, e, knn.begin(), knn.end());
   //! // Optionally scale back to the actual metric distance.
   //! for (auto& nn : knn) { nn.second *= e; }
@@ -737,16 +726,15 @@ class KdTree {
     static_assert(
         std::is_same<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            std::pair<Index, Scalar>>::value,
-        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_PAIR_INDEX_SCALAR");
+            Neighbor>::value,
+        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
     SearchNn(root_, p, &v);
   }
 
-  //! \brief Searches for the \p k approximate nearest neighbors of point \p p .
-  //! The output vector \p knn contains an index and distance pair for each of
-  //! the search results.
+  //! \brief Searches for the \p k approximate nearest neighbors of point \p p
+  //! and stores the results in output vector \p knn.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void
   //! SearchAknn(P const&, RandomAccessIterator, RandomAccessIterator) const
@@ -755,7 +743,7 @@ class KdTree {
       P const& p,
       Index const k,
       Scalar const e,
-      std::vector<std::pair<Index, Scalar>>* knn) const {
+      std::vector<Neighbor>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));
