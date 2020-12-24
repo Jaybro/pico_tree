@@ -446,14 +446,33 @@ class SplitterSlidingMidpoint {
 //! \tparam Dim The spatial dimension of the tree. It can be set to
 //! pico_tree::kDynamicDim in case Dim is only known at run-time.
 template <
-    typename Index,
-    typename Scalar,
-    int Dim,
-    typename Points,
-    typename Metric = MetricL2<Scalar, Dim>,
-    typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dim, Points>>
+    typename Index_,
+    typename Scalar_,
+    int Dim_,
+    typename Points_,
+    typename Metric_ = MetricL2<Scalar_, Dim_>,
+    typename Splitter_ =
+        SplitterSlidingMidpoint<Index_, Scalar_, Dim_, Points_>>
 class KdTree {
+ public:
+  //! \brief Index type.
+  using Index = Index_;
+  //! \brief Scalar type.
+  using Scalar = Scalar_;
+  //! \brief KdTree dimension. It equals pico_tree::kDynamicDim in case Dim is
+  //! only known at run-time.
+  static constexpr int Dim = Dim_;
+  //! \brief Point set or adaptor type.
+  using Points = Points_;
+  //! \brief The metric used for various searches.
+  using Metric = Metric_;
+  //! \brief Neighbor type of various search resuls.
+  using Neighbor = Neighbor<Index, Scalar>;
+
  private:
+  //! \private
+  using Splitter = Splitter_;
+
   //! \brief KdTree Node.
   struct Node {
     //! \brief Data is used to either store branch or leaf information. Which
@@ -558,8 +577,6 @@ class KdTree {
     Splitter const& splitter_;
     MemoryBuffer& nodes_;
   };
-
-  using Neighbor = Neighbor<Index, Scalar>;
 
  public:
   //! \brief The KdTree cannot be copied.

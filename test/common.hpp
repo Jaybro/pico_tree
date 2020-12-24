@@ -1,17 +1,5 @@
 #pragma once
 
-template <typename Tree>
-using TreeIndexType = typename std::remove_reference<decltype(
-    std::declval<Tree>().points())>::type::Index;
-
-template <typename Tree>
-using TreeScalarType = typename std::remove_reference<decltype(
-    std::declval<Tree>().points())>::type::Scalar;
-
-template <typename Tree>
-using TreePointsType = typename std::remove_reference<decltype(
-    std::declval<Tree>().points())>::type;
-
 template <
     typename P,
     typename Points,
@@ -36,14 +24,12 @@ void SearchKnn(
   std::sort(knn->begin(), knn->end());
 }
 
-// TODO Perhaps do something more friendly for exposing types.
-// TODO Some traits.
 template <typename Tree>
 void TestBox(
     Tree const& tree,
-    TreeScalarType<Tree> const min_v,
-    TreeScalarType<Tree> const max_v) {
-  using PointsX = TreePointsType<Tree>;
+    typename Tree::Scalar const min_v,
+    typename Tree::Scalar const max_v) {
+  using PointsX = typename Tree::Points;
   using PointX = typename PointsX::Point;
   using Index = typename PointsX::Index;
 
@@ -84,8 +70,8 @@ void TestBox(
 }
 
 template <typename Tree>
-void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
-  using PointsX = TreePointsType<Tree>;
+void TestRadius(Tree const& tree, typename Tree::Scalar const radius) {
+  using PointsX = typename Tree::Points;
   using PointX = typename PointsX::Point;
   using Index = typename PointsX::Index;
   using Scalar = typename PointsX::Scalar;
@@ -121,8 +107,8 @@ void TestRadius(Tree const& tree, TreeScalarType<Tree> const radius) {
 }
 
 template <typename Tree>
-void TestKnn(Tree const& tree, TreeIndexType<Tree> const k) {
-  using PointsX = TreePointsType<Tree>;
+void TestKnn(Tree const& tree, typename Tree::Index const k) {
+  using PointsX = typename Tree::Points;
   using PointX = typename PointsX::Point;
   using Index = typename PointsX::Index;
   using Scalar = typename PointsX::Scalar;
