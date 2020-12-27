@@ -146,7 +146,7 @@ void Search() {
   }
 
   SearchNnCounter<pico_tree::Neighbor<Index, Scalar>> v(&nn);
-  tree.SearchNn(q, &v);
+  tree.SearchNearest(q, &v);
 
   std::cout << "Custom visitor # nns considered: " << v.count() << std::endl;
 }

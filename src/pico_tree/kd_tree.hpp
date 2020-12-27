@@ -623,8 +623,8 @@ class KdTree {
   //! \see internal::SearchRadius
   //! \see internal::SearchAknn
   template <typename P, typename V>
-  inline void SearchNn(P const& p, V* visitor) const {
-    SearchNn(root_, p, visitor);
+  inline void SearchNearest(P const& p, V* visitor) const {
+    SearchNearest(root_, p, visitor);
   }
 
   //! \brief Searches for the nearest neighbor of point \p p .
@@ -633,7 +633,7 @@ class KdTree {
   template <typename P>
   inline void SearchNn(P const& p, Neighbor* nn) const {
     internal::SearchNn<Neighbor> v(nn);
-    SearchNn(root_, p, &v);
+    SearchNearest(root_, p, &v);
   }
 
   //! \brief Searches for the k nearest neighbors of point \p p , where k equals
@@ -653,7 +653,7 @@ class KdTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
-    SearchNn(root_, p, &v);
+    SearchNearest(root_, p, &v);
   }
 
   //! \brief Searches for the \p k nearest neighbors of point \p p and stores
@@ -694,7 +694,7 @@ class KdTree {
       std::vector<Neighbor>* n,
       bool const sort = false) const {
     internal::SearchRadius<Neighbor> v(radius, n);
-    SearchNn(root_, p, &v);
+    SearchNearest(root_, p, &v);
 
     if (sort) {
       v.Sort();
@@ -747,7 +747,7 @@ class KdTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
-    SearchNn(root_, p, &v);
+    SearchNearest(root_, p, &v);
   }
 
   //! \brief Searches for the \p k approximate nearest neighbors of point \p p
@@ -869,10 +869,11 @@ class KdTree {
         0, 0, points_.npts(), Sequence(root_box_min_), Sequence(root_box_max_));
   }
 
-  //! Returns the nearest neighbor (or neighbors) of point \p p depending on
-  //! their selection by visitor \p visitor for node \p node .
+  //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
+  //! on their selection by visitor \p visitor for node \p node .
   template <typename P, typename V>
-  inline void SearchNn(Node const* const node, P const& p, V* visitor) const {
+  inline void SearchNearest(
+      Node const* const node, P const& p, V* visitor) const {
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
@@ -900,9 +901,9 @@ class KdTree {
         node_2nd = node->left;
       }
 
-      SearchNn(node_1st, p, visitor);
+      SearchNearest(node_1st, p, visitor);
       if (visitor->max() >= metric_(node->data.branch.split_val, v)) {
-        SearchNn(node_2nd, p, visitor);
+        SearchNearest(node_2nd, p, visitor);
       }
     }
   }
