@@ -24,10 +24,11 @@ static constexpr int kDynamicDim = -1;
 //! another point.
 template <typename Index_, typename Scalar_>
 struct Neighbor {
-  static_assert(std::is_integral<Index_>::value);
+  static_assert(std::is_integral<Index_>::value, "INDEX_NOT_AN_INTEGRAL_TYPE");
   static_assert(
       std::is_integral<Scalar_>::value ||
-      std::is_floating_point<Scalar_>::value);
+          std::is_floating_point<Scalar_>::value,
+      "SCALAR_NOT_AN_INTEGRAL_OR_FLOATING_POINT_TYPE");
 
   //! \brief Index type.
   using Index = Index_;
@@ -110,7 +111,7 @@ struct Dimension<kDynamicDim> {
 template <typename Scalar, int Dim_>
 class Sequence {
  private:
-  static_assert(Dim_ >= 0);
+  static_assert(Dim_ >= 0, "SEQUENCE_DIM_MUST_BE_DYNAMIC_OR_>=_0");
 
  public:
   //! \brief Return type of the Move() member function.
