@@ -6,6 +6,7 @@
 //! \brief Contains various common utilities.
 
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <deque>
 #include <fstream>
@@ -101,9 +102,16 @@ struct Dimension<kDynamicDim> {
   inline static int Dim(int dim) { return dim; }
 };
 
-//! \brief Compile time sequence. A lot faster than the run time version.
+//! \brief A sequence stores a contiguous array of elements similar to
+//! std::array or std::vector.
+//! \details The non-specialized Sequence class knows its dimension at
+//! compile-time and uses an std::array for storing its data. Faster than using
+//! the std::vector in practice.
 template <typename Scalar, int Dim_>
 class Sequence {
+ private:
+  static_assert(Dim_ >= 0);
+
  public:
   //! \brief Return type of the Move() member function.
   //! \details An std::array is movable, which is useful if its contents are
@@ -111,7 +119,7 @@ class Sequence {
   //! results in a copy. In some cases we can prevent an unwanted copy.
   using MoveReturnType = Sequence const&;
 
-  //! \details Access data contained in the Sequence.
+  //! \brief Access data contained in the Sequence.
   inline Scalar& operator[](std::size_t const i) noexcept {
     return sequence_[i];
   }
@@ -121,8 +129,21 @@ class Sequence {
     return sequence_[i];
   }
 
+  //! \brief Access data contained in the Sequence.
+  inline Scalar& operator()(std::size_t const i) noexcept {
+    return sequence_[i];
+  }
+
+  //! \brief Access data contained in the Sequence.
+  inline Scalar const& operator()(std::size_t const i) const noexcept {
+    return sequence_[i];
+  }
+
   //! \brief Fills the sequence with value \p v.
-  inline void Fill(std::size_t const, Scalar const v) { sequence_.fill(v); }
+  inline void Fill(std::size_t const s, Scalar const v) {
+    assert(s == static_cast<std::size_t>(Dim_));
+    sequence_.fill(v);
+  }
 
   //! \brief Returns a const reference to the current object.
   inline MoveReturnType Move() const noexcept { return *this; }
@@ -137,7 +158,11 @@ class Sequence {
   std::array<Scalar, Dim_> sequence_;
 };
 
-//! \brief Run time sequence. More flexible than the compile time one.
+//! \brief A sequence stores a contiguous array of elements similar to
+//! std::array or std::vector.
+//! \details The specialized Sequence class doesn't knows its dimension at
+//! compile-time and uses an std::vector for storing its data so it can be
+//! resized.
 template <typename Scalar>
 class Sequence<Scalar, kDynamicDim> {
  public:
@@ -154,6 +179,16 @@ class Sequence<Scalar, kDynamicDim> {
 
   //! \brief Access data contained in the Sequence.
   inline Scalar const& operator[](std::size_t const i) const noexcept {
+    return sequence_[i];
+  }
+
+  //! \brief Access data contained in the Sequence.
+  inline Scalar& operator()(std::size_t const i) noexcept {
+    return sequence_[i];
+  }
+
+  //! \brief Access data contained in the Sequence.
+  inline Scalar const& operator()(std::size_t const i) const noexcept {
     return sequence_[i];
   }
 

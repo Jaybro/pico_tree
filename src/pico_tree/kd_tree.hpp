@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
 #include <numeric>
 
 #include "core.hpp"
@@ -910,24 +909,10 @@ class KdTree {
 
   //! Checks if \p p is contained in the box defined by \p min and \p max. A
   //! point on the edge considered inside the box.
-  template <typename P>
-  inline bool PointInBox(Sequence const& p, P const& min, P const& max) const {
+  template <typename P0, typename P1>
+  inline bool PointInBox(P0 const& p, P1 const& min, P1 const& max) const {
     for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-      if (min(i) > p[i] || max(i) < p[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  //! Checks if the point refered to by \p idx is contained in the box defined
-  //! by \p min and \p max. A point on the edge considered inside the box.
-  template <typename P>
-  inline bool PointInBox(Index const idx, P const& min, P const& max) const {
-    auto const& p = points_(idx);
-    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-      Scalar const v = p(i);
-      if (min(i) > v || max(i) < v) {
+      if (min(i) > p(i) || max(i) < p(i)) {
         return false;
       }
     }
@@ -966,7 +951,7 @@ class KdTree {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         Index const idx = indices_[i];
-        if (PointInBox(idx, rng_min, rng_max)) {
+        if (PointInBox(points_(idx), rng_min, rng_max)) {
           idxs->push_back(idx);
         }
       }
