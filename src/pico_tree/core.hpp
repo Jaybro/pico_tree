@@ -6,8 +6,8 @@
 //! \brief Contains various common utilities.
 
 #include <array>
+#include <cassert>
 #include <cmath>
-#include <deque>
 #include <fstream>
 #include <vector>
 
@@ -19,68 +19,44 @@ namespace pico_tree {
 //! adaptor.
 static constexpr int kDynamicDim = -1;
 
-namespace internal {
+//! \brief A Neighbor is a point reference with a corresponding distance to
+//! another point.
+template <typename Index, typename Scalar>
+struct Neighbor {
+  static_assert(std::is_integral<Index>::value, "INDEX_NOT_AN_INTEGRAL_TYPE");
+  static_assert(
+      std::is_integral<Scalar>::value || std::is_floating_point<Scalar>::value,
+      "SCALAR_NOT_AN_INTEGRAL_OR_FLOATING_POINT_TYPE");
 
-//! \brief Restores the heap property of the range defined by \p begin and \p
-//! end, assuming only the top element could have broken it.
-//! \details Worst case performs O(2 log n) comparisons and O(log n) copies.
-//! Performance will be better in practice because it is possible to "early
-//! out" as soon as the first node is encountered that adheres to the heap
-//! property.
-//! <p/>
-//! A function for replacing the top of the heap is not available using the
-//! C++ stl. It is possible to use something like std::make_heap() or
-//! range.push_back() followed by a std::pop_heap() to get the desired effect.
-//! However, these solutions are either forced to traverse the entire range or
-//! introduce overhead, which seem to make them quite a bit slower.
-//! <p/>
-//! It should be possible to use this function in combination with any of the
-//! C++ stl heap related functions, as the documention of those suggest that the
-//! heap is implemented as a binary heap.
-template <typename RandomAccessIterator, typename Compare>
-inline void ReplaceFrontHeap(
-    RandomAccessIterator begin, RandomAccessIterator end, Compare comp) {
-  auto const size = end - begin;
+  //! \brief Index type.
+  using IndexType = Index;
+  //! \brief Distance type.
+  using ScalarType = Scalar;
 
-  if (size < 2) {
-    return;
-  }
+  //! \brief Default constructor.
+  //! \details Declaring a custom constructor removes the default one. With
+  //! C++11 we can bring back the default constructor and keep this struct a POD
+  //! type.
+  inline constexpr Neighbor() = default;
+  //! \brief Constructs a Neighbor given an index and distance.
+  inline constexpr Neighbor(Index idx, Scalar dst) noexcept
+      : index(idx), distance(dst) {}
 
-  typename std::iterator_traits<RandomAccessIterator>::difference_type parent =
-      0;
-  auto front = std::move(begin[parent]);
-  auto const last_parent = (size - 2) / 2;
-  while (parent < last_parent) {
-    auto child = 2 * parent + 1;
-    if (comp(begin[child], begin[child + 1])) {
-      ++child;
-    }
-    if (!comp(front, begin[child])) {
-      begin[parent] = std::move(front);
-      return;
-    } else {
-      begin[parent] = std::move(begin[child]);
-      parent = child;
-    }
-  }
-  // Everything below (but for replacing the last child) is the same as
-  // inside the loop. The only difference is that for even sized vectors we
-  // can't compare with the second child of the last parent.
-  //
-  // Assuming doing the check once outside of the loop is better?
-  if (parent == last_parent) {
-    auto child = 2 * parent + 1;
-    if ((size & 1) == 1 && comp(begin[child], begin[child + 1])) {
-      ++child;
-    }
-    if (comp(front, begin[child])) {
-      begin[parent] = std::move(begin[child]);
-      parent = child;
-    }
-  }
-  // Last child gets replaced.
-  begin[parent] = std::move(front);
+  //! \brief Point index of the Neighbor.
+  Index index;
+  //! \brief Distance of the Neighbor with respect to another point.
+  Scalar distance;
+};
+
+//! \brief Compares neighbors by distance.
+template <typename Index, typename Scalar>
+inline constexpr bool operator<(
+    Neighbor<Index, Scalar> const& lhs,
+    Neighbor<Index, Scalar> const& rhs) noexcept {
+  return lhs.distance < rhs.distance;
 }
+
+namespace internal {
 
 //! \brief Inserts \p item in O(n) time at the index for which \p comp
 //! first holds true. The sequence must be sorted and remains sorted after
@@ -92,12 +68,15 @@ inline void ReplaceFrontHeap(
 //! <p/>
 //! This algorithm is used as the inner loop of insertion sort:
 //! * https://en.wikipedia.org/wiki/Insertion_sort
-template <typename RandomAccessIterator, typename Compare>
+template <
+    typename RandomAccessIterator,
+    typename Compare = std::less<
+        typename std::iterator_traits<RandomAccessIterator>::value_type>>
 inline void InsertSorted(
     RandomAccessIterator begin,
     RandomAccessIterator end,
     typename std::iterator_traits<RandomAccessIterator>::value_type item,
-    Compare comp) {
+    Compare comp = Compare()) {
   std::advance(end, -1);
   for (; end > begin && comp(item, *std::prev(end)); --end) {
     *end = std::move(*std::prev(end));
@@ -123,9 +102,16 @@ struct Dimension<kDynamicDim> {
   inline static int Dim(int dim) { return dim; }
 };
 
-//! \brief Compile time sequence. A lot faster than the run time version.
+//! \brief A sequence stores a contiguous array of elements similar to
+//! std::array or std::vector.
+//! \details The non-specialized Sequence class knows its dimension at
+//! compile-time and uses an std::array for storing its data. Faster than using
+//! the std::vector in practice.
 template <typename Scalar, int Dim_>
 class Sequence {
+ private:
+  static_assert(Dim_ >= 0, "SEQUENCE_DIM_MUST_BE_DYNAMIC_OR_>=_0");
+
  public:
   //! \brief Return type of the Move() member function.
   //! \details An std::array is movable, which is useful if its contents are
@@ -133,7 +119,7 @@ class Sequence {
   //! results in a copy. In some cases we can prevent an unwanted copy.
   using MoveReturnType = Sequence const&;
 
-  //! \details Access data contained in the Sequence.
+  //! \brief Access data contained in the Sequence.
   inline Scalar& operator[](std::size_t const i) noexcept {
     return sequence_[i];
   }
@@ -143,8 +129,21 @@ class Sequence {
     return sequence_[i];
   }
 
+  //! \brief Access data contained in the Sequence.
+  inline Scalar& operator()(std::size_t const i) noexcept {
+    return sequence_[i];
+  }
+
+  //! \brief Access data contained in the Sequence.
+  inline Scalar const& operator()(std::size_t const i) const noexcept {
+    return sequence_[i];
+  }
+
   //! \brief Fills the sequence with value \p v.
-  inline void Fill(std::size_t const, Scalar const v) { sequence_.fill(v); }
+  inline void Fill(std::size_t const s, Scalar const v) {
+    assert(s == static_cast<std::size_t>(Dim_));
+    sequence_.fill(v);
+  }
 
   //! \brief Returns a const reference to the current object.
   inline MoveReturnType Move() const noexcept { return *this; }
@@ -159,7 +158,11 @@ class Sequence {
   std::array<Scalar, Dim_> sequence_;
 };
 
-//! \brief Run time sequence. More flexible than the compile time one.
+//! \brief A sequence stores a contiguous array of elements similar to
+//! std::array or std::vector.
+//! \details The specialized Sequence class doesn't knows its dimension at
+//! compile-time and uses an std::vector for storing its data so it can be
+//! resized.
 template <typename Scalar>
 class Sequence<Scalar, kDynamicDim> {
  public:
@@ -176,6 +179,16 @@ class Sequence<Scalar, kDynamicDim> {
 
   //! \brief Access data contained in the Sequence.
   inline Scalar const& operator[](std::size_t const i) const noexcept {
+    return sequence_[i];
+  }
+
+  //! \brief Access data contained in the Sequence.
+  inline Scalar& operator()(std::size_t const i) noexcept {
+    return sequence_[i];
+  }
+
+  //! \brief Access data contained in the Sequence.
+  inline Scalar const& operator()(std::size_t const i) const noexcept {
     return sequence_[i];
   }
 
@@ -198,49 +211,121 @@ class Sequence<Scalar, kDynamicDim> {
   std::vector<Scalar> sequence_;
 };
 
-//! \brief Simple memory buffer making deletions of recursive elements a bit
-//! easier.
-//! \details The buffer owns all memory returned by MakeItem() and all memory is
-//! released when the buffer is destroyed.
-template <typename Container>
-class MemoryBuffer {
+//! \brief A ListPool is useful for creating objects of a single type when the
+//! total amount to be created cannot be known up front. The list maintains
+//! ownership of the objects which are destructed when the list is destructed.
+//! Objects cannot be returned to the pool.
+//! \details A ListPool maintains a linked list of fixed size chunks that
+//! contain a single object type. The size of the list increases as more objects
+//! are requested.
+//! <p/>
+//! This class supersedes the use of the std::deque. The std::deque appears to
+//! to have different a chunk size depending on the implementation of the C++
+//! standard. This practically means that the performance of PicoTree is
+//! unstable across platforms.
+//! <p/>
+//! Benchmarked various vs. the ListPool using a chunk size 256:
+//! * GCC libstdc++ std::deque ~50% slower.
+//! * Other variations (like the std::list) were about 10% slower.
+//! <p/>
+//! https://en.wikipedia.org/wiki/Memory_pool
+template <typename T, std::size_t ChunkSize>
+class ListPool {
+ private:
+  static_assert(std::is_trivial<T>::value, "TYPE_T_IS_NOT_TRIVIAL");
+  //! \brief List item.
+  struct Chunk {
+    Chunk* prev;
+    T data[ChunkSize];
+  };
+
  public:
-  //! Creates an item and returns a pointer to it. The buffer retains ownership
-  //! of the memory. All memory gets released when the buffer is destroyed.
+  //! \brief Creates a ListPool using the default constructor.
+  ListPool() : end_(nullptr), index_(ChunkSize) {}
+
+  //! \brief The ListPool class cannot be copied.
+  //! \details The ListPool uses pointers to objects and copying pointers is not
+  //! the same as creating a deep copy. For now we are not interested in
+  //! providing a deep copy.
+  ListPool(ListPool const&) = delete;
+
+  //! \brief ListPool move constructor.
+  ListPool(ListPool&& other) {
+    end_ = other.end_;
+    index_ = other.index_;
+    // So we don't accidentally delete things twice.
+    other.end_ = nullptr;
+  }
+
+  //! \brief Destroys up the ListPool using the destructor.
+  ~ListPool() {
+    // Suppose Chunk was contained by an std::unique_ptr, then it may happen
+    // that we hit a recursion limit depending on how many chunks are
+    // destructed.
+    while (end_ != nullptr) {
+      Chunk* chunk = end_->prev;
+      delete end_;
+      end_ = chunk;
+    }
+  }
+
+  //! \brief Creates an item and returns a pointer to it.
+  inline T* Allocate() {
+    if (index_ == ChunkSize) {
+      Chunk* chunk = new Chunk;
+      chunk->prev = end_;
+      end_ = chunk;
+      index_ = 0;
+    }
+
+    T* i = &end_->data[index_];
+    index_++;
+
+    return i;
+  }
+
+ private:
+  //! \brief The last and currently active chunk.
+  Chunk* end_;
+  //! \brief Index within the last chunk.
+  std::size_t index_;
+};
+
+//! \brief Static MemoryBuffer using a vector. It is a simple memory buffer
+//! making deletions of recursive elements a bit easier.
+//! \details The buffer owns all memory returned by Allocate() and all memory is
+//! released when the buffer is destroyed.
+template <typename T>
+class StaticBuffer {
+ public:
+  //! Creates a StaticBuffer having space for \p size elements.
+  inline explicit StaticBuffer(std::size_t const size) {
+    buffer_.reserve(size);
+  }
+
+  //! \brief Creates an item and returns a pointer to it.
   template <typename... Args>
-  inline typename Container::value_type* MakeItem(Args&&... args) {
+  inline T* Allocate(Args&&... args) {
     buffer_.emplace_back(std::forward<Args>(args)...);
     return &buffer_.back();
   }
 
- protected:
-  //! Memory buffer.
-  Container buffer_;
+ private:
+  //! \private
+  std::vector<T> buffer_;
 };
 
-//! \brief Static MemoryBuffer using a vector.
-//! \details The buffer owns all memory returned by MakeItem() and all memory is
+//! \brief Dynamic MemoryBuffer using a ListPool.
+//! \details The buffer owns all memory returned by Allocate() and all memory is
 //! released when the buffer is destroyed.
 template <typename T>
-class StaticBuffer : public MemoryBuffer<std::vector<T>> {
- public:
-  //! Creates a StaticBuffer having space for \p size elements.
-  inline StaticBuffer(std::size_t const size) {
-    MemoryBuffer<std::vector<T>>::buffer_.reserve(size);
-  }
-};
-
-//! \brief Dynamic MemoryBuffer using a deque.
-//! \details The buffer owns all memory returned by MakeItem() and all memory is
-//! released when the buffer is destroyed.
-template <typename T>
-class DynamicBuffer : public MemoryBuffer<std::deque<T>> {
+class DynamicBuffer : public ListPool<T, 256> {
  public:
   //! Creates a DynamicBuffer.
   inline DynamicBuffer() = default;
   //! Creates a DynamicBuffer. Ignores the argument in favor of a common
   //! interface with the StaticBuffer.
-  inline DynamicBuffer(std::size_t const) {}
+  inline explicit DynamicBuffer(std::size_t const) {}
 };
 
 //! \brief Returns an std::fstream given a filename.

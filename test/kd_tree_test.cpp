@@ -8,15 +8,15 @@
 
 template <typename PicoAdaptor>
 using KdTree = pico_tree::KdTree<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
+    typename PicoAdaptor::IndexType,
+    typename PicoAdaptor::ScalarType,
     PicoAdaptor::Dim,
     PicoAdaptor>;
 
 TEST(KdTreeTest, MetricL1) {
   using PointX = Point2f;
   using Index = int;
-  using Scalar = typename PointX::Scalar;
+  using Scalar = typename PointX::ScalarType;
   using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dim = PointX::Dim;
   std::vector<PointX> points{{2.0f, 4.0f}};
@@ -33,7 +33,7 @@ TEST(KdTreeTest, MetricL1) {
 TEST(KdTreeTest, MetricL2) {
   using PointX = Point2f;
   using Index = int;
-  using Scalar = typename PointX::Scalar;
+  using Scalar = typename PointX::ScalarType;
   using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dim = PointX::Dim;
   std::vector<PointX> points{{2.0f, 4.0f}};
@@ -50,7 +50,7 @@ TEST(KdTreeTest, MetricL2) {
 TEST(KdTreeTest, SplitterMedian) {
   using PointX = Point2f;
   using Index = int;
-  using Scalar = typename PointX::Scalar;
+  using Scalar = typename PointX::ScalarType;
   using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dim = PointX::Dim;
   std::vector<PointX> pts4{
@@ -106,7 +106,7 @@ TEST(KdTreeTest, SplitterMedian) {
 TEST(KdTreeTest, SplitterSlidingMidpoint) {
   using PointX = Point2f;
   using Index = int;
-  using Scalar = typename PointX::Scalar;
+  using Scalar = typename PointX::ScalarType;
   using AdaptorX = PicoAdaptor<Index, PointX>;
   constexpr auto Dim = PointX::Dim;
   std::vector<PointX> pts4{{0.0, 2.0}, {0.0, 1.0}, {0.0, 4.0}, {0.0, 3.0}};
@@ -174,9 +174,9 @@ namespace {
 template <typename PointX>
 void QueryRange(
     int const point_count,
-    typename PointX::Scalar const area_size,
-    typename PointX::Scalar const min_v,
-    typename PointX::Scalar const max_v) {
+    typename PointX::ScalarType const area_size,
+    typename PointX::ScalarType const min_v,
+    typename PointX::ScalarType const max_v) {
   using Index = int;
   using AdaptorX = PicoAdaptor<Index, PointX>;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
@@ -189,8 +189,8 @@ void QueryRange(
 template <typename PointX>
 void QueryRadius(
     int const point_count,
-    typename PointX::Scalar const area_size,
-    typename PointX::Scalar const radius) {
+    typename PointX::ScalarType const area_size,
+    typename PointX::ScalarType const radius) {
   using Index = int;
   using AdaptorX = PicoAdaptor<Index, PointX>;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
@@ -203,7 +203,7 @@ void QueryRadius(
 template <typename PointX>
 void QueryKnn(
     int const point_count,
-    typename PointX::Scalar const area_size,
+    typename PointX::ScalarType const area_size,
     int const k) {
   using Index = int;
   using AdaptorX = PicoAdaptor<Index, PointX>;

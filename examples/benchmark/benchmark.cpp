@@ -2,32 +2,31 @@
 
 #include <pico_adaptor.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <scoped_timer.hpp>
 
 #include "format_bin.hpp"
 #include "nano_adaptor.hpp"
 
 template <int Dim, typename PicoAdaptor>
-using MetricL2 = pico_tree::MetricL2<typename PicoAdaptor::Scalar, Dim>;
+using MetricL2 = pico_tree::MetricL2<typename PicoAdaptor::ScalarType, Dim>;
 
 template <int Dims, typename PicoAdaptor>
 using SplitterLongestMedian = pico_tree::SplitterLongestMedian<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
+    typename PicoAdaptor::IndexType,
+    typename PicoAdaptor::ScalarType,
     Dims,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
 using PicoKdTreeCtSldMid = pico_tree::KdTree<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
+    typename PicoAdaptor::IndexType,
+    typename PicoAdaptor::ScalarType,
     PicoAdaptor::Dim,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
 using PicoKdTreeCtLngMed = pico_tree::KdTree<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
+    typename PicoAdaptor::IndexType,
+    typename PicoAdaptor::ScalarType,
     PicoAdaptor::Dim,
     PicoAdaptor,
     MetricL2<PicoAdaptor::Dim, PicoAdaptor>,
@@ -35,15 +34,15 @@ using PicoKdTreeCtLngMed = pico_tree::KdTree<
 
 template <typename PicoAdaptor>
 using PicoKdTreeRtSldMid = pico_tree::KdTree<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
+    typename PicoAdaptor::IndexType,
+    typename PicoAdaptor::ScalarType,
     pico_tree::kDynamicDim,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
 using PicoKdTreeRtLngMed = pico_tree::KdTree<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
+    typename PicoAdaptor::IndexType,
+    typename PicoAdaptor::ScalarType,
     pico_tree::kDynamicDim,
     PicoAdaptor,
     MetricL2<pico_tree::kDynamicDim, PicoAdaptor>,
@@ -51,17 +50,17 @@ using PicoKdTreeRtLngMed = pico_tree::KdTree<
 
 template <typename NanoAdaptor>
 using NanoKdTreeCt = nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
+    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::ScalarType, NanoAdaptor>,
     NanoAdaptor,
     NanoAdaptor::Dim,
-    typename NanoAdaptor::Index>;
+    typename NanoAdaptor::IndexType>;
 
 template <typename NanoAdaptor>
 using NanoKdTreeRt = nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::Scalar, NanoAdaptor>,
+    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::ScalarType, NanoAdaptor>,
     NanoAdaptor,
     -1,
-    typename NanoAdaptor::Index>;
+    typename NanoAdaptor::IndexType>;
 
 class KdTreeBenchmark : public benchmark::Fixture {
  protected:
@@ -206,7 +205,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoKnn)(benchmark::State& state) {
   PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::vector<std::pair<Index, Scalar>> results;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_) {
       tree.SearchKnn(p, knn_count, &results);
@@ -222,7 +221,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtLngMedPicoKnn)(benchmark::State& state) {
   PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::vector<std::pair<Index, Scalar>> results;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_) {
       tree.SearchKnn(p, knn_count, &results);
@@ -237,7 +236,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoNn)(benchmark::State& state) {
   PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::pair<Index, Scalar> result;
+    pico_tree::Neighbor<Index, Scalar> result;
     for (auto const& p : points_) {
       tree.SearchNn(p, &result);
     }
@@ -250,7 +249,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtLngMedPicoNn)(benchmark::State& state) {
   PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::pair<Index, Scalar> result;
+    pico_tree::Neighbor<Index, Scalar> result;
     for (auto const& p : points_) {
       tree.SearchNn(p, &result);
     }
@@ -380,7 +379,7 @@ BENCHMARK_DEFINE_F(KdTreeBenchmark, CtSldMidPicoRadius)
   PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
 
   for (auto _ : state) {
-    std::vector<std::pair<Index, Scalar>> results;
+    std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_) {
       tree.SearchRadius(p, squared, &results);

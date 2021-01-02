@@ -9,13 +9,9 @@ template <typename Index, typename Matrix, bool RowMajor>
 class EigenAdaptorBase;
 
 //! \brief ColMajor EigenAdaptor.
-template <typename Index_, typename Matrix>
-class EigenAdaptorBase<Index_, Matrix, false> {
+template <typename Index, typename Matrix>
+class EigenAdaptorBase<Index, Matrix, false> {
  public:
-  //! \brief Index type.
-  using Index = Index_;
-  //! \brief Scalar type.
-  using Scalar = typename Matrix::Scalar;
   //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
   static constexpr int Dim = Matrix::RowsAtCompileTime;
   //! \brief RowMajor flag that is true if the data is row-major.
@@ -48,13 +44,9 @@ class EigenAdaptorBase<Index_, Matrix, false> {
 };
 
 //! \brief RowMajor EigenAdaptor.
-template <typename Index_, typename Matrix>
-class EigenAdaptorBase<Index_, Matrix, true> {
+template <typename Index, typename Matrix>
+class EigenAdaptorBase<Index, Matrix, true> {
  public:
-  //! \brief Index type.
-  using Index = Index_;
-  //! \brief Scalar type.
-  using Scalar = typename Matrix::Scalar;
   //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
   static constexpr int Dim = Matrix::ColsAtCompileTime;
   //! \brief RowMajor flag that is true if the data is row-major.
@@ -112,6 +104,11 @@ class EigenAdaptor
       EigenAdaptorBase;
   //! \private
   using internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>::matrix_;
+
+  //! \brief Index type.
+  using IndexType = Index;
+  //! \brief Scalar type.
+  using ScalarType = typename Matrix::Scalar;
 
   //! \brief Returns a reference to the Eigen matrix.
   inline Matrix& matrix() { return matrix_; }
