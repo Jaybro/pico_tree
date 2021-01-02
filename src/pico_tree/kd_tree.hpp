@@ -466,7 +466,7 @@ class KdTree {
   //! \brief The metric used for various searches.
   using Metric = Metric_;
   //! \brief Neighbor type of various search resuls.
-  using Neighbor = Neighbor<Index, Scalar>;
+  using Neighbor = struct Neighbor<Index, Scalar>;
 
  private:
   //! \private
