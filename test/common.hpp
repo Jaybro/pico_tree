@@ -79,11 +79,7 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
   auto const& points = tree.points();
 
   Index idx = tree.points().npts() / 2;
-  PointX p;
-
-  for (Index d = 0; d < PointX::Dim; ++d) {
-    p(d) = points(idx)(d);
-  }
+  PointX p = points(idx);
 
   auto const& metric = tree.metric();
   Scalar const lp_radius = metric(radius);
@@ -116,12 +112,7 @@ void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
   auto const& points = tree.points();
 
   Index idx = tree.points().npts() / 2;
-  PointX p;
-
-  for (Index d = 0; d < PointX::Dim; ++d) {
-    p(d) = points(idx)(d);
-  }
-
+  PointX p = points(idx);
   Scalar ratio = tree.metric()(1.5);
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_exact;

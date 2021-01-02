@@ -234,3 +234,30 @@ TEST(KdTreeTest, QueryRadiusSubset2d) {
 TEST(KdTreeTest, QueryKnn1) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 1); }
 
 TEST(KdTreeTest, QueryKnn10) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 10); }
+
+TEST(KdTreeTest, WriteRead) {
+  using Index = int;
+  using Scalar = typename Point2f::ScalarType;
+  int point_count = 100;
+  Scalar area_size = 2;
+  std::vector<Point2f> random =
+      GenerateRandomN<Point2f>(point_count, area_size);
+  using Adaptor = PicoAdaptor<Index, Point2f>;
+
+  Adaptor points(random);
+
+  std::string filename = "tree.bin";
+
+  {
+    // The points are not stored.
+    KdTree<Adaptor> tree(points, 1);
+    KdTree<Adaptor>::Save(tree, filename);
+  }
+  {
+    // Points are required to load the tree.
+    KdTree<Adaptor> tree = KdTree<Adaptor>::Load(points, filename);
+    TestKnn(tree, Index(20));
+  }
+
+  EXPECT_EQ(std::remove(filename.c_str()), 0);
+}
