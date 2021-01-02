@@ -579,8 +579,9 @@ class KdTree {
 
  public:
   //! \brief The KdTree cannot be copied.
-  //! \details The KdTree uses pointers to refer to tree nodes. These would all
-  //! be invalidated during a deep copy.
+  //! \details The KdTree uses pointers to nodes and copying pointers is not
+  //! the same as creating a deep copy. For now we are not interested in
+  //! providing a deep copy.
   //! \private
   KdTree(KdTree const&) = delete;
 
