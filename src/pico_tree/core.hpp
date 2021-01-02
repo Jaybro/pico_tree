@@ -40,7 +40,7 @@ struct Neighbor {
   inline constexpr Neighbor() = default;
   //! \brief Constructs a Neighbor given an index and distance.
   inline constexpr Neighbor(Index idx, Scalar dst) noexcept
-      : index(std::forward<Index>(idx)), distance(std::forward<Scalar>(dst)) {}
+      : index(idx), distance(dst) {}
 
   //! \brief Point index of the Neighbor.
   Index index;
@@ -51,7 +51,8 @@ struct Neighbor {
 //! \brief Compares neighbors by distance.
 template <typename Index, typename Scalar>
 inline constexpr bool operator<(
-    Neighbor<Index, Scalar> const& lhs, Neighbor<Index, Scalar> const& rhs) {
+    Neighbor<Index, Scalar> const& lhs,
+    Neighbor<Index, Scalar> const& rhs) noexcept {
   return lhs.distance < rhs.distance;
 }
 
@@ -298,7 +299,9 @@ template <typename T>
 class StaticBuffer {
  public:
   //! Creates a StaticBuffer having space for \p size elements.
-  inline StaticBuffer(std::size_t const size) { buffer_.reserve(size); }
+  inline explicit StaticBuffer(std::size_t const size) {
+    buffer_.reserve(size);
+  }
 
   //! \brief Creates an item and returns a pointer to it.
   template <typename... Args>
@@ -322,7 +325,7 @@ class DynamicBuffer : public ListPool<T, 256> {
   inline DynamicBuffer() = default;
   //! Creates a DynamicBuffer. Ignores the argument in favor of a common
   //! interface with the StaticBuffer.
-  inline DynamicBuffer(std::size_t const) {}
+  inline explicit DynamicBuffer(std::size_t const) {}
 };
 
 //! \brief Returns an std::fstream given a filename.
