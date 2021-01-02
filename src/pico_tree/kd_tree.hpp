@@ -995,7 +995,7 @@ class KdTree {
 
   //! \brief Recursively reads the Node and its descendants.
   inline Node* ReadNode(internal::Stream* stream) {
-    Node* node = nodes_.MakeItem();
+    Node* node = nodes_.Allocate();
     bool is_leaf;
     stream->Read(&is_leaf);
 
