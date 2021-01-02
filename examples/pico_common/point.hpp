@@ -10,7 +10,7 @@
 //! \code{.cpp}
 //! inline Scalar const& operator()(int i) const;
 //! \endcode
-//! \tparam Scalar_ Coordinate value type.
+//! \tparam Scalar Coordinate value type.
 //! \tparam Dim_ The dimension of the space in which the point resides.
 template <typename Scalar, int Dim_>
 class Point {

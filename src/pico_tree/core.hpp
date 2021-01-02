@@ -268,6 +268,7 @@ class ListPool {
     }
   }
 
+  //! \brief Creates an item and returns a pointer to it.
   inline T* Allocate() {
     if (index_ == ChunkSize) {
       Chunk* chunk = new Chunk;
@@ -282,8 +283,10 @@ class ListPool {
     return i;
   }
 
- protected:
+ private:
+  //! \brief The last and currently active chunk.
   Chunk* end_;
+  //! \brief Index within the last chunk.
   std::size_t index_;
 };
 
@@ -297,8 +300,7 @@ class StaticBuffer {
   //! Creates a StaticBuffer having space for \p size elements.
   inline StaticBuffer(std::size_t const size) { buffer_.reserve(size); }
 
-  //! Creates an item and returns a pointer to it. The buffer retains ownership
-  //! of the memory. All memory gets released when the buffer is destroyed.
+  //! \brief Creates an item and returns a pointer to it.
   template <typename... Args>
   inline T* Allocate(Args&&... args) {
     buffer_.emplace_back(std::forward<Args>(args)...);
@@ -306,6 +308,7 @@ class StaticBuffer {
   }
 
  private:
+  //! \private
   std::vector<T> buffer_;
 };
 
