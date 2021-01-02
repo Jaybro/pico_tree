@@ -529,7 +529,7 @@ class KdTree {
         Index const size,
         typename Sequence::MoveReturnType box_min,
         typename Sequence::MoveReturnType box_max) const {
-      Node* node = nodes_.MakeItem();
+      Node* node = nodes_.Allocate();
       //
       if (size <= max_leaf_size_) {
         node->data.leaf.begin_idx = offset;
