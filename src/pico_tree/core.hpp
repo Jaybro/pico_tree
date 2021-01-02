@@ -140,8 +140,8 @@ class Sequence {
   }
 
   //! \brief Fills the sequence with value \p v.
-  inline void Fill(std::size_t const s, Scalar const v) {
-    assert(s == static_cast<std::size_t>(Dim_));
+  inline void Fill(std::size_t const, Scalar const v) {
+    // The first argument is the size s. It should be the same as Dim.
     sequence_.fill(v);
   }
 
