@@ -34,8 +34,8 @@ inline void LongestAxisBox(
 template <typename Neighbor>
 class SearchNn {
  private:
-  using Index = typename Neighbor::Index;
-  using Scalar = typename Neighbor::Scalar;
+  using Index = typename Neighbor::IndexType;
+  using Scalar = typename Neighbor::ScalarType;
 
  public:
   //! \private
@@ -82,8 +82,8 @@ class SearchKnn {
 
   using Neighbor =
       typename std::iterator_traits<RandomAccessIterator>::value_type;
-  using Index = typename Neighbor::Index;
-  using Scalar = typename Neighbor::Scalar;
+  using Index = typename Neighbor::IndexType;
+  using Scalar = typename Neighbor::ScalarType;
 
  public:
   //! \private
@@ -116,8 +116,8 @@ class SearchKnn {
 template <typename Neighbor>
 class SearchRadius {
  private:
-  using Index = typename Neighbor::Index;
-  using Scalar = typename Neighbor::Scalar;
+  using Index = typename Neighbor::IndexType;
+  using Scalar = typename Neighbor::ScalarType;
 
  public:
   //! \private
@@ -168,8 +168,8 @@ class SearchAknn {
 
   using Neighbor =
       typename std::iterator_traits<RandomAccessIterator>::value_type;
-  using Index = typename Neighbor::Index;
-  using Scalar = typename Neighbor::Scalar;
+  using Index = typename Neighbor::IndexType;
+  using Scalar = typename Neighbor::ScalarType;
 
  public:
   //! \private
@@ -445,33 +445,29 @@ class SplitterSlidingMidpoint {
 //! \tparam Dim The spatial dimension of the tree. It can be set to
 //! pico_tree::kDynamicDim in case Dim is only known at run-time.
 template <
-    typename Index_,
-    typename Scalar_,
+    typename Index,
+    typename Scalar,
     int Dim_,
-    typename Points_,
-    typename Metric_ = MetricL2<Scalar_, Dim_>,
-    typename Splitter_ =
-        SplitterSlidingMidpoint<Index_, Scalar_, Dim_, Points_>>
+    typename Points,
+    typename Metric = MetricL2<Scalar, Dim_>,
+    typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dim_, Points>>
 class KdTree {
  public:
   //! \brief Index type.
-  using Index = Index_;
+  using IndexType = Index;
   //! \brief Scalar type.
-  using Scalar = Scalar_;
+  using ScalarType = Scalar;
   //! \brief KdTree dimension. It equals pico_tree::kDynamicDim in case Dim is
   //! only known at run-time.
   static constexpr int Dim = Dim_;
   //! \brief Point set or adaptor type.
-  using Points = Points_;
+  using PointsType = Points;
   //! \brief The metric used for various searches.
-  using Metric = Metric_;
+  using MetricType = Metric;
   //! \brief Neighbor type of various search resuls.
-  using Neighbor = struct Neighbor<Index, Scalar>;
+  using NeighborType = Neighbor<Index, Scalar>;
 
  private:
-  //! \private
-  using Splitter = Splitter_;
-
   //! \brief KdTree Node.
   struct Node {
     //! \brief Data is used to either store branch or leaf information. Which
@@ -631,8 +627,8 @@ class KdTree {
   //! \details Interpretation of the output distance depends on the Metric. The
   //! default MetricL2 results in a squared distance.
   template <typename P>
-  inline void SearchNn(P const& p, Neighbor* nn) const {
-    internal::SearchNn<Neighbor> v(nn);
+  inline void SearchNn(P const& p, NeighborType* nn) const {
+    internal::SearchNn<NeighborType> v(nn);
     SearchNearest(root_, p, &v);
   }
 
@@ -649,7 +645,7 @@ class KdTree {
     static_assert(
         std::is_same<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            Neighbor>::value,
+            NeighborType>::value,
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
@@ -663,7 +659,7 @@ class KdTree {
   //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
-      P const& p, Index const k, std::vector<Neighbor>* knn) const {
+      P const& p, Index const k, std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));
@@ -691,9 +687,9 @@ class KdTree {
   inline void SearchRadius(
       P const& p,
       Scalar const radius,
-      std::vector<Neighbor>* n,
+      std::vector<NeighborType>* n,
       bool const sort = false) const {
-    internal::SearchRadius<Neighbor> v(radius, n);
+    internal::SearchRadius<NeighborType> v(radius, n);
     SearchNearest(root_, p, &v);
 
     if (sort) {
@@ -743,7 +739,7 @@ class KdTree {
     static_assert(
         std::is_same<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            Neighbor>::value,
+            NeighborType>::value,
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
@@ -760,7 +756,7 @@ class KdTree {
       P const& p,
       Index const k,
       Scalar const e,
-      std::vector<Neighbor>* knn) const {
+      std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));

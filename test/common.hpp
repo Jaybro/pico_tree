@@ -27,11 +27,11 @@ void SearchKnn(
 template <typename Tree>
 void TestBox(
     Tree const& tree,
-    typename Tree::Scalar const min_v,
-    typename Tree::Scalar const max_v) {
-  using PointsX = typename Tree::Points;
-  using PointX = typename PointsX::Point;
-  using Index = typename PointsX::Index;
+    typename Tree::ScalarType const min_v,
+    typename Tree::ScalarType const max_v) {
+  using PointsX = typename Tree::PointsType;
+  using PointX = typename PointsX::PointType;
+  using Index = typename PointsX::IndexType;
 
   auto const& points = tree.points();
 
@@ -70,11 +70,11 @@ void TestBox(
 }
 
 template <typename Tree>
-void TestRadius(Tree const& tree, typename Tree::Scalar const radius) {
-  using PointsX = typename Tree::Points;
-  using PointX = typename PointsX::Point;
-  using Index = typename PointsX::Index;
-  using Scalar = typename PointsX::Scalar;
+void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
+  using PointsX = typename Tree::PointsType;
+  using PointX = typename PointsX::PointType;
+  using Index = typename PointsX::IndexType;
+  using Scalar = typename PointsX::ScalarType;
 
   auto const& points = tree.points();
 
@@ -107,11 +107,11 @@ void TestRadius(Tree const& tree, typename Tree::Scalar const radius) {
 }
 
 template <typename Tree>
-void TestKnn(Tree const& tree, typename Tree::Index const k) {
-  using PointsX = typename Tree::Points;
-  using PointX = typename PointsX::Point;
-  using Index = typename PointsX::Index;
-  using Scalar = typename PointsX::Scalar;
+void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
+  using PointsX = typename Tree::PointsType;
+  using PointX = typename PointsX::PointType;
+  using Index = typename PointsX::IndexType;
+  using Scalar = typename PointsX::ScalarType;
 
   auto const& points = tree.points();
 

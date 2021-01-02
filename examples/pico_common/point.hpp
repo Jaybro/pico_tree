@@ -12,10 +12,10 @@
 //! \endcode
 //! \tparam Scalar_ Coordinate value type.
 //! \tparam Dim_ The dimension of the space in which the point resides.
-template <typename Scalar_, int Dim_>
+template <typename Scalar, int Dim_>
 class Point {
  public:
-  using Scalar = Scalar_;
+  using ScalarType = Scalar;
   static constexpr int Dim = Dim_;
 
   inline Scalar const& operator()(int const i) const { return data[i]; }
@@ -63,10 +63,10 @@ inline Point GenerateRandomP(typename Point::Scalar size) {
 
 //! Generates \p n points in a square of size \p size .
 template <typename Point>
-std::vector<Point> GenerateRandomN(int n, typename Point::Scalar size) {
+std::vector<Point> GenerateRandomN(int n, typename Point::ScalarType size) {
   std::random_device rd;
   std::mt19937 e2(rd());
-  std::uniform_real_distribution<typename Point::Scalar> dist(0, size);
+  std::uniform_real_distribution<typename Point::ScalarType> dist(0, size);
 
   std::vector<Point> random(n);
   for (auto& p : random) {

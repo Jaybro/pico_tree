@@ -8,7 +8,6 @@
 #include <array>
 #include <cassert>
 #include <cmath>
-#include <deque>
 #include <fstream>
 #include <vector>
 
@@ -22,18 +21,17 @@ static constexpr int kDynamicDim = -1;
 
 //! \brief A Neighbor is a point reference with a corresponding distance to
 //! another point.
-template <typename Index_, typename Scalar_>
+template <typename Index, typename Scalar>
 struct Neighbor {
-  static_assert(std::is_integral<Index_>::value, "INDEX_NOT_AN_INTEGRAL_TYPE");
+  static_assert(std::is_integral<Index>::value, "INDEX_NOT_AN_INTEGRAL_TYPE");
   static_assert(
-      std::is_integral<Scalar_>::value ||
-          std::is_floating_point<Scalar_>::value,
+      std::is_integral<Scalar>::value || std::is_floating_point<Scalar>::value,
       "SCALAR_NOT_AN_INTEGRAL_OR_FLOATING_POINT_TYPE");
 
   //! \brief Index type.
-  using Index = Index_;
+  using IndexType = Index;
   //! \brief Distance type.
-  using Scalar = Scalar_;
+  using ScalarType = Scalar;
 
   //! \brief Default constructor.
   //! \details Declaring a custom constructor removes the default one. With

@@ -10,12 +10,12 @@
 //! inline int sdim() const;
 //! inline Index npts() const;
 //! \endcode
-template <typename Index_, typename Point_>
+template <typename Index, typename Point>
 class PicoAdaptor {
  public:
-  using Index = Index_;
-  using Point = Point_;
-  using Scalar = typename Point::Scalar;
+  using IndexType = Index;
+  using PointType = Point;
+  using ScalarType = typename Point::ScalarType;
   static constexpr int Dim = Point::Dim;
 
   explicit PicoAdaptor(std::vector<Point> const& points) : points_(points) {}

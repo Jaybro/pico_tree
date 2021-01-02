@@ -4,15 +4,15 @@
 
 template <typename PicoAdaptor>
 using KdTreeCt = pico_tree::KdTree<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
+    typename PicoAdaptor::IndexType,
+    typename PicoAdaptor::ScalarType,
     PicoAdaptor::Dim,
     PicoAdaptor>;
 
 template <typename PicoAdaptor>
 using KdTreeRt = pico_tree::KdTree<
-    typename PicoAdaptor::Index,
-    typename PicoAdaptor::Scalar,
+    typename PicoAdaptor::IndexType,
+    typename PicoAdaptor::ScalarType,
     pico_tree::kDynamicDim,
     PicoAdaptor>;
 
@@ -20,7 +20,7 @@ using KdTreeRt = pico_tree::KdTree<
 void Build() {
   using PointX = Point2f;
   using Index = int;
-  using Scalar = typename PointX::Scalar;
+  using Scalar = typename PointX::ScalarType;
   using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 
   Index max_leaf_size = 12;
@@ -45,8 +45,8 @@ void Build() {
 template <typename Neighbor>
 class SearchNnCounter {
  private:
-  using Index = typename Neighbor::Index;
-  using Scalar = typename Neighbor::Scalar;
+  using Index = typename Neighbor::IndexType;
+  using Scalar = typename Neighbor::ScalarType;
 
  public:
   //! \brief Creates a visitor for approximate nearest neighbor searching.
@@ -86,7 +86,7 @@ class SearchNnCounter {
 void Search() {
   using PointX = Point3f;
   using Index = int;
-  using Scalar = typename PointX::Scalar;
+  using Scalar = typename PointX::ScalarType;
   using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 
   Index run_count = 1024 * 1024;

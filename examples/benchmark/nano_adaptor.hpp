@@ -4,12 +4,15 @@
 #include <point.hpp>
 
 //! Demo point set adaptor for a vector of points.
-template <typename Index_, typename Point_>
+template <typename Index, typename Point>
 class NanoAdaptor {
+ private:
+  using Scalar = typename Point::ScalarType;
+
  public:
-  using Index = Index_;
-  using Point = Point_;
-  using Scalar = typename Point::Scalar;
+  using IndexType = Index;
+  using PointType = Point;
+  using ScalarType = typename Point::ScalarType;
   static constexpr int Dim = Point::Dim;
 
   NanoAdaptor(std::vector<Point> const& points) : points_(points) {}
