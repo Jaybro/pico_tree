@@ -24,7 +24,7 @@ runs:
       working-directory: ${{ inputs.path-cmake-lists }}
       run: echo "Running CMake for $(basename "`pwd`")"
 
-    - name: Build
+    - name: Configure
       shell: bash
       working-directory: ${{ inputs.path-cmake-lists }}
       # Visual Studio ignores -DCMAKE_BUILD_TYPE=$BUILD_TYPE and will use cmake --config $BUILD_TYPE
