@@ -1,0 +1,44 @@
+name: 'CMake'
+description: 'Runs various CMake commands depending on the inputs. Works with macos-latest, ubuntu-latest and windows-latest.'
+inputs:
+  path-cmake-lists:
+    description: 'Where to find the root CMakeLists.txt'
+    required: true
+    default: ''
+  cmake-build-type:
+    description: 'CMake build type. E.g.: Release.'
+    required: false
+    default: 'Release'
+  cmake-configure-flags:
+    description: 'CMake configure flags that can be set as -D<key>=<value>'
+    required: false
+    default: ''
+  cmake-install:
+    description: 'Install using CMake.'
+    required: false
+    default: false
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      working-directory: ${{ inputs.path-cmake-lists }}
+      run: echo "Running CMake for $(basename "`pwd`")"
+
+    - name: Build
+      shell: bash
+      working-directory: ${{ inputs.path-cmake-lists }}
+      # Visual Studio ignores -DCMAKE_BUILD_TYPE=$BUILD_TYPE and will use cmake --config $BUILD_TYPE
+      # Make like generators will do the opposite.
+      run: cmake . -DCMAKE_BUILD_TYPE=${{ inputs.cmake-build-type }} ${{ inputs.cmake-configure-flags }}
+    
+    - name: Build
+      working-directory: ${{ inputs.path-cmake-lists }}
+      shell: bash
+      run: cmake --build . --config ${{ inputs.cmake-build-type }}
+    
+    - name: Install
+      working-directory: ${{ inputs.path-cmake-lists }}
+      shell: bash
+      # macos-latest doesn't support ${var,,} for tolower
+      # Composite actions don't seem to support an if: ${{ <expression> }}, hence the bash based if.
+      run: if [[ $(echo "${{ inputs.cmake-install }}" | awk '{print tolower($0)}') = "true" ]]; then cmake --install . --config ${{ inputs.cmake-build-type }}; fi
