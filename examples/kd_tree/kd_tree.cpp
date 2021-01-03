@@ -27,6 +27,8 @@ void Build() {
   Index point_count = 1024 * 1024;
   Scalar area_size = 1000;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
+  // Because the adapter only contains a reference to the vector, we don't care
+  // that it gets copied twice by both trees below.
   PicoAdaptorX adaptor(random);
 
   {
@@ -94,7 +96,7 @@ void Search() {
   Index point_count = 1024 * 1024;
   Scalar area_size = 1000;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  // The tree can fully own the adaptor.
+  // The tree can fully own the adaptor!
   KdTreeCt<PicoAdaptorX> tree(PicoAdaptorX(random), max_leaf_size);
 
   Scalar min_v = 25.1f;

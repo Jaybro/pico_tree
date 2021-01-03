@@ -28,8 +28,21 @@ class PicoAdaptor {
   inline int sdim() const { return Dim; };
 
   //! \brief Returns the number of points.
-  inline Index npts() const { return static_cast<Index>(points_.size()); };
+  inline Index npts() const { return static_cast<Index>(points_.size()); }
 
  private:
+  //! \brief A reference to the actual point data.
+  //! \details Using a reference avoids unwanted copies but it doesn't allow the
+  //! KdTree to fully own everything. This means we always have to keep track of
+  //! at least 2 variables:
+  //!
+  //! * std::vector<> points;
+  //! * pico_tree::KdTree<> tree(PicoAdaptor<>(points), 10);
+  //!
+  //! We could allow the constructor of this class to std::move() the points
+  //! into the points_ member if we removed the const&. This would allow the
+  //! KdTree to fully own everything:
+  //!
+  //! * pico_tree::KdTree<> tree(PicoAdaptor<>(std::move(points)), 10);
   std::vector<Point> const& points_;
 };
