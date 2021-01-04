@@ -59,8 +59,4 @@ jobs:
         with:
           path-cmake-lists: ${{ runner.workspace }}/pico_tree
           cmake-configure-flags: -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE//'\'/'/'}/install
-
-      - name: Test PicoTree
-        working-directory: ${{runner.workspace}}/pico_tree
-        shell: bash
-        run: ctest -C $BUILD_TYPE
+          cmake-ctest: true

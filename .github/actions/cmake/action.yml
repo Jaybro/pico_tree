@@ -18,7 +18,11 @@ inputs:
     required: false
     default: ''
   cmake-install:
-    description: 'Install using CMake.'
+    description: 'Install the build.'
+    required: false
+    default: false
+  cmake-ctest:
+    description: 'CTest the build.'
     required: false
     default: false
 runs:
@@ -48,3 +52,8 @@ runs:
       # macos-latest doesn't support ${var,,} for tolower
       # Composite actions don't seem to support an if: ${{ <expression> }}, hence the bash based if.
       run: if [[ $(echo "${{ inputs.cmake-install }}" | awk '{print tolower($0)}') = "true" ]]; then cmake --install . --config ${{ inputs.cmake-build-type }}; fi
+
+    - name: CTest
+      working-directory: ${{ inputs.path-cmake-lists }}/${{ inputs.path-cmake-build }}
+      shell: bash
+      run: if [[ $(echo "${{ inputs.cmake-ctest }}" | awk '{print tolower($0)}') = "true" ]]; then ctest -C ${{ inputs.cmake-build-type }}; fi
