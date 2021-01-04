@@ -2,9 +2,13 @@ name: 'CMake'
 description: 'Runs various CMake commands depending on the inputs. Works with macos-latest, ubuntu-latest and windows-latest.'
 inputs:
   path-cmake-lists:
-    description: 'Where to find the root CMakeLists.txt'
+    description: 'Where to find the root CMakeLists.txt.'
     required: true
     default: ''
+  path-cmake-build:
+    description: 'Directory relative to path-cmake-lists in which to build the source.'
+    required: false
+    default: 'build'
   cmake-build-type:
     description: 'CMake build type. E.g.: Release.'
     required: false
@@ -22,22 +26,24 @@ runs:
   steps:
     - shell: bash
       working-directory: ${{ inputs.path-cmake-lists }}
-      run: echo "Running CMake for $(basename "`pwd`")"
+      run: |
+        echo "Running CMake for $(basename "`pwd`")"
+        cmake -E make_directory ./${{ inputs.path-cmake-build }}
 
     - name: Configure
       shell: bash
-      working-directory: ${{ inputs.path-cmake-lists }}
+      working-directory: ${{ inputs.path-cmake-lists }}/${{ inputs.path-cmake-build }}
       # Visual Studio ignores -DCMAKE_BUILD_TYPE=$BUILD_TYPE and will use cmake --config $BUILD_TYPE
       # Make like generators will do the opposite.
-      run: cmake . -DCMAKE_BUILD_TYPE=${{ inputs.cmake-build-type }} ${{ inputs.cmake-configure-flags }}
+      run: cmake ../ -DCMAKE_BUILD_TYPE=${{ inputs.cmake-build-type }} ${{ inputs.cmake-configure-flags }}
     
     - name: Build
-      working-directory: ${{ inputs.path-cmake-lists }}
+      working-directory: ${{ inputs.path-cmake-lists }}/${{ inputs.path-cmake-build }}
       shell: bash
-      run: cmake --build . --config ${{ inputs.cmake-build-type }}
+      run: cmake --build . --config ${{ inputs.cmake-build-type }} -j 4
     
     - name: Install
-      working-directory: ${{ inputs.path-cmake-lists }}
+      working-directory: ${{ inputs.path-cmake-lists }}/${{ inputs.path-cmake-build }}
       shell: bash
       # macos-latest doesn't support ${var,,} for tolower
       # Composite actions don't seem to support an if: ${{ <expression> }}, hence the bash based if.
