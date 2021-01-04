@@ -33,7 +33,7 @@ class EigenAdaptorBase<Index, Matrix, false> {
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline int sdim() const { return matrix_.rows(); }
+  inline int sdim() const { return static_cast<int>(matrix_.rows()); }
 
   //! \brief Returns the number of points.
   inline Index npts() const { return static_cast<Index>(matrix_.cols()); }
@@ -68,7 +68,7 @@ class EigenAdaptorBase<Index, Matrix, true> {
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline int sdim() const { return matrix_.cols(); }
+  inline int sdim() const { return static_cast<int>(matrix_.cols()); }
 
   //! \brief Returns the number of points.
   inline Index npts() const { return static_cast<Index>(matrix_.rows()); }
