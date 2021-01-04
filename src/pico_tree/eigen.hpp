@@ -129,8 +129,6 @@ class EigenMetricL1 {
   inline Scalar operator()(
       Eigen::MatrixBase<Derived0> const& p0,
       Eigen::MatrixBase<Derived1> const& p1) const {
-    static_assert(std::is_same<typename Derived0::Scalar, Scalar>::value);
-    static_assert(std::is_same<typename Derived1::Scalar, Scalar>::value);
     return (p0 - p1).cwiseAbs().sum();
   }
 
@@ -156,8 +154,6 @@ class EigenMetricL2 {
   inline Scalar operator()(
       Eigen::MatrixBase<Derived0> const& p0,
       Eigen::MatrixBase<Derived1> const& p1) const {
-    static_assert(std::is_same<typename Derived0::Scalar, Scalar>::value);
-    static_assert(std::is_same<typename Derived1::Scalar, Scalar>::value);
     return (p0 - p1).squaredNorm();
   }
 
