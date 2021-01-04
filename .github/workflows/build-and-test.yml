@@ -24,6 +24,13 @@ jobs:
           # For some reason in windows-latest we can only create directories within pico_tree/pico_tree.
           path: ${{ runner.workspace }}/pico_tree/googletest
 
+      - name: Clone Eigen
+        working-directory: ${{runner.workspace}}/pico_tree
+        shell: bash
+        run: |
+          git clone https://gitlab.com/libeigen/eigen.git && cd eigen
+          git checkout -b 3.3.9 tags/3.3.9
+
       - name: Create Build Environment
         shell: bash
         # Within the Windows environment the GITHUB_WORKSPACE variable uses a \ as a separator. MinGW cmake cannot handle this.
@@ -38,6 +45,13 @@ jobs:
           #    https://github.com/google/googletest/tree/release-1.8.1/googletest#visual-studio-dynamic-vs-static-runtimes
           # 2) The installation directory is customized so PicoTree knows where to find it later.
           cmake-configure-flags: -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE//'\'/'/'}/install -Dgtest_force_shared_crt=ON
+          cmake-install: true
+
+      - name: CMake Eigen
+        uses: ./.github/actions/cmake
+        with:
+          path-cmake-lists: ${{ runner.workspace }}/pico_tree/eigen
+          cmake-configure-flags: -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE//'\'/'/'}/install
           cmake-install: true
 
       - name: CMake PicoTree
