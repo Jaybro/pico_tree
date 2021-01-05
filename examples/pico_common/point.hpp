@@ -47,20 +47,6 @@ using Point1d = Point<double, 1>;
 using Point2d = Point<double, 2>;
 using Point3d = Point<double, 3>;
 
-template <typename Point>
-inline Point GenerateRandomP(typename Point::Scalar size) {
-  std::random_device rd;
-  std::mt19937 e2(rd());
-  std::uniform_real_distribution<typename Point::Scalar> dist(0, size);
-
-  Point p;
-  for (int i = 0; i < Point::Dim; ++i) {
-    p(i) = dist(e2);
-  }
-
-  return p;
-}
-
 //! Generates \p n points in a square of size \p size .
 template <typename Point>
 std::vector<Point> GenerateRandomN(int n, typename Point::ScalarType size) {
