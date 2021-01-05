@@ -21,8 +21,8 @@ class EigenAdaptorBase<Index, Matrix, false> {
   //! of dynamic size.
   //! \details To prevent an unwanted (deep) copy:
   //! \li Move the matrix inside the adaptor.
-  //! \li Copy or move an Eigen::Map. Note that an Eigen::Map can be used as a
-  //! proxy for a matrix.
+  //! \li Copy or move an Eigen::Map. An Eigen::Map can be used as a proxy for a
+  //! matrix.
   inline EigenAdaptorBase(Matrix matrix) : matrix_(std::move(matrix)) {}
 
   //! \brief Returns the point at index \p idx.
@@ -56,8 +56,8 @@ class EigenAdaptorBase<Index, Matrix, true> {
   //! of dynamic size.
   //! \details To prevent an unwanted (deep) copy:
   //! \li Move the matrix inside the adaptor.
-  //! \li Copy or move an Eigen::Map. Note that an Eigen::Map can be used as a
-  //! proxy for a matrix.
+  //! \li Copy or move an Eigen::Map. An Eigen::Map can be used as a proxy for a
+  //! matrix.
   inline EigenAdaptorBase(Matrix matrix) : matrix_(std::move(matrix)) {}
 
   //! \brief Returns the point at index \p idx.
@@ -80,20 +80,26 @@ class EigenAdaptorBase<Index, Matrix, true> {
 
 }  // namespace internal
 
-//! Adapts Eigen matrices so they can be used with any of the pico trees.
+//! \brief The EigenAdaptor contains or wraps Eigen matrices so they can be used
+//! with any of the pico trees. It supports dynamic matrices and maps of dynamic
+//! matrices. It does not support fixed size matrices or maps of those.
+//! \details Fixed size matrices are mostly useful when they are small. See
+//! section "Fixed vs. Dynamic size" of the following link:
+//! https://eigen.tuxfamily.org/dox/group__TutorialMatrixClass.html . Special
+//! care needs to be taken to work with fixed size matrices as well, adding to
+//! the complexity of this class with little in return. This results in the
+//! choice to not support them through this adaptor.
+//! <p/>
+//! Special care:
+//! * Aligned members of fixed size cannot be copied or moved (a move is a
+//! copy). https://eigen.tuxfamily.org/dox/group__TopicPassingByValue.html
+//! * They may need to be aligned in memory. As members are aligned with respect
+//! to the containing class the EigenAdaptor would need to be aligned as well.
+//! https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
 template <typename Index, typename Matrix>
 class EigenAdaptor
     : public internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor> {
  public:
-  // Fixed size Eigen members may need to be aligned in memory:
-  // 1) As members are aligned with respect to the containing class the
-  // EigenAdaptor would need to be aligned as well.
-  // 2) Aligned members cannot be copied or moved (could be misaligned again
-  // after a copy). This requires the interface to work quite differently for
-  // fixed size matrices as compared to dynamic ones.
-  // Combined with the idea that fixed size matrices are mostly useful when they
-  // are small it is also not really worth it to support those through the
-  // adaptor.
   static_assert(
       Matrix::RowsAtCompileTime == Eigen::Dynamic ||
           Matrix::ColsAtCompileTime == Eigen::Dynamic,
