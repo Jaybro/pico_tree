@@ -2,20 +2,6 @@
 #include <pico_tree/kd_tree.hpp>
 #include <scoped_timer.hpp>
 
-template <typename PicoAdaptor>
-using KdTreeCt = pico_tree::KdTree<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    PicoAdaptor::Dim,
-    PicoAdaptor>;
-
-template <typename PicoAdaptor>
-using KdTreeRt = pico_tree::KdTree<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    pico_tree::kDynamicDim,
-    PicoAdaptor>;
-
 // Compile time or run time known dimensions.
 void Build() {
   using PointX = Point2f;
@@ -33,12 +19,16 @@ void Build() {
 
   {
     ScopedTimer t("build kd_tree ct");
-    KdTreeCt<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    constexpr int Dim = PointX::Dim;
+    pico_tree::KdTree<Index, Scalar, Dim, PicoAdaptorX> tree(
+        adaptor, max_leaf_size);
   }
 
   {
     ScopedTimer t("build kd_tree rt");
-    KdTreeRt<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    constexpr int Dim = pico_tree::kDynamicDim;
+    pico_tree::KdTree<Index, Scalar, Dim, PicoAdaptorX> tree(
+        adaptor, max_leaf_size);
   }
 }
 
@@ -89,6 +79,7 @@ void Search() {
   using PointX = Point3f;
   using Index = int;
   using Scalar = typename PointX::ScalarType;
+  constexpr int Dim = PointX::Dim;
   using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 
   Index run_count = 1024 * 1024;
@@ -97,7 +88,8 @@ void Search() {
   Scalar area_size = 1000;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
   // The tree can fully own the adaptor!
-  KdTreeCt<PicoAdaptorX> tree(PicoAdaptorX(random), max_leaf_size);
+  pico_tree::KdTree<Index, Scalar, Dim, PicoAdaptorX> tree(
+      PicoAdaptorX(random), max_leaf_size);
 
   Scalar min_v = 25.1f;
   Scalar max_v = 37.9f;
