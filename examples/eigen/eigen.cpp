@@ -13,12 +13,6 @@
 // the "elapsed time" numbers too seriously.
 
 using Index = int;
-// Certain fixed size matrices require us to use aligned memory.
-// https://eigen.tuxfamily.org/dox-devel/group__TopicFixedSizeVectorizable.html
-using PointCm = Eigen::Vector3f;
-using PointRm = Eigen::RowVector3f;
-// Eigen::Vector4f requires aligned memory.
-using Point4f = Eigen::Vector4f;
 
 template <typename Point>
 using PointsMapCm = Eigen::Map<
@@ -50,6 +44,8 @@ int const kNumPoints = 1024 * 1024 * 2;
 double const kArea = 1000.0;
 Index const kMaxLeafCount = 16;
 
+// Certain fixed size matrices require us to use aligned memory.
+// https://eigen.tuxfamily.org/dox-devel/group__TopicFixedSizeVectorizable.html
 template <typename Point>
 std::vector<Point, Eigen::aligned_allocator<Point>> GenerateRandomEigenN(
     int n, typename Point::Scalar size) {
@@ -61,8 +57,10 @@ std::vector<Point, Eigen::aligned_allocator<Point>> GenerateRandomEigenN(
   return random;
 }
 
-void ColMajor() {
-  using Point = PointCm;
+// Creates a KdTree from a col-major matrix. The matrix maps an
+// std::vector<Eigen::Vector3f>.
+void VectorMapColMajor() {
+  using Point = Eigen::Vector3f;
   using Scalar = typename Point::Scalar;
   constexpr int Dim = Point::RowsAtCompileTime;
   using PointsMap = PointsMapCm<Point>;
@@ -79,15 +77,17 @@ void ColMajor() {
         kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
-    ScopedTimer t("tree nn_ pico_tree deflt l2", kRunCount);
+    ScopedTimer t("pico_tree deflt l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
       tree.SearchKnn(p, 1, &knn);
     }
   }
 }
 
-void RowMajor() {
-  using Point = PointRm;
+// Creates a KdTree from a row-major matrix. The matrix maps an
+// std::vector<Eigen::RowVector3f>.
+void VectorMapRowMajor() {
+  using Point = Eigen::RowVector3f;
   using Scalar = typename Point::Scalar;
   constexpr int Dim = Point::ColsAtCompileTime;
   using PointsMap = PointsMapRm<Point>;
@@ -104,7 +104,7 @@ void RowMajor() {
         kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
-    ScopedTimer t("tree nn_ pico_tree deflt l2", kRunCount);
+    ScopedTimer t("pico_tree deflt l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
       tree.SearchKnn(p, 1, &knn);
     }
@@ -131,7 +131,8 @@ void RowMajor() {
 // See also:
 // http://eigen.tuxfamily.org/index.php?title=UsingVector4fForVector3fOperations
 void Metrics() {
-  using Point = Point4f;
+  // Eigen::Vector4f requires aligned memory.
+  using Point = Eigen::Vector4f;
   using Scalar = typename Point::Scalar;
   // Tell the KdTree to use a spatial dimension of 3 instead of 4.
   constexpr int Dim = Point::RowsAtCompileTime - 1;
@@ -161,7 +162,7 @@ void Metrics() {
         tree(adaptor, kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
-    ScopedTimer t("tree nn_ pico_tree eigen l2", kRunCount);
+    ScopedTimer t("pico_tree eigen l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
       tree.SearchKnn(p, 1, &knn);
     }
@@ -177,16 +178,45 @@ void Metrics() {
         tree(adaptor, kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
-    ScopedTimer t("tree nn_ pico_tree eigen l1", kRunCount);
+    ScopedTimer t("pico_tree eigen l1", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
       tree.SearchKnn(p, 1, &knn);
     }
   }
 }
 
+// Creates a KdTree from an Eigen::Matrix<> and searches for nearest neighbors.
+void BasicMatrix() {
+  using Point = Eigen::Vector3f;
+  using Scalar = typename Eigen::Matrix3Xf::Scalar;
+  constexpr int Dim = Eigen::Matrix3Xf::RowsAtCompileTime;
+
+  // The KdTree can fully own the point set:
+  // * The matrix gets moved into the adaptor.
+  // * The adaptor gets moved into the kd-tree.
+  pico_tree::KdTree<
+      Index,
+      Scalar,
+      Dim,
+      pico_tree::EigenAdaptor<Index, Eigen::Matrix3Xf>>
+      tree(
+          pico_tree::EigenAdaptor<Index, Eigen::Matrix3Xf>(
+              Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0)),
+          kMaxLeafCount);
+
+  Point p = Point::Random() * kArea / Scalar(2.0);
+
+  pico_tree::Neighbor<Index, Scalar> nn;
+  ScopedTimer t("pico_tree eigen matrix", kRunCount);
+  for (std::size_t i = 0; i < kRunCount; ++i) {
+    tree.SearchNn(p, &nn);
+  }
+}
+
 int main() {
-  RowMajor();
-  ColMajor();
+  VectorMapColMajor();
+  VectorMapRowMajor();
   Metrics();
+  BasicMatrix();
   return 0;
 }
