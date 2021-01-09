@@ -24,7 +24,7 @@ if(Eigen3_FOUND)
     message(STATUS "Eigen3 found. Building Eigen unit tests.")
     set(TEST_TARGET_SOURCES
         ${TEST_TARGET_SOURCES}
-        ${CMAKE_CURRENT_LIST_DIR}/eigen.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/eigen_test.cpp
     )
 else()
     message(STATUS "Eigen3 not found. Eigen unit tests skipped.")
