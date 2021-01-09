@@ -45,3 +45,86 @@ TEST(EigenTest, MetricL2) {
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f), 9.61f);
 }
+
+template <typename ColMatrix, typename RowMatrix>
+void CheckEigenAdaptorInterface() {
+  static_assert(
+      !pico_tree::EigenAdaptor<Index, ColMatrix>::RowMajor,
+      "ADAPTOR_NOT_COL_MAJOR");
+  static_assert(
+      pico_tree::EigenAdaptor<Index, RowMatrix>::RowMajor,
+      "ADAPTOR_NOT_ROW_MAJOR");
+
+  static_assert(
+      pico_tree::EigenAdaptor<Index, ColMatrix>::Dim ==
+          ColMatrix::RowsAtCompileTime,
+      "ADAPTOR_DIM_NOT_EQUAL_TO_MATRIX_ROWSATCOMPILETIME");
+
+  static_assert(
+      pico_tree::EigenAdaptor<Index, RowMatrix>::Dim ==
+          ColMatrix::ColsAtCompileTime,
+      "ADAPTOR_DIM_NOT_EQUAL_TO_MATRIX_COLSATCOMPILETIME");
+
+  ColMatrix col_matrix = ColMatrix::Random(4, 8);
+  RowMatrix row_matrix = RowMatrix::Random(8, 4);
+
+  // Copies of the matrices.
+  pico_tree::EigenAdaptor<Index, ColMatrix> col_adaptor(col_matrix);
+  pico_tree::EigenAdaptor<Index, RowMatrix> row_adaptor(row_matrix);
+
+  EXPECT_EQ(col_matrix.rows(), col_adaptor.sdim());
+  EXPECT_EQ(col_matrix.cols(), col_adaptor.npts());
+  EXPECT_EQ(row_matrix.cols(), row_adaptor.sdim());
+  EXPECT_EQ(row_matrix.rows(), row_adaptor.npts());
+
+  EXPECT_TRUE(col_adaptor(0).isApprox(col_matrix.col(0)));
+  EXPECT_TRUE(col_adaptor(col_adaptor.npts() - 1)
+                  .isApprox(col_matrix.col(col_matrix.cols() - 1)));
+  EXPECT_TRUE(row_adaptor(0).isApprox(row_matrix.row(0)));
+  EXPECT_TRUE(row_adaptor(row_adaptor.npts() - 1)
+                  .isApprox(row_matrix.row(row_matrix.rows() - 1)));
+}
+
+TEST(EigenTest, Interface) {
+  // Spatial dimension known.
+  CheckEigenAdaptorInterface<
+      Eigen::Matrix<float, 4, Eigen::Dynamic, Eigen::ColMajor>,
+      Eigen::Matrix<float, 4, Eigen::Dynamic, Eigen::RowMajor>>();
+  // Spatial dimension dynamic.
+  CheckEigenAdaptorInterface<
+      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>,
+      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>();
+}
+
+TEST(EigenTest, ValueMove) {
+  using ColMatrix = Eigen::Matrix<float, 4, Eigen::Dynamic, Eigen::ColMajor>;
+  using RowMatrix = Eigen::Matrix<float, 4, Eigen::Dynamic, Eigen::RowMajor>;
+
+  ColMatrix col_matrix = ColMatrix::Random(4, 8);
+  RowMatrix row_matrix = RowMatrix::Random(8, 4);
+
+  {
+    // Copies of the matrices.
+    pico_tree::EigenAdaptor<Index, ColMatrix> col_adaptor(col_matrix);
+    pico_tree::EigenAdaptor<Index, RowMatrix> row_adaptor(row_matrix);
+
+    // Proof of copy.
+    EXPECT_NE(col_adaptor.matrix().data(), col_matrix.data());
+    EXPECT_NE(row_adaptor.matrix().data(), row_matrix.data());
+  }
+
+  {
+    // The move implementation sets the pointers to nullptr;
+    auto col_data = col_matrix.data();
+    auto row_data = row_matrix.data();
+
+    pico_tree::EigenAdaptor<Index, ColMatrix> col_adaptor(
+        std::move(col_matrix));
+    pico_tree::EigenAdaptor<Index, RowMatrix> row_adaptor(
+        std::move(row_matrix));
+
+    // Proof of move.
+    EXPECT_EQ(col_adaptor.matrix().data(), col_data);
+    EXPECT_EQ(row_adaptor.matrix().data(), row_data);
+  }
+}
