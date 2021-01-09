@@ -7,6 +7,10 @@ add_executable(${TEST_TARGET_NAME})
 set_target_properties(${TEST_TARGET_NAME}
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+# The library should be compliant with the C++11 standard.
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
 )
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
