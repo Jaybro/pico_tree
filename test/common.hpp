@@ -102,6 +102,18 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
   EXPECT_EQ(count, results.size());
 }
 
+inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
+
+inline void FloatEq(double val1, double val2) { EXPECT_DOUBLE_EQ(val1, val2); }
+
+inline void FloatLe(float val1, float val2) {
+  EXPECT_PRED_FORMAT2(testing::FloatLE, val1, val2);
+}
+
+inline void FloatLe(double val1, double val2) {
+  EXPECT_PRED_FORMAT2(testing::DoubleLE, val1, val2);
+}
+
 template <typename Tree>
 void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
   using PointsX = typename Tree::PointsType;
@@ -126,23 +138,11 @@ void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
 
   ASSERT_EQ(compare.size(), results_exact.size());
   for (std::size_t i = 0; i < compare.size(); ++i) {
-    if (std::is_same<Scalar, float>::value) {
-      // Index is not tested in case it happens points have an equal distance.
-      // TODO Would be nicer to test indices too.
-      EXPECT_FLOAT_EQ(results_exact[i].distance, compare[i].distance);
-
-      // Because results_apprx[i] is already scaled: approx = approx / ratio,
-      // the check below is the same as: approx <= exact * ratio
-      EXPECT_PRED_FORMAT2(
-          testing::FloatLE,
-          results_apprx[i].distance,
-          results_exact[i].distance);
-    } else {
-      EXPECT_DOUBLE_EQ(results_exact[i].distance, compare[i].distance);
-      EXPECT_PRED_FORMAT2(
-          testing::DoubleLE,
-          results_apprx[i].distance,
-          results_exact[i].distance);
-    }
+    // Index is not tested in case it happens points have an equal distance.
+    // TODO Would be nicer to test indices too.
+    FloatEq(results_exact[i].distance, compare[i].distance);
+    // Because results_apprx[i] is already scaled: approx = approx / ratio,
+    // the check below is the same as: approx <= exact * ratio
+    FloatLe(results_apprx[i].distance, results_exact[i].distance);
   }
 }
