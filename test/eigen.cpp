@@ -20,12 +20,11 @@ TEST(EigenTest, MetricL1) {
   using PointX = Eigen::Vector2f;
   using Scalar = typename PointX::Scalar;
   using AdaptorX = EigenAdaptor<PointX>;
-  constexpr auto Dim = PointX::RowsAtCompileTime;
   std::vector<PointX, Eigen::aligned_allocator<PointX>> points{{2.0f, 4.0f}};
   AdaptorX adaptor(EigenMap<PointX>(points.data()->data(), 2, 1));
   PointX p{10.0f, 1.0f};
 
-  pico_tree::MetricL1<Scalar, Dim> metric(adaptor.sdim());
+  pico_tree::EigenMetricL1<Scalar> metric(adaptor.sdim());
 
   EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 11.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 12.0f);
@@ -36,12 +35,11 @@ TEST(EigenTest, MetricL2) {
   using PointX = Eigen::Vector2f;
   using Scalar = typename PointX::Scalar;
   using AdaptorX = EigenAdaptor<PointX>;
-  constexpr auto Dim = PointX::RowsAtCompileTime;
   std::vector<PointX, Eigen::aligned_allocator<PointX>> points{{2.0f, 4.0f}};
   AdaptorX adaptor(EigenMap<PointX>(points.data()->data(), 2, 1));
   PointX p{10.0f, 1.0f};
 
-  pico_tree::MetricL2<Scalar, Dim> metric(adaptor.sdim());
+  pico_tree::EigenMetricL2<Scalar> metric(adaptor.sdim());
 
   EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 73.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);
