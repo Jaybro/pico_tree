@@ -1,5 +1,7 @@
 include(GoogleTest)
 
+find_package(Eigen3 QUIET)
+
 set(TEST_TARGET_NAME ${PROJECT_NAME}_test)
 add_executable(${TEST_TARGET_NAME})
 set_target_properties(${TEST_TARGET_NAME}
@@ -7,12 +9,31 @@ set_target_properties(${TEST_TARGET_NAME}
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 include_directories(${CMAKE_CURRENT_LIST_DIR})
-target_sources(${TEST_TARGET_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/common.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/kd_tree_test.cpp
+
+set(TEST_TARGET_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/kd_tree_test.cpp
 )
-target_link_libraries(${TEST_TARGET_NAME} ${PROJECT_NAME} pico_common GTest::GTest GTest::Main)
+
+# gtest_add_tests fails on generator expressions like:
+#$<$<TARGET_EXISTS:Eigen3::Eigen>:${CMAKE_CURRENT_LIST_DIR}/eigen.cpp>
+if(Eigen3_FOUND)
+    message(STATUS "Eigen3 found. Building Eigen unit tests.")
+    set(TEST_TARGET_SOURCES
+        ${TEST_TARGET_SOURCES}
+        ${CMAKE_CURRENT_LIST_DIR}/eigen.cpp
+    )
+else()
+    message(STATUS "Eigen3 not found. Eigen unit tests skipped.")
+endif()
+
+target_sources(${TEST_TARGET_NAME} PRIVATE ${TEST_TARGET_SOURCES})
+target_link_libraries(${TEST_TARGET_NAME}
+    ${PROJECT_NAME}
+    pico_common
+    GTest::GTest
+    GTest::Main
+    $<$<TARGET_EXISTS:Eigen3::Eigen>:Eigen3::Eigen>
+)
 
 gtest_add_tests(
     TARGET ${TEST_TARGET_NAME}
