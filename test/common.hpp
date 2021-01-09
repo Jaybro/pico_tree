@@ -114,7 +114,7 @@ void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
   // Because the point type can come from the EigenAdaptor, we use auto. It is
   // somewhat dangerous to use auto with Eigen types, but here we don't care.
   auto p = points(idx);
-  Scalar ratio = tree.metric()(1.5);
+  Scalar ratio = tree.metric()(Scalar(1.5));
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_exact;
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_apprx;
@@ -126,13 +126,23 @@ void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
 
   ASSERT_EQ(compare.size(), results_exact.size());
   for (std::size_t i = 0; i < compare.size(); ++i) {
-    // Index is not tested in case it happens points have an equal distance.
-    // TODO Would be nicer to test indices too.
-    EXPECT_FLOAT_EQ(results_exact[i].distance, compare[i].distance);
+    if (std::is_same<Scalar, float>::value) {
+      // Index is not tested in case it happens points have an equal distance.
+      // TODO Would be nicer to test indices too.
+      EXPECT_FLOAT_EQ(results_exact[i].distance, compare[i].distance);
 
-    // Because results_apprx[i] is already scaled: approx = approx / ratio, the
-    // check below is the same as: approx <= exact * ratio
-    EXPECT_PRED_FORMAT2(
-        testing::FloatLE, results_apprx[i].distance, results_exact[i].distance);
+      // Because results_apprx[i] is already scaled: approx = approx / ratio,
+      // the check below is the same as: approx <= exact * ratio
+      EXPECT_PRED_FORMAT2(
+          testing::FloatLE,
+          results_apprx[i].distance,
+          results_exact[i].distance);
+    } else {
+      EXPECT_DOUBLE_EQ(results_exact[i].distance, compare[i].distance);
+      EXPECT_PRED_FORMAT2(
+          testing::DoubleLE,
+          results_apprx[i].distance,
+          results_exact[i].distance);
+    }
   }
 }

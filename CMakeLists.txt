@@ -30,8 +30,8 @@ endif()
 
 find_package(GTest QUIET)
 if(GTEST_FOUND)
-    message(STATUS "GTest found. Unit test build: ${BUILD_TESTING}.")
     include(CTest)
+    message(STATUS "GTest found. Unit test build: ${BUILD_TESTING}.")
     if(BUILD_TESTING)
         # Tests are dependent on some common code.
         if(NOT TARGET pico_common)
