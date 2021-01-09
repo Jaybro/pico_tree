@@ -21,7 +21,7 @@ TEST(EigenTest, MetricL1) {
   using Scalar = typename PointX::Scalar;
   using AdaptorX = EigenAdaptor<PointX>;
   constexpr auto Dim = PointX::RowsAtCompileTime;
-  std::vector<PointX> points{{2.0f, 4.0f}};
+  std::vector<PointX, Eigen::aligned_allocator<PointX>> points{{2.0f, 4.0f}};
   AdaptorX adaptor(EigenMap<PointX>(points.data()->data(), 2, 1));
   PointX p{10.0f, 1.0f};
 
@@ -37,7 +37,7 @@ TEST(EigenTest, MetricL2) {
   using Scalar = typename PointX::Scalar;
   using AdaptorX = EigenAdaptor<PointX>;
   constexpr auto Dim = PointX::RowsAtCompileTime;
-  std::vector<PointX> points{{2.0f, 4.0f}};
+  std::vector<PointX, Eigen::aligned_allocator<PointX>> points{{2.0f, 4.0f}};
   AdaptorX adaptor(EigenMap<PointX>(points.data()->data(), 2, 1));
   PointX p{10.0f, 1.0f};
 
