@@ -3,6 +3,8 @@
 #include <pico_tree/eigen.hpp>
 #include <pico_tree/kd_tree.hpp>
 
+#include "common.hpp"
+
 using Index = int;
 
 template <typename Point>
@@ -127,4 +129,19 @@ TEST(EigenTest, ValueMove) {
     EXPECT_EQ(col_adaptor.matrix().data(), col_data);
     EXPECT_EQ(row_adaptor.matrix().data(), row_data);
   }
+}
+
+TEST(EigenTest, TreeCompatibility) {
+  using Adaptor = pico_tree::EigenAdaptor<Index, Eigen::Matrix4Xd>;
+  static_assert(
+      std::is_same<Index, typename Adaptor::IndexType>::value,
+      "ADAPTOR_INDEX_TYPE_INCORRECT");
+  using Scalar = typename Adaptor::ScalarType;
+  constexpr int Dim = Adaptor::Dim;
+
+  Adaptor adaptor(Eigen::Matrix4Xd::Random(4, 8));
+  // Testing of adaptor move compiles.
+  pico_tree::KdTree<Index, Scalar, Dim, Adaptor> tree(std::move(adaptor), 10);
+
+  TestKnn(tree, 2);
 }

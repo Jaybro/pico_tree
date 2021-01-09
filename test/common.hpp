@@ -105,14 +105,15 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
 template <typename Tree>
 void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
   using PointsX = typename Tree::PointsType;
-  using PointX = typename PointsX::PointType;
   using Index = typename PointsX::IndexType;
   using Scalar = typename PointsX::ScalarType;
 
   auto const& points = tree.points();
 
   Index idx = tree.points().npts() / 2;
-  PointX p = points(idx);
+  // Because the point type can come from the EigenAdaptor, we use auto. It is
+  // somewhat dangerous to use auto with Eigen types, but here we don't care.
+  auto p = points(idx);
   Scalar ratio = tree.metric()(1.5);
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_exact;
