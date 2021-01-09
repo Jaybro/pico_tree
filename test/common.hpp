@@ -102,18 +102,31 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
   EXPECT_EQ(count, results.size());
 }
 
+inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
+
+inline void FloatEq(double val1, double val2) { EXPECT_DOUBLE_EQ(val1, val2); }
+
+inline void FloatLe(float val1, float val2) {
+  EXPECT_PRED_FORMAT2(testing::FloatLE, val1, val2);
+}
+
+inline void FloatLe(double val1, double val2) {
+  EXPECT_PRED_FORMAT2(testing::DoubleLE, val1, val2);
+}
+
 template <typename Tree>
 void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
   using PointsX = typename Tree::PointsType;
-  using PointX = typename PointsX::PointType;
   using Index = typename PointsX::IndexType;
   using Scalar = typename PointsX::ScalarType;
 
   auto const& points = tree.points();
 
   Index idx = tree.points().npts() / 2;
-  PointX p = points(idx);
-  Scalar ratio = tree.metric()(1.5);
+  // Because the point type can come from the EigenAdaptor, we use auto. It is
+  // somewhat dangerous to use auto with Eigen types, but here we don't care.
+  auto p = points(idx);
+  Scalar ratio = tree.metric()(Scalar(1.5));
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_exact;
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_apprx;
@@ -127,11 +140,9 @@ void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
   for (std::size_t i = 0; i < compare.size(); ++i) {
     // Index is not tested in case it happens points have an equal distance.
     // TODO Would be nicer to test indices too.
-    EXPECT_FLOAT_EQ(results_exact[i].distance, compare[i].distance);
-
-    // Because results_apprx[i] is already scaled: approx = approx / ratio, the
-    // check below is the same as: approx <= exact * ratio
-    EXPECT_PRED_FORMAT2(
-        testing::FloatLE, results_apprx[i].distance, results_exact[i].distance);
+    FloatEq(results_exact[i].distance, compare[i].distance);
+    // Because results_apprx[i] is already scaled: approx = approx / ratio,
+    // the check below is the same as: approx <= exact * ratio
+    FloatLe(results_apprx[i].distance, results_exact[i].distance);
   }
 }

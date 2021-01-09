@@ -1,4 +1,3 @@
-#include <Eigen/Dense>
 // This example compiles with C++11.
 // C++11 and higher don't need the StdVector include (as mentioned inside the
 // include itself).

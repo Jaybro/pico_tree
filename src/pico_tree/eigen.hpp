@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Eigen/Core>
+
 namespace pico_tree {
 
 namespace internal {
