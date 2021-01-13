@@ -17,11 +17,7 @@ endif()
 ################################################################################
 
 set(PROJECT_PACKAGE_NAME "PicoTree")
-set(PROJECT_SOURCE_RELATIVE "src")
-set(PROJECT_SOURCE_ABSOLUTE
-    "${CMAKE_CURRENT_LIST_DIR}/${PROJECT_SOURCE_RELATIVE}")
-
-add_subdirectory(${PROJECT_SOURCE_RELATIVE})
+add_subdirectory(src/pico_tree)
 
 option(BUILD_EXAMPLES "Enable the creation of PicoTree examples." ON)
 if(BUILD_EXAMPLES)
@@ -55,7 +51,7 @@ if(BUILD_DOCUMENTATION)
 
     doxygen_add_docs(
         ${DOC_TARGET_NAME}
-        ${PROJECT_SOURCE_ABSOLUTE})
+        src/pico_tree)
 
     message(STATUS "Doxygen found. Documentation can be build as: make ${DOC_TARGET_NAME}")
 else()
