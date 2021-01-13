@@ -17,7 +17,7 @@ endif()
 ################################################################################
 
 set(PROJECT_PACKAGE_NAME "PicoTree")
-add_subdirectory(src/pico_tree)
+add_subdirectory(src)
 
 option(BUILD_EXAMPLES "Enable the creation of PicoTree examples." ON)
 if(BUILD_EXAMPLES)
