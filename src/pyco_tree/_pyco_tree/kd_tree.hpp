@@ -5,6 +5,7 @@
 #include <pico_tree/kd_tree.hpp>
 #include <thread>
 
+#include "darray.hpp"
 #include "pyco_adaptor.hpp"
 
 namespace py = pybind11;
@@ -91,23 +92,25 @@ class KdTree : public pico_tree::KdTree<
   void SearchRadius(
       py::array_t<Scalar, 0> const pts,
       Scalar const radius,
-      std::vector<std::vector<NeighborType>>* nns,
+      DArray* nns,
       bool const sort) const {
     PycoAdaptor<Index, Scalar, Dim> query(pts);
-    nns->resize(query.npts());
+
+    auto& nns_data = nns->data<NeighborType>();
+    nns_data.resize(query.npts());
 
 #pragma omp parallel for schedule(static, kChunkSize)
     // TODO Reduce the vector resize overhead
     for (Index i = 0; i < query.npts(); ++i) {
-      SearchRadius(query(i), radius, &(*nns)[i], sort);
+      SearchRadius(query(i), radius, &nns_data[i], sort);
     }
   }
 
-  std::vector<std::vector<NeighborType>> SearchRadius(
+  DArray SearchRadius(
       py::array_t<Scalar, 0> const pts,
       Scalar const radius,
       bool const sort) const {
-    std::vector<std::vector<NeighborType>> nns;
+    DArray nns = DArray(std::vector<std::vector<NeighborType>>());
     SearchRadius(pts, radius, &nns, sort);
     return nns;
   }

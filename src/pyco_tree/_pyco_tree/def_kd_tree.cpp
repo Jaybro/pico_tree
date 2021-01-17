@@ -1,5 +1,6 @@
 #include "def_kd_tree.hpp"
 
+#include "darray.hpp"
 #include "def_core.hpp"
 #include "kd_tree.hpp"
 
@@ -32,7 +33,7 @@ void DefKdTree(std::string const& name, py::module* m) {
   using Points = typename KdTree::PointsType;
   using Metric = typename KdTree::MetricType;
   using Neighbor = typename KdTree::NeighborType;
-  using Neighborhoods = std::vector<std::vector<Neighbor>>;
+  using Neighborhoods = DArray;
 
   py::class_<KdTree>(*m, name.c_str(), py::buffer_protocol())
       .def(

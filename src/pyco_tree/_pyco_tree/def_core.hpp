@@ -1,9 +1,7 @@
 #pragma once
 
-#include <pybind11/pybind11.h>
-
+// For MetricLx. Changes in the future.
 #include <pico_tree/kd_tree.hpp>
-#include <vector>
 
 #include "pyco_adaptor.hpp"
 
@@ -24,13 +22,5 @@ using Points3d = PycoAdaptor<int, double, 3>;
 
 using Neighborf = pico_tree::Neighbor<int, float>;
 using Neighbord = pico_tree::Neighbor<int, double>;
-
-using Neighborhoodf = std::vector<Neighborf>;
-using Neighborhoodd = std::vector<Neighbord>;
-
-using Neighborhoodsf = std::vector<Neighborhoodf>;
-using Neighborhoodsd = std::vector<Neighborhoodd>;
-
-void DefCore(pybind11::module* m);
 
 }  // namespace pyco_tree

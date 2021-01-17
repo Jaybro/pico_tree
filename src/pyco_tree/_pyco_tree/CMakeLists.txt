@@ -12,7 +12,7 @@ pybind11_add_module(_pyco_tree)
 target_sources(_pyco_tree
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/_pyco_tree.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/def_core.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/def_darray.cpp
         ${CMAKE_CURRENT_LIST_DIR}/def_kd_tree.cpp
 )
 target_link_libraries(_pyco_tree PRIVATE PicoTree::PicoTree OpenMP::OpenMP_CXX)
