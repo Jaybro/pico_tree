@@ -18,6 +18,7 @@ void DefDArray(pybind11::module* m) {
             //
             return a[i];
           },
+          py::arg("i").none(false),
           py::keep_alive<0, 1>())
       .def(
           "__bool__",

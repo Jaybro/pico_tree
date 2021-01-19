@@ -13,13 +13,13 @@ class DArrayImplBase {
  public:
   virtual ~DArrayImplBase() = default;
 
-  virtual pybind11::dtype dtype() const = 0;
+  virtual pybind11::array operator[](std::size_t i) = 0;
 
   virtual std::size_t size() const = 0;
 
   virtual bool empty() const = 0;
 
-  virtual pybind11::array operator[](std::size_t i) = 0;
+  virtual pybind11::dtype dtype() const = 0;
 };
 
 template <typename T>
@@ -30,12 +30,6 @@ class DArrayImpl : public DArrayImplBase {
       "Type T doesn't have a standard layout or isn't trivial.");
 
   DArrayImpl(std::vector<std::vector<T>> array) : array_(std::move(array)) {}
-
-  pybind11::dtype dtype() const override { return pybind11::dtype::of<T>(); }
-
-  std::size_t size() const override { return array_.size(); }
-
-  bool empty() const override { return array_.empty(); }
 
   pybind11::array operator[](std::size_t const i) override {
     // A NumPy array has ownership of its own data when it is created
@@ -49,6 +43,12 @@ class DArrayImpl : public DArrayImplBase {
     return pybind11::array_t<T, 0>(
         array_[i].size(), array_[i].data(), pybind11::none());
   }
+
+  std::size_t size() const override { return array_.size(); }
+
+  bool empty() const override { return array_.empty(); }
+
+  pybind11::dtype dtype() const override { return pybind11::dtype::of<T>(); }
 
   std::vector<std::vector<T>> const& data() const { return array_; }
 
@@ -65,8 +65,8 @@ class DArray {
  private:
   template <typename T>
   //! \brief Wraps a type T and exposes it as a poiner to type T.
-  //! \details In some cases we are dependent having a pointer interface for a
-  //! variable that would otherwise go out of scope.
+  //! \details In some cases we are dependent on having a pointer interface for
+  //! a variable that would otherwise go out of scope.
   class PointerInterface {
    public:
     inline PointerInterface(T array) : array_(std::move(array)) {}
@@ -82,6 +82,8 @@ class DArray {
   };
 
  public:
+  //! \brief The DArray Iterator class allows iterating over the contained
+  //! vectors and presenting them as numpy ndarray views.
   class Iterator {
    public:
     // clang-format off
@@ -92,48 +94,59 @@ class DArray {
     using reference         = pybind11::array;
     // clang-format on
 
+    //! \brief Constructs an Interator from an array and an index.
     Iterator(internal::DArrayImplBase* array, difference_type index)
         : array_(array), index_(index) {}
 
+    //! \private
     value_type operator[](difference_type const i) {
       return array_->operator[](i);
     }
 
+    //! \private
     pointer operator->() {
       // A pointer interface.
       return pointer(array_->operator[](index_));
     }
+
+    //! \private
     reference operator*() {
       // A reference is just a copy.
       return array_->operator[](index_);
     }
 
+    //! \private
     Iterator& operator++() {
       index_++;
       return *this;
     }
 
+    //! \private
     Iterator operator++(int) {
       Iterator tmp = *this;
       ++(*this);
       return tmp;
     }
 
+    //! \private
     Iterator& operator--() {
       index_--;
       return *this;
     }
 
+    //! \private
     Iterator operator--(int) {
       Iterator tmp = *this;
       --(*this);
       return tmp;
     }
 
+    //! \private
     friend bool operator==(Iterator const& a, Iterator const& b) {
       return a.index_ == b.index_ && a.array_ == b.array_;
     };
 
+    //! \private
     friend bool operator!=(Iterator const& a, Iterator const& b) {
       return a.index_ != b.index_ || a.array_ != b.array_;
     };
@@ -155,19 +168,15 @@ class DArray {
     impl_.reset(new internal::DArrayImpl<T>(std::move(darray)));
   }
 
-  pybind11::dtype dtype() const { return impl_->dtype(); }
+  pybind11::array operator[](std::size_t const i) {
+    return impl_->operator[](i);
+  }
 
   std::size_t size() const { return impl_->size(); }
 
   bool empty() const { return impl_->empty(); }
 
-  pybind11::array operator[](std::size_t const i) {
-    return impl_->operator[](i);
-  }
-
-  Iterator begin() { return Iterator(impl_.get(), 0); }
-
-  Iterator end() { return Iterator(impl_.get(), size()); }
+  pybind11::dtype dtype() const { return impl_->dtype(); }
 
   template <typename T>
   std::vector<std::vector<T>> const& data() const {
@@ -210,6 +219,10 @@ class DArray {
   std::vector<std::vector<T>>& data_unchecked() {
     return static_cast<internal::DArrayImpl<T>*>(impl_.get())->data();
   }
+
+  Iterator begin() { return Iterator(impl_.get(), 0); }
+
+  Iterator end() { return Iterator(impl_.get(), size()); }
 
  private:
   std::unique_ptr<internal::DArrayImplBase> impl_;
