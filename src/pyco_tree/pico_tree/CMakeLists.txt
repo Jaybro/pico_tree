@@ -24,14 +24,21 @@ target_link_libraries(_pyco_tree PRIVATE PicoTree::PicoTree OpenMP::OpenMP_CXX)
 
 set_target_properties(_pyco_tree
     PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pyco_tree"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/py/pico_tree"
 )
 
 file(GLOB PY_SOURCES_ABS "${CMAKE_CURRENT_LIST_DIR}" *.py)
 # TODO These don't get deleted when running: make clean
 add_custom_command(TARGET _pyco_tree POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${PY_SOURCES_ABS} ${CMAKE_BINARY_DIR}/pyco_tree)
+    COMMAND ${CMAKE_COMMAND} -E copy ${PY_SOURCES_ABS} ${CMAKE_BINARY_DIR}/py/pico_tree)
 
 if(SKBUILD)
+        # scikit-build copies all built targets into setup(cmake_install_dir=)
+    # while preserving the relative directory as set by install(DESTINATION).
+    # Target _pyco_tree gets copied directly into the cmake_install_dir with
+    # its install DESTINATION set to ".".
     install(TARGETS _pyco_tree LIBRARY DESTINATION .)
+    # scikit-build copies all .py files from the setup(package_dir=) argument.
+    #file(GLOB PY_SOURCES_REL RELATIVE "${CMAKE_CURRENT_LIST_DIR}" *.py)
+    #install(FILES ${PY_SOURCES_REL} DESTINATION .)
 endif()
