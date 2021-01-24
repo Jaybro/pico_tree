@@ -3,11 +3,11 @@
 from skbuild import setup
 
 setup(name='pico_tree',
-      # The version of PycoTree follows that of PicoTree.
+      # The same as the CMake project version.
       version='0.6.0',
       description='PicoTree Python Bindings',
       author='Jonathan Broere',
-      # url='https://github.com/Jaybro/pico_tree',
+      url='https://github.com/Jaybro/pico_tree',
       license="MIT",
       packages=["pico_tree"],
       package_dir={"": "src/pyco_tree"},
