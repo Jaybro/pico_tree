@@ -36,9 +36,9 @@ class DArrayImpl : public DArrayImplBase {
     // with default arguments. This causes it to copy the data from the
     // input pointer unless we tell it that an other object should own
     // its data. In this case that other object equals py::none().
-    // It would have been nice if that could be this/self?
-    // In this case it is important that while the array is alive, the
-    // Neighborhood is kept alive (see py::keep_alive).
+    // TODO It would have been nice if that could be this/self?
+    // It is important that at the binding side of things we ensure that the
+    // array is kept alive while the view is alive.
     // NOTE: At the time of writing an undocumented feature.
     return pybind11::array_t<T, 0>(
         array_[i].size(), array_[i].data(), pybind11::none());

@@ -53,7 +53,8 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_VERSION_NAME}.cmake"
     VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion)
+    # Beta library will use the minor version for compatibility.
+    COMPATIBILITY SameMinorVersion)
 
 configure_package_config_file(
     "${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in"
