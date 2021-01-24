@@ -10,7 +10,7 @@ else()
     message(STATUS "Eigen3 not found. Eigen example skipped.")
 endif()
 
-function (HAS_CXX_COMPILE_FEATURE FEATURE HAS_FEATURE)
+function(HAS_CXX_COMPILE_FEATURE FEATURE HAS_FEATURE)
     foreach(i ${CMAKE_CXX_COMPILE_FEATURES})
         if(${i} STREQUAL ${FEATURE})
             set(${HAS_FEATURE} TRUE PARENT_SCOPE)

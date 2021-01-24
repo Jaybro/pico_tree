@@ -21,41 +21,44 @@ endif()
 set(PROJECT_PACKAGE_NAME "PicoTree")
 add_subdirectory(src)
 
-option(BUILD_EXAMPLES "Enable the creation of PicoTree examples." ON)
-if(BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif()
-
-find_package(GTest QUIET)
-if(GTEST_FOUND)
-    include(CTest)
-    message(STATUS "GTest found. Unit test build: ${BUILD_TESTING}.")
-    if(BUILD_TESTING)
-        # Tests are dependent on some common code.
-        if(NOT TARGET pico_common)
-            add_subdirectory(examples/pico_common)
-        endif()
-
-        enable_testing()
-        add_subdirectory(test)
+# Ignored when running cmake from setup.py using scikit-build.
+if(NOT SKBUILD)
+    option(BUILD_EXAMPLES "Enable the creation of PicoTree examples." ON)
+    if(BUILD_EXAMPLES)
+        add_subdirectory(examples)
     endif()
-else()
-    message(STATUS "GTest not found. Unit tests will not be build.")
-endif()
 
-find_package(Doxygen QUIET)
-include(CMakeDependentOption)
-CMAKE_DEPENDENT_OPTION(BUILD_DOCUMENTATION "Build documentation with Doxygen." ON "DOXYGEN_FOUND" OFF)
-if(BUILD_DOCUMENTATION)
-    set(DOC_TARGET_NAME ${PROJECT_NAME}_doc)
-    # Hide the internal namespace from the documentation.
-    # set(DOXYGEN_EXCLUDE_SYMBOLS "internal")
+    find_package(GTest QUIET)
+    if(GTEST_FOUND)
+        include(CTest)
+        message(STATUS "GTest found. Unit test build: ${BUILD_TESTING}.")
+        if(BUILD_TESTING)
+            # Tests are dependent on some common code.
+            if(NOT TARGET pico_common)
+                add_subdirectory(examples/pico_common)
+            endif()
 
-    doxygen_add_docs(
-        ${DOC_TARGET_NAME}
-        src/pico_tree)
+            enable_testing()
+            add_subdirectory(test)
+        endif()
+    else()
+        message(STATUS "GTest not found. Unit tests will not be build.")
+    endif()
 
-    message(STATUS "Doxygen found. Documentation can be build as: make ${DOC_TARGET_NAME}")
-else()
-    message(STATUS "Doxygen not found. Documentation cannot be build.")
+    find_package(Doxygen QUIET)
+    include(CMakeDependentOption)
+    CMAKE_DEPENDENT_OPTION(BUILD_DOCUMENTATION "Build documentation with Doxygen." ON "DOXYGEN_FOUND" OFF)
+    if(BUILD_DOCUMENTATION)
+        set(DOC_TARGET_NAME ${PROJECT_NAME}_doc)
+        # Hide the internal namespace from the documentation.
+        # set(DOXYGEN_EXCLUDE_SYMBOLS "internal")
+
+        doxygen_add_docs(
+            ${DOC_TARGET_NAME}
+            src/pico_tree)
+
+        message(STATUS "Doxygen found. Documentation can be build as: make ${DOC_TARGET_NAME}")
+    else()
+        message(STATUS "Doxygen not found. Documentation cannot be build.")
+    endif()
 endif()

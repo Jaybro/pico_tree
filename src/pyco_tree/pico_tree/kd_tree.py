@@ -1,4 +1,4 @@
-import pyco_tree._pyco_tree as _pt
+import pico_tree._pyco_tree as _pt
 from .metric import Metric
 
 import numpy as np
