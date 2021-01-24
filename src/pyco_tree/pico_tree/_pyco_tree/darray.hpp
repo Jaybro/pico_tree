@@ -62,7 +62,7 @@ class DArrayImpl : public DArrayImplBase {
 
 // TODO Class names.
 class DArray {
- private:
+ public:
   template <typename T>
   //! \brief Wraps a type T and exposes it as a poiner to type T.
   //! \details In some cases we are dependent on having a pointer interface for
@@ -81,7 +81,6 @@ class DArray {
     T array_;
   };
 
- public:
   //! \brief The DArray Iterator class allows iterating over the contained
   //! vectors and presenting them as numpy ndarray views.
   class Iterator {
