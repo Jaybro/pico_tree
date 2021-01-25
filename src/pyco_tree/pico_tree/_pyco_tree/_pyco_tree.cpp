@@ -9,8 +9,8 @@
 
 PYBIND11_MODULE(_pyco_tree, m) {
   m.doc() =
-      "PycoTree is a small module for range searches and nearest neighbor "
-      "searches using a KdTree. It wraps the C++ PicoTree library.";
+      "PicoTree is a module for range searches and nearest neighbor searches "
+      "using a KdTree. It wraps the C++ PicoTree library.";
 
   // Registered dtypes.
   PYBIND11_NUMPY_DTYPE(pyco_tree::Neighborf, index, distance);

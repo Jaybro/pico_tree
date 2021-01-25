@@ -2,7 +2,7 @@
 
 [![build-and-test](https://github.com/Jaybro/pico_tree/workflows/build-and-test/badge.svg)](https://github.com/Jaybro/pico_tree/actions?query=workflow%3Abuild-and-test)
 
-PicoTree is a small C++ header only library for range searches and nearest neighbor searches using a KdTree.
+PicoTree is a C++ header only library with [Python bindings](https://github.com/pybind/pybind11) for range searches and nearest neighbor searches using a KdTree.
 
 See the comparison [benchmark](./docs/benchmark.md) between PicoTree and [nanoflann](https://github.com/jlblancoc/nanoflann) to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library.
 
@@ -36,6 +36,12 @@ Optional:
 * [Google Test](https://github.com/google/googletest). Used for running unit tests.
 * [Eigen](http://eigen.tuxfamily.org). To run the example that shows how Eigen data types can be used in combination with PicoTree.
 * [nanoflann](https://github.com/jlblancoc/nanoflann), [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run the comparison [benchmark](./docs/benchmark.md) between nanoflann and PicoTree.
+
+Python bindings:
+* [pybind11](https://github.com/pybind/pybind11). Used to ease the creation of Python bindings. Available under the [BSD](https://github.com/pybind/pybind11/blob/master/LICENSE) license and copyright.
+* [OpenMP](https://www.openmp.org/). For parallelization of queries.
+* [numpy](https://numpy.org/). Points and search results are represented by ndarrays.
+* [scikit-build](https://scikit-build.readthedocs.io/). Glue between CMake and setuptools.
 
 # Build
 
