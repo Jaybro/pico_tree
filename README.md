@@ -38,6 +38,7 @@ Optional:
 * [nanoflann](https://github.com/jlblancoc/nanoflann), [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run the comparison [benchmark](./docs/benchmark.md) between nanoflann and PicoTree.
 
 Python bindings:
+* [Python](https://www.python.org/). Version 3.5 or higher.
 * [pybind11](https://github.com/pybind/pybind11). Used to ease the creation of Python bindings. Available under the [BSD](https://github.com/pybind/pybind11/blob/master/LICENSE) license and copyright.
 * [OpenMP](https://www.openmp.org/). For parallelization of queries.
 * [numpy](https://numpy.org/). Points and search results are represented by ndarrays.
@@ -45,14 +46,23 @@ Python bindings:
 
 # Build
 
-An example using [CMake](https://cmake.org/) with [MSYS2](https://github.com/msys2/) and [MinGW64](http://mingw-w64.org/):
+Build using [CMake](https://cmake.org/):
 
 ```console
 $ mkdir build && cd build
+$ cmake ../
+$ make
+$ make install
+$ make pico_tree_doc
+```
+
+Similarly with [MSYS2](https://github.com/msys2/) and [MinGW64](http://mingw-w64.org/):
+
+```console
+$ ...
 $ cmake.exe ../ -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64/local
 $ mingw32-make.exe
-$ mingw32-make.exe install
-$ mingw32-make.exe pico_tree_doc
+$ ...
 ```
 
 ```cmake
@@ -60,6 +70,18 @@ find_package(PicoTree REQUIRED)
 
 add_executable(myexe main.cpp)
 target_link_libraries(myexe PUBLIC PicoTree::PicoTree)
+```
+
+Install with pip3:
+
+```console
+$ pip3 install ./pico_tree
+```
+
+Set a generator for use with MinGW:
+
+```console
+$ pip3 install ./pico_tree --install-option="-GMinGW Makefiles"
 ```
 
 # References
