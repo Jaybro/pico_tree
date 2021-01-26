@@ -2,7 +2,7 @@
 
 [![build-and-test](https://github.com/Jaybro/pico_tree/workflows/build-and-test/badge.svg)](https://github.com/Jaybro/pico_tree/actions?query=workflow%3Abuild-and-test)
 
-PicoTree is a small C++ header only library for range searches and nearest neighbor searches using a KdTree.
+PicoTree is a C++ header only library with [Python bindings](https://github.com/pybind/pybind11) for range searches and nearest neighbor searches using a KdTree.
 
 See the comparison [benchmark](./docs/benchmark.md) between PicoTree and [nanoflann](https://github.com/jlblancoc/nanoflann) to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library.
 
@@ -37,16 +37,32 @@ Optional:
 * [Eigen](http://eigen.tuxfamily.org). To run the example that shows how Eigen data types can be used in combination with PicoTree.
 * [nanoflann](https://github.com/jlblancoc/nanoflann), [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run the comparison [benchmark](./docs/benchmark.md) between nanoflann and PicoTree.
 
+Python bindings:
+* [Python](https://www.python.org/). Version 3.5 or higher.
+* [pybind11](https://github.com/pybind/pybind11). Used to ease the creation of Python bindings. Available under the [BSD](https://github.com/pybind/pybind11/blob/master/LICENSE) license and copyright.
+* [OpenMP](https://www.openmp.org/). For parallelization of queries.
+* [numpy](https://numpy.org/). Points and search results are represented by ndarrays.
+* [scikit-build](https://scikit-build.readthedocs.io/). Glue between CMake and setuptools.
+
 # Build
 
-An example using [CMake](https://cmake.org/) with [MSYS2](https://github.com/msys2/) and [MinGW64](http://mingw-w64.org/):
+Build using [CMake](https://cmake.org/):
 
 ```console
 $ mkdir build && cd build
+$ cmake ../
+$ make
+$ make install
+$ make pico_tree_doc
+```
+
+Similarly with [MSYS2](https://github.com/msys2/) and [MinGW64](http://mingw-w64.org/):
+
+```console
+$ ...
 $ cmake.exe ../ -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64/local
 $ mingw32-make.exe
-$ mingw32-make.exe install
-$ mingw32-make.exe pico_tree_doc
+$ ...
 ```
 
 ```cmake
@@ -54,6 +70,18 @@ find_package(PicoTree REQUIRED)
 
 add_executable(myexe main.cpp)
 target_link_libraries(myexe PUBLIC PicoTree::PicoTree)
+```
+
+Install with pip3:
+
+```console
+$ pip3 install ./pico_tree
+```
+
+Set a generator for use with MinGW:
+
+```console
+$ pip3 install ./pico_tree --install-option="-GMinGW Makefiles"
 ```
 
 # References

@@ -22,3 +22,7 @@ cmake-build-*/
 # Eclipse
 [Dd]ebug/
 [Rr]elease/
+
+# Python
+__pycache__
+_skbuild
