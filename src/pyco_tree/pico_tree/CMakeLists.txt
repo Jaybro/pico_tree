@@ -33,7 +33,7 @@ add_custom_command(TARGET _pyco_tree POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${PY_SOURCES_ABS} ${CMAKE_BINARY_DIR}/py/pico_tree)
 
 if(SKBUILD)
-        # scikit-build copies all built targets into setup(cmake_install_dir=)
+    # scikit-build copies all built targets into setup(cmake_install_dir=)
     # while preserving the relative directory as set by install(DESTINATION).
     # Target _pyco_tree gets copied directly into the cmake_install_dir with
     # its install DESTINATION set to ".".
