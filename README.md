@@ -21,7 +21,8 @@ The examples show how PicoTree can be used:
 
 * How to create the expected [point](./examples/pico_common/point.hpp) and [point set](./examples/pico_common/pico_adaptor.hpp) interfaces.
 * Searching using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
-* Using [Eigen](./examples/eigen/eigen.cpp) data types.
+* Support for [Eigen](./examples/eigen/eigen.cpp) data types.
+* Using the [KdTree from Python](./examples/python/kd_tree.py).
 
 # Requirements
 

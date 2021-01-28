@@ -40,7 +40,7 @@ def tree_creation_and_query_types():
 
     # A radius search doesn't return a numpy array but a custom vector of numpy
     # arrays. This is because the amount of neighbors to each of input points
-    # may varry for a radius search.
+    # may vary for a radius search.
     search_radius = t.metric(2.5)
     print(f"Result with radius: {search_radius}")
     rns = t.search_radius(p, search_radius)
@@ -52,7 +52,7 @@ def tree_creation_and_query_types():
     for neighborhood in rns:
         print(f"{neighborhood}")
 
-    # The custom type is can also be indexed.
+    # The custom type can also be indexed.
     print(f"Result size: {len(rns)}")
     # Note that each numpy array is actually a view of a C++ vector.
     print(f"First index: {rns[0]}")
