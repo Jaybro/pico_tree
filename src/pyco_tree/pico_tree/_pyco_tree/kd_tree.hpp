@@ -46,7 +46,7 @@ class KdTree : public pico_tree::KdTree<
   inline KdTree(Points points, Index max_leaf_size)
       : Base(std::move(points), max_leaf_size) {}
 
-  void SearchKnns(
+  void SearchKnn(
       py::array_t<Scalar, 0> const pts,
       Index const k,
       py::array_t<NeighborType, 0> nns) const {
@@ -60,14 +60,14 @@ class KdTree : public pico_tree::KdTree<
     }
   }
 
-  py::array_t<NeighborType, 0> SearchKnns(
+  py::array_t<NeighborType, 0> SearchKnn(
       py::array_t<Scalar, 0> const pts, Index const k) const {
     py::array_t<NeighborType, 0> nns;
-    SearchKnns(pts, k, nns);
+    SearchKnn(pts, k, nns);
     return nns;
   }
 
-  void SearchAknns(
+  void SearchAknn(
       py::array_t<Scalar, 0> const pts,
       Index const k,
       Scalar const e,
@@ -82,10 +82,10 @@ class KdTree : public pico_tree::KdTree<
     }
   }
 
-  py::array_t<NeighborType, 0> SearchAknns(
+  py::array_t<NeighborType, 0> SearchAknn(
       py::array_t<Scalar, 0> const pts, Index const k, Scalar const e) const {
     py::array_t<NeighborType, 0> nns;
-    SearchAknns(pts, k, e, nns);
+    SearchAknn(pts, k, e, nns);
     return nns;
   }
 
