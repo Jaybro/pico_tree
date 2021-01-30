@@ -83,7 +83,15 @@ void DefKdTree(std::string const& name, py::module* m) {
                    ", npts=" + std::to_string(t.npts()) + ")";
           })
       .def(
-          "neighbor_dtype",
+          "dtype_index",
+          [](KdTree const& t) { return py::dtype::of<Index>(); },
+          "Return the dtype of an Index.")
+      .def(
+          "dtype_scalar",
+          [](KdTree const& t) { return py::dtype::of<Scalar>(); },
+          "Return the dtype of a Scalar.")
+      .def(
+          "dtype_neighbor",
           [](KdTree const& t) { return py::dtype::of<Neighbor>(); },
           "Return the dtype of a Neighbor.")
       .def("sdim", &KdTree::sdim, "Return the spatial dimension of the KdTree.")
@@ -155,7 +163,7 @@ void DefKdTree(std::string const& name, py::module* m) {
           py::arg("nns").noconvert().none(false),
           py::arg("sort").none(false) = false,
           "Search for all neighbors within a radius of each of the input "
-          "points and stores the result in the specified output.")
+          "points and store the result in the specified output.")
       .def(
           "search_radius",
           static_cast<Neighborhoods (KdTree::*)(
@@ -165,7 +173,26 @@ void DefKdTree(std::string const& name, py::module* m) {
           py::arg("radius").none(false),
           py::arg("sort").none(false) = false,
           "Search for all neighbors within a radius of each of the input "
-          "points.");
+          "points.")
+      .def(
+          "search_box",
+          static_cast<void (KdTree::*)(
+              py::array_t<Scalar, 0> const,
+              py::array_t<Scalar, 0> const,
+              Neighborhoods*) const>(&KdTree::SearchBox),
+          py::arg("min").noconvert().none(false),
+          py::arg("max").noconvert().none(false),
+          py::arg("box").noconvert().none(false),
+          "Search for all points within each of the axis aligned input boxes "
+          "and store the result in the specified output.")
+      .def(
+          "search_box",
+          static_cast<Neighborhoods (KdTree::*)(
+              py::array_t<Scalar, 0> const, py::array_t<Scalar, 0> const)
+                          const>(&KdTree::SearchBox),
+          py::arg("min").noconvert().none(false),
+          py::arg("max").noconvert().none(false),
+          "Search for all points within each of the axis aligned input boxes.");
 }
 
 void DefKdTree(py::module* m) {

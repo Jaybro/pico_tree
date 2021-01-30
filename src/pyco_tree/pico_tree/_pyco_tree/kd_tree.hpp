@@ -33,9 +33,6 @@ class KdTree : public pico_tree::KdTree<
   using Base::Dim;
   using Base::metric;
   using Base::points;
-  using Base::SearchAknn;
-  using Base::SearchKnn;
-  using Base::SearchRadius;
   using typename Base::IndexType;
   using typename Base::MetricType;
   using typename Base::NeighborType;
@@ -56,7 +53,7 @@ class KdTree : public pico_tree::KdTree<
 
 #pragma omp parallel for schedule(static, kChunkSize)
     for (Index i = 0; i < query.npts(); ++i) {
-      SearchKnn(query(i), output + i * k, output + (i + 1) * k);
+      Base::SearchKnn(query(i), output + i * k, output + (i + 1) * k);
     }
   }
 
@@ -78,7 +75,7 @@ class KdTree : public pico_tree::KdTree<
 
 #pragma omp parallel for schedule(static, kChunkSize)
     for (Index i = 0; i < query.npts(); ++i) {
-      SearchAknn(query(i), e, output + i * k, output + (i + 1) * k);
+      Base::SearchAknn(query(i), e, output + i * k, output + (i + 1) * k);
     }
   }
 
@@ -102,7 +99,7 @@ class KdTree : public pico_tree::KdTree<
 #pragma omp parallel for schedule(static, kChunkSize)
     // TODO Reduce the vector resize overhead
     for (Index i = 0; i < query.npts(); ++i) {
-      SearchRadius(query(i), radius, &nns_data[i], sort);
+      Base::SearchRadius(query(i), radius, &nns_data[i], sort);
     }
   }
 
@@ -113,6 +110,35 @@ class KdTree : public pico_tree::KdTree<
     DArray nns = DArray(std::vector<std::vector<NeighborType>>());
     SearchRadius(pts, radius, &nns, sort);
     return nns;
+  }
+
+  void SearchBox(
+      py::array_t<Scalar, 0> const min,
+      py::array_t<Scalar, 0> const max,
+      DArray* box) const {
+    PycoAdaptor<Index, Scalar, Dim> query_min(min);
+    PycoAdaptor<Index, Scalar, Dim> query_max(max);
+
+    if (query_min.npts() != query_max.npts()) {
+      throw std::invalid_argument("Query min and max don't have equal size.");
+    }
+
+    auto& box_data = box->data<Index>();
+    box_data.resize(query_min.npts());
+
+#pragma omp parallel for schedule(static, kChunkSize)
+    // TODO Reduce the vector resize overhead
+    for (Index i = 0; i < query_min.npts(); ++i) {
+      Base::SearchBox(query_min(i), query_max(i), &box_data[i]);
+    }
+  }
+
+  DArray SearchBox(
+      py::array_t<Scalar, 0> const min,
+      py::array_t<Scalar, 0> const max) const {
+    DArray box = DArray(std::vector<std::vector<Index>>());
+    SearchBox(min, max, &box);
+    return box;
   }
 
   inline Scalar const* const data() const { return points().data(); }

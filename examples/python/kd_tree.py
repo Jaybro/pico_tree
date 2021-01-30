@@ -5,6 +5,7 @@ import numpy as np
 
 
 def tree_creation_and_query_types():
+    print("*** KdTree Creation And Basic Information ***")
     p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
     # In and output distances are squared distances when using Metric.L2.
     t = pt.KdTree(p, pt.Metric.L2, 1)
@@ -13,7 +14,9 @@ def tree_creation_and_query_types():
     print(f"Spatial dimension of the tree: {t.sdim()}")
     value = -2.0
     print(f"Metric applied to {value}: {t.metric(value)}")
+    print()
 
+    print("*** Nearest Neighbor Search ***")
     # Nearest neighbors via return.
     knns = t.search_knn(p, 1)
     print("Single nn for each input point:")
@@ -23,7 +26,9 @@ def tree_creation_and_query_types():
     t.search_knn(p, 2, knns)
     print("Two nns for each input point:")
     print(knns)
+    print()
 
+    print("*** Approximate Nearest Neighbor Search ***")
     # Searching for approximate nearest neighbors works the same way.
     # An approximate nearest neighbor can be at most a distance factor of 1+e
     # farther away from the true nearest neighbor.
@@ -37,7 +42,9 @@ def tree_creation_and_query_types():
     for knn in knns:
         print(
             f"Point index {knn[1][0]} with distance {knn[1][1] * max_error_ratio}")
+    print()
 
+    print("*** Radius Search ***")
     # A radius search doesn't return a numpy array but a custom vector of numpy
     # arrays. This is because the amount of neighbors to each of input points
     # may vary for a radius search.
@@ -47,8 +54,8 @@ def tree_creation_and_query_types():
     for rnn in rnns:
         print(f"{rnn}")
     search_radius = t.metric(5.0)
-    print(f"Result with radius: {search_radius}")
     t.search_radius(p, 25.0, rnns)
+    print(f"Result with radius: {search_radius}")
     for rnn in rnns:
         print(f"{rnn}")
 
@@ -56,6 +63,19 @@ def tree_creation_and_query_types():
     print(f"Result size: {len(rnns)}")
     # Note that each numpy array is actually a view of a C++ vector.
     print(f"First index: {rnns[0]}")
+    print()
+
+    print("*** Box Search ***")
+    # A box search returns the same data structure as a radius search. However,
+    # instead of returning neighbors it simply returns indices.
+    min = np.array([[0, 0], [2, 2], [0, 0], [6, 6]], dtype=np.float32)
+    max = np.array([[3, 3], [3, 3], [9, 9], [9, 9]], dtype=np.float32)
+    bnns = t.search_box(min, max)
+    t.search_box(min, max, bnns)
+    print("Results for the orthogonal box search:")
+    for bnn in bnns:
+        print(f"{bnn}")
+    print()
 
 
 def main():
