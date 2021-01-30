@@ -86,11 +86,11 @@ def array_initialization():
     # This type of forward initialization of arrays may be useful to streamline
     # loops that depend on them and where reusing memory is desired. E.g.: ICP.
     knns = np.empty((0), dtype=t.dtype_neighbor())
-    print(knns)
+    print(knns.dtype)
     rnns = pt.DArray(dtype=t.dtype_neighbor())
-    print(rnns)
+    print(rnns.dtype)
     bnns = pt.DArray(dtype=t.dtype_index())
-    print(bnns)
+    print(bnns.dtype)
 
 
 def main():

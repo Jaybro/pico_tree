@@ -89,7 +89,8 @@ class DArray {
    public:
     // clang-format off
     using iterator_category = std::random_access_iterator_tag;
-    using difference_type   = std::size_t;
+    using size_type         = std::size_t;
+    using difference_type   = std::ptrdiff_t;
     using value_type        = pybind11::array;
     using pointer           = PointerInterface<pybind11::array>;
     using reference         = pybind11::array;
@@ -157,6 +158,12 @@ class DArray {
     difference_type index_;
   };
 
+  using difference_type = Iterator::difference_type;
+  using size_type = Iterator::size_type;
+  using value_type = Iterator::value_type;
+  using pointer = Iterator::pointer;
+  using reference = pybind11::array;
+
   DArray() = default;
 
   template <typename T>
@@ -181,11 +188,9 @@ class DArray {
     impl_.reset(new internal::DArrayImpl<T>(std::move(darray)));
   }
 
-  pybind11::array operator[](std::size_t const i) {
-    return impl_->operator[](i);
-  }
+  pybind11::array operator[](size_type const i) { return impl_->operator[](i); }
 
-  std::size_t size() const { return impl_->size(); }
+  size_type size() const { return impl_->size(); }
 
   bool empty() const { return impl_->empty(); }
 
@@ -233,9 +238,15 @@ class DArray {
     return static_cast<internal::DArrayImpl<T>*>(impl_.get())->data();
   }
 
-  Iterator begin() { return Iterator(impl_.get(), 0); }
+  Iterator begin() {
+    // Start at index 0
+    return Iterator(impl_.get(), 0);
+  }
 
-  Iterator end() { return Iterator(impl_.get(), size()); }
+  Iterator end() {
+    // The end is 1 past the last item.
+    return Iterator(impl_.get(), static_cast<difference_type>(size()));
+  }
 
  private:
   std::unique_ptr<internal::DArrayImplBase> impl_;
