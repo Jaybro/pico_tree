@@ -86,6 +86,7 @@ def tree_creation_and_query_types():
 
 
 def array_initialization():
+    print("*** Array Initialization ***")
     p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float64)
     # In and output distances are absolute distances when using Metric.L1.
     t = pt.KdTree(p, pt.Metric.L1, 10)
@@ -98,6 +99,7 @@ def array_initialization():
     print(rnns.dtype)
     bnns = pt.DArray(dtype=t.dtype_index())
     print(bnns.dtype)
+    print()
 
 
 def main():
