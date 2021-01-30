@@ -31,6 +31,18 @@ void DefDArray(pybind11::module* m) {
           },
           py::arg("i").none(false),
           py::keep_alive<0, 1>())
+      // Slicing protocol
+      .def(
+          "__getitem__",
+          [](DArray const& a, py::slice slice) -> DArray {
+            std::size_t start, stop, step, slice_length;
+
+            if (!slice.compute(a.size(), &start, &stop, &step, &slice_length))
+              throw py::error_already_set();
+
+            return a.Copy(start, step, slice_length);
+          },
+          py::arg("s"))
       .def(
           "__bool__",
           [](DArray const& a) -> bool { return !a.empty(); },

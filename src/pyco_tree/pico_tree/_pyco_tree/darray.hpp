@@ -17,6 +17,9 @@ class DArrayImplBase {
 
   virtual pybind11::array operator[](std::size_t i) = 0;
 
+  virtual std::unique_ptr<DArrayImplBase> Copy(
+      std::size_t begin, std::size_t step, std::size_t count) const = 0;
+
   virtual std::size_t size() const = 0;
 
   virtual bool empty() const = 0;
@@ -44,6 +47,19 @@ class DArrayImpl : public DArrayImplBase {
     // NOTE: At the time of writing an undocumented feature.
     return pybind11::array_t<T, 0>(
         array_[i].size(), array_[i].data(), pybind11::none());
+  }
+
+  std::unique_ptr<DArrayImplBase> Copy(
+      std::size_t begin, std::size_t step, std::size_t count) const override {
+    std::vector<std::vector<T>> array;
+    array.reserve(count);
+
+    for (std::size_t i = 0; i < count; ++i) {
+      array.push_back(array_[begin]);
+      begin += step;
+    }
+
+    return std::unique_ptr<DArrayImplBase>(new DArrayImpl(std::move(array)));
   }
 
   std::size_t size() const override { return array_.size(); }
@@ -188,6 +204,10 @@ class DArray {
     impl_.reset(new internal::DArrayImpl<T>(std::move(darray)));
   }
 
+  DArray Copy(std::size_t begin, std::size_t step, std::size_t count) const {
+    return DArray(impl_->Copy(begin, step, count));
+  }
+
   pybind11::array operator[](size_type const i) { return impl_->operator[](i); }
 
   size_type size() const { return impl_->size(); }
@@ -249,6 +269,9 @@ class DArray {
   }
 
  private:
+  DArray(std::unique_ptr<internal::DArrayImplBase> array)
+      : impl_(std::move(array)) {}
+
   std::unique_ptr<internal::DArrayImplBase> impl_;
 };
 

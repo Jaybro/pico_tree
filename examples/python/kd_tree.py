@@ -58,11 +58,6 @@ def tree_creation_and_query_types():
     print(f"Result with radius: {search_radius}")
     for rnn in rnns:
         print(f"{rnn}")
-
-    # The custom type can also be indexed.
-    print(f"Result size: {len(rnns)}")
-    # Note that each numpy array is actually a view of a C++ vector.
-    print(f"First index: {rnns[0]}")
     print()
 
     print("*** Box Search ***")
@@ -74,6 +69,18 @@ def tree_creation_and_query_types():
     t.search_box(min, max, bnns)
     print("Results for the orthogonal box search:")
     for bnn in bnns:
+        print(f"{bnn}")
+    print()
+
+    print("*** DArray ***")
+    # The custom type can also be indexed.
+    print(f"Result size: {len(bnns)}")
+    # Note that each numpy array is actually a view of a C++ vector.
+    print(f"First index: {bnns[0]}")
+    print(f"Second last index: {bnns[-2]}")
+    half = bnns[slice(0, 4, 2)]
+    print("Sliced results for the orthogonal box search:")
+    for bnn in half:
         print(f"{bnn}")
     print()
 
