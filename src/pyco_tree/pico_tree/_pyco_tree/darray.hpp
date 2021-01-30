@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+#include "def_core.hpp"
+
 namespace pyco_tree {
 
 namespace internal {
@@ -161,6 +163,18 @@ class DArray {
   explicit DArray(std::vector<std::vector<T>> darray)
       : impl_(std::unique_ptr<internal::DArrayImplBase>(
             new internal::DArrayImpl<T>(std::move(darray)))) {}
+
+  DArray(pybind11::dtype const dtype) {
+    if (dtype.equal(pybind11::dtype::of<Neighborf>())) {
+      Reset(std::vector<std::vector<Neighborf>>());
+    } else if (dtype.equal(pybind11::dtype::of<Neighbord>())) {
+      Reset(std::vector<std::vector<Neighbord>>());
+    } else if (dtype.equal(pybind11::dtype::of<int>())) {
+      Reset(std::vector<std::vector<int>>());
+    } else {
+      throw std::invalid_argument("Type not supported.");
+    }
+  }
 
   template <typename T>
   void Reset(std::vector<std::vector<T>> darray) {

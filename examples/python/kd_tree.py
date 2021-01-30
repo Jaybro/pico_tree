@@ -78,8 +78,24 @@ def tree_creation_and_query_types():
     print()
 
 
+def array_initialization():
+    p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float64)
+    # In and output distances are absolute distances when using Metric.L1.
+    t = pt.KdTree(p, pt.Metric.L1, 10)
+
+    # This type of forward initialization of arrays may be useful to streamline
+    # loops that depend on them and where reusing memory is desired. E.g.: ICP.
+    knns = np.empty((0), dtype=t.dtype_neighbor())
+    print(knns)
+    rnns = pt.DArray(dtype=t.dtype_neighbor())
+    print(rnns)
+    bnns = pt.DArray(dtype=t.dtype_index())
+    print(bnns)
+
+
 def main():
     tree_creation_and_query_types()
+    array_initialization()
 
 
 if __name__ == "__main__":

@@ -40,8 +40,8 @@ class KdTree : public pico_tree::KdTree<
   using typename Base::ScalarType;
 
  public:
-  inline KdTree(Points points, Index max_leaf_size)
-      : Base(std::move(points), max_leaf_size) {}
+  inline KdTree(py::array_t<Scalar, 0> pts, Index max_leaf_size)
+      : Base(Points(pts), max_leaf_size) {}
 
   void SearchKnn(
       py::array_t<Scalar, 0> const pts,

@@ -30,16 +30,13 @@ template <typename KdTree>
 void DefKdTree(std::string const& name, py::module* m) {
   using Index = typename KdTree::IndexType;
   using Scalar = typename KdTree::ScalarType;
-  using Points = typename KdTree::PointsType;
   using Metric = typename KdTree::MetricType;
   using Neighbor = typename KdTree::NeighborType;
   using Neighborhoods = DArray;
 
   py::class_<KdTree>(*m, name.c_str(), py::buffer_protocol())
       .def(
-          py::init(
-              [](py::array_t<Scalar, 0> const pts, Index max_leaf_size)
-                  -> KdTree { return KdTree(Points(pts), max_leaf_size); }),
+          py::init<py::array_t<Scalar, 0>, Index>(),
           // We keep the input points alive until the KdTree is gone.
           // Nurse: 1 = Implicit first argument: KdTree.
           // Patient: 2 = Second function argument: NumPy array.

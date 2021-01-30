@@ -9,6 +9,10 @@ namespace pyco_tree {
 void DefDArray(pybind11::module* m) {
   py::class_<DArray>(*m, "DArray")
       .def(
+          py::init<py::dtype>(),
+          py::arg("dtype").none(false),
+          "Create a DArray from a numpy dtype.")
+      .def(
           "__iter__",
           [](DArray& a) { return py::make_iterator(a.begin(), a.end()); },
           py::keep_alive<0, 1>())
