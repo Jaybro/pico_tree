@@ -4,6 +4,8 @@ import pico_tree as pt
 import numpy as np
 from pathlib import Path
 from time import perf_counter
+#from scipy.spatial import KDTree, cKDTree
+#from sklearn.neighbors import KDTree as sklKDTree
 
 
 def tree_creation_and_query_types():
@@ -104,16 +106,25 @@ def array_initialization():
     print()
 
 
-def performance_test():
+def performance_test_pico_tree():
     print("*** Performance vs scans.bin ***")
     # The benchmark documention, docs/benchmark.md section "Running a new
     # benchmark", explains how to generate a scans.bin file from an online
     # dataset.
     path_bin = Path(__file__).parent.joinpath("scans.bin")
     p = np.fromfile(path_bin, np.float64).reshape((-1, 3))
-    # Pretty close to the same performance in Python vs C++.
+    # pico_tree has pretty close to the same performance in Python vs C++.
+    # Following numbers are tree build times for a max leaf size of 10 and
+    # about 13 million 3D points:
+    # - pico_tree.KdTree ~2.4s
+    # - scipy.spatial.KDTree ~136.1s
+    # - scipy.spatial.cKDTree ~11.6s
+    # - sklearn.neighbors.KDTree ~30.0s
     cnt_build_time_before = perf_counter()
     t = pt.KdTree(p, pt.Metric.L2, 10)
+    #t = KDTree(p, leafsize=10)
+    #t = cKDTree(p, leafsize=10)
+    #t = sklKDTree(p, leaf_size=10)
     cnt_build_time_after = perf_counter()
     print(f"{t} was built in {(cnt_build_time_after - cnt_build_time_before) * 1000.0}ms")
     # A sizeable amount of time is spent creating memory. Re-using the output
@@ -129,7 +140,7 @@ def performance_test():
 def main():
     tree_creation_and_query_types()
     array_initialization()
-    performance_test()
+    performance_test_pico_tree()
 
 
 if __name__ == "__main__":
