@@ -2,6 +2,8 @@
 
 import pico_tree as pt
 import numpy as np
+from pathlib import Path
+from time import perf_counter
 
 
 def tree_creation_and_query_types():
@@ -102,9 +104,32 @@ def array_initialization():
     print()
 
 
+def performance_test():
+    print("*** Performance vs scans.bin ***")
+    # The benchmark documention, docs/benchmark.md section "Running a new
+    # benchmark", explains how to generate a scans.bin file from an online
+    # dataset.
+    path_bin = Path(__file__).parent.joinpath("scans.bin")
+    p = np.fromfile(path_bin, np.float64).reshape((-1, 3))
+    # Pretty close to the same performance in Python vs C++.
+    cnt_build_time_before = perf_counter()
+    t = pt.KdTree(p, pt.Metric.L2, 10)
+    cnt_build_time_after = perf_counter()
+    print(f"{t} was built in {(cnt_build_time_after - cnt_build_time_before) * 1000.0}ms")
+    # A sizeable amount of time is spent creating memory. Re-using the output
+    # matrix reduces the next query time.
+    cnt_query_time_before = perf_counter()
+    knns = t.search_knn(p, 12)
+    cnt_query_time_after = perf_counter()
+    print(
+        f"{knns.shape[0]} points queried in {(cnt_query_time_after - cnt_query_time_before) * 1000.0}ms")
+    print()
+
+
 def main():
     tree_creation_and_query_types()
     array_initialization()
+    performance_test()
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ class KdTree : public pico_tree::KdTree<
                    Points,
                    Metric> {
  private:
-  static constexpr int kChunkSize = 256;
+  static constexpr int kChunkSize = 128;
 
   using Index = typename Points::IndexType;
   using Scalar = typename Points::ScalarType;
@@ -51,7 +51,7 @@ class KdTree : public pico_tree::KdTree<
     EnsureSize(query, k, nns);
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
-#pragma omp parallel for schedule(static, kChunkSize)
+#pragma omp parallel for schedule(dynamic, kChunkSize)
     for (Index i = 0; i < query.npts(); ++i) {
       Base::SearchKnn(query(i), output + i * k, output + (i + 1) * k);
     }
@@ -73,7 +73,7 @@ class KdTree : public pico_tree::KdTree<
     EnsureSize(query, k, nns);
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
-#pragma omp parallel for schedule(static, kChunkSize)
+#pragma omp parallel for schedule(dynamic, kChunkSize)
     for (Index i = 0; i < query.npts(); ++i) {
       Base::SearchAknn(query(i), e, output + i * k, output + (i + 1) * k);
     }
@@ -96,7 +96,7 @@ class KdTree : public pico_tree::KdTree<
     auto& nns_data = nns->data<NeighborType>();
     nns_data.resize(query.npts());
 
-#pragma omp parallel for schedule(static, kChunkSize)
+#pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
     for (Index i = 0; i < query.npts(); ++i) {
       Base::SearchRadius(query(i), radius, &nns_data[i], sort);
@@ -126,7 +126,7 @@ class KdTree : public pico_tree::KdTree<
     auto& box_data = box->data<Index>();
     box_data.resize(query_min.npts());
 
-#pragma omp parallel for schedule(static, kChunkSize)
+#pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
     for (Index i = 0; i < query_min.npts(); ++i) {
       Base::SearchBox(query_min(i), query_max(i), &box_data[i]);
