@@ -30,3 +30,8 @@ if(nanoflann_FOUND AND benchmark_FOUND AND HAS_CPP17_FEATURE)
 else()
     message(STATUS "nanoflann, benchmark or C++17 not found. PicoTree benchmark skipped.")
 endif()
+
+# The Python examples only get copied when the bindings module will be build.
+if(TARGET _pyco_tree)
+    add_subdirectory(python)
+endif()

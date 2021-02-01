@@ -107,7 +107,7 @@ def array_initialization():
 
 
 def performance_test_pico_tree():
-    print("*** Performance vs scans.bin ***")
+    print("*** Performance against scans.bin ***")
     # The benchmark documention, docs/benchmark.md section "Running a new
     # benchmark", explains how to generate a scans.bin file from an online
     # dataset.
