@@ -129,6 +129,8 @@ def performance_test_pico_tree():
     print(f"{t} was built in {(cnt_build_time_after - cnt_build_time_before) * 1000.0}ms")
     # A sizeable amount of time is spent creating memory. Re-using the output
     # matrix reduces the next query time.
+    # Use the OMP_NUM_THREADS environment variable to influence the number of
+    # threads used for querying: export OMP_NUM_THREADS=1
     cnt_query_time_before = perf_counter()
     knns = t.search_knn(p, 12)
     cnt_query_time_after = perf_counter()
