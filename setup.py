@@ -12,4 +12,6 @@ setup(name='pico_tree',
       packages=["pico_tree"],
       package_dir={"": "src/pyco_tree"},
       cmake_install_dir="src/pyco_tree/pico_tree",
+      python_requires='>=3.5',
+      install_requires=['numpy'],
       )
