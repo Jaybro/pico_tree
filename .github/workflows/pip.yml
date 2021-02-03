@@ -1,0 +1,33 @@
+name: pip
+
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Clones to ${{ runner.workspace }}/pico_tree
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.5"
+
+      - name: Install OpenMP for macOS
+        if: runner.os == 'macOS'
+        run: brew install llvm libomp
+
+      # The global version of pybind11 allows us to find it via CMake.
+      - name: Update setup related tools
+        run: |
+          python -m pip install --upgrade wheel setuptools
+          pip install scikit-build
+          pip install pybind11-global
+
+      - name: Install with pip
+        run: pip install ${{ runner.workspace }}/pico_tree -v
