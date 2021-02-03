@@ -66,4 +66,14 @@ void ThrowIfNotContiguous(ArrayLayout<T> const& layout) {
   // should not have to deal with this.
 }
 
+template <int Dim>
+inline bool IsDimCompatible(int dim) {
+  return Dim == dim;
+}
+
+template <>
+inline bool IsDimCompatible<pico_tree::kDynamicDim>(int) {
+  return true;
+}
+
 }  // namespace pyco_tree

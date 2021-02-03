@@ -37,8 +37,8 @@ class PycoAdaptor {
     // We always want the memory layout to look like x,y,z,x,y,z,...,x,y,z.
     // This means that the shape of the inner dimension should equal the spatial
     // dimension of the KdTree.
-    if (Dim != pico_tree::kDynamicDim &&
-        Dim != layout.info.shape[layout.index_inner]) {
+    if (!IsDimCompatible<Dim>(
+            static_cast<int>(layout.info.shape[layout.index_inner]))) {
       throw std::runtime_error(
           "Array: Incompatible KdTree sdim and Array inner stride.");
     }
@@ -46,8 +46,8 @@ class PycoAdaptor {
     ThrowIfNotContiguous(layout);
 
     data_ = static_cast<Scalar*>(layout.info.ptr);
-    sdim_ = layout.info.shape[layout.index_inner];
-    npts_ = layout.info.shape[layout.index_outer];
+    sdim_ = static_cast<int>(layout.info.shape[layout.index_inner]);
+    npts_ = static_cast<Index>(layout.info.shape[layout.index_outer]);
     row_major_ = layout.row_major;
   }
 

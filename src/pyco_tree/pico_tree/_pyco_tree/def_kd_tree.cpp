@@ -81,15 +81,15 @@ void DefKdTree(std::string const& name, py::module* m) {
           })
       .def(
           "dtype_index",
-          [](KdTree const& t) { return py::dtype::of<Index>(); },
+          [](KdTree const&) { return py::dtype::of<Index>(); },
           "Return the dtype of an Index.")
       .def(
           "dtype_scalar",
-          [](KdTree const& t) { return py::dtype::of<Scalar>(); },
+          [](KdTree const&) { return py::dtype::of<Scalar>(); },
           "Return the dtype of a Scalar.")
       .def(
           "dtype_neighbor",
-          [](KdTree const& t) { return py::dtype::of<Neighbor>(); },
+          [](KdTree const&) { return py::dtype::of<Neighbor>(); },
           "Return the dtype of a Neighbor.")
       .def("sdim", &KdTree::sdim, "Return the spatial dimension of the KdTree.")
       .def("npts", &KdTree::npts, "Return the number of points of the KdTree.")

@@ -36,7 +36,7 @@ class DArrayImpl : public DArrayImplBase {
 
   DArrayImpl(std::vector<std::vector<T>> array) : array_(std::move(array)) {}
 
-  pybind11::array operator[](std::size_t const i) override {
+  pybind11::array operator[](std::size_t i) override {
     // A NumPy array has ownership of its own data when it is created
     // with default arguments. This causes it to copy the data from the
     // input pointer unless we tell it that an other object should own
