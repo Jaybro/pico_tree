@@ -10,18 +10,22 @@ if(NOT SKBUILD)
         message(STATUS "Python, pybind11 or OpenMP not found. PycoTree Python Module skipped.")
     endif()
 else()
-    # scikit-build incorrectly detects Python under MSYS2 / MinGW.
+    # scikit-build incorrectly detects Python under MSYS2 / MinGW which it then
+    # "manually" specifies to CMake. To solve this issue we want to ignore the
+    # manually set flags and use find_package(Python) instead.
+    # The problem starts here:
     # https://github.com/scikit-build/scikit-build/blob/master/skbuild/cmaker.py#L358
     # The function get_python_library inside cmaker.py uses:
     #   python_library = sysconfig.get_config_var('LIBRARY')
-    # Which returns libpython3.8.a even though the static library is not
+    # It returns a static library, e.g. libpython3.8.a, even though it isn't
     # provided via MSYS2.
     # https://github.com/msys2/MINGW-packages/issues/3562
-    # scikit-build otherwise doesn't seem to work well with
-    # find_package(Python). The PYTHON_LIBRARY flag conflicts with the 
-    # Python_LIBRARY one from find_package().
-    # The scikit-build provided flags are unset to solve both previously
-    # mentioned issues.
+    
+    # Ignoring manually specified flags results in a warning. Here follows
+    # fake usage of the flags.
+    set(IGNORE_WARNING "${PYTHON_EXECUTABLE}${PYTHON_VERSION_STRING}${PYTHON_INCLUDE_DIR}${PYTHON_LIBRARY}")
+    
+    # Unset the flags to solve both previously mentioned issue.
     unset(PYTHON_EXECUTABLE CACHE)
     unset(PYTHON_VERSION_STRING CACHE)
     unset(PYTHON_INCLUDE_DIR CACHE)
