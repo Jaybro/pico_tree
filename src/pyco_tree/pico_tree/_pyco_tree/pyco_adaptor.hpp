@@ -27,7 +27,7 @@ class PycoAdaptor {
     Scalar const* const data_;
   };
 
-  PycoAdaptor(py::array_t<Scalar, 0> const pts) {
+  explicit PycoAdaptor(py::array_t<Scalar, 0> const pts) {
     ArrayLayout<Scalar> layout(pts);
 
     if (layout.info.ndim != 2) {
