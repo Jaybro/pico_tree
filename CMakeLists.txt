@@ -39,7 +39,7 @@ if(NOT SKBUILD)
             endif()
 
             enable_testing()
-            add_subdirectory(test)
+            add_subdirectory(test/pico_tree)
         endif()
     else()
         message(STATUS "GTest not found. Unit tests will not be build.")
