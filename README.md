@@ -29,7 +29,7 @@ The examples show how PicoTree can be used:
 Minimum:
 
 * A compiler that is compliant with the C++11 standard or higher.
-* [CMake](https://cmake.org/). It is also possible to simply copy and paste the contents of the [src](./src/) directory given that PicoTree is header only.
+* [CMake](https://cmake.org/). It is also possible to just copy and paste the [pico_tree](./src/) directory into an include directory.
 
 Optional:
 
