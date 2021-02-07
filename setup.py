@@ -13,8 +13,8 @@ def compile_cxx_flags():
         # result causes the following compile error in cmath using MinGW:
         #   cmath:1121:11: error: '::hypot' has not been declared
         #       using ::hypot;
-        # Issue and backport references: https://github.com/python/cpython/pull/11283
-        # Gone: https://github.com/python/cpython/blob/v3.7.3/PC/pyconfig.h
+        # Issue and backport reference: https://github.com/python/cpython/pull/11283
+        # Issue solved: https://github.com/python/cpython/blob/v3.7.3/PC/pyconfig.h
         python_version = sys.version_info[:3]
         if python_version < (3, 7, 3):
             cxx_flags.append('-D_hypot=hypot')
@@ -38,10 +38,10 @@ setup(name='pico_tree',
       description='PicoTree Python Bindings',
       author='Jonathan Broere',
       url='https://github.com/Jaybro/pico_tree',
-      license="MIT",
-      packages=["pico_tree"],
-      package_dir={"": "src/pyco_tree"},
-      cmake_install_dir="src/pyco_tree/pico_tree",
+      license='MIT',
+      packages=['pico_tree'],
+      package_dir={'': 'src/pyco_tree'},
+      cmake_install_dir='src/pyco_tree/pico_tree',
       cmake_args=compile_cmake_args(),
       python_requires='>=3.5',
       install_requires=['numpy'],

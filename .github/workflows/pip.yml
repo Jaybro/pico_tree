@@ -18,6 +18,8 @@ jobs:
         with:
           python-version: "3.5"
 
+      # The GCC and MSVC compilers integrate OpenMP. Newer versions of CLang
+      # as well, but no just yet via workflows.
       - name: Install OpenMP for macOS
         if: runner.os == 'macOS'
         run: brew install llvm libomp
@@ -30,10 +32,10 @@ jobs:
           pip install scikit-build
           pip install pybind11-global
 
-      # Without this, running the unit tests will fail: The installed package
-      # or built module will not be found.
+      # Running the unit tests will fail without setting up the environment. 
+      # The installed package or built module will not be found.
       # See example: https://github.com/pybind/scikit_build_example/blob/master/.github/workflows/pip.yml
-      - name: Prepare compiler environment for Windows
+      - name: Setting up compiler environment for Windows
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -43,6 +45,6 @@ jobs:
         working-directory: ${{runner.workspace}}
         run: pip install ./pico_tree -v
 
-      - name: Test Bindings
+      - name: Test Python bindings
         working-directory: ${{runner.workspace}}
         run: python -m unittest discover -s ./pico_tree/test/pyco_tree -p '*_test.py' -v
