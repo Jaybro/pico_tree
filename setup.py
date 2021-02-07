@@ -12,6 +12,7 @@ def compile_cxx_flags():
         # result causes the following compile error in cmath using MinGW:
         #   cmath:1121:11: error: '::hypot' has not been declared
         #       using ::hypot;
+        # Issue and backport references: https://github.com/python/cpython/pull/11283
         # Gone: https://github.com/python/cpython/blob/v3.7.3/PC/pyconfig.h
         python_version = sys.version_info[:3]
         if python_version < (3, 7, 3):
