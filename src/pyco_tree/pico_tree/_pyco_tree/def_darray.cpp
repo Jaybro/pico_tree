@@ -7,7 +7,13 @@ namespace py = pybind11;
 namespace pyco_tree {
 
 void DefDArray(pybind11::module* m) {
-  py::class_<DArray>(*m, "DArray")
+  py::class_<DArray>(
+      *m,
+      "DArray",
+      "A class whos instance is a dynamic array of numpy arrays. The numpy "
+      "arrays don't have to be of equal size but do always have a single "
+      "dimension. An instance cannot be resized but its contents can be "
+      "modified.")
       .def(
           py::init<py::dtype>(),
           py::arg("dtype").none(false),
