@@ -6,6 +6,7 @@ from skbuild import setup
 
 def compile_cxx_flags():
     cxx_flags = []
+
     if sys.platform == 'win32':
         # Old versions of CPython have a bug where "hypot" is defined as
         # "_hypot". This definition conflicts with the one from math.h and as a
@@ -17,6 +18,7 @@ def compile_cxx_flags():
         python_version = sys.version_info[:3]
         if python_version < (3, 7, 3):
             cxx_flags.append('-D_hypot=hypot')
+
     return cxx_flags
 
 
