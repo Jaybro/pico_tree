@@ -23,16 +23,16 @@ else()
     
     # Ignoring manually specified flags results in a warning. Here follows
     # fake usage of the flags.
-    set(IGNORE_WARNING "${PYTHON_EXECUTABLE}${PYTHON_VERSION_STRING}${PYTHON_INCLUDE_DIR}${PYTHON_LIBRARY}")
+    set(IGNORE_WARNING "${PYTHON_EXECUTABLE}${PYTHON_INCLUDE_DIR}${PYTHON_LIBRARY}")
     
     # Unset the flags to solve both previously mentioned issue.
     unset(PYTHON_EXECUTABLE CACHE)
-    unset(PYTHON_VERSION_STRING CACHE)
     unset(PYTHON_INCLUDE_DIR CACHE)
     unset(PYTHON_LIBRARY CACHE)
     
-    # pybind11 also looks for Python.
-    find_package(Python COMPONENTS Interpreter Development)
+    # We want the version specified by scikit build. In environments where
+    # multiple versions of Python are installed, this can prevent a mixup.
+    find_package(Python ${PYTHON_VERSION_STRING} EXACT COMPONENTS Interpreter Development)
     find_package(pybind11 CONFIG)
     find_package(OpenMP)
 
