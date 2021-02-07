@@ -79,20 +79,22 @@ void DefKdTree(std::string const& name, py::module* m) {
                    ", sdim=" + std::to_string(t.sdim()) +
                    ", npts=" + std::to_string(t.npts()) + ")";
           })
-      .def(
+      .def_property_readonly(
           "dtype_index",
           [](KdTree const&) { return py::dtype::of<Index>(); },
-          "Return the dtype of an Index.")
-      .def(
+          "Get the dtype of indices returned by this tree.")
+      .def_property_readonly(
           "dtype_scalar",
           [](KdTree const&) { return py::dtype::of<Scalar>(); },
-          "Return the dtype of a Scalar.")
-      .def(
+          "Get the dtype of scalars returned by this tree.")
+      .def_property_readonly(
           "dtype_neighbor",
           [](KdTree const&) { return py::dtype::of<Neighbor>(); },
-          "Return the dtype of a Neighbor.")
-      .def("sdim", &KdTree::sdim, "Return the spatial dimension of the KdTree.")
-      .def("npts", &KdTree::npts, "Return the number of points of the KdTree.")
+          "Get the dtype of neighbors returned by this tree.")
+      .def_property_readonly(
+          "sdim", &KdTree::sdim, "Get the spatial dimension of the KdTree.")
+      .def_property_readonly(
+          "npts", &KdTree::npts, "Get the number of points of the KdTree.")
       // Because of the ambiguity that arises from function overloading, we have
       // to show which function we mean by using a static_cast.
       .def(

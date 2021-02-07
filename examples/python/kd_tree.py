@@ -14,8 +14,8 @@ def tree_creation_and_query_types():
     # In and output distances are squared distances when using Metric.L2.
     t = pt.KdTree(p, pt.Metric.L2, 1)
     print(f"{t}")
-    print(f"Number of points used to build the tree: {t.npts()}")
-    print(f"Spatial dimension of the tree: {t.sdim()}")
+    print(f"Number of points used to build the tree: {t.npts}")
+    print(f"Spatial dimension of the tree: {t.sdim}")
     value = -2.0
     print(f"Metric applied to {value}: {t.metric(value)}")
     print()
@@ -97,11 +97,11 @@ def array_initialization():
 
     # This type of forward initialization of arrays may be useful to streamline
     # loops that depend on them and where reusing memory is desired. E.g.: ICP.
-    knns = np.empty((0), dtype=t.dtype_neighbor())
+    knns = np.empty((0), dtype=t.dtype_neighbor)
     print(knns.dtype)
-    rnns = pt.DArray(dtype=t.dtype_neighbor())
+    rnns = pt.DArray(dtype=t.dtype_neighbor)
     print(rnns.dtype)
-    bnns = pt.DArray(dtype=t.dtype_index())
+    bnns = pt.DArray(dtype=t.dtype_index)
     print(bnns.dtype)
     print()
 

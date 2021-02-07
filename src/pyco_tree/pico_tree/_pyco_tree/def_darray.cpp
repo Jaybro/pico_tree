@@ -48,7 +48,10 @@ void DefDArray(pybind11::module* m) {
           [](DArray const& a) -> bool { return !a.empty(); },
           "Check whether the list is nonempty")
       .def("__len__", &DArray::size)
-      .def_property_readonly("dtype", &DArray::dtype);
+      .def_property_readonly(
+          "dtype",
+          &DArray::dtype,
+          "Get the dtype of neighbors returned by this array.");
 }
 
 }  // namespace pyco_tree
