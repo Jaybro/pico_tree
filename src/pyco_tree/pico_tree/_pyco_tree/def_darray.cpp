@@ -10,14 +10,17 @@ void DefDArray(pybind11::module* m) {
   py::class_<DArray>(
       *m,
       "DArray",
-      "A class whos instance is a dynamic array of numpy arrays. The numpy "
-      "arrays don't have to be of equal size but do always have a single "
-      "dimension. An instance cannot be resized but its contents can be "
-      "modified.")
+      "A class whos instance is a dynamic array of numpy arrays. Resizing an "
+      "array and its contents is not possible but the values of the numpy "
+      "arrays may be modified. The numpy arrays always have a single dimension "
+      "and they don't have to be of equal size.")
       .def(
-          py::init<py::dtype>(),
+          py::init([](py::object dtype) {
+            return DArray(py::dtype::from_args(dtype));
+          }),
           py::arg("dtype").none(false),
-          "Create a DArray from a numpy dtype.")
+          "Create a DArray from any object that can be used to construct a "
+          "numpy dtype.")
       .def(
           "__iter__",
           [](DArray& a) { return py::make_iterator(a.begin(), a.end()); },

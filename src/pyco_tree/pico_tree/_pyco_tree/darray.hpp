@@ -195,7 +195,7 @@ class DArray {
     } else if (dtype.equal(pybind11::dtype::of<int>())) {
       Reset(std::vector<std::vector<int>>());
     } else {
-      throw std::invalid_argument("Type not supported.");
+      throw std::invalid_argument("dtype not supported.");
     }
   }
 
