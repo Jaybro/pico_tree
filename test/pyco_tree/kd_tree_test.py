@@ -38,6 +38,41 @@ class KdTreeTest(unittest.TestCase):
         t = pt.KdTree(a, pt.Metric.L1, 10)
         self.assertEqual(t.metric(-2.0), 2)
 
+    def test_search_knn(self):
+        a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
+        t = pt.KdTree(a, pt.Metric.L2, 10)
+
+        # Test if the query actually works
+        nns0 = t.search_knn(a, 2)
+        self.assertEqual(nns0.shape, (3, 2))
+
+        for i in range(len(nns0)):
+            self.assertEqual(nns0[i][0][0], i)
+            self.assertAlmostEqual(nns0[i][0][1], 0)
+
+        # Test that the memory is re-used
+        nns0[0][0][0] = 42
+        t.search_knn(a, 2, nns0)
+        self.assertEqual(nns0[0][0][0], 0)
+
+    def test_search_aknn(self):
+        a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
+        t = pt.KdTree(a, pt.Metric.L2, 10)
+        r = 1.0
+
+        # Test if the query actually works
+        nns0 = t.search_aknn(a, 2, r)
+        self.assertEqual(nns0.shape, (3, 2))
+
+        for i in range(len(nns0)):
+            self.assertEqual(nns0[i][0][0], i)
+            self.assertAlmostEqual(nns0[i][0][1], 0)
+
+        # Test that the memory is re-used
+        nns0[0][0][0] = 42
+        t.search_aknn(a, 2, r, nns0)
+        self.assertEqual(nns0[0][0][0], 0)
+
     def test_creation_darray(self):
         # A DArray can be created from 3 different dtypes or their descriptors.
         # It is the easiest to use the dtype properties of the KdTree.
