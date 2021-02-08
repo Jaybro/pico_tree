@@ -42,6 +42,20 @@ def _build_kd_tree_3d(pts: np.array, metric: Metric, max_leaf_size: int):
 
 
 def KdTree(pts: np.array, metric: Metric, max_leaf_size: int):
+    """
+    Create a KdTree. A KdTree is a binary tree that partitions space using hyper planes.
+
+    Args:
+        pts (np.array): Input point set represented by a numpy ndarray of two dimensions.
+        metric (Metric): Reference to a distance function.
+        max_leaf_size (int): The maximum amount of points contained by a leaf node.
+
+    Returns:
+        A KdTree instance.
+
+    Raises:
+        TypeError: Invalid numpy ndarray argument.
+    """
     if pts.ndim != 2:
         raise TypeError("pts.ndim should equal 2")
 
