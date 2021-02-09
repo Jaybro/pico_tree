@@ -81,6 +81,7 @@ class KdTreeTest(unittest.TestCase):
         nns0 = t.search_radius(a, search_radius)
         self.assertEqual(len(nns0), 3)
         self.assertEqual(nns0.dtype, t.dtype_neighbor)
+        self.assertTrue(nns0)
 
         for i, n in enumerate(nns0):
             self.assertEqual(n[0][0], i)
@@ -105,6 +106,7 @@ class KdTreeTest(unittest.TestCase):
         nns0 = t.search_box(min, max)
         self.assertEqual(len(nns0), 4)
         self.assertEqual(nns0.dtype, t.dtype_index)
+        self.assertTrue(nns0)
 
         # Test that the memory is re-used
         nns0[0][0] = 42
@@ -125,18 +127,21 @@ class KdTreeTest(unittest.TestCase):
         t = pt.KdTree(a, pt.Metric.L2, 10)
         d = pt.DArray(t.dtype_neighbor)
         self.assertEqual(d.dtype, t.dtype_neighbor)
+        self.assertFalse(d)
 
         # 2) {'names':['index','distance'], 'formats':['<i4','<f8'], 'offsets':[0,8], 'itemsize':16}
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float64)
         t = pt.KdTree(a, pt.Metric.L2, 10)
         d = pt.DArray(dtype=t.dtype_neighbor)
         self.assertEqual(d.dtype, t.dtype_neighbor)
+        self.assertFalse(d)
 
         # 3) int32
         d = pt.DArray(np.int32)
         self.assertEqual(d.dtype, t.dtype_index)
         d = pt.DArray(np.dtype(np.int32))
         self.assertEqual(d.dtype, t.dtype_index)
+        self.assertFalse(d)
 
 
 if __name__ == '__main__':
