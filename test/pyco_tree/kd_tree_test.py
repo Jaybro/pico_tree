@@ -55,27 +55,6 @@ class KdTreeTest(unittest.TestCase):
         t.search_knn(a, 2, nns0)
         self.assertEqual(nns0[0][0][0], 0)
 
-    def test_search_radius(self):
-        a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
-        t = pt.KdTree(a, pt.Metric.L2, 10)
-
-        search_radius = t.metric(2.5)
-        nns0 = t.search_radius(a, search_radius)
-        self.assertEqual(len(nns0), 3)
-
-        for i in range(len(nns0)):
-            self.assertEqual(nns0[i][0][0], i)
-            self.assertAlmostEqual(nns0[i][0][1], 0)
-
-        # Test that the memory is re-used
-        nns0[0][0][0] = 42
-        t.search_radius(a, search_radius, nns0)
-        self.assertEqual(nns0[0][0][0], 0)
-
-        for i, n in enumerate(nns0):
-            self.assertEqual(n[0][0], i)
-            self.assertAlmostEqual(n[0][1], 0)
-
     def test_search_aknn(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
         t = pt.KdTree(a, pt.Metric.L2, 10)
@@ -93,6 +72,49 @@ class KdTreeTest(unittest.TestCase):
         nns0[0][0][0] = 42
         t.search_aknn(a, 2, r, nns0)
         self.assertEqual(nns0[0][0][0], 0)
+
+    def test_search_radius(self):
+        a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
+        t = pt.KdTree(a, pt.Metric.L2, 10)
+
+        search_radius = t.metric(2.5)
+        nns0 = t.search_radius(a, search_radius)
+        self.assertEqual(len(nns0), 3)
+        self.assertEqual(nns0.dtype, t.dtype_neighbor)
+
+        for i, n in enumerate(nns0):
+            self.assertEqual(n[0][0], i)
+            self.assertAlmostEqual(n[0][1], 0)
+
+        # Test that the memory is re-used
+        nns0[0][0][0] = 42
+        t.search_radius(a, search_radius, nns0)
+        self.assertEqual(nns0[0][0][0], 0)
+
+        # This checks if DArray is also a sequence.
+        for i in range(len(nns0)):
+            self.assertEqual(nns0[i][0][0], i)
+            self.assertAlmostEqual(nns0[i][0][1], 0)
+
+    def test_search_box(self):
+        a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
+        t = pt.KdTree(a, pt.Metric.L2, 10)
+
+        min = np.array([[0, 0], [2, 2], [0, 0], [6, 6]], dtype=np.float32)
+        max = np.array([[3, 3], [3, 3], [9, 9], [9, 9]], dtype=np.float32)
+        nns0 = t.search_box(min, max)
+        self.assertEqual(len(nns0), 4)
+        self.assertEqual(nns0.dtype, t.dtype_index)
+
+        # Test that the memory is re-used
+        nns0[0][0] = 42
+        t.search_box(min, max, nns0)
+        self.assertEqual(nns0[0][0], 0)
+
+        # Check the amount of indices found.
+        sizes = [1, 0, 3, 1]
+        for n, s in zip(nns0, sizes):
+            self.assertEqual(len(n), s)
 
     def test_creation_darray(self):
         # A DArray can be created from 3 different dtypes or their descriptors.
