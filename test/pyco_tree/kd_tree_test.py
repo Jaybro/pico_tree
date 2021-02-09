@@ -55,6 +55,27 @@ class KdTreeTest(unittest.TestCase):
         t.search_knn(a, 2, nns0)
         self.assertEqual(nns0[0][0][0], 0)
 
+    def test_search_radius(self):
+        a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
+        t = pt.KdTree(a, pt.Metric.L2, 10)
+
+        search_radius = t.metric(2.5)
+        nns0 = t.search_radius(a, search_radius)
+        self.assertEqual(len(nns0), 3)
+
+        for i in range(len(nns0)):
+            self.assertEqual(nns0[i][0][0], i)
+            self.assertAlmostEqual(nns0[i][0][1], 0)
+
+        # Test that the memory is re-used
+        nns0[0][0][0] = 42
+        t.search_radius(a, search_radius, nns0)
+        self.assertEqual(nns0[0][0][0], 0)
+
+        for i, n in enumerate(nns0):
+            self.assertEqual(n[0][0], i)
+            self.assertAlmostEqual(n[0][1], 0)
+
     def test_search_aknn(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
         t = pt.KdTree(a, pt.Metric.L2, 10)
