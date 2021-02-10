@@ -125,6 +125,9 @@ class KdTreeTest(unittest.TestCase):
         for n, s in zip(nns, sizes):
             self.assertEqual(len(n), s)
 
+        # Test negative indexing.
+        self.assertEqual(len(nns[-1]), 3)
+
     def test_creation_darray(self):
         # A DArray can be created from 3 different dtypes or their descriptors.
         # It is the easiest to use the dtype properties of the KdTree.
