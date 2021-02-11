@@ -4,8 +4,8 @@ import pico_tree as pt
 import numpy as np
 from pathlib import Path
 from time import perf_counter
-#from scipy.spatial import KDTree, cKDTree
-#from sklearn.neighbors import KDTree as sklKDTree
+from scipy.spatial import KDTree as spKDTree, cKDTree as spcKDTree
+from sklearn.neighbors import KDTree as skKDTree
 
 
 def tree_creation_and_query_types():
@@ -111,31 +111,36 @@ def performance_test_pico_tree():
     # The benchmark documention, docs/benchmark.md section "Running a new
     # benchmark", explains how to generate a scans.bin file from an online
     # dataset.
-    path_bin = Path(__file__).parent.joinpath("scans.bin")
-    p = np.fromfile(path_bin, np.float64).reshape((-1, 3))
-    # pico_tree has pretty close to the same performance in Python vs C++.
-    # Following numbers are tree build times for a max leaf size of 10 and
-    # about 13 million 3D points:
-    # - pico_tree.KdTree ~2.4s
-    # - scipy.spatial.KDTree ~136.1s
-    # - scipy.spatial.cKDTree ~11.6s
-    # - sklearn.neighbors.KDTree ~30.0s
+    try:
+        p = np.fromfile(Path(__file__).parent / "scans.bin",
+                        np.float64).reshape((-1, 3))
+    except FileNotFoundError as e:
+        print(f"Skipping test. File does not exist: {e.filename}")
+        return
+
     cnt_build_time_before = perf_counter()
+    # Tree creation is only slightly slower in Python vs C++ using the bindings.
     t = pt.KdTree(p, pt.Metric.L2, 10)
-    #t = KDTree(p, leafsize=10)
-    #t = cKDTree(p, leafsize=10)
-    #t = sklKDTree(p, leaf_size=10)
+    #t = spKDTree(p, leafsize=10)
+    #t = spcKDTree(p, leafsize=10)
+    #t = skKDTree(p, leaf_size=10)
     cnt_build_time_after = perf_counter()
     print(f"{t} was built in {(cnt_build_time_after - cnt_build_time_before) * 1000.0}ms")
-    # A sizeable amount of time is spent creating memory. Re-using the output
-    # matrix reduces the next query time.
     # Use the OMP_NUM_THREADS environment variable to influence the number of
     # threads used for querying: export OMP_NUM_THREADS=1
+    k = 1
     cnt_query_time_before = perf_counter()
-    knns = t.search_knn(p, 12)
+    # Searching for nearest neighbors is close to a constant second slower
+    # using the bindings as compared to the C++ benchmark (regardless of k).
+    # The C++ benchmark may have been optimized more because is very simple and
+    # likely doesn't represent the performance of the Python bindings. The
+    # bindings also have various extra overhead: checks, memory creation,
+    # OpenMP, etc. TODO Measure overhead vs queries.
+    knns = t.search_knn(p, k)
+    #dd, ii = t.query(p, k=k)
     cnt_query_time_after = perf_counter()
     print(
-        f"{knns.shape[0]} points queried in {(cnt_query_time_after - cnt_query_time_before) * 1000.0}ms")
+        f"{len(p)} points queried in {(cnt_query_time_after - cnt_query_time_before) * 1000.0}ms")
     print()
 
 
