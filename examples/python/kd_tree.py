@@ -108,7 +108,7 @@ def array_initialization():
 
 def performance_test_pico_tree():
     print("*** Performance against scans.bin ***")
-    # The benchmark documention, docs/benchmark.md section "Running a new
+    # The benchmark documentation, docs/benchmark.md section "Running a new
     # benchmark", explains how to generate a scans.bin file from an online
     # dataset.
     try:
@@ -137,8 +137,8 @@ def performance_test_pico_tree():
     # doesn't represent the performance of the Python bindings. The bindings
     # also have various extra overhead: checks, memory creation, OpenMP, etc.
     # TODO It would be nice to measure the overhead w.r.t. the actual query.
-    knns = t.search_knn(p, k)
-    #dd, ii = t.query(p, k=k)
+    unused_knns = t.search_knn(p, k)
+    # unused_dd, unused_ii = t.query(p, k=k)
     cnt_query_time_after = perf_counter()
     print(
         f"{len(p)} points queried in {(cnt_query_time_after - cnt_query_time_before) * 1000.0}ms")
