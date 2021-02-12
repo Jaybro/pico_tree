@@ -2,7 +2,7 @@
 
 [![build-and-test](https://github.com/Jaybro/pico_tree/workflows/build-and-test/badge.svg)](https://github.com/Jaybro/pico_tree/actions?query=workflow%3Abuild-and-test) [![pip](https://github.com/Jaybro/pico_tree/workflows/pip/badge.svg)](https://github.com/Jaybro/pico_tree/actions?query=workflow%3Apip)
 
-PicoTree is a C++ header only library with [Python bindings](https://github.com/pybind/pybind11) for range searches and nearest neighbor searches using a KdTree.
+PicoTree is a C++ header only library with [Python bindings](https://github.com/pybind/pybind11) for nearest neighbor searches and range searches using a KdTree.
 
 See the table below to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library versus several other implementations:
 
@@ -12,9 +12,9 @@ See the table below to get an impression of the performance provided by the [KdT
 | [SciPy KDTree][sppk]        | ...       | 117.9s        | ...       | +inf        |
 | [SciPy cKDTree][spck]       | ...       | 9.6s          | ...       | 14.1s       |
 | [Scikit-learn KDTree][skck] | ...       | 27.1s         | ...       | 55.4s       |
-| PicoTree                    | 2.0s      | 2.1s          | 3.1s      | 4.1s        |
+| PicoTree KdTree             | 2.0s      | 2.1s          | 3.1s      | 4.1s        |
 
-The [comparison](./examples/python/kd_tree.py) was generated using 13729039 3d points from a [LiDAR](./docs/benchmark.md) scan, float64, with k = 1 for queries. Note that the Python Knn benchmark does not directly wrap the C++ Knn benchmark, meaning that they can't be compared directly. A more detailed [comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
+The [comparison](./examples/python/kd_tree.py) was generated using 13729039 3d points from a [LiDAR](./docs/benchmark.md) scan, float64, with k = 1 for queries. Note that the Python Knn benchmark is not a binding on top of the C++ Knn benchmark. This means that they shouldn't be compared directly. A more detailed [comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
 Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 

@@ -1,7 +1,7 @@
 #pragma once
 
-//! \mainpage PicoTree is a small C++ header only library for range searches and
-//! nearest neighbor searches using a KdTree.
+//! \mainpage PicoTree is a C++ header only library for nearest neighbor
+//! searches and range searches using a KdTree.
 //! \file core.hpp
 //! \brief Contains various common utilities.
 
