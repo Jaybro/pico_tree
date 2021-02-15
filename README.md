@@ -6,15 +6,15 @@ PicoTree is a C++ header only library with [Python bindings](https://github.com/
 
 See the table below to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library versus several other implementations:
 
-|                             | Build C++ | Build Python  | Knn C++   | Knn Python  |
-| --------------------------- | --------- | ------------- | ----------| ----------- |
-| [nanoflann][nano]           | 3.6s      | ...           | 5.2s      | ...         |
-| [SciPy KDTree][sppk]        | ...       | 117.9s        | ...       | +inf        |
-| [SciPy cKDTree][spck]       | ...       | 9.6s          | ...       | 14.1s       |
-| [Scikit-learn KDTree][skck] | ...       | 27.1s         | ...       | 55.4s       |
-| PicoTree KdTree             | 2.0s      | 2.1s          | 3.1s      | 4.1s        |
+|                                     | Build C++ | Build Python  | Knn C++   | Knn Python  |
+| ----------------------------------- | --------- | ------------- | ----------| ----------- |
+| [nanoflann][nano] v1.3.2            | 3.6s      | ...           | 5.2s      | ...         |
+| [SciPy KDTree][sppk] v1.5.0         | ...       | 117.9s        | ...       | +inf        |
+| [SciPy cKDTree][spck] v1.5.0        | ...       | 9.6s          | ...       | 14.1s       |
+| [Scikit-learn KDTree][skck] 0.22.2  | ...       | 27.1s         | ...       | 55.4s       |
+| PicoTree KdTree v0.6.0              | 2.0s      | 2.1s          | 3.1s      | 4.1s        |
 
-The [comparison](./examples/python/kd_tree.py) was generated using 13729039 3d points from a [LiDAR](./docs/benchmark.md) scan, float64, with k = 1 for queries. Note that the Python Knn benchmark is not a binding on top of the C++ Knn benchmark. This means that they shouldn't be compared directly. A more detailed [comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
+The comparison was generated using 13729039 3d points from a [LiDAR](./docs/benchmark.md) scan, float64, with k = 1 for queries. Note that a different C++ back-end was used for each of the `Knn C++` and `Knn Python` benchmarks. This means that they shouldn't be compared directly. See the [Python](./examples/python/kd_tree.py) comparison for more details. A more detailed [C++](./docs/benchmark.md) comparison of PicoTree is available with respect to [nanoflann][nano].
 
 Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
