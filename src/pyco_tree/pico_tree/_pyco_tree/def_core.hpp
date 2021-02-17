@@ -1,8 +1,5 @@
 #pragma once
 
-// For MetricLx. Changes in the future.
-#include <pico_tree/kd_tree.hpp>
-
 #include "pyco_adaptor.hpp"
 
 namespace pyco_tree {

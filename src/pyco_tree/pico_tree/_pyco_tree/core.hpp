@@ -2,7 +2,7 @@
 
 #include <pybind11/numpy.h>
 
-#include <pico_tree/core.hpp>
+#include <pico_tree/metric.hpp>
 
 namespace py = pybind11;
 
