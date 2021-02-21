@@ -32,7 +32,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * Static tree builds.
   * Thread safe queries.
 
-* CoverTree <span style="color:red">***Work in progress***</span>
+* CoverTree - ***Work in progress***
   * Nearest neighbors and approximate nearest neighbors searches.
   * Customizable metrics that don't have to be Cartesian such as [spherical metrics](https://en.wikipedia.org/wiki/Great-circle_distance).
 
