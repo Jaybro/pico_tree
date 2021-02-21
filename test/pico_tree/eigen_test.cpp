@@ -68,7 +68,7 @@ void CheckEigenAdaptorInterface() {
       "ADAPTOR_DIM_NOT_EQUAL_TO_MATRIX_COLSATCOMPILETIME");
 
   ColMatrix col_matrix = ColMatrix::Random(4, 8);
-  RowMatrix row_matrix = RowMatrix::Random(8, 4);
+  RowMatrix row_matrix = RowMatrix::Random(4, 8);
 
   // Copies of the matrices.
   pico_tree::EigenAdaptor<Index, ColMatrix> col_adaptor(col_matrix);
@@ -103,7 +103,7 @@ TEST(EigenTest, ValueMove) {
   using RowMatrix = Eigen::Matrix<float, 4, Eigen::Dynamic, Eigen::RowMajor>;
 
   ColMatrix col_matrix = ColMatrix::Random(4, 8);
-  RowMatrix row_matrix = RowMatrix::Random(8, 4);
+  RowMatrix row_matrix = RowMatrix::Random(4, 8);
 
   {
     // Copies of the matrices.
