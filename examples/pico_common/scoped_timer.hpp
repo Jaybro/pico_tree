@@ -20,13 +20,15 @@ class ScopedTimer {
   ~ScopedTimer() {
     std::chrono::duration<double> elapsed_seconds =
         std::chrono::high_resolution_clock::now() - start_;
-    std::cout << "[" << name_ << "] Elapsed time: " << elapsed_seconds.count()
-              << "s\n";
+    std::cout << "[" << name_
+              << "] Elapsed time: " << (elapsed_seconds.count() * 1000.0)
+              << " ms\n";
 
     if (times_ > 1) {
       std::cout << "[" << name_ << "] Average time: "
-                << (elapsed_seconds.count() / static_cast<double>(times_))
-                << "s\n";
+                << ((elapsed_seconds.count() / static_cast<double>(times_)) *
+                    1000.0)
+                << " ms\n";
     }
   }
 

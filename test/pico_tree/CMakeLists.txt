@@ -16,6 +16,7 @@ include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 set(TEST_TARGET_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/kd_tree_test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cover_tree_test.cpp
 )
 
 # gtest_add_tests fails on generator expressions like:

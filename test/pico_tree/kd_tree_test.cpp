@@ -2,7 +2,6 @@
 
 #include <pico_adaptor.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <scoped_timer.hpp>
 
 #include "common.hpp"
 
