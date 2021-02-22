@@ -34,7 +34,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 * CoverTree - ***Work in progress***
   * Nearest neighbors and approximate nearest neighbors searches.
-  * Customizable metrics that don't have to be Cartesian such as [spherical metrics](https://en.wikipedia.org/wiki/Great-circle_distance).
+  * Customizable metrics that don't have to be Cartesian such as [spherical](https://en.wikipedia.org/wiki/Great-circle_distance) metrics.
 
 The examples show how PicoTree can be used:
 
