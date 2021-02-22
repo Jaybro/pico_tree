@@ -1,7 +1,7 @@
 #pragma once
 
-//#include "metric.hpp"
-#include "kd_tree.hpp"
+#include "pico_tree/internal/search_visitor.hpp"
+#include "pico_tree/metric.hpp"
 
 namespace pico_tree {
 
@@ -42,8 +42,8 @@ class CoverTree {
     std::vector<Node*> children;
   };
 
-  //! \brief This class contains (what we will call) the "doubling base" of
-  //! the tree.
+  //! \brief This class contains (what we will call) the "leveling base" of the
+  //! tree.
   //! \details It determines how fast the levels of the tree increase or
   //! decrease. When we raise "base" to the power of a certain natural number,
   //! that exponent represents the active level of the tree.
@@ -84,7 +84,7 @@ class CoverTree {
   //! \private
   CoverTree(CoverTree&&) = default;
 
-  //! \brief Creates a CoverTree given \p points and a doubling \p base.
+  //! \brief Creates a CoverTree given \p points and a leveling \p base.
   CoverTree(Points points, Scalar base)
       : points_(std::move(points)),
         metric_(points_.sdim()),
@@ -336,7 +336,7 @@ class CoverTree {
     for (auto const& m : node->children) {
       // Algorithm 1 from paper "Faster Cover Trees" has a mistake. It checks
       // with respect to the nearest point, not the query point itself,
-      // intersecting the wrong balls.
+      // intersecting the wrong spheres.
       // TODO Change ParentDistance into MaxDistance(*m);
       // TODO The distance calculation can be cached. When SearchNeighbor is
       // called it's calculated again.
