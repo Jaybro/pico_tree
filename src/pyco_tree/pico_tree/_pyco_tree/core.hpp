@@ -22,7 +22,7 @@ struct StringTraits<double> {
 };
 
 template <typename Scalar, int Dim>
-struct StringTraits<pico_tree::MetricL1<Scalar, Dim>> {
+struct StringTraits<pico_tree::L1<Scalar, Dim>> {
   static std::string String() { return "L1"; }
 };
 

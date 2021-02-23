@@ -4,13 +4,13 @@
 
 namespace pico_tree {
 
-//! \brief L1 metric using the L1 norm for measuring distances between points.
+//! \brief L1 metric for measuring distances between points.
 //! \see MetricL2
 template <typename Scalar, int Dim>
-class MetricL1 {
+class L1 {
  public:
-  //! \brief Creates a MetricL1 given a spatial dimension.
-  inline explicit MetricL1(int const dim) : dim_{dim} {}
+  //! \brief Creates an L1 metric given a spatial dimension.
+  inline explicit L1(int const dim) : dim_{dim} {}
 
   //! \brief Calculates the distance between points \p p0 and \p p1.
   //! \tparam P0 Point type.

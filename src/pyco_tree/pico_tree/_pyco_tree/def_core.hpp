@@ -5,7 +5,7 @@
 namespace pyco_tree {
 
 template <typename Points>
-using MetricL1 = pico_tree::MetricL1<typename Points::ScalarType, Points::Dim>;
+using L1 = pico_tree::L1<typename Points::ScalarType, Points::Dim>;
 
 template <typename Points>
 using MetricL2 = pico_tree::MetricL2<typename Points::ScalarType, Points::Dim>;

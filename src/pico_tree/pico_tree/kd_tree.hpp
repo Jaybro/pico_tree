@@ -420,7 +420,7 @@ class KdTree {
   //! MetricL2.
   //! \code{.cpp}
   //! Scalar distance = -2.0;
-  //! // E.g., MetricL1: 2.0, MetricL2: 4.0
+  //! // E.g., L1: 2.0, MetricL2: 4.0
   //! Scalar metric_distance = kdtree.metric()(distance);
   //! \endcode
   //! \param n Output points.
