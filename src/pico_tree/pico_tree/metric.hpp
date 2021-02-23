@@ -92,7 +92,7 @@ class L2 {
 };
 
 //! \brief The L2Squared semimetric measures squared Euclidean distances between
-//! points.
+//! points. It does not satisfy the triangle inequality.
 //! \see L1
 //! \see L2
 template <typename Scalar, int Dim>
