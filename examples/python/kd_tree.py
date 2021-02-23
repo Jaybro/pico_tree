@@ -11,8 +11,8 @@ from sklearn.neighbors import KDTree as skKDTree
 def tree_creation_and_query_types():
     print("*** KdTree Creation And Basic Information ***")
     p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
-    # In and output distances are squared distances when using Metric.L2.
-    t = pt.KdTree(p, pt.Metric.L2, 1)
+    # Both the in and output distances are squared when using Metric.L2Squared.
+    t = pt.KdTree(p, pt.Metric.L2Squared, 1)
     print(f"{t}")
     print(f"Number of points used to build the tree: {t.npts}")
     print(f"Spatial dimension of the tree: {t.sdim}")
@@ -120,7 +120,7 @@ def performance_test_pico_tree():
 
     cnt_build_time_before = perf_counter()
     # Tree creation is only slightly slower in Python vs C++ using the bindings.
-    t = pt.KdTree(p, pt.Metric.L2, 10)
+    t = pt.KdTree(p, pt.Metric.L2Squared, 10)
     #t = spKDTree(p, leafsize=10)
     #t = spcKDTree(p, leafsize=10)
     #t = skKDTree(p, leaf_size=10)
