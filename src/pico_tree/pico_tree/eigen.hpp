@@ -127,10 +127,10 @@ class EigenAdaptor
 
 //! \brief L1 metric using the L1 norm for measuring distances between points.
 template <typename Scalar>
-class EigenMetricL1 {
+class EigenL1 {
  public:
-  //! \brief Creates an EigenMetricL1.
-  inline EigenMetricL1(int const) {}
+  //! \brief Creates an EigenL1.
+  inline EigenL1(int const) {}
 
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
@@ -149,13 +149,13 @@ class EigenMetricL1 {
   inline Scalar operator()(Scalar const x) const { return std::abs(x); }
 };
 
-//! \brief The L2 metric measures distances between points using the squared L2
-//! norm.
+//! \brief The EigenL2Squared semimetric measures squared Euclidean distances
+//! between points.
 template <typename Scalar>
-class EigenMetricL2 {
+class EigenL2Squared {
  public:
-  //! \brief Creates an EigenMetricL2.
-  inline EigenMetricL2(int const) {}
+  //! \brief Creates an EigenL2Squared.
+  inline EigenL2Squared(int const) {}
 
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>

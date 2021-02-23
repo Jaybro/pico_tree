@@ -157,7 +157,7 @@ void Metrics() {
         Point::Scalar,
         Dim,
         Adaptor,
-        pico_tree::EigenMetricL2<Scalar>>
+        pico_tree::EigenL2Squared<Scalar>>
         tree(adaptor, kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
@@ -168,13 +168,9 @@ void Metrics() {
   }
 
   {
-    pico_tree::KdTree<
-        Index,
-        Point::Scalar,
-        Dim,
-        Adaptor,
-        pico_tree::EigenMetricL1<Scalar>>
-        tree(adaptor, kMaxLeafCount);
+    pico_tree::
+        KdTree<Index, Point::Scalar, Dim, Adaptor, pico_tree::EigenL1<Scalar>>
+            tree(adaptor, kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("pico_tree eigen l1", kRunCount);

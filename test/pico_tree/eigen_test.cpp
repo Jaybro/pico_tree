@@ -18,7 +18,7 @@ using EigenMap = Eigen::Map<
 template <typename Point>
 using EigenAdaptor = pico_tree::EigenAdaptor<Index, EigenMap<Point>>;
 
-TEST(EigenTest, MetricL1) {
+TEST(EigenTest, EigenL1) {
   using PointX = Eigen::Vector2f;
   using Scalar = typename PointX::Scalar;
   using AdaptorX = EigenAdaptor<PointX>;
@@ -26,14 +26,14 @@ TEST(EigenTest, MetricL1) {
   AdaptorX adaptor(EigenMap<PointX>(points.data()->data(), 2, 1));
   PointX p{10.0f, 1.0f};
 
-  pico_tree::EigenMetricL1<Scalar> metric(adaptor.sdim());
+  pico_tree::EigenL1<Scalar> metric(adaptor.sdim());
 
   EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 11.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 12.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
 }
 
-TEST(EigenTest, MetricL2) {
+TEST(EigenTest, EigenL2Squared) {
   using PointX = Eigen::Vector2f;
   using Scalar = typename PointX::Scalar;
   using AdaptorX = EigenAdaptor<PointX>;
@@ -41,7 +41,7 @@ TEST(EigenTest, MetricL2) {
   AdaptorX adaptor(EigenMap<PointX>(points.data()->data(), 2, 1));
   PointX p{10.0f, 1.0f};
 
-  pico_tree::EigenMetricL2<Scalar> metric(adaptor.sdim());
+  pico_tree::EigenL2Squared<Scalar> metric(adaptor.sdim());
 
   EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 73.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);
