@@ -12,7 +12,7 @@ template <
     typename Scalar,
     int Dim_,
     typename Points,
-    typename Metric = L2Squared<Scalar, Dim_>>
+    typename Metric = L2<Scalar, Dim_>>
 class CoverTree {
  public:
   //! \brief Index type.
@@ -96,7 +96,7 @@ class CoverTree {
   //! std::distance(begin, end). It is expected that the value type of the
   //! iterator equals Neighbor<Index, Scalar>.
   //! \details Interpretation of the output distances depend on the Metric. The
-  //! default MetricL2 results in squared distances.
+  //! default L2 metric results in Euclidean distances.
   //! \tparam P Point type.
   //! \tparam RandomAccessIterator Iterator type.
   template <typename P, typename RandomAccessIterator>
@@ -137,27 +137,16 @@ class CoverTree {
   //! neighbor: max_ann_distance = true_nn_distance * e. This holds true for
   //! each respective nn index i, 0 <= i < k.
   //!
-  //! The amount of requested neighbors, k, should be sufficiently large to get
-  //! a noticeable speed increase from this method. Within a leaf all points are
-  //! compared to the query anyway, even if they are skipped. These calculations
-  //! can be avoided by skipping leafs completely, which will never happen if
-  //! all requested neighbors reside within a single one.
-  //!
-  //! Interpretation of both the input error ratio and output distances
-  //! depend on the Metric. The default MetricL2 calculates squared
-  //! distances. Using this metric, the input error ratio should be the squared
-  //! error ratio and the output distances will be squared distances scaled by
-  //! the inverse error ratio.
+  //! Interpretation of both the input error ratio and output distances depend
+  //! on the Metric. The default L2 metric calculates Euclidean distances.
   //!
   //! Example:
   //! \code{.cpp}
   //! // A max error of 15%. I.e. max 15% farther away from the true nn.
   //! Scalar max_error = Scalar(0.15);
-  //! Scalar e = tree.metric()(Scalar(1.0) + max_error);
+  //! Scalar e = Scalar(1.0) + max_error;
   //! std::vector<Neighbor<Index, Scalar>> knn(k);
   //! tree.SearchAknn(p, e, knn.begin(), knn.end());
-  //! // Optionally scale back to the actual metric distance.
-  //! for (auto& nn : knn) { nn.second *= e; }
   //! \endcode
   template <typename P, typename RandomAccessIterator>
   inline void SearchAknn(
