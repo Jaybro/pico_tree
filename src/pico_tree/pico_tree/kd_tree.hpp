@@ -192,7 +192,7 @@ template <
     typename Scalar,
     int Dim_,
     typename Points,
-    typename Metric = MetricL2<Scalar, Dim_>,
+    typename Metric = L2Squared<Scalar, Dim_>,
     typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dim_, Points>>
 class KdTree {
  public:
@@ -368,7 +368,7 @@ class KdTree {
 
   //! \brief Searches for the nearest neighbor of point \p p .
   //! \details Interpretation of the output distance depends on the Metric. The
-  //! default MetricL2 results in a squared distance.
+  //! default L2Squared results in a squared distance.
   template <typename P>
   inline void SearchNn(P const& p, NeighborType* nn) const {
     internal::SearchNn<NeighborType> v(nn);
@@ -379,7 +379,7 @@ class KdTree {
   //! std::distance(begin, end). It is expected that the value type of the
   //! iterator equals Neighbor<Index, Scalar>.
   //! \details Interpretation of the output distances depend on the Metric. The
-  //! default MetricL2 results in squared distances.
+  //! default L2Squared results in squared distances.
   //! \tparam P Point type.
   //! \tparam RandomAccessIterator Iterator type.
   template <typename P, typename RandomAccessIterator>
@@ -412,15 +412,15 @@ class KdTree {
   //! \brief Searches for all the neighbors of point \p p that are within radius
   //! \p radius and stores the results in output vector \p n.
   //! \details Interpretation of the output distances depend on the Metric. The
-  //! default MetricL2 results in squared distances.
+  //! default L2Squared results in squared distances.
   //! \tparam P Point type.
   //! \param p Input point.
   //! \param radius Search radius. The interpretation of the radius depends on
   //! the Metric used by the KdTree. Squared distance are required when using
-  //! MetricL2.
+  //! L2Squared.
   //! \code{.cpp}
   //! Scalar distance = -2.0;
-  //! // E.g., L1: 2.0, MetricL2: 4.0
+  //! // E.g., L1: 2.0, L2Squared: 4.0
   //! Scalar metric_distance = kdtree.metric()(distance);
   //! \endcode
   //! \param n Output points.
@@ -458,7 +458,7 @@ class KdTree {
   //! all requested neighbors reside within a single one.
   //!
   //! Interpretation of both the input error ratio and output distances
-  //! depend on the Metric. The default MetricL2 calculates squared
+  //! depend on the Metric. The default L2Squared calculates squared
   //! distances. Using this metric, the input error ratio should be the squared
   //! error ratio and the output distances will be squared distances scaled by
   //! the inverse error ratio.

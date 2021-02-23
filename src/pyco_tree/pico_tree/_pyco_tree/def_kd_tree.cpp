@@ -10,21 +10,21 @@ namespace pyco_tree {
 
 // Dynamic size KdTree
 using KdTreeXfL1 = KdTree<PointsXf, L1<PointsXf>>;
-using KdTreeXfL2 = KdTree<PointsXf, MetricL2<PointsXf>>;
+using KdTreeXfL2 = KdTree<PointsXf, L2Squared<PointsXf>>;
 using KdTreeXdL1 = KdTree<PointsXd, L1<PointsXd>>;
-using KdTreeXdL2 = KdTree<PointsXd, MetricL2<PointsXd>>;
+using KdTreeXdL2 = KdTree<PointsXd, L2Squared<PointsXd>>;
 
 // Fixed size 2d KdTree
 using KdTree2fL1 = KdTree<Points2f, L1<Points2f>>;
-using KdTree2fL2 = KdTree<Points2f, MetricL2<Points2f>>;
+using KdTree2fL2 = KdTree<Points2f, L2Squared<Points2f>>;
 using KdTree2dL1 = KdTree<Points2d, L1<Points2d>>;
-using KdTree2dL2 = KdTree<Points2d, MetricL2<Points2d>>;
+using KdTree2dL2 = KdTree<Points2d, L2Squared<Points2d>>;
 
 // Fixed size 3d KdTree
 using KdTree3fL1 = KdTree<Points3f, L1<Points3f>>;
-using KdTree3fL2 = KdTree<Points3f, MetricL2<Points3f>>;
+using KdTree3fL2 = KdTree<Points3f, L2Squared<Points3f>>;
 using KdTree3dL1 = KdTree<Points3d, L1<Points3d>>;
-using KdTree3dL2 = KdTree<Points3d, MetricL2<Points3d>>;
+using KdTree3dL2 = KdTree<Points3d, L2Squared<Points3d>>;
 
 template <typename KdTree>
 void DefKdTree(std::string const& name, py::module* m) {

@@ -4,8 +4,11 @@
 
 namespace pico_tree {
 
-//! \brief L1 metric for measuring distances between points.
-//! \see MetricL2
+//! \brief L1 metric for measuring the Taxicab or Manhattan distance between
+//! points.
+//! \details For more details:
+//! * https://en.wikipedia.org/wiki/Metric_space
+//! * https://en.wikipedia.org/wiki/Lp_space
 template <typename Scalar, int Dim>
 class L1 {
  public:
@@ -45,16 +48,14 @@ class L1 {
   int const dim_;
 };
 
-//! \brief The L2 metric measures distances between points using the squared L2
-//! norm.
-//! \details For more details:
-//! * https://en.wikipedia.org/wiki/Metric_space
-//! * https://en.wikipedia.org/wiki/Lp_space
+//! \brief The L2Squared semimetric measures squared Euclidean distances between
+//! points.
+//! \see L1
 template <typename Scalar, int Dim>
-class MetricL2 {
+class L2Squared {
  public:
-  //! \brief Creates a MetricL2 given a spatial dimension.
-  inline explicit MetricL2(int const dim) : dim_{dim} {}
+  //! \brief Creates an L2Squared given a spatial dimension.
+  inline explicit L2Squared(int const dim) : dim_{dim} {}
 
   //! \brief Calculates the distance between points \p p0 and \p p1.
   //! \tparam P0 Point type.

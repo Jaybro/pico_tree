@@ -29,7 +29,7 @@ TEST(KdTreeTest, L1) {
   EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
 }
 
-TEST(KdTreeTest, MetricL2) {
+TEST(KdTreeTest, L2Squared) {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::ScalarType;
@@ -39,7 +39,7 @@ TEST(KdTreeTest, MetricL2) {
   AdaptorX adaptor(points);
   PointX p{10.0f, 1.0f};
 
-  pico_tree::MetricL2<Scalar, Dim> metric(adaptor.sdim());
+  pico_tree::L2Squared<Scalar, Dim> metric(adaptor.sdim());
 
   EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 73.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);

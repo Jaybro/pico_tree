@@ -7,7 +7,7 @@
 #include "nano_adaptor.hpp"
 
 template <int Dim, typename PicoAdaptor>
-using MetricL2 = pico_tree::MetricL2<typename PicoAdaptor::ScalarType, Dim>;
+using L2Squared = pico_tree::L2Squared<typename PicoAdaptor::ScalarType, Dim>;
 
 template <int Dims, typename PicoAdaptor>
 using SplitterLongestMedian = pico_tree::SplitterLongestMedian<
@@ -29,7 +29,7 @@ using PicoKdTreeCtLngMed = pico_tree::KdTree<
     typename PicoAdaptor::ScalarType,
     PicoAdaptor::Dim,
     PicoAdaptor,
-    MetricL2<PicoAdaptor::Dim, PicoAdaptor>,
+    L2Squared<PicoAdaptor::Dim, PicoAdaptor>,
     SplitterLongestMedian<PicoAdaptor::Dim, PicoAdaptor>>;
 
 template <typename PicoAdaptor>
@@ -45,7 +45,7 @@ using PicoKdTreeRtLngMed = pico_tree::KdTree<
     typename PicoAdaptor::ScalarType,
     pico_tree::kDynamicDim,
     PicoAdaptor,
-    MetricL2<pico_tree::kDynamicDim, PicoAdaptor>,
+    L2Squared<pico_tree::kDynamicDim, PicoAdaptor>,
     SplitterLongestMedian<pico_tree::kDynamicDim, PicoAdaptor>>;
 
 template <typename NanoAdaptor>

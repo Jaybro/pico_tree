@@ -12,7 +12,7 @@ template <
     typename Scalar,
     int Dim_,
     typename Points,
-    typename Metric = MetricL2<Scalar, Dim_>>
+    typename Metric = L2Squared<Scalar, Dim_>>
 class CoverTree {
  public:
   //! \brief Index type.
