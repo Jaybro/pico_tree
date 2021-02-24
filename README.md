@@ -14,7 +14,7 @@ See the table below to get an impression of the performance provided by the [KdT
 | [Scikit-learn KDTree][skck] 0.22.2  | ...       | 27.1s         | ...       | 55.4s       |
 | PicoTree KdTree v0.6.0              | 2.0s      | 2.1s          | 3.1s      | 4.1s        |
 
-The comparison was generated using 13729039 3d points from a [LiDAR](./docs/benchmark.md) scan, float64, with k = 1 for queries. Note that a different C++ back-end was used for each of the `Knn C++` and `Knn Python` benchmarks. This means that they shouldn't be compared directly. See the [Python](./examples/python/kd_tree.py) comparison for more details. A more detailed [C++](./docs/benchmark.md) comparison of PicoTree is available with respect to [nanoflann][nano].
+The comparison was generated using 13729039 3d points from a [LiDAR](./docs/benchmark.md) scan, float64, with k = 1 for queries. Note that a different C++ back-end was used for each of the `Knn C++` and `Knn Python` benchmarks. This means that they shouldn't be compared directly. See the [Python](./examples/python/kd_tree.py) comparison for more details. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
 Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
@@ -32,8 +32,8 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * Static tree builds.
   * Thread safe queries.
 
-* CoverTree - ***Work in progress***
-  * Nearest neighbors and approximate nearest neighbors searches.
+* CoverTree - ***Experimental / Work in progress***
+  * Nearest neighbors, approximate nearest neighbors, and radius searches.
   * Customizable metrics that don't have to be Cartesian such as [spherical](https://en.wikipedia.org/wiki/Great-circle_distance) metrics.
 
 The examples show how PicoTree can be used:
