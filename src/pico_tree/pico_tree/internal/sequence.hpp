@@ -60,7 +60,7 @@ class Sequence {
   }
 
  private:
-  //! Storage.
+  //! \brief Storage.
   std::array<Scalar, Dim_> sequence_;
 };
 
@@ -113,7 +113,7 @@ class Sequence<Scalar, kDynamicDim> {
   }
 
  private:
-  //! Storage.
+  //! \brief Storage.
   std::vector<Scalar> sequence_;
 };
 

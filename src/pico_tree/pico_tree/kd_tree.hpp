@@ -411,17 +411,17 @@ class KdTree {
 
   //! \brief Searches for all the neighbors of point \p p that are within radius
   //! \p radius and stores the results in output vector \p n.
-  //! \details Interpretation of the output distances depend on the Metric. The
-  //! default L2Squared results in squared distances.
+  //! \details Interpretation of the in and output distances depend on the
+  //! Metric. The default L2Squared results in squared distances.
   //! \tparam P Point type.
   //! \param p Input point.
-  //! \param radius Search radius. The interpretation of the radius depends on
-  //! the Metric used by the KdTree. Squared distance are required when using
-  //! L2Squared.
+  //! \param radius Search radius.
   //! \code{.cpp}
   //! Scalar distance = -2.0;
   //! // E.g., L1: 2.0, L2Squared: 4.0
   //! Scalar metric_distance = kdtree.metric()(distance);
+  //! std::vector<Neighbor<Index, Scalar>> n;
+  //! tree.SearchRadius(p, metric_distance, &n);
   //! \endcode
   //! \param n Output points.
   //! \param sort If true, the result set is sorted from closest to farthest

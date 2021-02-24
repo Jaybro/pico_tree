@@ -18,6 +18,21 @@ using CoverTree = pico_tree::CoverTree<
 namespace {
 
 template <typename PointX>
+void QueryRadius(
+    int const point_count,
+    typename PointX::ScalarType const area_size,
+    typename PointX::ScalarType const radius) {
+  using Index = int;
+  using Scalar = typename PointX::ScalarType;
+  using AdaptorX = PicoAdaptor<Index, PointX>;
+  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
+  AdaptorX adaptor(random);
+  CoverTree<AdaptorX> tree(adaptor, Scalar(2.0));
+
+  TestRadius(tree, radius);
+}
+
+template <typename PointX>
 void QueryKnn(
     int const point_count,
     typename PointX::ScalarType const area_size,
@@ -39,6 +54,10 @@ void QueryKnn(
 }
 
 }  // namespace
+
+TEST(CoverTreeTest, QueryRadiusSubset2d) {
+  QueryRadius<Point2f>(1024 * 128, 100.0f, 2.5f);
+}
 
 TEST(CoverTreeTest, QueryKnn1) { QueryKnn<Point2f>(1024 * 128, 100.0f, 1); }
 

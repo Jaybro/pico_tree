@@ -126,6 +126,30 @@ class CoverTree {
     SearchKnn(p, knn->begin(), knn->end());
   }
 
+  //! \brief Searches for all the neighbors of point \p p that are within radius
+  //! \p radius and stores the results in output vector \p n.
+  //! \details Interpretation of the in and output distances depend on the
+  //! Metric. The default L2 results in squared distances.
+  //! \tparam P Point type.
+  //! \param p Input point.
+  //! \param radius Search radius.
+  //! \param n Output points.
+  //! \param sort If true, the result set is sorted from closest to farthest
+  //! distance with respect to the query point.
+  template <typename P>
+  inline void SearchRadius(
+      P const& p,
+      Scalar const radius,
+      std::vector<NeighborType>* n,
+      bool const sort = false) const {
+    internal::SearchRadius<NeighborType> v(radius, n);
+    SearchNearest(root_, p, &v);
+
+    if (sort) {
+      v.Sort();
+    }
+  }
+
   //! \brief Searches for the k approximate nearest neighbors of point \p p ,
   //! where k equals std::distance(begin, end). It is expected that the value
   //! type of the iterator equals Neighbor<Index, Scalar>.
@@ -217,7 +241,7 @@ class CoverTree {
   }
 
   //! \brief Inserts the first or first two nodes of the tree.
-  //! \details Both papers don't really handle these case but here we go.
+  //! \details Both papers don't really handle these cases but here we go.
   inline Node* InsertFirstTwo() {
     Node* node = nodes_.Allocate();
     node->index = 0;
