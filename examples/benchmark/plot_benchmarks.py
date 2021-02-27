@@ -27,9 +27,9 @@ def get_benchmarks(json):
         benchmarks = json['benchmarks']
 
     return [
-        get_benchmark_subset(benchmarks, re.compile(r'.+(Nano|Pico)Build.+')),
-        get_benchmark_subset(benchmarks, re.compile(r'.+(Nano|Pico)(Knn|Nn).+')),
-        get_benchmark_subset(benchmarks, re.compile(r'.+(Nano|Pico)Radius.+'))
+        get_benchmark_subset(benchmarks, re.compile(r'.+/Build.+')),
+        get_benchmark_subset(benchmarks, re.compile(r'.+/(Knn|Nn).+')),
+        get_benchmark_subset(benchmarks, re.compile(r'.+/Radius.+'))
     ]
 
 
@@ -38,12 +38,16 @@ def get_plots(benchmarks_subset, pattern):
 
     for x in benchmarks_subset:
         m = pattern.match(x['name'])
-        k = m.group('tree') + '_' + m.group('label')
+        k = m.group('tree') + '_' + \
+            m.group('type') + (('_' + m.group('arg'))
+                               if m.group('arg') else '')
         plots[k] = {'x': [], 'y': []}
 
     for x in benchmarks_subset:
         m = pattern.match(x['name'])
-        k = m.group('tree') + '_' + m.group('label')
+        k = m.group('tree') + '_' + \
+            m.group('type') + (('_' + m.group('arg'))
+                               if m.group('arg') else '')
         plots[k]['x'].append(float(m.group('x')))
         plots[k]['y'].append(float(x['cpu_time']))
 
@@ -71,21 +75,15 @@ def main():
     args = parser.parse_args()
 
     benchmarks = get_benchmarks(json.load(args.json_file))
-
-    re_str_build = r'^.+/(?P<label>Ct|Rt)(?P<tree>Nano|(.+Pico)).+/(?P<x>\d+).*$'
-    re_str_other = r'^.+/(Ct|Rt)(?P<tree>Nano|(.+Pico)).+/(?P<x>\d+)/(?P<label>\d+).*$'
-
-    plots_build = get_plots(benchmarks[0], re.compile(re_str_build))
-    plots_knn = get_plots(benchmarks[1], re.compile(re_str_other))
-    plots_radius = get_plots(benchmarks[2], re.compile(re_str_other))
+    re_info = r'^Bm(?P<tree>.+)/(Build|Knn|Nn|Radius)(?P<type>(Ct|Rt)[^/]*)/(?P<x>\d+)(/(?P<arg>\d+))?$'
+    plots = [get_plots(b, re.compile(re_info)) for b in benchmarks]
 
     # Format is determined by filename extension
     extension = '.png'
-    get_figure(plots_build, 'build time')[
-        0].savefig(f'./build_time{extension}')
-    get_figure(plots_knn, 'knn search time')[
+    get_figure(plots[0], 'build time')[0].savefig(f'./build_time{extension}')
+    get_figure(plots[1], 'knn search time')[
         0].savefig(f'./knn_search_time{extension}')
-    get_figure(plots_radius, 'radius search time')[
+    get_figure(plots[2], 'radius search time')[
         0].savefig(f'./radius_search_time{extension}')
     plt.show()
 
