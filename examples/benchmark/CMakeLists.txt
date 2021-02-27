@@ -1,15 +1,15 @@
-add_executable(benchmark)
-target_sources(benchmark
+add_executable(bm_nanoflann)
+target_sources(bm_nanoflann
     PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/benchmark.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/bm_nanoflann.cpp
 )
-target_link_libraries(benchmark
+target_link_libraries(bm_nanoflann
     PRIVATE
         pico_common
         nanoflann::nanoflann
         benchmark::benchmark
 )
-set_target_properties(benchmark
+set_target_properties(bm_nanoflann
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 # For the benchmark demo we want to explicitly use C++11.
