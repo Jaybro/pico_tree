@@ -1,5 +1,8 @@
 #pragma once
 
+#include <numeric>
+#include <random>
+
 #include "pico_tree/internal/memory.hpp"
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/metric.hpp"
