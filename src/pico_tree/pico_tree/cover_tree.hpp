@@ -218,8 +218,6 @@ class CoverTree {
   Node* Build() {
     assert(points_.npts() > 0);
 
-    std::size_t one = 0, other = 0;
-
     // For the simplified cover tree, query performance is greatly improved
     // using a randomized insertion at the price of construction time. The tree
     // seems to get highly imbalanced if not done.
@@ -230,19 +228,26 @@ class CoverTree {
     std::mt19937 g(rd());
     std::shuffle(indices.begin(), indices.end(), g);
 
+    std::size_t too_far = 0, covered = 0;
+    std::size_t unbalanced = 0, balanced = 0;
+
     Node* node = InsertFirstTwo(indices);
     for (Index i = 2; i < points_.npts(); ++i) {
-      node = Insert(node, indices[i], &one, &other);
+      node =
+          Insert(node, indices[i], &too_far, &covered, &unbalanced, &balanced);
     }
 
-    // std::cout << "one other " << one << " " << other << std::endl;
-
-    // TODO Make cache friendly structure here. I.e., a depth first re-creation
-    // of the tree.
+    // std::cout << "too_far / covered " << too_far << " / " << covered
+    //           << std::endl;
+    // std::cout << "unbalanced / balanced " << unbalanced << " / " << balanced
+    //           << std::endl;
 
     // TODO This is quite expensive. Perhaps we can do better. Well worth it vs.
     // queries. These are otherwise extremely slow. ~70% faster.
     UpdateMaxDistance(node);
+
+    // TODO Make cache friendly structure here. I.e., a depth first re-creation
+    // of the tree.
 
     return node;
   }
@@ -284,7 +289,12 @@ class CoverTree {
 
   //! \brief Inserts a new node for point \p idx into the tree defined by \p n.
   inline Node* Insert(
-      Node* n, Index const idx, std::size_t* one, std::size_t* other) {
+      Node* n,
+      Index const idx,
+      std::size_t* too_far,
+      std::size_t* covered,
+      std::size_t* unbalanced,
+      std::size_t* balanced) {
     // TODO Change to levels?
     Scalar d = metric_(points_(n->index), points_(idx));
     Scalar c = base_.CoverDistance(*n);
@@ -295,19 +305,31 @@ class CoverTree {
         c = base_.ParentDistance(*n);
       }
 
-      *one += 1;
+      *too_far += 1;
 
       return CreateParent(idx, n);
     } else {
-      *other += 1;
+      *covered += 1;
 
-      InsertLeaf(n, idx);
+      InsertLeaf(n, idx, unbalanced, balanced);
       return n;
     }
   }
 
-  inline void InsertLeaf(Node* n, Index const idx) {
-    CreateChild(idx, FindParent(n, points_(idx)));
+  inline void InsertLeaf(
+      Node* n,
+      Index const idx,
+      std::size_t* unbalanced,
+      std::size_t* balanced) {
+    Node* p = FindParent(n, points_(idx));
+
+    if (p->IsLeaf()) {
+      *balanced += 1;
+    } else {
+      *unbalanced += 1;
+    }
+
+    CreateChild(idx, p);
   }
 
   template <typename P>
@@ -388,7 +410,8 @@ class CoverTree {
     }
 
     // TODO The paper tells us to sort the children based on distance from the
-    // query point.
+    // query point. We do the same in the KdTree already. Here it's more of the
+    // same.
     for (auto const& m : node->children) {
       // Algorithm 1 from paper "Faster Cover Trees" has a mistake. It checks
       // with respect to the nearest point, not the query point itself,
