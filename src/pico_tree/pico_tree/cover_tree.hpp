@@ -39,6 +39,8 @@ class CoverTree {
     // TODO Could possibly reduce storage if changed to some integer type at the
     // price of performance?
     Scalar level;
+    //! \brief Distance to the farthest child.
+    Scalar max_distance;
     Index index;
     std::vector<Node*> children;
   };
@@ -218,40 +220,63 @@ class CoverTree {
 
     std::size_t one = 0, other = 0;
 
-    Node* node = InsertFirstTwo();
+    // For the simplified cover tree, query performance is greatly improved
+    // using a randomized insertion. The tree seems to get highly imbalanced if
+    // not done. Building the tree becomes a lot slower but well worth it.
+    // TODO May be solved by the nearest ancestor version.
+    std::vector<Index> indices(points_.npts());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(indices.begin(), indices.end(), g);
+
+    Node* node = InsertFirstTwo(indices);
     for (Index i = 2; i < points_.npts(); ++i) {
-      node = Insert(node, i, &one, &other);
+      node = Insert(node, indices[i], &one, &other);
     }
 
     // std::cout << "one other " << one << " " << other << std::endl;
-    // std::size_t size = 1;
-    // NodeCount(node, &size);
-    // std::cout << "tree size " << size << std::endl;
 
     // TODO Make cache friendly structure here. I.e., a depth first re-creation
     // of the tree.
 
+    // TODO This is quite expensive. Perhaps we can do better. Well worth it vs.
+    // queries. These are otherwise extremely slow. ~70% faster.
+    UpdateMaxDistance(node);
+
     return node;
   }
 
-  void NodeCount(Node const* const node, std::size_t* size) const {
-    for (auto const& m : node->children) {
-      NodeCount(m, size);
-      (*size)++;
+  void UpdateMaxDistance(Node* node) const {
+    node->max_distance = MaxDistance(node, points_(node->index));
+
+    for (Node* m : node->children) {
+      UpdateMaxDistance(m);
     }
+  }
+
+  template <typename P>
+  Scalar MaxDistance(Node const* const node, P const& p) const {
+    Scalar max = metric_(points_(node->index), p);
+
+    for (Node const* const m : node->children) {
+      max = std::max(max, MaxDistance(m, p));
+    }
+
+    return max;
   }
 
   //! \brief Inserts the first or first two nodes of the tree.
   //! \details Both papers don't really handle these cases but here we go.
-  inline Node* InsertFirstTwo() {
+  inline Node* InsertFirstTwo(std::vector<Index> const& indices) {
     Node* node = nodes_.Allocate();
-    node->index = 0;
+    node->index = indices[0];
     if (points_.npts() == 1) {
       node->level = 0;
     } else {
-      Scalar d = metric_(points_(0), points_(1));
+      Scalar d = metric_(points_(indices[0]), points_(indices[1]));
       node->level = std::ceil(base_.Level(d));
-      CreateChild(1, node);
+      CreateChild(indices[1], node);
     }
 
     return node;
@@ -351,11 +376,9 @@ class CoverTree {
       // Algorithm 1 from paper "Faster Cover Trees" has a mistake. It checks
       // with respect to the nearest point, not the query point itself,
       // intersecting the wrong spheres.
-      // TODO Change ParentDistance into MaxDistance(*m);
       // TODO The distance calculation can be cached. When SearchNeighbor is
       // called it's calculated again.
-      if (visitor->max() >
-          (metric_(p, points_(m->index)) - base_.ParentDistance(*m))) {
+      if (visitor->max() > (metric_(p, points_(m->index)) - m->max_distance)) {
         SearchNearest(m, p, visitor);
       }
     }

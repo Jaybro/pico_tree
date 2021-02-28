@@ -47,8 +47,6 @@ void QueryKnn(
   // This line compile time "tests" the move capability of the tree.
   auto tree2 = std::move(tree);
 
-  EXPECT_TRUE(true);
-
   // ScopedTimer t("cover_tree knn: " + std::to_string(k));
   TestKnn(tree2, static_cast<Index>(k));
 }
