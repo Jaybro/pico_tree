@@ -221,8 +221,8 @@ class CoverTree {
     std::size_t one = 0, other = 0;
 
     // For the simplified cover tree, query performance is greatly improved
-    // using a randomized insertion. The tree seems to get highly imbalanced if
-    // not done. Building the tree becomes a lot slower but well worth it.
+    // using a randomized insertion at the price of construction time. The tree
+    // seems to get highly imbalanced if not done.
     // TODO May be solved by the nearest ancestor version.
     std::vector<Index> indices(points_.npts());
     std::iota(indices.begin(), indices.end(), 0);
@@ -312,15 +312,32 @@ class CoverTree {
 
   template <typename P>
   inline Node* FindParent(Node* n, P const& p) const {
-    Scalar s = base_.ChildDistance(*n);
-    for (std::size_t i = 0; i < n->children.size(); ++i) {
-      Node* m = n->children[i];
-      if (metric_(points_(m->index), p) <= s) {
-        return FindParent(m, p);
-      }
-    }
+    if (n->IsLeaf()) {
+      return n;
+    } else {
+      // Traverse branches via the closest ancestors to the point. The paper
+      // "Faster Cover Trees" mentions this as being part of the nearest
+      // ancestor cover tree, but this speeds up the queries of the simplified
+      // cover tree as well. Roughly by ~70%, but tree creation is a bit slower
+      // for it (3-14%).
+      Scalar min_d = metric_(points_(n->children[0]->index), p);
+      Index min_i = 0;
 
-    return n;
+      for (Index i = 1; i < n->children.size(); ++i) {
+        Scalar d = metric_(points_(n->children[i]->index), p);
+
+        if (d < min_d) {
+          min_d = d;
+          min_i = i;
+        }
+      }
+
+      if (min_d <= base_.ChildDistance(*n)) {
+        return FindParent(n->children[min_i], p);
+      }
+
+      return n;
+    }
   }
 
   // Called with trust.
