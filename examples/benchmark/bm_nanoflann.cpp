@@ -120,7 +120,7 @@ BENCHMARK_REGISTER_F(BmNanoflann, KnnCt)
 
 BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  double radius = static_cast<double>(state.range(1)) / 4.0;
+  double radius = static_cast<double>(state.range(1)) / 10.0;
   double squared = radius * radius;
   NanoAdaptorX adaptor(points_);
   NanoKdTreeCt<NanoAdaptorX> tree(
@@ -141,20 +141,20 @@ BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
 }
 
 // Argument 1: Maximum leaf size.
-// Argument 2: Search radius (divided by 4.0).
+// Argument 2: Search radius (divided by 10.0).
 BENCHMARK_REGISTER_F(BmNanoflann, RadiusCt)
     ->Unit(benchmark::kMillisecond)
-    ->Args({1, 1})
-    ->Args({6, 1})
-    ->Args({8, 1})
-    ->Args({10, 1})
-    ->Args({12, 1})
-    ->Args({14, 1})
-    ->Args({1, 2})
-    ->Args({6, 2})
-    ->Args({8, 2})
-    ->Args({10, 2})
-    ->Args({12, 2})
-    ->Args({14, 2});
+    ->Args({1, 5})
+    ->Args({6, 5})
+    ->Args({8, 5})
+    ->Args({10, 5})
+    ->Args({12, 5})
+    ->Args({14, 5})
+    ->Args({1, 10})
+    ->Args({6, 10})
+    ->Args({8, 10})
+    ->Args({10, 10})
+    ->Args({12, 10})
+    ->Args({14, 10});
 
 BENCHMARK_MAIN();

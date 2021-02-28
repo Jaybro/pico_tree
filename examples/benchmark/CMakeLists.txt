@@ -1,41 +1,31 @@
+function(add_benchmark BM_TARGET_NAME)
+    add_executable(${BM_TARGET_NAME})
+    target_sources(${BM_TARGET_NAME}
+        PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/${BM_TARGET_NAME}.cpp
+    )
+    target_link_libraries(${BM_TARGET_NAME}
+        PRIVATE
+            pico_common
+            benchmark::benchmark
+    )
+    set_target_properties(${BM_TARGET_NAME}
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
+endfunction()
+
 ################################################################################
-# bm_nanoflann
+# bm_nanoflann, bm_pico_kd_tree, bm_pico_cover_tree
 ################################################################################
 
-add_executable(bm_nanoflann)
-target_sources(bm_nanoflann
-    PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/bm_nanoflann.cpp
-)
+add_benchmark(bm_nanoflann)
 target_link_libraries(bm_nanoflann
     PRIVATE
-        pico_common
-        nanoflann::nanoflann
-        benchmark::benchmark
+         nanoflann::nanoflann
 )
-set_target_properties(bm_nanoflann
-    PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
-
-################################################################################
-# bm_pico_kd_tree
-################################################################################
-
-add_executable(bm_pico_kd_tree)
-target_sources(bm_pico_kd_tree
-    PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/bm_pico_kd_tree.cpp
-)
-target_link_libraries(bm_pico_kd_tree
-    PRIVATE
-        pico_common
-        benchmark::benchmark
-)
-set_target_properties(bm_pico_kd_tree
-    PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
+add_benchmark(bm_pico_kd_tree)
+add_benchmark(bm_pico_cover_tree)
 
 ################################################################################
 # uosr_to_bin

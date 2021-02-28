@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "pico_tree/core.hpp"
 
 namespace pico_tree {
