@@ -141,13 +141,9 @@ class SplitterSlidingMidpoint {
     auto const comp = [&points, &split_dim, &split_val](Index const a) -> bool {
       return points(a)(*split_dim) < *split_val;
     };
-    std::partition(
-        indices_.begin() + offset, indices_.begin() + offset + size, comp);
     *split_idx = static_cast<Index>(
-        std::partition_point(
-            indices_.cbegin() + offset,
-            indices_.cbegin() + offset + size,
-            comp) -
+        std::partition(
+            indices_.begin() + offset, indices_.begin() + offset + size, comp) -
         indices_.cbegin());
 
     // If it happens that either all points are on the left side or right side,
