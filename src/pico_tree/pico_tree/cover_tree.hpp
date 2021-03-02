@@ -284,7 +284,7 @@ class CoverTree {
     } else {
       Scalar d = metric_(points_(indices[0]), points_(indices[1]));
       node->level = std::ceil(base_.Level(d));
-      CreateChild(indices[1], node);
+      PushChild(node, indices[1]);
     }
 
     return node;
@@ -324,15 +324,19 @@ class CoverTree {
       Index const idx,
       std::size_t* unbalanced,
       std::size_t* balanced) {
+    // Change contents of this function to the following line for a simplified
+    // cover tree.
+    // PushChild(FindParent(n, points_(idx)), idx);
+
     Node* p = FindParent(n, points_(idx));
 
     if (p->IsLeaf()) {
       *balanced += 1;
+      PushChild(p, idx);
     } else {
       *unbalanced += 1;
+      Rebalance(p, idx);
     }
-
-    CreateChild(idx, p);
   }
 
   template <typename P>
@@ -343,7 +347,7 @@ class CoverTree {
       // Traverse branches via the closest ancestors to the point. The paper
       // "Faster Cover Trees" mentions this as being part of the nearest
       // ancestor cover tree, but this speeds up the queries of the simplified
-      // cover tree as well. Roughly by ~70%, but tree creation is a bit slower
+      // cover tree as well. Faster by ~70%, but tree creation is a bit slower
       // for it (3-14%).
       Scalar min_d = metric_(points_(n->children[0]->index), p);
       Index min_i = 0;
@@ -363,6 +367,11 @@ class CoverTree {
 
       return n;
     }
+  }
+
+  void Rebalance(Node* n, Index const idx) {
+    Node* c = CreateNode(idx);
+    PushChild(n, c);
   }
 
   // Called with trust.
@@ -389,17 +398,24 @@ class CoverTree {
     return p;
   }
 
-  inline Node* CreateParent(Index idx, Node* c) {
-    Node* p = nodes_.Allocate();
-    p->index = idx;
-    return ChildToParent(p, c);
-  }
-
-  inline void CreateChild(Index idx, Node* p) {
+  inline Node* CreateNode(Index idx) {
     Node* c = nodes_.Allocate();
     c->index = idx;
+    return c;
+  }
+
+  inline Node* CreateParent(Index idx, Node* c) {
+    return ChildToParent(CreateNode(idx), c);
+  }
+
+  inline void PushChild(Node* p, Node* c) {
     c->level = p->level - Scalar(1.0);
     p->children.push_back(c);
+  }
+
+  inline void PushChild(Node* p, Index idx) {
+    //
+    PushChild(p, CreateNode(idx));
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
@@ -419,6 +435,13 @@ class CoverTree {
       // Algorithm 1 from paper "Faster Cover Trees" has a mistake. It checks
       // with respect to the nearest point, not the query point itself,
       // intersecting the wrong spheres.
+      // Algorithm 1 from paper "Cover Trees for Nearest Neighbor" is correct.
+      // NOTE: In both papers, the upper-bound is said to be the cover
+      // distance of the parent. This is true taking the invariants into
+      // account, but in reality it's only half this distance. Proof: The insert
+      // algorithms of both papers ONLY insert a point when it's within
+      // the current level's parent cover distance. So it will never be twice as
+      // far.
       // TODO The distance calculation can be cached. When SearchNeighbor is
       // called it's calculated again.
       if (visitor->max() > (metric_(p, points_(m->index)) - m->max_distance)) {
