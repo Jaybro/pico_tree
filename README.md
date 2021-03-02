@@ -14,7 +14,7 @@ See the table below to get an impression of the performance provided by the [KdT
 | [Scikit-learn KDTree][skck] 0.22.2  | ...       | 27.1s         | ...       | 55.4s       |
 | PicoTree KdTree v0.6.0              | 2.0s      | 2.1s          | 3.1s      | 4.1s        |
 
-The comparison was generated using 13729039 3d points from a [LiDAR](./docs/benchmark.md) scan, float64, with k = 1 for queries. Note that a different C++ back-end was used for each of the `Knn C++` and `Knn Python` benchmarks. This means that they shouldn't be compared directly. See the [Python](./examples/python/kd_tree.py) comparison for more details. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
+The comparison was generated using 13729039 3d points from a [LiDAR](./docs/benchmark.md) scan, float64, with k=1 for queries and OMP_NUM_THREADS=1. Note that a different C++ back-end was used for each of the `Knn C++` and `Knn Python` benchmarks. This means that they shouldn't be compared directly. See the [Python comparison](./examples/python/kd_tree.py) for more details. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
 Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
@@ -28,13 +28,15 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 * KdTree
   * Nearest neighbors, approximate nearest neighbors, radius, and box searches.
   * Customizable nearest neighbor searches, Cartesian [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
-  * Compile time and run time known dimensions.
-  * Static tree builds.
-  * Thread safe queries.
 
 * CoverTree - ***Experimental / Work in progress***
   * Nearest neighbors, approximate nearest neighbors, and radius searches.
   * Customizable metrics that don't have to be Cartesian such as [spherical](https://en.wikipedia.org/wiki/Great-circle_distance) metrics.
+
+* General
+  * Compile time and run time known dimensions.
+  * Static tree builds.
+  * Thread safe queries.
 
 The examples show how PicoTree can be used:
 
