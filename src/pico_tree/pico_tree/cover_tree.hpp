@@ -315,28 +315,26 @@ class CoverTree {
     } else {
       *covered += 1;
 
-      InsertLeaf(n, idx, unbalanced, balanced);
+      InsertLeaf(n, CreateNode(idx), unbalanced, balanced);
       return n;
     }
   }
 
   inline void InsertLeaf(
-      Node* n,
-      Index const idx,
-      std::size_t* unbalanced,
-      std::size_t* balanced) {
+      Node* n, Node* l, std::size_t* unbalanced, std::size_t* balanced) {
     // Change contents of this function to the following line for a simplified
     // cover tree.
-    // PushChild(FindParent(n, points_(idx)), idx);
+    // PushChild(FindParent(n, points_(l->index)), l);
 
-    Node* p = FindParent(n, points_(idx));
+    auto const& x = points_(l->index);
+    Node* p = FindParent(n, x);
 
     if (p->IsLeaf()) {
       *balanced += 1;
-      PushChild(p, idx);
+      PushChild(p, l);
     } else {
       *unbalanced += 1;
-      Rebalance(p, idx);
+      Rebalance(p, l, x, balanced, unbalanced);
     }
   }
 
@@ -370,9 +368,94 @@ class CoverTree {
     }
   }
 
-  void Rebalance(Node* n, Index const idx) {
-    Node* c = CreateNode(idx);
+  template <typename P>
+  void Rebalance(
+      Node* n,
+      Node* c,
+      P const& p,
+      std::size_t* unbalanced,
+      std::size_t* balanced) {
+    std::vector<Node*> to_move;
+    std::vector<Node*> to_stay;
+
+    c->level = n->level - Scalar(1.0);
+
+    Scalar const d = base_.CoverDistance(*n);
+
+    for (auto const& m : n->children) {
+      auto const& q = points_(m->index);
+
+      // Adaptation to the original aglorithm. Saves unnecessary tree traversal
+      // an appears to be a bit faster.
+      if (metric_(p, q) < d) {
+        Rebalance_(q, p, m, &to_move, &to_stay, unbalanced, balanced);
+      }
+
+      // for (auto const& r : to_stay) {
+      //   InsertLeaf(m, r, unbalanced, balanced);
+      // }
+
+      // to_stay.clear();
+    }
+
     PushChild(n, c);
+
+    for (auto const& m : to_move) {
+      InsertLeaf(c, m, unbalanced, balanced);
+    }
+  }
+
+  template <typename P>
+  void Rebalance_(
+      P const& n,
+      P const& p,
+      Node* d,
+      std::vector<Node*>* to_move,
+      std::vector<Node*>* to_stay,
+      std::size_t* unbalanced,
+      std::size_t* balanced) {
+    auto erase_begin = std::partition(
+        d->children.begin(),
+        d->children.end(),
+        [this, &n, &p](Node* r) -> bool {
+          return metric_(n, points_(r->index)) < metric_(p, points_(r->index));
+        });
+
+    auto it = d->children.begin();
+    for (; it != erase_begin; ++it) {
+      Rebalance_(n, p, *it, to_move, to_stay, unbalanced, balanced);
+    }
+    for (; it != d->children.end(); ++it) {
+      to_move->push_back(*it);
+      Strip(n, p, *it, to_move, to_stay);
+    }
+    d->children.erase(erase_begin, d->children.end());
+
+    for (auto const& r : *to_stay) {
+      InsertLeaf(d, r, unbalanced, balanced);
+    }
+
+    to_stay->clear();
+  }
+
+  //! \brief Strips all decendants of d in a depth-first fashion and puts them
+  //! in either the move or stay set.
+  template <typename P>
+  void Strip(
+      P const& n,
+      P const& p,
+      Node* d,
+      std::vector<Node*>* to_move,
+      std::vector<Node*>* to_stay) {
+    for (auto const& r : d->children) {
+      Strip(n, p, r, to_move, to_stay);
+      if (metric_(n, points_(r->index)) > metric_(p, points_(r->index))) {
+        to_move->push_back(r);
+      } else {
+        to_stay->push_back(r);
+      }
+    }
+    d->children.clear();
   }
 
   // Called with trust.
