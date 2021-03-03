@@ -298,14 +298,15 @@ class CoverTree {
       std::size_t* covered,
       std::size_t* unbalanced,
       std::size_t* balanced) {
-    // TODO Change to levels?
-    Scalar d = metric_(points_(n->index), points_(idx));
+    auto const& p = points_(idx);
+    Scalar d = metric_(points_(n->index), p);
     Scalar c = base_.CoverDistance(*n);
     if (d > c) {
       c *= base_.value;
       while (d > c) {
         n = ChildToParent(RemoveLeaf(n), n);
         c = base_.ParentDistance(*n);
+        d = metric_(points_(n->index), p);
       }
 
       *too_far += 1;
