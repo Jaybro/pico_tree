@@ -231,18 +231,10 @@ class CoverTree {
     std::mt19937 g(rd());
     std::shuffle(indices.begin(), indices.end(), g);
 
-    std::size_t too_far = 0, covered = 0;
-    std::size_t unbalanced = 0, balanced = 0;
-
     Node* node = InsertFirstTwo(indices);
     for (Index i = 2; i < points_.npts(); ++i) {
       node = Insert(node, CreateNode(indices[i]));
     }
-
-    // std::cout << "too_far / covered " << too_far << " / " << covered
-    //           << std::endl;
-    // std::cout << "unbalanced / balanced " << unbalanced << " / " << balanced
-    //           << std::endl;
 
     // TODO This is quite expensive. Perhaps we can do better. Well worth it vs.
     // queries. These are otherwise extremely slow. ~70% faster.
