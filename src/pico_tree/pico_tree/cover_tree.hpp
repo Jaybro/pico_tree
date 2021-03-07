@@ -224,7 +224,8 @@ class CoverTree {
     // For the simplified cover tree, query performance is greatly improved
     // using a randomized insertion at the price of construction time. The tree
     // seems to get highly imbalanced if not done.
-    // TODO May be solved by the nearest ancestor version.
+    // Building the nearest ancestor cover tree is enormously faster when the
+    // points come in randomly. This saves a lot of rebalancing.
     std::vector<Index> indices(points_.npts());
     std::iota(indices.begin(), indices.end(), 0);
     std::random_device rd;
@@ -236,14 +237,33 @@ class CoverTree {
       node = Insert(node, CreateNode(indices[i]));
     }
 
+    // TODO Make cache friendly structure here. I.e., a depth first re-creation
+    // of the tree.
+    // TODO This is take 1. Not final.
+    internal::StaticBuffer<Node> nodes(points_.npts());
+    Node* root = DepthFirstBufferCopy(node, &nodes);
+    std::swap(nodes_, nodes);
+    node = root;
+
     // TODO This is quite expensive. Perhaps we can do better. Well worth it vs.
     // queries. These are otherwise extremely slow. ~70% faster.
     UpdateMaxDistance(node);
 
-    // TODO Make cache friendly structure here. I.e., a depth first re-creation
-    // of the tree.
-
     return node;
+  }
+
+  Node* DepthFirstBufferCopy(
+      Node const* const node, internal::StaticBuffer<Node>* nodes) {
+    Node* copy = nodes->Allocate();
+    copy->index = node->index;
+    copy->level = node->level;
+    copy->children.reserve(node->children.size());
+
+    for (auto const& m : node->children) {
+      copy->children.push_back(DepthFirstBufferCopy(m, nodes));
+    }
+
+    return copy;
   }
 
   void UpdateMaxDistance(Node* node) const {
