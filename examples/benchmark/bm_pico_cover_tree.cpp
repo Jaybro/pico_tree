@@ -46,9 +46,9 @@ BENCHMARK_DEFINE_F(BmPicoCoverTree, KnnCt)(benchmark::State& state) {
   for (auto _ : state) {
     std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
-    std::size_t group = 1000;
-
-    for (std::size_t pi = 0; pi < points_.size(); ++pi) {
+    std::size_t group = 4000;
+    std::size_t pi = 0;
+    while (pi < points_.size()) {
       std::size_t group_end = std::min(pi + group, points_.size());
       std::flush(std::cout);
       ScopedTimer timer("query_group");
