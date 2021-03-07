@@ -236,8 +236,7 @@ class CoverTree {
 
     Node* node = InsertFirstTwo(indices);
     for (Index i = 2; i < points_.npts(); ++i) {
-      node =
-          Insert(node, indices[i], &too_far, &covered, &unbalanced, &balanced);
+      node = Insert(node, CreateNode(indices[i]));
     }
 
     // std::cout << "too_far / covered " << too_far << " / " << covered
@@ -284,44 +283,33 @@ class CoverTree {
     } else {
       Scalar d = metric_(points_(indices[0]), points_(indices[1]));
       node->level = std::ceil(base_.Level(d));
-      PushChild(node, indices[1]);
+      PushChild(node, CreateNode(indices[1]));
     }
 
     return node;
   }
 
   //! \brief Inserts a new node for point \p idx into the tree defined by \p n.
-  inline Node* Insert(
-      Node* n,
-      Index const idx,
-      std::size_t* too_far,
-      std::size_t* covered,
-      std::size_t* unbalanced,
-      std::size_t* balanced) {
-    auto const& p = points_(idx);
+  inline Node* Insert(Node* n, Node* x) {
+    auto const& p = points_(x->index);
     Scalar d = metric_(points_(n->index), p);
     Scalar c = base_.CoverDistance(*n);
     if (d > c) {
       c *= base_.value;
       while (d > c) {
-        n = ChildToParent(RemoveLeaf(n), n);
+        n = NodeToParent(RemoveLeaf(n), n);
         c = base_.ParentDistance(*n);
         d = metric_(points_(n->index), p);
       }
 
-      *too_far += 1;
-
-      return CreateParent(idx, n);
+      return NodeToParent(x, n);
     } else {
-      *covered += 1;
-
-      InsertLeaf(n, CreateNode(idx), unbalanced, balanced);
+      InsertLeaf(n, x);
       return n;
     }
   }
 
-  inline void InsertLeaf(
-      Node* n, Node* l, std::size_t* unbalanced, std::size_t* balanced) {
+  inline void InsertLeaf(Node* n, Node* l) {
     // Change contents of this function to the following line for a simplified
     // cover tree.
     // PushChild(FindParent(n, points_(l->index)), l);
@@ -330,11 +318,9 @@ class CoverTree {
     Node* p = FindParent(n, x);
 
     if (p->IsLeaf()) {
-      *balanced += 1;
       PushChild(p, l);
     } else {
-      *unbalanced += 1;
-      Rebalance(p, l, x, balanced, unbalanced);
+      Rebalance(p, l, x);
     }
   }
 
@@ -369,51 +355,53 @@ class CoverTree {
   }
 
   template <typename P>
-  void Rebalance(
-      Node* n,
-      Node* c,
-      P const& p,
-      std::size_t* unbalanced,
-      std::size_t* balanced) {
+  void Rebalance(Node* n, Node* c, P const& p) {
     std::vector<Node*> to_move;
     std::vector<Node*> to_stay;
 
-    c->level = n->level - Scalar(1.0);
+    // For this node's children we want to know what the farthest distance of
+    // their descendants is. That distance is this node's cover distance as it
+    // is twice the separation distance. When the distance between the children
+    // is more than twice this value, they don't intersect and checking them can
+    // be skipped. However, since radius of this node's sphere equals the cover
+    // distance, we always have to check all children.
+    // TODO The only reason the above is true, is because Insert does not always
+    // return a node that contains all its descendants in its cover distance. If
+    // it's possible to change Insert to always return a node that covers all
+    // its descendants with its cover distance, this algorithm could be faster.
+    // 1) Can actually skip children, especially at higher dimensions.
+    // 2) We'll never have to level the tree from Rebalance and can use
+    // InsertLeaf everywhere instead of Insert.
 
-    Scalar const d = base_.CoverDistance(*n);
+    for (auto& m : n->children) {
+      Extract(points_(m->index), p, m, &to_move, &to_stay);
 
-    for (auto const& m : n->children) {
-      auto const& q = points_(m->index);
-
-      // Adaptation to the original aglorithm. Saves unnecessary tree traversal
-      // an appears to be a bit faster.
-      if (metric_(p, q) < d) {
-        Rebalance_(q, p, m, &to_move, &to_stay, unbalanced, balanced);
+      for (auto it = to_stay.rbegin(); it != to_stay.rend(); ++it) {
+        m = Insert(m, *it);
       }
 
-      // for (auto const& r : to_stay) {
-      //   InsertLeaf(m, r, unbalanced, balanced);
-      // }
+      to_stay.clear();
+    }
 
-      // to_stay.clear();
+    c->level = n->level - Scalar(1.0);
+
+    for (auto it = to_move.rbegin(); it != to_move.rend(); ++it) {
+      c = Insert(c, *it);
     }
 
     PushChild(n, c);
-
-    for (auto const& m : to_move) {
-      InsertLeaf(c, m, unbalanced, balanced);
-    }
   }
 
   template <typename P>
-  void Rebalance_(
+  void Extract(
       P const& n,
       P const& p,
       Node* d,
       std::vector<Node*>* to_move,
-      std::vector<Node*>* to_stay,
-      std::size_t* unbalanced,
-      std::size_t* balanced) {
+      std::vector<Node*>* to_stay) {
+    if (d->IsLeaf()) {
+      return;
+    }
     auto erase_begin = std::partition(
         d->children.begin(),
         d->children.end(),
@@ -421,24 +409,21 @@ class CoverTree {
           return metric_(n, points_(r->index)) < metric_(p, points_(r->index));
         });
 
-    auto it = d->children.begin();
-    for (; it != erase_begin; ++it) {
-      Rebalance_(n, p, *it, to_move, to_stay, unbalanced, balanced);
-    }
-    for (; it != d->children.end(); ++it) {
+    auto erase_rend =
+        typename std::vector<Node*>::reverse_iterator(erase_begin);
+
+    auto it = d->children.rbegin();
+    for (; it != erase_rend; ++it) {
       to_move->push_back(*it);
       Strip(n, p, *it, to_move, to_stay);
     }
-    d->children.erase(erase_begin, d->children.end());
-
-    for (auto const& r : *to_stay) {
-      InsertLeaf(d, r, unbalanced, balanced);
+    for (; it != d->children.rend(); ++it) {
+      Extract(n, p, *it, to_move, to_stay);
     }
-
-    to_stay->clear();
+    d->children.erase(erase_begin, d->children.end());
   }
 
-  //! \brief Strips all decendants of d in a depth-first fashion and puts them
+  //! \brief Strips all descendants of d in a depth-first fashion and puts them
   //! in either the move or stay set.
   template <typename P>
   void Strip(
@@ -447,6 +432,10 @@ class CoverTree {
       Node* d,
       std::vector<Node*>* to_move,
       std::vector<Node*>* to_stay) {
+    if (d->IsLeaf()) {
+      return;
+    }
+
     for (auto const& r : d->children) {
       Strip(n, p, r, to_move, to_stay);
       if (metric_(n, points_(r->index)) > metric_(p, points_(r->index))) {
@@ -474,7 +463,7 @@ class CoverTree {
     return n;
   }
 
-  inline Node* ChildToParent(Node* p, Node* c) const {
+  inline Node* NodeToParent(Node* p, Node* c) const {
     assert(p->IsLeaf());
 
     p->level = c->level + Scalar(1.0);
@@ -488,18 +477,9 @@ class CoverTree {
     return c;
   }
 
-  inline Node* CreateParent(Index idx, Node* c) {
-    return ChildToParent(CreateNode(idx), c);
-  }
-
   inline void PushChild(Node* p, Node* c) {
     c->level = p->level - Scalar(1.0);
     p->children.push_back(c);
-  }
-
-  inline void PushChild(Node* p, Index idx) {
-    //
-    PushChild(p, CreateNode(idx));
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
@@ -520,12 +500,15 @@ class CoverTree {
       // with respect to the nearest point, not the query point itself,
       // intersecting the wrong spheres.
       // Algorithm 1 from paper "Cover Trees for Nearest Neighbor" is correct.
-      // NOTE: In both papers, the upper-bound is said to be the cover
-      // distance of the parent. This is true taking the invariants into
-      // account, but in reality it's only half this distance. Proof: The insert
-      // algorithms of both papers ONLY insert a point when it's within
-      // the current level's parent cover distance. So it will never be twice as
-      // far.
+
+      // The upper-bound distance a descendant can be is twice the cover
+      // distance of the node. This is true taking the invariants into account.
+      // NOTE: In "Cover Trees for Nearest Neighbor" this upper-bound
+      // practically appears to be half this distance, as new nodes are only
+      // added when they are within cover distance.
+      // For "Faster Cover Trees" it is twice the cover distance due to the
+      // first phase of the insert algorithm (not having a root at infinity).
+
       // TODO The distance calculation can be cached. When SearchNeighbor is
       // called it's calculated again.
       if (visitor->max() > (metric_(p, points_(m->index)) - m->max_distance)) {
