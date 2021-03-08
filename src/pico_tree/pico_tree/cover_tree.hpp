@@ -504,10 +504,21 @@ class CoverTree {
       (*visitor)(node->index, d);
     }
 
-    // TODO The paper tells us to sort the children based on distance from the
-    // query point. We do the same in the KdTree already. Here it's more of the
-    // same.
-    for (auto const& m : node->children) {
+    std::vector<std::pair<Node const*, Scalar>> sorted;
+    sorted.reserve(node->children.size());
+    for (auto const n : node->children) {
+      sorted.push_back({n, metric_(p, points_(n->index))});
+    }
+
+    std::sort(
+        sorted.begin(),
+        sorted.end(),
+        [](std::pair<Node const*, Scalar> const& a,
+           std::pair<Node const*, Scalar> const& b) -> bool {
+          return a.second < b.second;
+        });
+
+    for (auto const& m : sorted) {
       // Algorithm 1 from paper "Faster Cover Trees" has a mistake. It checks
       // with respect to the nearest point, not the query point itself,
       // intersecting the wrong spheres.
@@ -523,8 +534,11 @@ class CoverTree {
 
       // TODO The distance calculation can be cached. When SearchNeighbor is
       // called it's calculated again.
-      if (visitor->max() > (metric_(p, points_(m->index)) - m->max_distance)) {
-        SearchNearest(m, p, visitor);
+      if (visitor->max() >
+          (metric_(p, points_(m.first->index)) - m.first->max_distance)) {
+        SearchNearest(m.first, p, visitor);
+      } else {
+        break;
       }
     }
   }
