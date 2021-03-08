@@ -537,8 +537,6 @@ class CoverTree {
       if (visitor->max() >
           (metric_(p, points_(m.first->index)) - m.first->max_distance)) {
         SearchNearest(m.first, p, visitor);
-      } else {
-        break;
       }
     }
   }
