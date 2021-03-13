@@ -27,20 +27,14 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 * KdTree
   * Nearest neighbors, approximate nearest neighbors, radius, and box searches.
-  * Customizable nearest neighbor searches, Cartesian [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
-
-* CoverTree - ***Experimental / Work in progress***
-  * Nearest neighbors, approximate nearest neighbors, and radius searches.
-  * Customizable metrics that don't have to be Cartesian such as [spherical](https://en.wikipedia.org/wiki/Great-circle_distance) metrics.
-
-* General
+  * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
   * Compile time and run time known dimensions.
   * Static tree builds.
   * Thread safe queries.
 
 The examples show how PicoTree can be used:
 
-* How to create the expected [point](./examples/pico_common/point.hpp) and [point set](./examples/pico_common/pico_adaptor.hpp) interfaces.
+* How to create the expected [point](./examples/pico_toolshed/pico_toolshed/point.hpp) and [point set](./examples/pico_toolshed/pico_toolshed/pico_adaptor.hpp) interfaces.
 * Searching using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
 * Support for [Eigen](./examples/eigen/eigen.cpp) data types.
 * Using the [KdTree with Python](./examples/python/kd_tree.py).
@@ -112,5 +106,3 @@ $ pip3 install ./pico_tree --install-option="-GMinGW Makefiles"
 * S. Maneewongvatana and D. M. Mount. [It's okay to be skinny, if your friends are fat.](http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf) 4th Annual CGC Workshop on Computational Geometry, 1999.
 * S. Arya and H. Y. Fu. [Expected-case complexity of approximate nearest neighbor searching.](https://www.cse.ust.hk/faculty/arya/pub/exp.pdf) InProceedings of the 11th ACM-SIAM Symposium on Discrete Algorithms, 2000.
 * https://en.wikipedia.org/wiki/K-d_tree
-* Beygelzimer, A.; Kakade, S.; and Langford, J. 2006. [Cover Trees for Nearest Neighbor.](https://hunch.net/~jl/projects/cover_tree/icml_final/final-icml.pdf) In ICML, 97–104.
-* Izbicki, M., and Shelton, C. R. 2015. [Faster cover trees.](https://izbicki.me/public/papers/icml2015-faster-cover-trees.pdf) In ICML, 1162–1170.
