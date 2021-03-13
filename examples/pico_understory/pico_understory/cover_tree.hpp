@@ -1,11 +1,10 @@
 #pragma once
 
 #include <numeric>
+#include <pico_tree/internal/memory.hpp>
+#include <pico_tree/internal/search_visitor.hpp>
+#include <pico_tree/metric.hpp>
 #include <random>
-
-#include "pico_tree/internal/memory.hpp"
-#include "pico_tree/internal/search_visitor.hpp"
-#include "pico_tree/metric.hpp"
 
 // Use this define to enable a simplified version of the nearest ancestor tree
 // or disable it to use the regular one from "Faster Cover Trees".
@@ -377,9 +376,9 @@ class CoverTree {
       // cover tree as well. Faster by ~70%, but tree creation is a bit slower
       // for it (3-14%).
       Scalar min_d = metric_(points_(tree->children[0]->index), x);
-      Index min_i = 0;
+      std::size_t min_i = 0;
 
-      for (Index i = 1; i < tree->children.size(); ++i) {
+      for (std::size_t i = 1; i < tree->children.size(); ++i) {
         Scalar d = metric_(points_(tree->children[i]->index), x);
 
         if (d < min_d) {

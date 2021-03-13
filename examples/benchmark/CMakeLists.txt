@@ -26,6 +26,10 @@ target_link_libraries(bm_nanoflann
 )
 add_benchmark(bm_pico_kd_tree)
 add_benchmark(bm_pico_cover_tree)
+target_link_libraries(bm_pico_cover_tree
+    PRIVATE
+         pico_understory
+)
 
 ################################################################################
 # uosr_to_bin

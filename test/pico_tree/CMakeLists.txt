@@ -36,6 +36,8 @@ target_sources(${TEST_TARGET_NAME} PRIVATE ${TEST_TARGET_SOURCES})
 target_link_libraries(${TEST_TARGET_NAME}
     ${PROJECT_NAME}
     pico_toolshed
+    # Testing the understory structures here as well.
+    pico_understory
     GTest::GTest
     GTest::Main
     $<$<TARGET_EXISTS:Eigen3::Eigen>:Eigen3::Eigen>
