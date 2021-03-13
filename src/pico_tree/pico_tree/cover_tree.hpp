@@ -7,9 +7,27 @@
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/metric.hpp"
 
-namespace pico_tree {
+// Use this define to enable a simplified version of the nearest ancestor tree
+// or disable it to use the regular one from "Faster Cover Trees".
+//
+// Testing seems to indicate that when the dataset has some structure (not
+// random), the "simplified" version is faster.
+// 1) Building: The performance difference can be large for a low leveling base,
+// e.g., 1.3. The difference in building time becomes smaller when the leveling
+// base increases.
+// 2) Queries: Slower compared to the regular nearest ancestor tree for a low
+// leveling base, but faster for a higher one.
+//
+// It seems that with structured data, both tree building and querying becomes
+// faster when increasing the leveling base. Both times decreasing steadily when
+// increasing the base. Here a value of 2.0 is the fastest.
+//
+// For random data, build and query times seem to be all over the place when
+// steadily increasing the base. A value of 1.3 generally seems the fastest, but
+// none of the values for this hyper parameter inspire trust.
+#define SIMPLIFIED_NEAREST_ANCESTOR_COVER_TREE
 
-namespace internal {}
+namespace pico_tree {
 
 template <
     typename Index,
@@ -38,9 +56,7 @@ class CoverTree {
     inline bool IsBranch() const { return !children.empty(); }
     inline bool IsLeaf() const { return children.empty(); }
 
-    // TODO Maybe move to the tree itself.
-    // TODO Could possibly reduce storage if changed to some integer type at the
-    // price of performance?
+    // TODO Could be moved to the tree.
     Scalar level;
     //! \brief Distance to the farthest child.
     Scalar max_distance;
@@ -53,6 +69,7 @@ class CoverTree {
   //! \details It determines how fast the levels of the tree increase or
   //! decrease. When we raise "base" to the power of a certain natural number,
   //! that exponent represents the active level of the tree.
+  //!
   //! The papers are written using a base of 2, but for performance reasons they
   //! use a base of 1.3.
   struct Base {
@@ -98,7 +115,7 @@ class CoverTree {
         base_{base},
         root_(Build()) {}
 
-  //! \brief Searches for the k nearest neighbors of point \p p , where k equals
+  //! \brief Searches for the k nearest neighbors of point \p x, where k equals
   //! std::distance(begin, end). It is expected that the value type of the
   //! iterator equals Neighbor<Index, Scalar>.
   //! \details Interpretation of the output distances depend on the Metric. The
@@ -107,7 +124,7 @@ class CoverTree {
   //! \tparam RandomAccessIterator Iterator type.
   template <typename P, typename RandomAccessIterator>
   inline void SearchKnn(
-      P const& p, RandomAccessIterator begin, RandomAccessIterator end) const {
+      P const& x, RandomAccessIterator begin, RandomAccessIterator end) const {
     static_assert(
         std::is_same<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
@@ -115,48 +132,48 @@ class CoverTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
-    SearchNearest(root_, p, &v);
+    SearchNearest(root_, x, &v);
   }
 
-  //! \brief Searches for the \p k nearest neighbors of point \p p and stores
+  //! \brief Searches for the \p k nearest neighbors of point \p x and stores
   //! the results in output vector \p knn.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void SearchKnn(P
   //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
-      P const& p, Index const k, std::vector<NeighborType>* knn) const {
+      P const& x, Index const k, std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));
-    SearchKnn(p, knn->begin(), knn->end());
+    SearchKnn(x, knn->begin(), knn->end());
   }
 
-  //! \brief Searches for all the neighbors of point \p p that are within radius
+  //! \brief Searches for all the neighbors of point \p x that are within radius
   //! \p radius and stores the results in output vector \p n.
   //! \details Interpretation of the in and output distances depend on the
   //! Metric. The default L2 results in squared distances.
   //! \tparam P Point type.
-  //! \param p Input point.
+  //! \param x Input point.
   //! \param radius Search radius.
   //! \param n Output points.
   //! \param sort If true, the result set is sorted from closest to farthest
   //! distance with respect to the query point.
   template <typename P>
   inline void SearchRadius(
-      P const& p,
+      P const& x,
       Scalar const radius,
       std::vector<NeighborType>* n,
       bool const sort = false) const {
     internal::SearchRadius<NeighborType> v(radius, n);
-    SearchNearest(root_, p, &v);
+    SearchNearest(root_, x, &v);
 
     if (sort) {
       v.Sort();
     }
   }
 
-  //! \brief Searches for the k approximate nearest neighbors of point \p p ,
+  //! \brief Searches for the k approximate nearest neighbors of point \p x,
   //! where k equals std::distance(begin, end). It is expected that the value
   //! type of the iterator equals Neighbor<Index, Scalar>.
   //! \details This function can result in faster search queries compared to
@@ -176,11 +193,11 @@ class CoverTree {
   //! Scalar max_error = Scalar(0.15);
   //! Scalar e = Scalar(1.0) + max_error;
   //! std::vector<Neighbor<Index, Scalar>> knn(k);
-  //! tree.SearchAknn(p, e, knn.begin(), knn.end());
+  //! tree.SearchAknn(x, e, knn.begin(), knn.end());
   //! \endcode
   template <typename P, typename RandomAccessIterator>
   inline void SearchAknn(
-      P const& p,
+      P const& x,
       Scalar const e,
       RandomAccessIterator begin,
       RandomAccessIterator end) const {
@@ -191,24 +208,24 @@ class CoverTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
-    SearchNearest(root_, p, &v);
+    SearchNearest(root_, x, &v);
   }
 
-  //! \brief Searches for the \p k approximate nearest neighbors of point \p p
+  //! \brief Searches for the \p k approximate nearest neighbors of point \p x
   //! and stores the results in output vector \p knn.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void
   //! SearchAknn(P const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchAknn(
-      P const& p,
+      P const& x,
       Index const k,
       Scalar const e,
       std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));
-    SearchAknn(p, e, knn->begin(), knn->end());
+    SearchAknn(x, e, knn->begin(), knn->end());
   }
 
   //! \brief Point set used by the tree.
@@ -221,11 +238,13 @@ class CoverTree {
   Node* Build() {
     assert(points_.npts() > 0);
 
+    // Both building and querying become a great deal faster for any of the
+    // nearest ancestor cover trees when they are constructed with randomly
+    // inserted points. It saves a huge deal of rebalancing (the build time of
+    // the LiDAR dataset goes from 1.5 hour+ to about 3 minutes) and the tree
+    // has a high probablity to be better balanced for queries.
     // For the simplified cover tree, query performance is greatly improved
-    // using a randomized insertion at the price of construction time. The tree
-    // seems to get highly imbalanced if not done.
-    // Building the nearest ancestor cover tree is enormously faster when the
-    // points come in randomly. This saves a lot of rebalancing.
+    // using a randomized insertion at the price of construction time.
     std::vector<Index> indices(points_.npts());
     std::iota(indices.begin(), indices.end(), 0);
     std::random_device rd;
@@ -237,16 +256,17 @@ class CoverTree {
       node = Insert(node, CreateNode(indices[i]));
     }
 
-    // TODO Make cache friendly structure here. I.e., a depth first re-creation
-    // of the tree.
-    // TODO This is take 1. Not final.
+    // Cache friendly tree.
+    // TODO Take 1. A better version is probably where the contents of the
+    // vector are part of the node and not in a different memory blocks.
     internal::StaticBuffer<Node> nodes(points_.npts());
     Node* root = DepthFirstBufferCopy(node, &nodes);
     std::swap(nodes_, nodes);
     node = root;
 
-    // TODO This is quite expensive. Perhaps we can do better. Well worth it vs.
-    // queries. These are otherwise extremely slow. ~70% faster.
+    // TODO This is quite expensive. We can do better by using the values
+    // calculated during an insert.
+    // Current version is well worth it vs. queries.
     UpdateMaxDistance(node);
 
     return node;
@@ -275,11 +295,11 @@ class CoverTree {
   }
 
   template <typename P>
-  Scalar MaxDistance(Node const* const node, P const& p) const {
-    Scalar max = metric_(points_(node->index), p);
+  Scalar MaxDistance(Node const* const node, P const& x) const {
+    Scalar max = metric_(points_(node->index), x);
 
     for (Node const* const m : node->children) {
-      max = std::max(max, MaxDistance(m, p));
+      max = std::max(max, MaxDistance(m, x));
     }
 
     return max;
@@ -301,56 +321,66 @@ class CoverTree {
     return node;
   }
 
-  //! \brief Inserts a new node for point \p idx into the tree defined by \p n.
-  inline Node* Insert(Node* n, Node* x) {
-    auto const& p = points_(x->index);
-    Scalar d = metric_(points_(n->index), p);
-    Scalar c = base_.CoverDistance(*n);
+  //! \brief Returns a new tree inserting \p node into \p tree.
+  inline Node* Insert(Node* tree, Node* node) {
+    auto const& x = points_(node->index);
+    Scalar d = metric_(points_(tree->index), x);
+    Scalar c = base_.CoverDistance(*tree);
     if (d > c) {
+#ifdef SIMPLIFIED_NEAREST_ANCESTOR_COVER_TREE
+      Scalar level = std::floor(base_.Level(c + d));
+
+      while (tree->level < level) {
+        tree = NodeToParent(RemoveLeaf(tree), tree);
+      }
+#else
       c *= base_.value;
       while (d > c) {
-        n = NodeToParent(RemoveLeaf(n), n);
-        c = base_.ParentDistance(*n);
-        d = metric_(points_(n->index), p);
+        tree = NodeToParent(RemoveLeaf(tree), tree);
+        c = base_.ParentDistance(*tree);
+        d = metric_(points_(tree->index), x);
       }
+#endif
 
-      return NodeToParent(x, n);
+      return NodeToParent(node, tree);
     } else {
-      InsertLeaf(n, x);
-      return n;
+      InsertCovered(tree, node);
+      return tree;
     }
   }
 
-  inline void InsertLeaf(Node* n, Node* l) {
-    // Change contents of this function to the following line for a simplified
-    // cover tree.
-    // PushChild(FindParent(n, points_(l->index)), l);
+  //! \brief Insert \p node somewhere in \p tree. If the new parent for \p
+  //! node already has children, rebalancing may occur.
+  inline void InsertCovered(Node* tree, Node* node) {
+    // The following line may replace the contents of this function to get a
+    // simplified cover tree:
+    // PushChild(FindParent(tree, points_(node->index)), node);
 
-    auto const& x = points_(l->index);
-    Node* p = FindParent(n, x);
+    auto const& x = points_(node->index);
+    Node* parent = FindParent(tree, x);
 
-    if (p->IsLeaf()) {
-      PushChild(p, l);
+    if (parent->IsLeaf()) {
+      PushChild(parent, node);
     } else {
-      Rebalance(p, l, x);
+      Rebalance(parent, node, x);
     }
   }
 
   template <typename P>
-  inline Node* FindParent(Node* n, P const& p) const {
-    if (n->IsLeaf()) {
-      return n;
+  inline Node* FindParent(Node* tree, P const& x) const {
+    if (tree->IsLeaf()) {
+      return tree;
     } else {
       // Traverse branches via the closest ancestors to the point. The paper
       // "Faster Cover Trees" mentions this as being part of the nearest
       // ancestor cover tree, but this speeds up the queries of the simplified
       // cover tree as well. Faster by ~70%, but tree creation is a bit slower
       // for it (3-14%).
-      Scalar min_d = metric_(points_(n->children[0]->index), p);
+      Scalar min_d = metric_(points_(tree->children[0]->index), x);
       Index min_i = 0;
 
-      for (Index i = 1; i < n->children.size(); ++i) {
-        Scalar d = metric_(points_(n->children[i]->index), p);
+      for (Index i = 1; i < tree->children.size(); ++i) {
+        Scalar d = metric_(points_(tree->children[i]->index), x);
 
         if (d < min_d) {
           min_d = d;
@@ -358,156 +388,183 @@ class CoverTree {
         }
       }
 
-      if (min_d <= base_.ChildDistance(*n)) {
-        return FindParent(n->children[min_i], p);
+      if (min_d <= base_.ChildDistance(*tree)) {
+        return FindParent(tree->children[min_i], x);
       }
 
-      return n;
+      return tree;
     }
   }
 
   template <typename P>
-  void Rebalance(Node* n, Node* c, P const& p) {
+  void Rebalance(Node* parent, Node* node, P const& x) {
     std::vector<Node*> to_move;
     std::vector<Node*> to_stay;
 
     // For this node's children we want to know what the farthest distance of
     // their descendants is. That distance is this node's cover distance as it
-    // is twice the separation distance. When the distance between the children
-    // is more than twice this value, they don't intersect and checking them can
-    // be skipped. However, since radius of this node's sphere equals the cover
-    // distance, we always have to check all children.
-    // TODO The only reason the above is true, is because Insert does not always
-    // return a node that contains all its descendants in its cover distance. If
-    // it's possible to change Insert to always return a node that covers all
-    // its descendants with its cover distance, this algorithm could be faster.
-    // 1) Can actually skip children, especially at higher dimensions.
-    // 2) We'll never have to level the tree from Rebalance and can use
-    // InsertLeaf everywhere instead of Insert.
+    // is twice the separation distance. When the distance between the
+    // children is more than twice this value, they don't intersect and
+    // checking them can be skipped. However, since radius of this node's
+    // sphere equals the cover distance, we always have to check all children.
 
-    for (auto& m : n->children) {
-      Extract(points_(m->index), p, m, &to_move, &to_stay);
+    // TODO With the simplified nearest ancestor cover tree we can skip more
+    // nodes, but perhaps we could use Node::max_distance later.
+
+#ifdef SIMPLIFIED_NEAREST_ANCESTOR_COVER_TREE
+    Scalar const d = base_.ChildDistance(*parent) * Scalar(2.0);
+
+    for (auto& child : parent->children) {
+      auto const& y = points_(child->index);
+
+      if (metric_(x, y) < d) {
+        Extract(x, y, child, &to_move, &to_stay);
+
+        for (auto it = to_stay.rbegin(); it != to_stay.rend(); ++it) {
+          InsertCovered(child, *it);
+        }
+
+        to_stay.clear();
+      }
+    }
+
+    node->level = parent->level - Scalar(1.0);
+
+    for (auto it = to_move.rbegin(); it != to_move.rend(); ++it) {
+      InsertCovered(node, *it);
+    }
+
+    PushChild(parent, node);
+#else
+    for (auto& child : parent->children) {
+      Extract(x, points_(child->index), child, &to_move, &to_stay);
 
       for (auto it = to_stay.rbegin(); it != to_stay.rend(); ++it) {
-        m = Insert(m, *it);
+        child = Insert(child, *it);
       }
 
       to_stay.clear();
     }
 
-    c->level = n->level - Scalar(1.0);
+    node->level = parent->level - Scalar(1.0);
 
     for (auto it = to_move.rbegin(); it != to_move.rend(); ++it) {
-      c = Insert(c, *it);
+      node = Insert(node, *it);
     }
 
-    PushChild(n, c);
+    PushChild(parent, node);
+#endif
   }
 
+  //! \brief Fill the \p to_move and \p to_stay buffers based on if any \p
+  //! descendant (of \p x_stay) is either closer to \p x_move or \p x_stay.
+  //! Move is the newly inserted node for which we are rebalancing.
   template <typename P>
   void Extract(
-      P const& n,
-      P const& p,
-      Node* d,
+      P const& x_move,
+      P const& x_stay,
+      Node* descendant,
       std::vector<Node*>* to_move,
       std::vector<Node*>* to_stay) {
-    if (d->IsLeaf()) {
+    if (descendant->IsLeaf()) {
       return;
     }
+
     auto erase_begin = std::partition(
-        d->children.begin(),
-        d->children.end(),
-        [this, &n, &p](Node* r) -> bool {
-          return metric_(n, points_(r->index)) < metric_(p, points_(r->index));
+        descendant->children.begin(),
+        descendant->children.end(),
+        [this, &x_move, &x_stay](Node* node) -> bool {
+          return metric_(x_stay, points_(node->index)) <
+                 metric_(x_move, points_(node->index));
         });
 
     auto erase_rend =
         typename std::vector<Node*>::reverse_iterator(erase_begin);
 
-    auto it = d->children.rbegin();
+    auto it = descendant->children.rbegin();
     for (; it != erase_rend; ++it) {
       to_move->push_back(*it);
-      Strip(n, p, *it, to_move, to_stay);
+      Strip(x_move, x_stay, *it, to_move, to_stay);
     }
-    for (; it != d->children.rend(); ++it) {
-      Extract(n, p, *it, to_move, to_stay);
+    for (; it != descendant->children.rend(); ++it) {
+      Extract(x_move, x_stay, *it, to_move, to_stay);
     }
-    d->children.erase(erase_begin, d->children.end());
+    descendant->children.erase(erase_begin, descendant->children.end());
   }
 
-  //! \brief Strips all descendants of d in a depth-first fashion and puts them
-  //! in either the move or stay set.
+  //! \brief Strips all descendants of d in a depth-first fashion and puts
+  //! them in either the move or stay set.
   template <typename P>
   void Strip(
-      P const& n,
-      P const& p,
-      Node* d,
+      P const& x_move,
+      P const& x_stay,
+      Node* descendant,
       std::vector<Node*>* to_move,
       std::vector<Node*>* to_stay) {
-    if (d->IsLeaf()) {
+    if (descendant->IsLeaf()) {
       return;
     }
 
-    for (auto const& r : d->children) {
-      Strip(n, p, r, to_move, to_stay);
-      if (metric_(n, points_(r->index)) > metric_(p, points_(r->index))) {
-        to_move->push_back(r);
+    for (auto const& child : descendant->children) {
+      Strip(x_move, x_stay, child, to_move, to_stay);
+      if (metric_(x_stay, points_(child->index)) >
+          metric_(x_move, points_(child->index))) {
+        to_move->push_back(child);
       } else {
-        to_stay->push_back(r);
+        to_stay->push_back(child);
       }
     }
-    d->children.clear();
+    descendant->children.clear();
   }
 
-  // Called with trust.
-  inline Node* RemoveLeaf(Node* n) const {
-    assert(n->IsBranch());
+  inline Node* RemoveLeaf(Node* tree) const {
+    assert(tree->IsBranch());
 
-    Node* m;
+    Node* node;
 
     do {
-      m = n;
-      n = n->children.back();
-    } while (n->IsBranch());
+      node = tree;
+      tree = tree->children.back();
+    } while (tree->IsBranch());
 
-    m->children.pop_back();
+    node->children.pop_back();
 
-    return n;
+    return tree;
   }
 
-  inline Node* NodeToParent(Node* p, Node* c) const {
-    assert(p->IsLeaf());
+  inline Node* NodeToParent(Node* parent, Node* child) const {
+    assert(parent->IsLeaf());
 
-    p->level = c->level + Scalar(1.0);
-    p->children.push_back(c);
-    return p;
+    parent->level = child->level + Scalar(1.0);
+    parent->children.push_back(child);
+    return parent;
   }
 
   inline Node* CreateNode(Index idx) {
-    Node* c = nodes_.Allocate();
-    c->index = idx;
-    return c;
+    Node* node = nodes_.Allocate();
+    node->index = idx;
+    return node;
   }
 
-  inline void PushChild(Node* p, Node* c) {
-    c->level = p->level - Scalar(1.0);
-    p->children.push_back(c);
+  inline void PushChild(Node* parent, Node* child) {
+    child->level = parent->level - Scalar(1.0);
+    parent->children.push_back(child);
   }
 
-  //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
+  //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node .
   template <typename P, typename V>
   inline void SearchNearest(
-      Node const* const node, P const& p, V* visitor) const {
-    Scalar const d = metric_(p, points_(node->index));
+      Node const* const node, P const& x, V* visitor) const {
+    Scalar const d = metric_(x, points_(node->index));
     if (visitor->max() > d) {
       (*visitor)(node->index, d);
     }
 
     std::vector<std::pair<Node const*, Scalar>> sorted;
     sorted.reserve(node->children.size());
-    for (auto const n : node->children) {
-      sorted.push_back({n, metric_(p, points_(n->index))});
+    for (auto const child : node->children) {
+      sorted.push_back({child, metric_(x, points_(child->index))});
     }
 
     std::sort(
@@ -535,8 +592,8 @@ class CoverTree {
       // TODO The distance calculation can be cached. When SearchNeighbor is
       // called it's calculated again.
       if (visitor->max() >
-          (metric_(p, points_(m.first->index)) - m.first->max_distance)) {
-        SearchNearest(m.first, p, visitor);
+          (metric_(x, points_(m.first->index)) - m.first->max_distance)) {
+        SearchNearest(m.first, x, visitor);
       }
     }
   }
