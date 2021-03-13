@@ -352,27 +352,27 @@ class KdTree {
         indices_(points_.npts()),
         root_(Build(max_leaf_size)) {}
 
-  //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
+  //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor .
   //! \see internal::SearchNn
   //! \see internal::SearchKnn
   //! \see internal::SearchRadius
   //! \see internal::SearchAknn
   template <typename P, typename V>
-  inline void SearchNearest(P const& p, V* visitor) const {
-    SearchNearest(root_, p, visitor);
+  inline void SearchNearest(P const& x, V* visitor) const {
+    SearchNearest(root_, x, visitor);
   }
 
-  //! \brief Searches for the nearest neighbor of point \p p .
+  //! \brief Searches for the nearest neighbor of point \p x.
   //! \details Interpretation of the output distance depends on the Metric. The
   //! default L2Squared results in a squared distance.
   template <typename P>
-  inline void SearchNn(P const& p, NeighborType* nn) const {
+  inline void SearchNn(P const& x, NeighborType* nn) const {
     internal::SearchNn<NeighborType> v(nn);
-    SearchNearest(root_, p, &v);
+    SearchNearest(root_, x, &v);
   }
 
-  //! \brief Searches for the k nearest neighbors of point \p p , where k equals
+  //! \brief Searches for the k nearest neighbors of point \p x, where k equals
   //! std::distance(begin, end). It is expected that the value type of the
   //! iterator equals Neighbor<Index, Scalar>.
   //! \details Interpretation of the output distances depend on the Metric. The
@@ -381,7 +381,7 @@ class KdTree {
   //! \tparam RandomAccessIterator Iterator type.
   template <typename P, typename RandomAccessIterator>
   inline void SearchKnn(
-      P const& p, RandomAccessIterator begin, RandomAccessIterator end) const {
+      P const& x, RandomAccessIterator begin, RandomAccessIterator end) const {
     static_assert(
         std::is_same<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
@@ -389,29 +389,29 @@ class KdTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
-    SearchNearest(root_, p, &v);
+    SearchNearest(root_, x, &v);
   }
 
-  //! \brief Searches for the \p k nearest neighbors of point \p p and stores
+  //! \brief Searches for the \p k nearest neighbors of point \p x and stores
   //! the results in output vector \p knn.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void SearchKnn(P
   //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
-      P const& p, Index const k, std::vector<NeighborType>* knn) const {
+      P const& x, Index const k, std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));
-    SearchKnn(p, knn->begin(), knn->end());
+    SearchKnn(x, knn->begin(), knn->end());
   }
 
-  //! \brief Searches for all the neighbors of point \p p that are within radius
+  //! \brief Searches for all the neighbors of point \p x that are within radius
   //! \p radius and stores the results in output vector \p n.
   //! \details Interpretation of the in and output distances depend on the
   //! Metric. The default L2Squared results in squared distances.
   //! \tparam P Point type.
-  //! \param p Input point.
+  //! \param x Input point.
   //! \param radius Search radius.
   //! \code{.cpp}
   //! Scalar distance = -2.0;
@@ -425,19 +425,19 @@ class KdTree {
   //! distance with respect to the query point.
   template <typename P>
   inline void SearchRadius(
-      P const& p,
+      P const& x,
       Scalar const radius,
       std::vector<NeighborType>* n,
       bool const sort = false) const {
     internal::SearchRadius<NeighborType> v(radius, n);
-    SearchNearest(root_, p, &v);
+    SearchNearest(root_, x, &v);
 
     if (sort) {
       v.Sort();
     }
   }
 
-  //! \brief Searches for the k approximate nearest neighbors of point \p p ,
+  //! \brief Searches for the k approximate nearest neighbors of point \p x,
   //! where k equals std::distance(begin, end). It is expected that the value
   //! type of the iterator equals Neighbor<Index, Scalar>.
   //! \details This function can result in faster search queries compared to
@@ -472,7 +472,7 @@ class KdTree {
   //! \endcode
   template <typename P, typename RandomAccessIterator>
   inline void SearchAknn(
-      P const& p,
+      P const& x,
       Scalar const e,
       RandomAccessIterator begin,
       RandomAccessIterator end) const {
@@ -483,24 +483,24 @@ class KdTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
-    SearchNearest(root_, p, &v);
+    SearchNearest(root_, x, &v);
   }
 
-  //! \brief Searches for the \p k approximate nearest neighbors of point \p p
+  //! \brief Searches for the \p k approximate nearest neighbors of point \p x
   //! and stores the results in output vector \p knn.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void
   //! SearchAknn(P const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchAknn(
-      P const& p,
+      P const& x,
       Index const k,
       Scalar const e,
       std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn->resize(std::min(k, points_.npts()));
-    SearchAknn(p, e, knn->begin(), knn->end());
+    SearchAknn(x, e, knn->begin(), knn->end());
   }
 
   //! \brief Returns all points within the box defined by \p min and \p max.
@@ -605,15 +605,15 @@ class KdTree {
         0, 0, points_.npts(), Sequence(root_box_min_), Sequence(root_box_max_));
   }
 
-  //! \brief Returns the nearest neighbor (or neighbors) of point \p p depending
+  //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node .
   template <typename P, typename V>
   inline void SearchNearest(
-      Node const* const node, P const& p, V* visitor) const {
+      Node const* const node, P const& x, V* visitor) const {
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        Scalar const d = metric_(p, points_(indices_[i]));
+        Scalar const d = metric_(x, points_(indices_[i]));
         if (visitor->max() > d) {
           (*visitor)(indices_[i], d);
         }
@@ -621,7 +621,7 @@ class KdTree {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      Scalar const v = p(node->data.branch.split_dim);
+      Scalar const v = x(node->data.branch.split_dim);
       Node const* node_1st;
       Node const* node_2nd;
 
@@ -637,19 +637,19 @@ class KdTree {
         node_2nd = node->left;
       }
 
-      SearchNearest(node_1st, p, visitor);
+      SearchNearest(node_1st, x, visitor);
       if (visitor->max() >= metric_(node->data.branch.split_val, v)) {
-        SearchNearest(node_2nd, p, visitor);
+        SearchNearest(node_2nd, x, visitor);
       }
     }
   }
 
-  //! Checks if \p p is contained in the box defined by \p min and \p max. A
+  //! Checks if \p x is contained in the box defined by \p min and \p max. A
   //! point on the edge considered inside the box.
   template <typename P0, typename P1>
-  inline bool PointInBox(P0 const& p, P1 const& min, P1 const& max) const {
+  inline bool PointInBox(P0 const& x, P1 const& min, P1 const& max) const {
     for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-      if (min(i) > p(i) || max(i) < p(i)) {
+      if (min(i) > x(i) || max(i) < x(i)) {
         return false;
       }
     }
