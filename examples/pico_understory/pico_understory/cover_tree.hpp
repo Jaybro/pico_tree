@@ -278,7 +278,7 @@ class CoverTree {
     copy->level = node->level;
     copy->children.reserve(node->children.size());
 
-    for (auto const& m : node->children) {
+    for (auto const m : node->children) {
       copy->children.push_back(DepthFirstBufferCopy(m, nodes));
     }
 
@@ -413,7 +413,7 @@ class CoverTree {
 #ifdef SIMPLIFIED_NEAREST_ANCESTOR_COVER_TREE
     Scalar const d = base_.ChildDistance(*parent) * Scalar(2.0);
 
-    for (auto& child : parent->children) {
+    for (auto child : parent->children) {
       auto const& y = points_(child->index);
 
       if (metric_(x, y) < d) {
@@ -504,7 +504,7 @@ class CoverTree {
       return;
     }
 
-    for (auto const& child : descendant->children) {
+    for (auto const child : descendant->children) {
       Strip(x_move, x_stay, child, to_move, to_stay);
       if (metric_(x_stay, points_(child->index)) >
           metric_(x_move, points_(child->index))) {
@@ -574,7 +574,7 @@ class CoverTree {
           return a.second < b.second;
         });
 
-    for (auto const& m : sorted) {
+    for (auto const m : sorted) {
       // Algorithm 1 from paper "Faster Cover Trees" has a mistake. It checks
       // with respect to the nearest point, not the query point itself,
       // intersecting the wrong spheres.
