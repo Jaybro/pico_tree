@@ -6,7 +6,7 @@ function(add_benchmark BM_TARGET_NAME)
     )
     target_link_libraries(${BM_TARGET_NAME}
         PRIVATE
-            pico_common
+            pico_toolshed
             benchmark::benchmark
     )
     set_target_properties(${BM_TARGET_NAME}
@@ -37,7 +37,7 @@ target_sources(uosr_to_bin
         ${CMAKE_CURRENT_LIST_DIR}/format_uosr.cpp
         ${CMAKE_CURRENT_LIST_DIR}/uosr_to_bin.cpp
 )
-target_link_libraries(uosr_to_bin PRIVATE pico_common)
+target_link_libraries(uosr_to_bin PRIVATE pico_toolshed)
 # This executable requires <filesystem>
 target_compile_features(uosr_to_bin PRIVATE cxx_std_17)
 set_target_properties(uosr_to_bin
@@ -54,7 +54,7 @@ target_sources(bin_to_ascii
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/bin_to_ascii.cpp
 )
-target_link_libraries(bin_to_ascii PRIVATE pico_common)
+target_link_libraries(bin_to_ascii PRIVATE pico_toolshed)
 # This executable requires <filesystem>
 target_compile_features(bin_to_ascii PRIVATE cxx_std_17)
 set_target_properties(bin_to_ascii

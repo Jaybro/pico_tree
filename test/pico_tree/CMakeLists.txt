@@ -35,7 +35,7 @@ endif()
 target_sources(${TEST_TARGET_NAME} PRIVATE ${TEST_TARGET_SOURCES})
 target_link_libraries(${TEST_TARGET_NAME}
     ${PROJECT_NAME}
-    pico_common
+    pico_toolshed
     GTest::GTest
     GTest::Main
     $<$<TARGET_EXISTS:Eigen3::Eigen>:Eigen3::Eigen>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <nanoflann.hpp>
-#include <point.hpp>
+#include <pico_toolshed/point.hpp>
 
 //! Demo point set adaptor for a vector of points.
 template <typename Index, typename Point>

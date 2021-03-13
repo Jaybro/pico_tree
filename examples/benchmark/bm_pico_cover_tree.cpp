@@ -1,6 +1,6 @@
-#include <pico_adaptor.hpp>
+#include <pico_toolshed/pico_adaptor.hpp>
+#include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/cover_tree.hpp>
-#include <scoped_timer.hpp>
 
 #include "benchmark.hpp"
 

@@ -4,9 +4,9 @@
 //#include <Eigen/StdVector>
 // If we use C++17 there is no need to take care of memory alignment:
 // https://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
+#include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/eigen.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <scoped_timer.hpp>
 
 // Important! The Eigen example is not a performance benchmark. So don't take
 // the "elapsed time" numbers too seriously.

@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <pico_toolshed/point.hpp>
 
 #include "format_ascii.hpp"
 #include "format_bin.hpp"

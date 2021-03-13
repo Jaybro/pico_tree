@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <pico_adaptor.hpp>
+#include <pico_toolshed/pico_adaptor.hpp>
 #include <pico_tree/kd_tree.hpp>
 
 #include "common.hpp"

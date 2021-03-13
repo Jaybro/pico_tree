@@ -1,5 +1,7 @@
 #include <benchmark/benchmark.h>
 
+#include <pico_toolshed/point.hpp>
+
 #include "format_bin.hpp"
 
 namespace pico_tree {

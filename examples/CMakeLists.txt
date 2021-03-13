@@ -1,4 +1,4 @@
-add_subdirectory(pico_common)
+add_subdirectory(pico_toolshed)
 
 add_subdirectory(kd_tree)
 
