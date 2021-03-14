@@ -265,7 +265,8 @@ class CoverTree {
 
     // TODO This is quite expensive. We can do better by using the values
     // calculated during an insert.
-    // Current version is well worth it vs. queries.
+    // Current version is well worth it vs. queries but maybe not for high
+    // dimensions.
     UpdateMaxDistance(node);
 
     return node;
