@@ -1,6 +1,6 @@
-#include <pico_adaptor.hpp>
+#include <pico_toolshed/pico_adaptor.hpp>
+#include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <scoped_timer.hpp>
 
 // Compile time or run time known dimensions.
 void Build() {

@@ -1,4 +1,10 @@
-add_subdirectory(pico_common)
+add_subdirectory(pico_toolshed)
+
+# Sunlight may not reach every tree equally.
+# Trees or other search structures that end up in the understory can still be
+# interesting to others, they can be used for comparisons, or perhaps promoted
+# later.
+add_subdirectory(pico_understory)
 
 add_subdirectory(kd_tree)
 

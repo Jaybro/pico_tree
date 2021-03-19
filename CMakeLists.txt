@@ -33,8 +33,10 @@ if(NOT SKBUILD)
     if(BUILD_TESTING)
         if (GTEST_FOUND)
             # Tests are dependent on some common code.
-            if(NOT TARGET pico_common)
-                add_subdirectory(examples/pico_common)
+            # For now, the understory is considered important enough to be tested.
+            if(NOT TARGET pico_toolshed)
+                add_subdirectory(examples/pico_toolshed)
+                add_subdirectory(examples/pico_understory)
             endif()
 
             enable_testing()

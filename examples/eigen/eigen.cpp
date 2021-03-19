@@ -4,9 +4,9 @@
 //#include <Eigen/StdVector>
 // If we use C++17 there is no need to take care of memory alignment:
 // https://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
+#include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/eigen.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <scoped_timer.hpp>
 
 // Important! The Eigen example is not a performance benchmark. So don't take
 // the "elapsed time" numbers too seriously.
@@ -157,7 +157,7 @@ void Metrics() {
         Point::Scalar,
         Dim,
         Adaptor,
-        pico_tree::EigenMetricL2<Scalar>>
+        pico_tree::EigenL2Squared<Scalar>>
         tree(adaptor, kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
@@ -168,13 +168,9 @@ void Metrics() {
   }
 
   {
-    pico_tree::KdTree<
-        Index,
-        Point::Scalar,
-        Dim,
-        Adaptor,
-        pico_tree::EigenMetricL1<Scalar>>
-        tree(adaptor, kMaxLeafCount);
+    pico_tree::
+        KdTree<Index, Point::Scalar, Dim, Adaptor, pico_tree::EigenL1<Scalar>>
+            tree(adaptor, kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("pico_tree eigen l1", kRunCount);

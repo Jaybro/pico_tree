@@ -17,8 +17,8 @@ def _build_kd_tree(pts: np.array, metric: Metric, max_leaf_size: int, lut: dict)
 def _build_kd_tree_xd(pts: np.array, metric: Metric, max_leaf_size: int):
     lut = {Metric.L1.value: {'f': _pt.KdTreeXfL1,
                              'd': _pt.KdTreeXdL1},
-           Metric.L2.value: {'f': _pt.KdTreeXfL2,
-                             'd': _pt.KdTreeXdL2}}
+           Metric.L2Squared.value: {'f': _pt.KdTreeXfL2,
+                                    'd': _pt.KdTreeXdL2}}
 
     return _build_kd_tree(pts, metric, max_leaf_size, lut)
 
@@ -26,8 +26,8 @@ def _build_kd_tree_xd(pts: np.array, metric: Metric, max_leaf_size: int):
 def _build_kd_tree_2d(pts: np.array, metric: Metric, max_leaf_size: int):
     lut = {Metric.L1.value: {'f': _pt.KdTree2fL1,
                              'd': _pt.KdTree2dL1},
-           Metric.L2.value: {'f': _pt.KdTree2fL2,
-                             'd': _pt.KdTree2dL2}}
+           Metric.L2Squared.value: {'f': _pt.KdTree2fL2,
+                                    'd': _pt.KdTree2dL2}}
 
     return _build_kd_tree(pts, metric, max_leaf_size, lut)
 
@@ -35,8 +35,8 @@ def _build_kd_tree_2d(pts: np.array, metric: Metric, max_leaf_size: int):
 def _build_kd_tree_3d(pts: np.array, metric: Metric, max_leaf_size: int):
     lut = {Metric.L1.value: {'f': _pt.KdTree3fL1,
                              'd': _pt.KdTree3dL1},
-           Metric.L2.value: {'f': _pt.KdTree3fL2,
-                             'd': _pt.KdTree3dL2}}
+           Metric.L2Squared.value: {'f': _pt.KdTree3fL2,
+                                    'd': _pt.KdTree3dL2}}
 
     return _build_kd_tree(pts, metric, max_leaf_size, lut)
 

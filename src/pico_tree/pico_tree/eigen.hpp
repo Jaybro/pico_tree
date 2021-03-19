@@ -125,12 +125,13 @@ class EigenAdaptor
   inline Matrix const& matrix() const { return matrix_; }
 };
 
-//! \brief L1 metric using the L1 norm for measuring distances between points.
+//! \brief EigenL1 metric for measuring the Taxicab or Manhattan distance
+//! between points.
 template <typename Scalar>
-class EigenMetricL1 {
+class EigenL1 {
  public:
-  //! \brief Creates an EigenMetricL1.
-  inline EigenMetricL1(int const) {}
+  //! \brief Creates an EigenL1.
+  inline explicit EigenL1(int const) {}
 
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
@@ -149,13 +150,37 @@ class EigenMetricL1 {
   inline Scalar operator()(Scalar const x) const { return std::abs(x); }
 };
 
-//! \brief The L2 metric measures distances between points using the squared L2
-//! norm.
+//! \brief EigenL2 metric for measuring Euclidean distances between points.
 template <typename Scalar>
-class EigenMetricL2 {
+class EigenL2 {
  public:
-  //! \brief Creates an EigenMetricL2.
-  inline EigenMetricL2(int const) {}
+  //! \brief Creates an L2Squared given a spatial dimension.
+  inline explicit EigenL2(int const) {}
+
+  //! \brief Calculates the distance between points \p p0 and \p p1.
+  template <typename Derived0, typename Derived1>
+  inline Scalar operator()(
+      Eigen::MatrixBase<Derived0> const& p0,
+      Eigen::MatrixBase<Derived1> const& p1) const {
+    return (p0 - p1).norm();
+  }
+
+  //! \brief Calculates the distance between two coordinates.
+  inline Scalar operator()(Scalar const x, Scalar const y) const {
+    return std::abs(x - y);
+  }
+
+  //! \brief Returns the absolute value of \p x.
+  inline Scalar operator()(Scalar const x) const { return std::abs(x); }
+};
+
+//! \brief The EigenL2Squared semimetric measures squared Euclidean distances
+//! between points.
+template <typename Scalar>
+class EigenL2Squared {
+ public:
+  //! \brief Creates an EigenL2Squared.
+  inline explicit EigenL2Squared(int const) {}
 
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>

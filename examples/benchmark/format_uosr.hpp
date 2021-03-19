@@ -1,6 +1,6 @@
 #pragma once
 
-#include <point.hpp>
+#include <pico_toolshed/point.hpp>
 
 namespace pico_tree {
 

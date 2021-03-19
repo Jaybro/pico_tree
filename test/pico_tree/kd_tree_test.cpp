@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <pico_adaptor.hpp>
+#include <pico_toolshed/pico_adaptor.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <scoped_timer.hpp>
 
 #include "common.hpp"
 
@@ -12,40 +11,6 @@ using KdTree = pico_tree::KdTree<
     typename PicoAdaptor::ScalarType,
     PicoAdaptor::Dim,
     PicoAdaptor>;
-
-TEST(KdTreeTest, MetricL1) {
-  using PointX = Point2f;
-  using Index = int;
-  using Scalar = typename PointX::ScalarType;
-  using AdaptorX = PicoAdaptor<Index, PointX>;
-  constexpr auto Dim = PointX::Dim;
-  std::vector<PointX> points{{2.0f, 4.0f}};
-  AdaptorX adaptor(points);
-  PointX p{10.0f, 1.0f};
-
-  pico_tree::MetricL1<Scalar, Dim> metric(adaptor.sdim());
-
-  EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 11.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 12.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
-}
-
-TEST(KdTreeTest, MetricL2) {
-  using PointX = Point2f;
-  using Index = int;
-  using Scalar = typename PointX::ScalarType;
-  using AdaptorX = PicoAdaptor<Index, PointX>;
-  constexpr auto Dim = PointX::Dim;
-  std::vector<PointX> points{{2.0f, 4.0f}};
-  AdaptorX adaptor(points);
-  PointX p{10.0f, 1.0f};
-
-  pico_tree::MetricL2<Scalar, Dim> metric(adaptor.sdim());
-
-  EXPECT_FLOAT_EQ(metric(p, adaptor(0)), 73.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f), 9.61f);
-}
 
 TEST(KdTreeTest, SplitterMedian) {
   using PointX = Point2f;

@@ -2,7 +2,6 @@
 
 #include <limits>
 #include <pico_tree/core.hpp>
-#include <point.hpp>
 
 namespace pico_tree {
 

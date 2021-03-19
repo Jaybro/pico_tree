@@ -9,7 +9,7 @@ class Metric(Enum):
 
     Symbols:
         L1: Sum of absolute differences between point coordinates.
-        L2: Sum of squared differences between point coordinates.
+        L2Squared: Sum of squared differences between point coordinates.
     """
     L1 = "L1"
-    L2 = "L2"
+    L2Squared = "L2Squared"
