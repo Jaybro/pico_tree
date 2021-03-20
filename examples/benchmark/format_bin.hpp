@@ -1,7 +1,7 @@
 #pragma once
 
 #include <limits>
-#include <pico_tree/core.hpp>
+#include <pico_tree/internal/stream.hpp>
 
 namespace pico_tree {
 

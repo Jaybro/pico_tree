@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <numeric>
 #include <pico_tree/internal/memory.hpp>
 #include <pico_tree/internal/search_visitor.hpp>

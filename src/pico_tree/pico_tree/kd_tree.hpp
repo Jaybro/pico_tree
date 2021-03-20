@@ -1,11 +1,13 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <numeric>
 
 #include "pico_tree/internal/memory.hpp"
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/internal/sequence.hpp"
+#include "pico_tree/internal/stream.hpp"
 #include "pico_tree/metric.hpp"
 
 namespace pico_tree {

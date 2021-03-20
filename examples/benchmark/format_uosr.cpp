@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <pico_tree/core.hpp>
+#include <pico_tree/internal/stream.hpp>
 #include <regex>
 #include <string>
 
