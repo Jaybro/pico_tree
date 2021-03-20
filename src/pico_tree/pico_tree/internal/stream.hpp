@@ -40,7 +40,7 @@ class Stream {
   //! \tparam T Type of a value.
   template <typename T>
   inline void Read(std::vector<T>* values) {
-    decltype(std::vector<T>().size()) size;
+    typename std::vector<T>::size_type size;
     Read(&size);
     values->resize(size);
     stream_.read(reinterpret_cast<char*>(&(*values)[0]), sizeof(T) * size);
