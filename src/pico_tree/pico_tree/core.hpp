@@ -13,7 +13,7 @@ namespace pico_tree {
 //! the spatial dimension of the search problem when it can only be known at
 //! run-time. In this case the dimension of the problem is provided by the point
 //! adaptor.
-static constexpr int kDynamicDim = -1;
+static int constexpr kDynamicDim = -1;
 
 //! \brief A Neighbor is a point reference with a corresponding distance to
 //! another point.
@@ -52,15 +52,44 @@ inline constexpr bool operator<(
   return lhs.distance < rhs.distance;
 }
 
+template <typename Point>
+struct PointTraits;
+
+template <typename Space>
+struct SpaceTraits;
+
+template <typename Point>
+struct SpaceTraits<std::vector<Point>> {
+  using IndexType = int;
+  using PointType = Point;
+  using ScalarType = typename PointTraits<Point>::ScalarType;
+  static constexpr int Dim = PointTraits<Point>::Dim;
+
+  inline static Point const& PointAt(
+      std::vector<Point> const& space, IndexType const idx) {
+    return space[idx];
+  }
+
+  inline static IndexType const Npts(std::vector<Point> const& space) {
+    return static_cast<IndexType>(space.size());
+  }
+
+  inline static int constexpr Sdim(std::vector<Point> const&) {
+    static_assert(
+        Dim != kDynamicDim, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
+    return Dim;
+  }
+};
+
 namespace internal {
 
 //! \brief Inserts \p item in O(n) time at the index for which \p comp
 //! first holds true. The sequence must be sorted and remains sorted after
 //! insertion. The last item in the sequence is "pushed out".
 //! \details The contents of the indices at which \p comp holds true are moved
-//! to the next index. Thus, starting from the end of the sequence, each item[i]
-//! gets replaced by item[i - 1] until \p comp results in false. The worst case
-//! has n comparisons and n copies, traversing the entire sequence.
+//! to the next index. Thus, starting from the end of the sequence, each
+//! item[i] gets replaced by item[i - 1] until \p comp results in false. The
+//! worst case has n comparisons and n copies, traversing the entire sequence.
 //! <p/>
 //! This algorithm is used as the inner loop of insertion sort:
 //! * https://en.wikipedia.org/wiki/Insertion_sort
@@ -79,8 +108,8 @@ inline void InsertSorted(
   }
   // We update the inserted element outside of the loop. This is done for the
   // case where we didn't break, simply reaching the end of the loop. This
-  // happens when we need to replace the first element in the sequence (the last
-  // item encountered).
+  // happens when we need to replace the first element in the sequence (the
+  // last item encountered).
   *end = std::move(item);
 }
 
