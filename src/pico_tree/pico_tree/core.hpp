@@ -6,6 +6,7 @@
 //! \brief Contains various common utilities.
 
 #include <cmath>
+#include <vector>
 
 namespace pico_tree {
 
@@ -13,7 +14,7 @@ namespace pico_tree {
 //! the spatial dimension of the search problem when it can only be known at
 //! run-time. In this case the dimension of the problem is provided by the point
 //! adaptor.
-static int constexpr kDynamicDim = -1;
+static constexpr int kDynamicDim = -1;
 
 //! \brief A Neighbor is a point reference with a corresponding distance to
 //! another point.
@@ -52,44 +53,75 @@ inline constexpr bool operator<(
   return lhs.distance < rhs.distance;
 }
 
-template <typename Point>
-struct PointTraits;
-
+//! \brief pico_tree::StdTraits provides an interface for points collections
+//! that use indexable containers from the C++ standard.
+//! \details Because different point types can have different interfaces, they
+//! will be provided by pico_tree::StdPointTraits.
+//! \tparam Space Any of the point sets supported by pico_tree::StdTraits.
 template <typename Space>
-struct SpaceTraits;
+struct StdTraits;
 
+//! \brief pico_tree::StdPointTraits provides an interface for the different
+//! point types that can be used with pico_tree::StdTraits.
 template <typename Point>
-struct SpaceTraits<std::vector<Point>> {
-  using IndexType = int;
+struct StdPointTraits;
+
+//! \brief This specialization of pico_tree::StdTraits provides support for
+//! std::vector.
+//! \tparam Point Any of the point types supported by pico_tree::StdPointTraits.
+//! \tparam Allocator Allocator type for the std::vector.
+template <typename Point, typename Allocator>
+struct StdTraits<std::vector<Point, Allocator>> {
+  using SpaceType = std::vector<Point, Allocator>;
   using PointType = Point;
-  using ScalarType = typename PointTraits<Point>::ScalarType;
-  static constexpr int Dim = PointTraits<Point>::Dim;
+  using ScalarType = typename StdPointTraits<Point>::ScalarType;
+  using IndexType = int;
+  static constexpr int Dim = StdPointTraits<Point>::Dim;
 
-  inline static Point const& PointAt(
-      std::vector<Point> const& space, IndexType const idx) {
-    return space[idx];
-  }
-
-  inline static IndexType const Npts(std::vector<Point> const& space) {
-    return static_cast<IndexType>(space.size());
-  }
-
-  inline static int constexpr Sdim(std::vector<Point> const&) {
+  inline static int constexpr SpaceSdim(std::vector<Point, Allocator> const&) {
     static_assert(
         Dim != kDynamicDim, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
     return Dim;
   }
+
+  inline static IndexType SpaceNpts(
+      std::vector<Point, Allocator> const& space) {
+    return static_cast<IndexType>(space.size());
+  }
+
+  inline static Point const& PointAt(
+      std::vector<Point, Allocator> const& space, IndexType const idx) {
+    return space[idx];
+  }
+
+  template <typename OtherPoint>
+  inline static int PointSdim(OtherPoint const& point) {
+    return StdPointTraits<OtherPoint>::Sdim(point);
+  }
+
+  template <typename OtherPoint>
+  inline static ScalarType const* PointCoords(OtherPoint const& point) {
+    return StdPointTraits<OtherPoint>::Coords(point);
+  }
 };
+
+template <typename Point, typename Allocator>
+struct StdTraits<std::reference_wrapper<std::vector<Point, Allocator>>>
+    : public StdTraits<std::vector<Point, Allocator>> {};
+
+template <typename Point, typename Allocator>
+struct StdTraits<std::reference_wrapper<std::vector<Point, Allocator> const>>
+    : public StdTraits<std::vector<Point, Allocator>> {};
 
 namespace internal {
 
-//! \brief Inserts \p item in O(n) time at the index for which \p comp
-//! first holds true. The sequence must be sorted and remains sorted after
-//! insertion. The last item in the sequence is "pushed out".
+//! \brief Inserts \p item in O(n) time at the index for which \p comp first
+//! holds true. The sequence must be sorted and remains sorted after insertion.
+//! The last item in the sequence is "pushed out".
 //! \details The contents of the indices at which \p comp holds true are moved
-//! to the next index. Thus, starting from the end of the sequence, each
-//! item[i] gets replaced by item[i - 1] until \p comp results in false. The
-//! worst case has n comparisons and n copies, traversing the entire sequence.
+//! to the next index. Thus, starting from the end of the sequence, each item[i]
+//! gets replaced by item[i - 1] until \p comp results in false. The worst case
+//! has n comparisons and n copies, traversing the entire sequence.
 //! <p/>
 //! This algorithm is used as the inner loop of insertion sort:
 //! * https://en.wikipedia.org/wiki/Insertion_sort
@@ -108,8 +140,8 @@ inline void InsertSorted(
   }
   // We update the inserted element outside of the loop. This is done for the
   // case where we didn't break, simply reaching the end of the loop. This
-  // happens when we need to replace the first element in the sequence (the
-  // last item encountered).
+  // happens when we need to replace the first element in the sequence (the last
+  // item encountered).
   *end = std::move(item);
 }
 

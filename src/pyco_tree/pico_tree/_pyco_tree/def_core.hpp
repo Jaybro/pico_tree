@@ -18,6 +18,12 @@ using Points2d = PycoAdaptor<int, double, 2>;
 using Points3f = PycoAdaptor<int, float, 3>;
 using Points3d = PycoAdaptor<int, double, 3>;
 
+template <typename PointsX>
+using TraitsX = MapTraits<
+    typename PointsX::IndexType,
+    typename PointsX::ScalarType,
+    PointsX::Dim>;
+
 using Neighborf = pico_tree::Neighbor<int, float>;
 using Neighbord = pico_tree::Neighbor<int, double>;
 

@@ -30,12 +30,14 @@
 namespace pico_tree {
 
 template <
-    typename Index,
-    typename Scalar,
-    int Dim_,
-    typename Points,
-    typename Metric = L2<Scalar, Dim_>>
+    typename Traits,
+    typename Metric = L2<typename Traits::ScalarType, Traits::Dim>>
 class CoverTree {
+ private:
+  using Index = typename Traits::IndexType;
+  using Scalar = typename Traits::ScalarType;
+  using Space = typename Traits::SpaceType;
+
  public:
   //! \brief Index type.
   using IndexType = Index;
@@ -43,9 +45,11 @@ class CoverTree {
   using ScalarType = Scalar;
   //! \brief CoverTree dimension. It equals pico_tree::kDynamicDim in case Dim
   //! is only known at run-time.
-  static constexpr int Dim = Dim_;
+  static constexpr int Dim = Traits::Dim;
+  //! \brief Traits with information about the input Spaces and Points.
+  using TraitsType = Traits;
   //! \brief Point set or adaptor type.
-  using PointsType = Points;
+  using SpaceType = Space;
   //! \brief The metric used for various searches.
   using MetricType = Metric;
   //! \brief Neighbor type of various search resuls.
@@ -108,10 +112,10 @@ class CoverTree {
   CoverTree(CoverTree&&) = default;
 
   //! \brief Creates a CoverTree given \p points and a leveling \p base.
-  CoverTree(Points points, Scalar base)
+  CoverTree(Space points, Scalar base)
       : points_(std::move(points)),
-        metric_(points_.sdim()),
-        nodes_(points_.npts()),
+        metric_(Traits::SpaceSdim(points_)),
+        nodes_(Traits::SpaceNpts(points_)),
         base_{base},
         root_(Build()) {}
 
@@ -145,7 +149,7 @@ class CoverTree {
       P const& x, Index const k, std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn->resize(std::min(k, points_.npts()));
+    knn->resize(std::min(k, Traits::SpaceNpts(points_)));
     SearchKnn(x, knn->begin(), knn->end());
   }
 
@@ -224,19 +228,19 @@ class CoverTree {
       std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn->resize(std::min(k, points_.npts()));
+    knn->resize(std::min(k, Traits::SpaceNpts(points_)));
     SearchAknn(x, e, knn->begin(), knn->end());
   }
 
   //! \brief Point set used by the tree.
-  inline Points const& points() const { return points_; }
+  inline Space const& points() const { return points_; }
 
   //! \brief Metric used for search queries.
   inline Metric const& metric() const { return metric_; }
 
  private:
   Node* Build() {
-    assert(points_.npts() > 0);
+    assert(Traits::SpaceNpts(points_) > 0);
 
     // Both building and querying become a great deal faster for any of the
     // nearest ancestor cover trees when they are constructed with randomly
@@ -245,21 +249,22 @@ class CoverTree {
     // has a high probablity to be better balanced for queries.
     // For the simplified cover tree, query performance is greatly improved
     // using a randomized insertion at the price of construction time.
-    std::vector<Index> indices(points_.npts());
+    Index const npts = Traits::SpaceNpts(points_);
+    std::vector<Index> indices(npts);
     std::iota(indices.begin(), indices.end(), 0);
     std::random_device rd;
     std::mt19937 g(rd());
     std::shuffle(indices.begin(), indices.end(), g);
 
     Node* node = InsertFirstTwo(indices);
-    for (Index i = 2; i < points_.npts(); ++i) {
+    for (Index i = 2; i < npts; ++i) {
       node = Insert(node, CreateNode(indices[i]));
     }
 
     // Cache friendly tree.
     // TODO Take 1. A better version is probably where the contents of the
     // vector are part of the node and not in a different memory blocks.
-    internal::StaticBuffer<Node> nodes(points_.npts());
+    internal::StaticBuffer<Node> nodes(npts);
     Node* root = DepthFirstBufferCopy(node, &nodes);
     std::swap(nodes_, nodes);
     node = root;
@@ -288,7 +293,8 @@ class CoverTree {
   }
 
   void UpdateMaxDistance(Node* node) const {
-    node->max_distance = MaxDistance(node, points_(node->index));
+    node->max_distance =
+        MaxDistance(node, Traits::PointAt(points_, node->index));
 
     for (Node* m : node->children) {
       UpdateMaxDistance(m);
@@ -297,7 +303,7 @@ class CoverTree {
 
   template <typename P>
   Scalar MaxDistance(Node const* const node, P const& x) const {
-    Scalar max = metric_(points_(node->index), x);
+    Scalar max = metric_(Traits::PointAt(points_, node->index), x);
 
     for (Node const* const m : node->children) {
       max = std::max(max, MaxDistance(m, x));
@@ -311,10 +317,13 @@ class CoverTree {
   inline Node* InsertFirstTwo(std::vector<Index> const& indices) {
     Node* node = nodes_.Allocate();
     node->index = indices[0];
-    if (points_.npts() == 1) {
+
+    if (Traits::SpaceNpts(points_) == 1) {
       node->level = 0;
     } else {
-      Scalar d = metric_(points_(indices[0]), points_(indices[1]));
+      Scalar d = metric_(
+          Traits::PointAt(points_, indices[0]),
+          Traits::PointAt(points_, indices[1]));
       node->level = std::ceil(base_.Level(d));
       PushChild(node, CreateNode(indices[1]));
     }
@@ -324,8 +333,8 @@ class CoverTree {
 
   //! \brief Returns a new tree inserting \p node into \p tree.
   inline Node* Insert(Node* tree, Node* node) {
-    auto const& x = points_(node->index);
-    Scalar d = metric_(points_(tree->index), x);
+    auto const& x = Traits::PointAt(points_, node->index);
+    Scalar d = metric_(Traits::PointAt(points_, tree->index), x);
     Scalar c = base_.CoverDistance(*tree);
     if (d > c) {
 #ifdef SIMPLIFIED_NEAREST_ANCESTOR_COVER_TREE
@@ -339,7 +348,7 @@ class CoverTree {
       while (d > c) {
         tree = NodeToParent(RemoveLeaf(tree), tree);
         c = base_.ParentDistance(*tree);
-        d = metric_(points_(tree->index), x);
+        d = metric_(Traits::PointAt(points_, tree->index), x);
       }
 #endif
 
@@ -355,9 +364,9 @@ class CoverTree {
   inline void InsertCovered(Node* tree, Node* node) {
     // The following line may replace the contents of this function to get a
     // simplified cover tree:
-    // PushChild(FindParent(tree, points_(node->index)), node);
+    // PushChild(FindParent(tree, Traits::PointAt(points_, node->index)), node);
 
-    auto const& x = points_(node->index);
+    auto const& x = Traits::PointAt(points_, node->index);
     Node* parent = FindParent(tree, x);
 
     if (parent->IsLeaf()) {
@@ -377,11 +386,13 @@ class CoverTree {
       // ancestor cover tree, but this speeds up the queries of the simplified
       // cover tree as well. Faster by ~70%, but tree creation is a bit slower
       // for it (3-14%).
-      Scalar min_d = metric_(points_(tree->children[0]->index), x);
+      Scalar min_d =
+          metric_(Traits::PointAt(points_, tree->children[0]->index), x);
       std::size_t min_i = 0;
 
       for (std::size_t i = 1; i < tree->children.size(); ++i) {
-        Scalar d = metric_(points_(tree->children[i]->index), x);
+        Scalar d =
+            metric_(Traits::PointAt(points_, tree->children[i]->index), x);
 
         if (d < min_d) {
           min_d = d;
@@ -416,7 +427,7 @@ class CoverTree {
     Scalar const d = base_.ChildDistance(*parent) * Scalar(2.0);
 
     for (auto child : parent->children) {
-      auto const& y = points_(child->index);
+      auto const& y = Traits::PointAt(points_, child->index);
 
       if (metric_(x, y) < d) {
         Extract(x, y, child, &to_move, &to_stay);
@@ -438,7 +449,8 @@ class CoverTree {
     PushChild(parent, node);
 #else
     for (auto& child : parent->children) {
-      Extract(x, points_(child->index), child, &to_move, &to_stay);
+      Extract(
+          x, Traits::PointAt(points_, child->index), child, &to_move, &to_stay);
 
       for (auto it = to_stay.rbegin(); it != to_stay.rend(); ++it) {
         child = Insert(child, *it);
@@ -475,8 +487,8 @@ class CoverTree {
         descendant->children.begin(),
         descendant->children.end(),
         [this, &x_move, &x_stay](Node* node) -> bool {
-          return metric_(x_stay, points_(node->index)) <
-                 metric_(x_move, points_(node->index));
+          auto const& p = Traits::PointAt(points_, node->index);
+          return metric_(x_stay, p) < metric_(x_move, p);
         });
 
     auto erase_rend =
@@ -508,8 +520,9 @@ class CoverTree {
 
     for (auto const child : descendant->children) {
       Strip(x_move, x_stay, child, to_move, to_stay);
-      if (metric_(x_stay, points_(child->index)) >
-          metric_(x_move, points_(child->index))) {
+
+      auto const& p = Traits::PointAt(points_, child->index);
+      if (metric_(x_stay, p) > metric_(x_move, p)) {
         to_move->push_back(child);
       } else {
         to_stay->push_back(child);
@@ -557,7 +570,7 @@ class CoverTree {
   template <typename P, typename V>
   inline void SearchNearest(
       Node const* const node, P const& x, V* visitor) const {
-    Scalar const d = metric_(x, points_(node->index));
+    Scalar const d = metric_(x, Traits::PointAt(points_, node->index));
     if (visitor->max() > d) {
       (*visitor)(node->index, d);
     }
@@ -565,7 +578,8 @@ class CoverTree {
     std::vector<std::pair<Node const*, Scalar>> sorted;
     sorted.reserve(node->children.size());
     for (auto const child : node->children) {
-      sorted.push_back({child, metric_(x, points_(child->index))});
+      sorted.push_back(
+          {child, metric_(x, Traits::PointAt(points_, child->index))});
     }
 
     std::sort(
@@ -593,14 +607,15 @@ class CoverTree {
       // TODO The distance calculation can be cached. When SearchNeighbor is
       // called it's calculated again.
       if (visitor->max() >
-          (metric_(x, points_(m.first->index)) - m.first->max_distance)) {
+          (metric_(x, Traits::PointAt(points_, m.first->index)) -
+           m.first->max_distance)) {
         SearchNearest(m.first, x, visitor);
       }
     }
   }
 
   //! Point set adapter used for querying point data.
-  Points points_;
+  Space points_;
   //! Metric used for comparing distances.
   Metric metric_;
   //! Memory buffer for tree nodes.

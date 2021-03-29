@@ -1,19 +1,18 @@
-#include <pico_toolshed/pico_adaptor.hpp>
+#include <pico_toolshed/point.hpp>
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_understory/cover_tree.hpp>
 
 #include "benchmark.hpp"
 
-template <typename PicoAdaptor>
-using PicoCoverTree = pico_tree::CoverTree<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    PicoAdaptor::Dim,
-    PicoAdaptor>;
+template <typename PointX>
+using PicoTraits =
+    pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>;
+
+template <typename PointX>
+using PicoCoverTree = pico_tree::CoverTree<PicoTraits<PointX>>;
 
 class BmPicoCoverTree : public pico_tree::Benchmark {
  public:
-  using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 };
 
 // ****************************************************************************
@@ -22,9 +21,9 @@ class BmPicoCoverTree : public pico_tree::Benchmark {
 
 BENCHMARK_DEFINE_F(BmPicoCoverTree, BuildCt)(benchmark::State& state) {
   Scalar base = static_cast<Scalar>(state.range(0)) / Scalar(10.0);
-  PicoAdaptorX adaptor(points_);
+
   for (auto _ : state) {
-    PicoCoverTree<PicoAdaptorX> tree(adaptor, base);
+    PicoCoverTree<PointX> tree(points_, base);
   }
 }
 
@@ -40,8 +39,8 @@ BENCHMARK_REGISTER_F(BmPicoCoverTree, BuildCt)
 BENCHMARK_DEFINE_F(BmPicoCoverTree, KnnCt)(benchmark::State& state) {
   Scalar base = static_cast<Scalar>(state.range(0)) / Scalar(10.0);
   int knn_count = state.range(1);
-  PicoAdaptorX adaptor(points_);
-  PicoCoverTree<PicoAdaptorX> tree(adaptor, base);
+
+  PicoCoverTree<PointX> tree(points_, base);
 
   for (auto _ : state) {
     std::vector<pico_tree::Neighbor<Index, Scalar>> results;

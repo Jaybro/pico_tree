@@ -47,11 +47,15 @@ inline void LongestAxisBox(
 //!
 //! Note that this splitter is not recommended when searching for more than a
 //! single neighbor.
-template <typename Index, typename Scalar, int Dim, typename Points>
+template <typename Traits>
 class SplitterLongestMedian {
  private:
-  //! Either an array or vector (compile time vs. run time).
-  using Sequence = typename internal::Sequence<Scalar, Dim>;
+  using Index = typename Traits::IndexType;
+  using Scalar = typename Traits::ScalarType;
+  static constexpr int Dim = Traits::Dim;
+  using Space = typename Traits::SpaceType;
+  template <int Dim_>
+  using Sequence = typename internal::Sequence<Scalar, Dim_>;
 
  public:
   //! \brief Buffer type used with this splitter.
@@ -59,20 +63,21 @@ class SplitterLongestMedian {
   using MemoryBuffer = internal::StaticBuffer<T>;
 
   //! \private
-  SplitterLongestMedian(Points const& points, std::vector<Index>* p_indices)
+  SplitterLongestMedian(Space const& points, std::vector<Index>* p_indices)
       : points_{points}, indices_{*p_indices} {}
 
   //! \brief This function splits a node.
+  template <int Dim_>
   inline void operator()(
       Index const,  // depth
       Index const offset,
       Index const size,
-      Sequence const& box_min,
-      Sequence const& box_max,
+      Sequence<Dim_> const& box_min,
+      Sequence<Dim_> const& box_max,
       int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
-    Points const& points = points_;
+    auto const& points = points_;
 
     Scalar max_delta;
     internal::LongestAxisBox(box_min, box_max, split_dim, &max_delta);
@@ -83,15 +88,20 @@ class SplitterLongestMedian {
         indices_.begin() + offset,
         indices_.begin() + *split_idx,
         indices_.begin() + offset + size,
-        [&points, &split_dim](Index const a, Index const b) -> bool {
-          return points(a)(*split_dim) < points(b)(*split_dim);
+        [this, &split_dim](Index const a, Index const b) -> bool {
+          return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
         });
 
-    *split_val = points(indices_[*split_idx])(*split_dim);
+    *split_val = PointCoord(indices_[*split_idx], *split_dim);
   }
 
  private:
-  Points const& points_;
+  inline Scalar const& PointCoord(
+      Index const point_idx, int const coord_idx) const {
+    return Traits::PointCoords(Traits::PointAt(points_, point_idx))[coord_idx];
+  }
+
+  Space const& points_;
   std::vector<Index>& indices_;
 };
 
@@ -109,11 +119,14 @@ class SplitterLongestMedian {
 //!
 //! This splitter can be used to answer an approximate nearest neighbor query in
 //! O(1/e^d log n) time.
-template <typename Index, typename Scalar, int Dim, typename Points>
+template <typename Traits>
 class SplitterSlidingMidpoint {
  private:
-  //! Either an array or vector (compile time vs. run time).
-  using Sequence = typename internal::Sequence<Scalar, Dim>;
+  using Index = typename Traits::IndexType;
+  using Scalar = typename Traits::ScalarType;
+  using Space = typename Traits::SpaceType;
+  template <int Dim_>
+  using Sequence = typename internal::Sequence<Scalar, Dim_>;
 
  public:
   //! \brief Buffer type used with this splitter.
@@ -121,16 +134,17 @@ class SplitterSlidingMidpoint {
   using MemoryBuffer = internal::DynamicBuffer<T>;
 
   //! \private
-  SplitterSlidingMidpoint(Points const& points, std::vector<Index>* p_indices)
+  SplitterSlidingMidpoint(Space const& points, std::vector<Index>* p_indices)
       : points_{points}, indices_{*p_indices} {}
 
   //! \brief This function splits a node.
+  template <int Dim_>
   inline void operator()(
       Index const,  // depth
       Index const offset,
       Index const size,
-      Sequence const& box_min,
-      Sequence const& box_max,
+      Sequence<Dim_> const& box_min,
+      Sequence<Dim_> const& box_max,
       int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
@@ -139,10 +153,10 @@ class SplitterSlidingMidpoint {
     *split_val = max_delta / Scalar(2.0) + box_min[*split_dim];
 
     // Everything smaller than split_val goes left, the rest right.
-    Points const& points = points_;
-    auto const comp = [&points, &split_dim, &split_val](Index const a) -> bool {
-      return points(a)(*split_dim) < *split_val;
+    auto const comp = [this, &split_dim, &split_val](Index const a) -> bool {
+      return PointCoord(a, *split_dim) < *split_val;
     };
+
     *split_idx = static_cast<Index>(
         std::partition(
             indices_.begin() + offset, indices_.begin() + offset + size, comp) -
@@ -160,40 +174,51 @@ class SplitterSlidingMidpoint {
           indices_.begin() + offset,
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
-          [&points, &split_dim](Index const a, Index const b) -> bool {
-            return points(a)(*split_dim) < points(b)(*split_dim);
+          [this, &split_dim](Index const a, Index const b) -> bool {
+            return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
           });
-      (*split_val) = points(indices_[*split_idx])(*split_dim);
+      (*split_val) = PointCoord(indices_[*split_idx], *split_dim);
     } else if ((*split_idx - offset) == 0) {
       (*split_idx)++;
       std::nth_element(
           indices_.begin() + offset,
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
-          [&points, &split_dim](Index const a, Index const b) -> bool {
-            return points(a)(*split_dim) < points(b)(*split_dim);
+          [this, &split_dim](Index const a, Index const b) -> bool {
+            return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
           });
-      (*split_val) = points(indices_[*split_idx])(*split_dim);
+      (*split_val) = PointCoord(indices_[*split_idx], *split_dim);
     }
   }
 
  private:
-  Points const& points_;
+  inline Scalar const& PointCoord(Index point_idx, int coord_idx) const {
+    return Traits::PointCoords(Traits::PointAt(points_, point_idx))[coord_idx];
+  }
+
+  Space const& points_;
   std::vector<Index>& indices_;
 };
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
-//! \tparam Dim The spatial dimension of the tree. It can be set to
-//! pico_tree::kDynamicDim in case Dim is only known at run-time.
+//! \tparam Dim_ The spatial dimension of the tree. Dim_ defaults to Traits::Dim
+//! but can be set to a different value should a rare occasion require it.
 template <
-    typename Index,
-    typename Scalar,
-    int Dim_,
-    typename Points,
-    typename Metric = L2Squared<Scalar, Dim_>,
-    typename Splitter = SplitterSlidingMidpoint<Index, Scalar, Dim_, Points>>
+    typename Traits,
+    typename Metric = L2Squared<typename Traits::ScalarType, Traits::Dim>,
+    typename Splitter = SplitterSlidingMidpoint<Traits>,
+    int Dim_ = Traits::Dim>
 class KdTree {
+ private:
+  static_assert(
+      Dim_ <= Traits::Dim,
+      "SPATIAL_DIMENSION_TREE_MUST_BE_SMALLER_OR_EQUAL_TO_TRAITS_DIMENSION");
+
+  using Index = typename Traits::IndexType;
+  using Scalar = typename Traits::ScalarType;
+  using Space = typename Traits::SpaceType;
+
  public:
   //! \brief Index type.
   using IndexType = Index;
@@ -202,8 +227,10 @@ class KdTree {
   //! \brief KdTree dimension. It equals pico_tree::kDynamicDim in case Dim is
   //! only known at run-time.
   static constexpr int Dim = Dim_;
+  //! \brief Traits with information about the input Spaces and Points.
+  using TraitsType = Traits;
   //! \brief Point set or adaptor type.
-  using PointsType = Points;
+  using SpaceType = Space;
   //! \brief The metric used for various searches.
   using MetricType = Metric;
   //! \brief Neighbor type of various search resuls.
@@ -347,11 +374,11 @@ class KdTree {
   //!
   //! \param points The input point set (interface).
   //! \param max_leaf_size The maximum amount of points allowed in a leaf node.
-  KdTree(Points points, Index max_leaf_size)
+  KdTree(Space points, Index max_leaf_size)
       : points_(std::move(points)),
-        metric_(points_.sdim()),
-        nodes_(internal::MaxNodesFromPoints(points_.npts())),
-        indices_(points_.npts()),
+        metric_(Traits::SpaceSdim(points_)),
+        nodes_(internal::MaxNodesFromPoints(Traits::SpaceNpts(points_))),
+        indices_(Traits::SpaceNpts(points_)),
         root_(Build(max_leaf_size)) {}
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
@@ -404,7 +431,7 @@ class KdTree {
       P const& x, Index const k, std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn->resize(std::min(k, points_.npts()));
+    knn->resize(std::min(k, Traits::SpaceNpts(points_)));
     SearchKnn(x, knn->begin(), knn->end());
   }
 
@@ -501,7 +528,7 @@ class KdTree {
       std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn->resize(std::min(k, points_.npts()));
+    knn->resize(std::min(k, Traits::SpaceNpts(points_)));
     SearchAknn(x, e, knn->begin(), knn->end());
   }
 
@@ -521,13 +548,13 @@ class KdTree {
   }
 
   //! \brief Point set used by the tree.
-  inline Points const& points() const { return points_; }
+  inline Space const& points() const { return points_; }
 
   //! \brief Metric used for search queries.
   inline Metric const& metric() const { return metric_; }
 
   //! \brief Loads the tree in binary from file.
-  static KdTree Load(Points points, std::string const& filename) {
+  static KdTree Load(Space points, std::string const& filename) {
     std::fstream stream =
         internal::OpenStream(filename, std::ios::in | std::ios::binary);
     return Load(std::move(points), &stream);
@@ -540,7 +567,7 @@ class KdTree {
   //! \li Does not check if the stored tree structure is valid for the given
   //! point set. \li Does not check if the stored tree structure is valid for
   //! the given template arguments.
-  static KdTree Load(Points points, std::iostream* stream) {
+  static KdTree Load(Space points, std::iostream* stream) {
     internal::Stream s(stream);
     return KdTree(std::move(points), &s);
   }
@@ -565,23 +592,25 @@ class KdTree {
  private:
   //! \brief Constructs a KdTree by reading its indexing and leaf information
   //! from a Stream.
-  KdTree(Points points, internal::Stream* stream)
+  KdTree(Space points, internal::Stream* stream)
       : points_(std::move(points)),
-        metric_(points_.sdim()),
-        nodes_(internal::MaxNodesFromPoints(points_.npts())),
-        indices_(points_.npts()),
+        metric_(Traits::SpaceSdim(points_)),
+        nodes_(internal::MaxNodesFromPoints(Traits::SpaceNpts(points_))),
+        indices_(Traits::SpaceNpts(points_)),
         root_(Load(stream)) {}
 
   inline void CalculateBoundingBox(Sequence* p_min, Sequence* p_max) {
     Sequence& min = *p_min;
     Sequence& max = *p_max;
-    min.Fill(points_.sdim(), std::numeric_limits<Scalar>::max());
-    max.Fill(points_.sdim(), std::numeric_limits<Scalar>::lowest());
+    min.Fill(Traits::SpaceSdim(points_), std::numeric_limits<Scalar>::max());
+    max.Fill(Traits::SpaceSdim(points_), std::numeric_limits<Scalar>::lowest());
 
-    for (Index j = 0; j < points_.npts(); ++j) {
-      auto const& p = points_(j);
-      for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
-        Scalar const v = p(i);
+    for (Index j = 0; j < Traits::SpaceNpts(points_); ++j) {
+      Scalar const* const p = Traits::PointCoords(Traits::PointAt(points_, j));
+      for (int i = 0;
+           i < internal::Dimension<Dim>::Dim(Traits::SpaceSdim(points_));
+           ++i) {
+        Scalar const v = p[i];
         if (v < min[i]) {
           min[i] = v;
         }
@@ -595,7 +624,7 @@ class KdTree {
   //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
   //! \details Run time may vary depending on the split strategy.
   inline Node* Build(Index const max_leaf_size) {
-    assert(points_.npts() > 0);
+    assert(Traits::SpaceNpts(points_) > 0);
     assert(max_leaf_size > 0);
 
     std::iota(indices_.begin(), indices_.end(), 0);
@@ -604,7 +633,11 @@ class KdTree {
 
     Splitter splitter(points_, &indices_);
     return Builder{max_leaf_size, splitter, &nodes_}.SplitIndices(
-        0, 0, points_.npts(), Sequence(root_box_min_), Sequence(root_box_max_));
+        0,
+        0,
+        Traits::SpaceNpts(points_),
+        Sequence(root_box_min_),
+        Sequence(root_box_max_));
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
@@ -615,7 +648,7 @@ class KdTree {
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        Scalar const d = metric_(x, points_(indices_[i]));
+        Scalar const d = metric_(x, Traits::PointAt(points_, indices_[i]));
         if (visitor->max() > d) {
           (*visitor)(indices_[i], d);
         }
@@ -650,7 +683,9 @@ class KdTree {
   //! point on the edge considered inside the box.
   template <typename P0, typename P1>
   inline bool PointInBox(P0 const& x, P1 const& min, P1 const& max) const {
-    for (int i = 0; i < internal::Dimension<Dim>::Dim(points_.sdim()); ++i) {
+    for (int i = 0;
+         i < internal::Dimension<Dim>::Dim(Traits::SpaceSdim(points_));
+         ++i) {
       if (min(i) > x(i) || max(i) < x(i)) {
         return false;
       }
@@ -690,7 +725,7 @@ class KdTree {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         Index const idx = indices_[i];
-        if (PointInBox(points_(idx), rng_min, rng_max)) {
+        if (PointInBox(Traits::PointAt(points_, idx), rng_min, rng_max)) {
           idxs->push_back(idx);
         }
       }
@@ -789,7 +824,7 @@ class KdTree {
   }
 
   //! Point set adapter used for querying point data.
-  Points points_;
+  Space points_;
   //! Metric used for comparing distances.
   Metric metric_;
   //! Memory buffer for tree nodes.

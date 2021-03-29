@@ -2,33 +2,51 @@
 
 #include <array>
 #include <iostream>
+#include <pico_tree/core.hpp>
 #include <random>
 #include <vector>
 
 //! \brief Example point type.
-//! \details A point should at least implement the parenthesis operator:
-//! \code{.cpp}
-//! inline Scalar const& operator()(int i) const;
-//! \endcode
-//! \tparam Scalar Coordinate value type.
+//! \tparam Scalar_ Coordinate value type.
 //! \tparam Dim_ The dimension of the space in which the point resides.
-template <typename Scalar, int Dim_>
+template <typename Scalar_, int Dim_>
 class Point {
  public:
-  using ScalarType = Scalar;
+  using ScalarType = Scalar_;
   static constexpr int Dim = Dim_;
 
-  inline Scalar const& operator()(int const i) const { return data[i]; }
-  inline Scalar& operator()(int const i) { return data[i]; }
+  inline ScalarType const& operator()(int const i) const { return data[i]; }
+  inline ScalarType& operator()(int const i) { return data[i]; }
 
-  inline void Fill(Scalar const v) {
+  inline void Fill(ScalarType const v) {
     for (int i = 0; i < Dim; ++i) {
       data[i] = v;
     }
   }
 
-  Scalar data[Dim];
+  ScalarType data[Dim];
 };
+
+namespace pico_tree {
+
+//! \brief Example point trait implementation for use with pico_tree::StdTraits.
+//! \details An implementation of StdPointTraits<PointType> *must* provide all
+//! the details of this example implementation.
+template <typename Scalar_, int Dim_>
+struct StdPointTraits<Point<Scalar_, Dim_>> {
+  using ScalarType = Scalar_;
+  static constexpr int Dim = Dim_;
+
+  inline static ScalarType const* Coords(Point<ScalarType, Dim> const& point) {
+    return point.data;
+  }
+
+  inline static int constexpr Sdim(Point<ScalarType, Dim> const&) {
+    return Dim_;
+  }
+};
+
+}  // namespace pico_tree
 
 template <typename Scalar_, int Dim_>
 inline std::ostream& operator<<(

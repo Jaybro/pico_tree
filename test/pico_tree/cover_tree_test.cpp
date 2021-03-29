@@ -1,32 +1,32 @@
 #include <gtest/gtest.h>
 
-#include <pico_toolshed/pico_adaptor.hpp>
+#include <pico_toolshed/point.hpp>
 #include <pico_understory/cover_tree.hpp>
 
 #include "common.hpp"
-
-template <typename PicoAdaptor>
-using CoverTree = pico_tree::CoverTree<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    PicoAdaptor::Dim,
-    PicoAdaptor>;
 
 // The anonymous namespace gives the function a unique "name" when there is
 // another one with the exact same signature.
 namespace {
 
 template <typename PointX>
+using Space = std::reference_wrapper<std::vector<PointX>>;
+
+template <typename SpaceX>
+using Traits = pico_tree::StdTraits<SpaceX>;
+
+template <typename PointX>
+using CoverTree = pico_tree::CoverTree<Traits<Space<PointX>>>;
+
+template <typename PointX>
 void QueryRadius(
     int const point_count,
     typename PointX::ScalarType const area_size,
     typename PointX::ScalarType const radius) {
-  using Index = int;
   using Scalar = typename PointX::ScalarType;
-  using AdaptorX = PicoAdaptor<Index, PointX>;
+
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  AdaptorX adaptor(random);
-  CoverTree<AdaptorX> tree(adaptor, Scalar(2.0));
+  CoverTree<PointX> tree(random, Scalar(2.0));
 
   TestRadius(tree, radius);
 }
@@ -38,10 +38,9 @@ void QueryKnn(
     int const k) {
   using Index = int;
   using Scalar = typename PointX::ScalarType;
-  using AdaptorX = PicoAdaptor<Index, PointX>;
+
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  AdaptorX adaptor(random);
-  CoverTree<AdaptorX> tree(adaptor, Scalar(2.0));
+  CoverTree<PointX> tree(random, Scalar(2.0));
 
   // This line compile time "tests" the move capability of the tree.
   auto tree2 = std::move(tree);

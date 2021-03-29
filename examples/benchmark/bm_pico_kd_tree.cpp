@@ -1,50 +1,37 @@
-#include <pico_toolshed/pico_adaptor.hpp>
+#include <pico_toolshed/point.hpp>
 #include <pico_tree/kd_tree.hpp>
 
 #include "benchmark.hpp"
 
-template <int Dims, typename PicoAdaptor>
-using SplitterLongestMedian = pico_tree::SplitterLongestMedian<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    Dims,
-    PicoAdaptor>;
+template <typename PointX>
+using PicoTraits =
+    pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>;
 
-template <typename PicoAdaptor>
-using PicoKdTreeCtSldMid = pico_tree::KdTree<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    PicoAdaptor::Dim,
-    PicoAdaptor>;
+template <typename PointX>
+using PicoKdTreeCtSldMid = pico_tree::KdTree<PicoTraits<PointX>>;
 
-template <typename PicoAdaptor>
+template <typename PointX>
 using PicoKdTreeCtLngMed = pico_tree::KdTree<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    PicoAdaptor::Dim,
-    PicoAdaptor,
-    pico_tree::L2Squared<typename PicoAdaptor::ScalarType, PicoAdaptor::Dim>,
-    SplitterLongestMedian<PicoAdaptor::Dim, PicoAdaptor>>;
+    PicoTraits<PointX>,
+    pico_tree::L2Squared<typename PointX::ScalarType, PointX::Dim>,
+    pico_tree::SplitterLongestMedian<PicoTraits<PointX>>>;
 
-template <typename PicoAdaptor>
+template <typename PointX>
 using PicoKdTreeRtSldMid = pico_tree::KdTree<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    pico_tree::kDynamicDim,
-    PicoAdaptor>;
+    PicoTraits<PointX>,
+    pico_tree::L2Squared<typename PointX::ScalarType, pico_tree::kDynamicDim>,
+    pico_tree::SplitterSlidingMidpoint<PicoTraits<PointX>>,
+    pico_tree::kDynamicDim>;
 
-template <typename PicoAdaptor>
+template <typename PointX>
 using PicoKdTreeRtLngMed = pico_tree::KdTree<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    pico_tree::kDynamicDim,
-    PicoAdaptor,
-    pico_tree::L2Squared<typename PicoAdaptor::ScalarType, PicoAdaptor::Dim>,
-    SplitterLongestMedian<pico_tree::kDynamicDim, PicoAdaptor>>;
+    PicoTraits<PointX>,
+    pico_tree::L2Squared<typename PointX::ScalarType, pico_tree::kDynamicDim>,
+    pico_tree::SplitterLongestMedian<PicoTraits<PointX>>,
+    pico_tree::kDynamicDim>;
 
 class BmPicoKdTree : public pico_tree::Benchmark {
  public:
-  using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 };
 
 // ****************************************************************************
@@ -53,33 +40,33 @@ class BmPicoKdTree : public pico_tree::Benchmark {
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, BuildCtSldMid)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  PicoAdaptorX adaptor(points_);
+
   for (auto _ : state) {
-    PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    PicoKdTreeCtSldMid<PointX> tree(points_, max_leaf_size);
   }
 }
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, BuildCtLngMed)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  PicoAdaptorX adaptor(points_);
+
   for (auto _ : state) {
-    PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    PicoKdTreeCtLngMed<PointX> tree(points_, max_leaf_size);
   }
 }
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, BuildRtSldMid)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  PicoAdaptorX adaptor(points_);
+
   for (auto _ : state) {
-    PicoKdTreeRtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    PicoKdTreeRtSldMid<PointX> tree(points_, max_leaf_size);
   }
 }
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, BuildRtLngMed)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  PicoAdaptorX adaptor(points_);
+
   for (auto _ : state) {
-    PicoKdTreeRtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
+    PicoKdTreeRtLngMed<PointX> tree(points_, max_leaf_size);
   }
 }
 
@@ -109,8 +96,8 @@ BENCHMARK_REGISTER_F(BmPicoKdTree, BuildRtLngMed)
 BENCHMARK_DEFINE_F(BmPicoKdTree, KnnCtSldMid)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
-  PicoAdaptorX adaptor(points_);
-  PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
+
+  PicoKdTreeCtSldMid<PointX> tree(points_, max_leaf_size);
 
   for (auto _ : state) {
     std::vector<pico_tree::Neighbor<Index, Scalar>> results;
@@ -125,8 +112,8 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, KnnCtSldMid)(benchmark::State& state) {
 BENCHMARK_DEFINE_F(BmPicoKdTree, KnnCtLngMed)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
-  PicoAdaptorX adaptor(points_);
-  PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
+
+  PicoKdTreeCtLngMed<PointX> tree(points_, max_leaf_size);
 
   for (auto _ : state) {
     std::vector<pico_tree::Neighbor<Index, Scalar>> results;
@@ -140,8 +127,8 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, KnnCtLngMed)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, NnCtSldMid)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  PicoAdaptorX adaptor(points_);
-  PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
+
+  PicoKdTreeCtSldMid<PointX> tree(points_, max_leaf_size);
 
   for (auto _ : state) {
     pico_tree::Neighbor<Index, Scalar> result;
@@ -153,8 +140,8 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, NnCtSldMid)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, NnCtLngMed)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  PicoAdaptorX adaptor(points_);
-  PicoKdTreeCtLngMed<PicoAdaptorX> tree(adaptor, max_leaf_size);
+
+  PicoKdTreeCtLngMed<PointX> tree(points_, max_leaf_size);
 
   for (auto _ : state) {
     pico_tree::Neighbor<Index, Scalar> result;
@@ -231,8 +218,8 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, RadiusCtSldMid)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   double radius = static_cast<double>(state.range(1)) / 10.0;
   double squared = radius * radius;
-  PicoAdaptorX adaptor(points_);
-  PicoKdTreeCtSldMid<PicoAdaptorX> tree(adaptor, max_leaf_size);
+
+  PicoKdTreeCtSldMid<PointX> tree(points_, max_leaf_size);
 
   for (auto _ : state) {
     std::vector<pico_tree::Neighbor<Index, Scalar>> results;

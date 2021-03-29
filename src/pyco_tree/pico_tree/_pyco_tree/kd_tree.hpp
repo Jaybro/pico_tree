@@ -15,19 +15,15 @@ namespace pyco_tree {
 //! \brief pico_tree::KdTree with some added convenience functions to be mapped
 //! on the Python side of things.
 //! \see pico_tree::KdTree
-template <typename Points, typename Metric>
-class KdTree : public pico_tree::KdTree<
-                   typename Points::IndexType,
-                   typename Points::ScalarType,
-                   Points::Dim,
-                   Points,
-                   Metric> {
+template <typename Traits, typename Metric>
+class KdTree : public pico_tree::KdTree<Traits, Metric> {
  private:
   static constexpr int kChunkSize = 128;
 
-  using Index = typename Points::IndexType;
-  using Scalar = typename Points::ScalarType;
-  using Base = pico_tree::KdTree<Index, Scalar, Points::Dim, Points, Metric>;
+  using Index = typename Traits::IndexType;
+  using Scalar = typename Traits::ScalarType;
+  using Space = typename Traits::SpaceType;
+  using Base = pico_tree::KdTree<Traits, Metric>;
 
  public:
   using Base::Dim;
@@ -36,12 +32,12 @@ class KdTree : public pico_tree::KdTree<
   using typename Base::IndexType;
   using typename Base::MetricType;
   using typename Base::NeighborType;
-  using typename Base::PointsType;
   using typename Base::ScalarType;
+  using typename Base::SpaceType;
 
  public:
   inline KdTree(py::array_t<Scalar, 0> pts, Index max_leaf_size)
-      : Base(Points(pts), max_leaf_size) {}
+      : Base(Space(pts), max_leaf_size) {}
 
   void SearchKnn(
       py::array_t<Scalar, 0> const pts,
@@ -153,7 +149,7 @@ class KdTree : public pico_tree::KdTree<
 
  private:
   void EnsureSize(
-      Points const& query,
+      Space const& query,
       Index const k,
       py::array_t<NeighborType, 0> nns) const {
     // This respects the ndim == 1 for k == 1
