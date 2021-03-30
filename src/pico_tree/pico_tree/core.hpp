@@ -53,52 +53,61 @@ inline constexpr bool operator<(
   return lhs.distance < rhs.distance;
 }
 
-//! \brief pico_tree::StdTraits provides an interface for points collections
-//! that use indexable containers from the C++ standard.
+//! \brief StdTraits provides an interface for spaces and points when working
+//! with indexable containers from the C++ standard.
 //! \details Because different point types can have different interfaces, they
-//! will be provided by pico_tree::StdPointTraits.
-//! \tparam Space Any of the point sets supported by pico_tree::StdTraits.
+//! will be provided by StdPointTraits.
+//! \tparam Space Any of the point sets supported by StdTraits.
 template <typename Space>
 struct StdTraits;
 
-//! \brief pico_tree::StdPointTraits provides an interface for the different
-//! point types that can be used with pico_tree::StdTraits.
+//! \brief StdPointTraits provides an interface for the different point types
+//! that can be used with StdTraits (or others).
 template <typename Point>
 struct StdPointTraits;
 
-//! \brief This specialization of pico_tree::StdTraits provides support for
-//! std::vector.
-//! \tparam Point Any of the point types supported by pico_tree::StdPointTraits.
+//! \brief This specialization of StdTraits provides support for std::vector.
+//! \tparam Point Any of the point types supported by StdPointTraits.
 //! \tparam Allocator Allocator type for the std::vector.
 template <typename Point, typename Allocator>
 struct StdTraits<std::vector<Point, Allocator>> {
+  //! \brief The SpaceType of these traits.
   using SpaceType = std::vector<Point, Allocator>;
+  //! \brief The point type used by SpaceType.
   using PointType = Point;
+  //! \brief The scalar type of point coordinates.
   using ScalarType = typename StdPointTraits<Point>::ScalarType;
   using IndexType = int;
+  //! \brief Compile time spatial dimension.
   static constexpr int Dim = StdPointTraits<Point>::Dim;
 
+  //! \brief Returns the dimension of the space in which the points reside.
+  //! I.e., the amount of coordinates each point has.
   inline static int constexpr SpaceSdim(std::vector<Point, Allocator> const&) {
     static_assert(
         Dim != kDynamicDim, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
     return Dim;
   }
 
+  //! \brief Returns number of points contained by \p space.
   inline static IndexType SpaceNpts(
       std::vector<Point, Allocator> const& space) {
     return static_cast<IndexType>(space.size());
   }
 
+  //! \brief Returns the point at \p idx from \p space.
   inline static Point const& PointAt(
       std::vector<Point, Allocator> const& space, IndexType const idx) {
     return space[idx];
   }
 
+  //! \brief Returns the spatial dimension of \p point.
   template <typename OtherPoint>
   inline static int PointSdim(OtherPoint const& point) {
     return StdPointTraits<OtherPoint>::Sdim(point);
   }
 
+  //! \brief Returns a pointer to the coordinates of \p point.
   template <typename OtherPoint>
   inline static ScalarType const* PointCoords(OtherPoint const& point) {
     return StdPointTraits<OtherPoint>::Coords(point);
