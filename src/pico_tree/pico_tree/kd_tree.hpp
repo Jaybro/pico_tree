@@ -206,7 +206,7 @@ class SplitterSlidingMidpoint {
 //! but can be set to a different value should a rare occasion require it.
 template <
     typename Traits,
-    typename Metric = L2Squared<typename Traits::ScalarType, Traits::Dim>,
+    typename Metric = L2Squared<Traits>,
     typename Splitter = SplitterSlidingMidpoint<Traits>,
     int Dim_ = Traits::Dim>
 class KdTree {
@@ -376,7 +376,7 @@ class KdTree {
   //! \param max_leaf_size The maximum amount of points allowed in a leaf node.
   KdTree(Space points, Index max_leaf_size)
       : points_(std::move(points)),
-        metric_(Traits::SpaceSdim(points_)),
+        metric_(),
         nodes_(internal::MaxNodesFromPoints(Traits::SpaceNpts(points_))),
         indices_(Traits::SpaceNpts(points_)),
         root_(Build(max_leaf_size)) {}
@@ -594,7 +594,7 @@ class KdTree {
   //! from a Stream.
   KdTree(Space points, internal::Stream* stream)
       : points_(std::move(points)),
-        metric_(Traits::SpaceSdim(points_)),
+        metric_(),
         nodes_(internal::MaxNodesFromPoints(Traits::SpaceNpts(points_))),
         indices_(Traits::SpaceNpts(points_)),
         root_(Load(stream)) {}

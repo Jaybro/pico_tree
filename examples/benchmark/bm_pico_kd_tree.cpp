@@ -13,20 +13,20 @@ using PicoKdTreeCtSldMid = pico_tree::KdTree<PicoTraits<PointX>>;
 template <typename PointX>
 using PicoKdTreeCtLngMed = pico_tree::KdTree<
     PicoTraits<PointX>,
-    pico_tree::L2Squared<typename PointX::ScalarType, PointX::Dim>,
+    pico_tree::L2Squared<PicoTraits<PointX>>,
     pico_tree::SplitterLongestMedian<PicoTraits<PointX>>>;
 
 template <typename PointX>
 using PicoKdTreeRtSldMid = pico_tree::KdTree<
     PicoTraits<PointX>,
-    pico_tree::L2Squared<typename PointX::ScalarType, pico_tree::kDynamicDim>,
+    pico_tree::L2Squared<PicoTraits<PointX>>,
     pico_tree::SplitterSlidingMidpoint<PicoTraits<PointX>>,
     pico_tree::kDynamicDim>;
 
 template <typename PointX>
 using PicoKdTreeRtLngMed = pico_tree::KdTree<
     PicoTraits<PointX>,
-    pico_tree::L2Squared<typename PointX::ScalarType, pico_tree::kDynamicDim>,
+    pico_tree::L2Squared<PicoTraits<PointX>>,
     pico_tree::SplitterLongestMedian<PicoTraits<PointX>>,
     pico_tree::kDynamicDim>;
 

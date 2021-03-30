@@ -4,12 +4,11 @@
 
 namespace pyco_tree {
 
-template <typename Points>
-using L1 = pico_tree::L1<typename Points::ScalarType, Points::Dim>;
+template <typename Traits>
+using L1 = pico_tree::L1<Traits>;
 
-template <typename Points>
-using L2Squared =
-    pico_tree::L2Squared<typename Points::ScalarType, Points::Dim>;
+template <typename Traits>
+using L2Squared = pico_tree::L2Squared<Traits>;
 
 using PointsXf = PycoAdaptor<int, float, pico_tree::kDynamicDim>;
 using PointsXd = PycoAdaptor<int, double, pico_tree::kDynamicDim>;

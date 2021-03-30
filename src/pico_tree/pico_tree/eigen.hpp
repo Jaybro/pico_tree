@@ -227,9 +227,6 @@ struct StdPointTraits<Eigen::Map<
 template <typename Scalar>
 class EigenL1 {
  public:
-  //! \brief Creates an EigenL1.
-  inline explicit EigenL1(int const) {}
-
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
   inline Scalar operator()(
@@ -251,9 +248,6 @@ class EigenL1 {
 template <typename Scalar>
 class EigenL2 {
  public:
-  //! \brief Creates an L2Squared given a spatial dimension.
-  inline explicit EigenL2(int const) {}
-
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
   inline Scalar operator()(
@@ -276,9 +270,6 @@ class EigenL2 {
 template <typename Scalar>
 class EigenL2Squared {
  public:
-  //! \brief Creates an EigenL2Squared.
-  inline explicit EigenL2Squared(int const) {}
-
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
   inline Scalar operator()(

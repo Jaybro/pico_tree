@@ -29,9 +29,7 @@
 
 namespace pico_tree {
 
-template <
-    typename Traits,
-    typename Metric = L2<typename Traits::ScalarType, Traits::Dim>>
+template <typename Traits, typename Metric = L2<Traits>>
 class CoverTree {
  private:
   using Index = typename Traits::IndexType;
@@ -114,7 +112,7 @@ class CoverTree {
   //! \brief Creates a CoverTree given \p points and a leveling \p base.
   CoverTree(Space points, Scalar base)
       : points_(std::move(points)),
-        metric_(Traits::SpaceSdim(points_)),
+        metric_(),
         nodes_(Traits::SpaceNpts(points_)),
         base_{base},
         root_(Build()) {}
