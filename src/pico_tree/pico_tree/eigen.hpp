@@ -52,10 +52,12 @@ struct EigenPointTraits : public EigenVectorDim<Derived, Derived::IsRowMajor> {
 
   //! \brief Returns the spatial dimension of \p point.
   inline static int Sdim(Eigen::MatrixBase<Derived> const& point) {
-    return point.size();
+    return static_cast<int>(point.size());
   }
 };
 
+//! \brief Provides the Point interface for the different implementations of
+//! EigenTraitsImpl.
 template <typename Derived>
 struct EigenPointBase {
   //! \brief The scalar type of point coordinates.
@@ -102,7 +104,7 @@ struct EigenTraitsImpl<Derived, false> : public EigenPointBase<Derived> {
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
   inline static int SpaceSdim(Eigen::MatrixBase<Derived> const& matrix) {
-    return matrix.rows();
+    return static_cast<int>(matrix.rows());
   }
 
   //! \brief Returns the number of points.
@@ -129,7 +131,7 @@ struct EigenTraitsImpl<Derived, true> : public EigenPointBase<Derived> {
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
   inline static int SpaceSdim(Eigen::MatrixBase<Derived> const& matrix) {
-    return matrix.cols();
+    return static_cast<int>(matrix.cols());
   }
 
   //! \brief Returns the number of points.
