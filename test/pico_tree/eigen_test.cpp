@@ -85,12 +85,12 @@ void CheckEigenAdaptorInterface() {
   EXPECT_TRUE(pico_tree::EigenTraits<ColMatrix>::PointAt(col_matrix, 0)
                   .isApprox(col_matrix.col(0)));
   EXPECT_TRUE(pico_tree::EigenTraits<ColMatrix>::PointAt(
-                  col_matrix, col_matrix.cols() - 1)
+                  col_matrix, static_cast<int>(col_matrix.cols()) - 1)
                   .isApprox(col_matrix.col(col_matrix.cols() - 1)));
   EXPECT_TRUE(pico_tree::EigenTraits<RowMatrix>::PointAt(row_matrix, 0)
                   .isApprox(row_matrix.row(0)));
   EXPECT_TRUE(pico_tree::EigenTraits<RowMatrix>::PointAt(
-                  row_matrix, row_matrix.rows() - 1)
+                  row_matrix, static_cast<int>(row_matrix.rows()) - 1)
                   .isApprox(row_matrix.row(row_matrix.rows() - 1)));
 }
 
