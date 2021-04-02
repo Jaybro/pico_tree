@@ -4,6 +4,47 @@
 
 namespace pico_tree {
 
+namespace internal {
+
+struct AbsDiff {
+  template <typename Scalar>
+  inline static Scalar Op(Scalar x, Scalar y) {
+    return std::abs(x - y);
+  }
+};
+
+struct SqrdDiff {
+  template <typename Scalar>
+  inline static Scalar Op(Scalar x, Scalar y) {
+    Scalar const d = x - y;
+    return d * d;
+  }
+};
+
+template <typename Traits, typename BinOp>
+struct Sum {
+  using ScalarType = typename Traits::ScalarType;
+
+  template <typename P0, typename P1>
+  inline static ScalarType Op(P0 const& p0, P1 const& p1) {
+    assert(Traits::PointSdim(p0) == Traits::PointSdim(p1));
+
+    ScalarType const* c0 = Traits::PointCoords(p0);
+    ScalarType const* c1 = Traits::PointCoords(p1);
+    ScalarType d{};
+
+    for (int i = 0;
+         i < internal::Dimension<Traits::Dim>::Dim(Traits::PointSdim(p0));
+         ++i) {
+      d += BinOp::Op(c0[i], c1[i]);
+    }
+
+    return d;
+  }
+};
+
+}  // namespace internal
+
 //! \brief L1 metric for measuring the Taxicab or Manhattan distance between
 //! points.
 //! \details For more details:
@@ -27,17 +68,7 @@ class L1 {
       !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
       Scalar>::type
   operator()(P0 const& p0, P1 const& p1) const {
-    assert(Traits::PointSdim(p0) == Traits::PointSdim(p1));
-
-    Scalar d{};
-
-    for (int i = 0;
-         i < internal::Dimension<Traits::Dim>::Dim(Traits::PointSdim(p0));
-         ++i) {
-      d += std::abs(p0(i) - p1(i));
-    }
-
-    return d;
+    return internal::Sum<Traits, internal::AbsDiff>::Op(p0, p1);
   }
 
   //! \brief Calculates the distance between two coordinates.
@@ -70,18 +101,7 @@ class L2 {
       !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
       Scalar>::type
   operator()(P0 const& p0, P1 const& p1) const {
-    assert(Traits::PointSdim(p0) == Traits::PointSdim(p1));
-
-    Scalar d{};
-
-    for (int i = 0;
-         i < internal::Dimension<Traits::Dim>::Dim(Traits::PointSdim(p0));
-         ++i) {
-      Scalar const v = p0(i) - p1(i);
-      d += v * v;
-    }
-
-    return std::sqrt(d);
+    return std::sqrt(internal::Sum<Traits, internal::SqrdDiff>::Op(p0, p1));
   }
 
   //! \brief Calculates the distance between two coordinates.
@@ -115,18 +135,7 @@ class L2Squared {
       !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
       Scalar>::type
   operator()(P0 const& p0, P1 const& p1) const {
-    assert(Traits::PointSdim(p0) == Traits::PointSdim(p1));
-
-    Scalar d{};
-
-    for (int i = 0;
-         i < internal::Dimension<Traits::Dim>::Dim(Traits::PointSdim(p0));
-         ++i) {
-      Scalar const v = p0(i) - p1(i);
-      d += v * v;
-    }
-
-    return d;
+    return internal::Sum<Traits, internal::SqrdDiff>::Op(p0, p1);
   }
 
   //! \brief Calculates the distance between two coordinates.
