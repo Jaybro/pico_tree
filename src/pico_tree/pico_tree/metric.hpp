@@ -6,14 +6,18 @@ namespace pico_tree {
 
 namespace internal {
 
+//! \brief Calculates the absolute difference between two point coordinates.
 struct AbsDiff {
+  //! \private
   template <typename Scalar>
   inline static Scalar Op(Scalar x, Scalar y) {
     return std::abs(x - y);
   }
 };
 
+//! \brief Calculates the squared difference between two point coordinates.
 struct SqrdDiff {
+  //! \private
   template <typename Scalar>
   inline static Scalar Op(Scalar x, Scalar y) {
     Scalar const d = x - y;
@@ -21,10 +25,16 @@ struct SqrdDiff {
   }
 };
 
+//! \brief Calculates the difference between all coordinats of two points given
+//! a binary operator.
+//! \tparam Traits Interface for intput points.
+//! \tparam BinOp Operator used to calculate coordinate differences.
 template <typename Traits, typename BinOp>
 struct Sum {
+  //! \private
   using ScalarType = typename Traits::ScalarType;
 
+  //! \private
   template <typename P0, typename P1>
   inline static ScalarType Op(P0 const& p0, P1 const& p1) {
     assert(Traits::PointSdim(p0) == Traits::PointSdim(p1));

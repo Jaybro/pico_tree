@@ -8,30 +8,36 @@ namespace pico_tree {
 
 namespace internal {
 
+//! \brief A trait that determines if Derived inherits from Eigen::MatrixBase<>.
 template <typename Derived>
 struct is_matrix_base
     : public std::is_base_of<
           Eigen::MatrixBase<typename std::decay<Derived>::type>,
           typename std::decay<Derived>::type> {};
 
+//! \brief Dimension trait for Eigen vectors.
 template <typename Derived, bool IsRowMajor>
 struct EigenVectorDim;
 
+//! \brief Provides compile time dimension for ColMajor Eigen types.
 template <typename Derived>
 struct EigenVectorDim<Derived, false> {
   static_assert(
       is_matrix_base<Derived>::value, "DERIVED_TYPE_IS_NOT_AN_EIGEN_MATRIX");
   static_assert(
       Derived::ColsAtCompileTime == 1, "DERIVED_TYPE_IS_NOT_A_VECTOR");
+  //! \brief Compile time dimension of Derived.
   static int constexpr Dim = Derived::RowsAtCompileTime;
 };
 
+//! \brief Provides compile time dimension for RowMajor Eigen types.
 template <typename Derived>
 struct EigenVectorDim<Derived, true> {
   static_assert(
       is_matrix_base<Derived>::value, "DERIVED_TYPE_IS_NOT_AN_EIGEN_MATRIX");
   static_assert(
       Derived::RowsAtCompileTime == 1, "DERIVED_TYPE_IS_NOT_A_VECTOR");
+  //! \brief Compile time dimension of Derived.
   static int constexpr Dim = Derived::ColsAtCompileTime;
 };
 
