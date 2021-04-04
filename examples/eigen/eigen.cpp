@@ -50,6 +50,50 @@ std::vector<PointX, Eigen::aligned_allocator<PointX>> GenerateRandomEigenN(
   return random;
 }
 
+// Creates a KdTree from a vector of Eigen::VectorX and searches for nearest
+// neighbors.
+void BasicVector() {
+  using PointX = Eigen::Vector2f;
+  using Scalar = typename PointX::Scalar;
+
+  // Including <pyco_tree/eigen.hpp> provices support for Eigen types with
+  // std::vector.
+  pico_tree::KdTree<pico_tree::StdTraits<
+      std::vector<PointX, Eigen::aligned_allocator<PointX>>>>
+      tree(GenerateRandomEigenN<PointX>(kNumPoints, kArea), kMaxLeafCount);
+
+  PointX p = PointX::Random() * kArea / Scalar(2.0);
+
+  pico_tree::Neighbor<Index, Scalar> nn;
+  ScopedTimer t("pico_tree eigen vector", kRunCount);
+  for (std::size_t i = 0; i < kRunCount; ++i) {
+    tree.SearchNn(p, &nn);
+  }
+}
+
+// Creates a KdTree from an Eigen::Matrix<> and searches for nearest neighbors.
+void BasicMatrix() {
+  using PointX = Eigen::Vector3f;
+  using Scalar = typename Eigen::Matrix3Xf::Scalar;
+  constexpr int Dim = Eigen::Matrix3Xf::RowsAtCompileTime;
+
+  // The KdTree takes the matrix by value. Prevent a copy by:
+  // * Using a move.
+  // * Creation an Eigen::Map<>.
+  // TODO Could add an std::reference_wrapper<> version for Eigen.
+  pico_tree::KdTree<pico_tree::EigenTraits<Eigen::Matrix3Xf>> tree(
+      Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0),
+      kMaxLeafCount);
+
+  PointX p = PointX::Random() * kArea / Scalar(2.0);
+
+  pico_tree::Neighbor<Index, Scalar> nn;
+  ScopedTimer t("pico_tree eigen matrix", kRunCount);
+  for (std::size_t i = 0; i < kRunCount; ++i) {
+    tree.SearchNn(p, &nn);
+  }
+}
+
 // Creates a KdTree from a col-major matrix. The matrix maps an
 // std::vector<Eigen::Vector3f>.
 void VectorMapColMajor() {
@@ -176,33 +220,11 @@ void Metrics() {
   }
 }
 
-// Creates a KdTree from an Eigen::Matrix<> and searches for nearest neighbors.
-void BasicMatrix() {
-  using PointX = Eigen::Vector3f;
-  using Scalar = typename Eigen::Matrix3Xf::Scalar;
-  constexpr int Dim = Eigen::Matrix3Xf::RowsAtCompileTime;
-
-  // The KdTree takes the matrix by value. Prevent a copy by:
-  // * Using a move.
-  // * Creation an Eigen::Map<>.
-  // TODO Could add an std::reference_wrapper<> version for Eigen.
-  pico_tree::KdTree<pico_tree::EigenTraits<Eigen::Matrix3Xf>> tree(
-      Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0),
-      kMaxLeafCount);
-
-  PointX p = PointX::Random() * kArea / Scalar(2.0);
-
-  pico_tree::Neighbor<Index, Scalar> nn;
-  ScopedTimer t("pico_tree eigen matrix", kRunCount);
-  for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchNn(p, &nn);
-  }
-}
-
 int main() {
+  BasicVector();
+  BasicMatrix();
   VectorMapColMajor();
   VectorMapRowMajor();
   Metrics();
-  BasicMatrix();
   return 0;
 }

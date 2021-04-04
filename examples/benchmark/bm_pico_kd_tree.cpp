@@ -3,9 +3,10 @@
 
 #include "benchmark.hpp"
 
+// Index explicitly set to int.
 template <typename PointX>
 using PicoTraits =
-    pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>;
+    pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>, int>;
 
 template <typename PointX>
 using PicoKdTreeCtSldMid = pico_tree::KdTree<PicoTraits<PointX>>;

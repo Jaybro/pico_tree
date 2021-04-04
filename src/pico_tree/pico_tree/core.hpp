@@ -58,26 +58,31 @@ inline constexpr bool operator<(
 //! \details Because different point types can have different interfaces, they
 //! will be provided by StdPointTraits.
 //! \tparam Space Any of the point sets supported by StdTraits.
-template <typename Space>
+//! \tparam Index Type used for indexing. Defaults to int.
+template <typename Space, typename Index = int>
 struct StdTraits;
 
 //! \brief StdPointTraits provides an interface for the different point types
 //! that can be used with StdTraits (or others).
+//! \tparam Point Any of the point types supported by StdPointTraits.
 template <typename Point>
 struct StdPointTraits;
 
-//! \brief This specialization of StdTraits provides support for std::vector.
+//! \brief StdTraits provides an interface for std::vector<> and points
+//! supported by StdPointTraits.
 //! \tparam Point Any of the point types supported by StdPointTraits.
 //! \tparam Allocator Allocator type for the std::vector.
-template <typename Point, typename Allocator>
-struct StdTraits<std::vector<Point, Allocator>> {
+//! \tparam Index Type used for indexing. Defaults to int.
+template <typename Point, typename Allocator, typename Index>
+struct StdTraits<std::vector<Point, Allocator>, Index> {
   //! \brief The SpaceType of these traits.
   using SpaceType = std::vector<Point, Allocator>;
   //! \brief The point type used by SpaceType.
   using PointType = Point;
   //! \brief The scalar type of point coordinates.
   using ScalarType = typename StdPointTraits<Point>::ScalarType;
-  using IndexType = int;
+  //! \brief The index type of point coordinates.
+  using IndexType = Index;
   //! \brief Compile time spatial dimension.
   static constexpr int Dim = StdPointTraits<Point>::Dim;
 
@@ -114,13 +119,26 @@ struct StdTraits<std::vector<Point, Allocator>> {
   }
 };
 
-template <typename Point, typename Allocator>
-struct StdTraits<std::reference_wrapper<std::vector<Point, Allocator>>>
-    : public StdTraits<std::vector<Point, Allocator>> {};
+//! \brief StdTraits provides an interface for
+//! std::reference_wrapper<std::vector<>> and points supported by
+//! StdPointTraits.
+//! \tparam Point Any of the point types supported by StdPointTraits.
+//! \tparam Allocator Allocator type for the std::vector.
+//! \tparam Index Type used for indexing. Defaults to int.
+template <typename Point, typename Allocator, typename Index>
+struct StdTraits<std::reference_wrapper<std::vector<Point, Allocator>>, Index>
+    : public StdTraits<std::vector<Point, Allocator>, Index> {};
 
-template <typename Point, typename Allocator>
-struct StdTraits<std::reference_wrapper<std::vector<Point, Allocator> const>>
-    : public StdTraits<std::vector<Point, Allocator>> {};
+//! \brief StdTraits provides an interface for
+//! std::reference_wrapper<std::vector<> const> and points supported by
+//! StdPointTraits.
+//! \tparam Point Any of the point types supported by StdPointTraits.
+//! \tparam Allocator Allocator type for the std::vector.
+//! \tparam Index Type used for indexing. Defaults to int.
+template <typename Point, typename Allocator, typename Index>
+struct StdTraits<
+    std::reference_wrapper<std::vector<Point, Allocator> const>,
+    Index> : public StdTraits<std::vector<Point, Allocator>, Index> {};
 
 namespace internal {
 

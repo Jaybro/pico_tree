@@ -68,7 +68,6 @@ template <typename Derived>
 struct EigenPointBase {
   //! \brief The scalar type of point coordinates.
   using ScalarType = typename std::decay<typename Derived::Scalar>::type;
-  using IndexType = int;
 
   //! \brief Returns the spatial dimension of \p point.
   template <typename OtherDerived>
@@ -95,17 +94,18 @@ struct EigenPointBase {
 };
 
 //! \brief Space and Point traits for Eigen types.
-template <typename Derived, bool RowMajor>
+template <typename Derived, typename Index, bool RowMajor>
 struct EigenTraitsImpl;
 
 //! \brief Space and Point traits for ColMajor Eigen types.
-template <typename Derived>
-struct EigenTraitsImpl<Derived, false> : public EigenPointBase<Derived> {
-  using typename EigenPointBase<Derived>::IndexType;
+template <typename Derived, typename Index>
+struct EigenTraitsImpl<Derived, Index, false> : public EigenPointBase<Derived> {
   //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
   static constexpr int Dim = Derived::RowsAtCompileTime;
   //! \brief The point type used by Derived.
   using PointType = Eigen::Block<Derived const, Dim, 1, true>;
+  //! \brief The index type of point coordinates.
+  using IndexType = Index;
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
@@ -126,13 +126,14 @@ struct EigenTraitsImpl<Derived, false> : public EigenPointBase<Derived> {
 };
 
 //! \brief Space and Point traits for RowMajor Eigen types.
-template <typename Derived>
-struct EigenTraitsImpl<Derived, true> : public EigenPointBase<Derived> {
-  using typename EigenPointBase<Derived>::IndexType;
+template <typename Derived, typename Index>
+struct EigenTraitsImpl<Derived, Index, true> : public EigenPointBase<Derived> {
   //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
   static constexpr int Dim = Derived::ColsAtCompileTime;
   //! \brief The point type used by Derived.
   using PointType = Eigen::Block<Derived const, 1, Dim, true>;
+  //! \brief The index type of point coordinates.
+  using IndexType = Index;
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
@@ -153,32 +154,40 @@ struct EigenTraitsImpl<Derived, true> : public EigenPointBase<Derived> {
 };
 
 //! \private This struct simply reduces some of the template argument overhead.
-template <typename Derived>
-struct EigenTraitsBase : public EigenTraitsImpl<Derived, Derived::IsRowMajor> {
+template <typename Derived, typename Index>
+struct EigenTraitsBase
+    : public EigenTraitsImpl<Derived, Index, Derived::IsRowMajor> {
   using SpaceType = Derived;
 };
 
 }  // namespace internal
 
-//! \brief pico_tree::EigenTraits provides an interface for spaces and points
-//! when working with Eigen types.
-//! \tparam Derived An Eigen::Matrix or Eigen::Map<Eigen::Matrix>.
-template <typename Derived>
+//! \brief EigenTraits provides an interface for spaces and points when working
+//! with Eigen types.
+//! \tparam Derived An Eigen::Matrix<> or Eigen::Map<Eigen::Matrix<>>.
+//! \tparam Index Type used for indexing. Defaults to int.
+template <typename Derived, typename Index = int>
 struct EigenTraits;
 
+//! \brief EigenTraits provides an interface for Eigen::Matrix<>.
+//! \tparam Index Type used for indexing. Defaults to int.
 template <
     typename Scalar_,
     int Rows_,
     int Cols_,
     int Options_,
     int MaxRows_,
-    int MaxCols_>
+    int MaxCols_,
+    typename Index>
 struct EigenTraits<
-    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>>
+    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+    Index>
     : internal::EigenTraitsBase<
-          Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> {
-};
+          Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+          Index> {};
 
+//! \brief EigenTraits provides an interface for Eigen::Map<Eigen::Matrix<>>.
+//! \tparam Index Type used for indexing. Defaults to int.
 template <
     typename Scalar_,
     int Rows_,
@@ -187,16 +196,23 @@ template <
     int MaxRows_,
     int MaxCols_,
     int MapOptions_,
-    typename StrideType_>
-struct EigenTraits<Eigen::Map<
-    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
-    MapOptions_,
-    StrideType_>>
-    : internal::EigenTraitsBase<Eigen::Map<
-          Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
-          MapOptions_,
-          StrideType_>> {};
+    typename StrideType_,
+    typename Index>
+struct EigenTraits<
+    Eigen::Map<
+        Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+        MapOptions_,
+        StrideType_>,
+    Index>
+    : internal::EigenTraitsBase<
+          Eigen::Map<
+              Eigen::
+                  Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+              MapOptions_,
+              StrideType_>,
+          Index> {};
 
+//! \brief StdPointTraits provides an interface for Eigen::Matrix<>.
 template <
     typename Scalar_,
     int Rows_,
@@ -210,6 +226,7 @@ struct StdPointTraits<
           Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> {
 };
 
+//! \brief StdPointTraits provides an interface for Eigen::Map<Eigen::Matrix<>>.
 template <
     typename Scalar_,
     int Rows_,

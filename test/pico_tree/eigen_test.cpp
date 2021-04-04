@@ -60,11 +60,33 @@ template <typename ColMatrix, typename RowMatrix>
 void CheckEigenAdaptorInterface() {
   static_assert(
       pico_tree::EigenTraits<ColMatrix>::Dim == ColMatrix::RowsAtCompileTime,
-      "ADAPTOR_DIM_NOT_EQUAL_TO_MATRIX_ROWSATCOMPILETIME");
+      "TRAITS_DIM_NOT_EQUAL_TO_MATRIX_ROWSATCOMPILETIME");
 
   static_assert(
       pico_tree::EigenTraits<RowMatrix>::Dim == ColMatrix::ColsAtCompileTime,
-      "ADAPTOR_DIM_NOT_EQUAL_TO_MATRIX_COLSATCOMPILETIME");
+      "TRAITS_DIM_NOT_EQUAL_TO_MATRIX_COLSATCOMPILETIME");
+
+  static_assert(
+      std::is_same<typename pico_tree::EigenTraits<ColMatrix>::IndexType, int>::
+          value,
+      "TRAITS_INDEX_TYPE_NOT_INT");
+
+  static_assert(
+      std::is_same<typename pico_tree::EigenTraits<RowMatrix>::IndexType, int>::
+          value,
+      "TRAITS_INDEX_TYPE_NOT_INT");
+
+  static_assert(
+      std::is_same<
+          typename pico_tree::EigenTraits<ColMatrix, std::size_t>::IndexType,
+          std::size_t>::value,
+      "TRAITS_INDEX_TYPE_NOT_SIZE_T");
+
+  static_assert(
+      std::is_same<
+          typename pico_tree::EigenTraits<RowMatrix, std::size_t>::IndexType,
+          std::size_t>::value,
+      "TRAITS_INDEX_TYPE_NOT_SIZE_T");
 
   ColMatrix col_matrix = ColMatrix::Random(4, 8);
   RowMatrix row_matrix = RowMatrix::Random(4, 8);

@@ -32,7 +32,7 @@ void BasicVector() {
     ScopedTimer t("build kd_tree ref");
     auto random = GenerateRandomN<PointX>(point_count, area_size);
 
-    // To prevent a copy or ownership, use the pico_tree::StdTraits with an
+    // To prevent a copy, use the pico_tree::StdTraits with an
     // std::reference_wrapper.
     pico_tree::KdTree<
         pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>>
