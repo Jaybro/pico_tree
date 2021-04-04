@@ -2,7 +2,7 @@
 
 #include <Eigen/Core>
 
-#include "core.hpp"
+#include "std_traits.hpp"
 
 namespace pico_tree {
 

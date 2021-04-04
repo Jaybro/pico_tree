@@ -1,8 +1,7 @@
 #pragma once
 
-#include <array>
 #include <iostream>
-#include <pico_tree/core.hpp>
+#include <pico_tree/std_traits.hpp>
 #include <random>
 #include <vector>
 
