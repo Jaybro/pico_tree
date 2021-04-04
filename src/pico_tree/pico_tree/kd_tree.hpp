@@ -77,8 +77,6 @@ class SplitterLongestMedian {
       int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
-    auto const& points = points_;
-
     Scalar max_delta;
     internal::LongestAxisBox(box_min, box_max, split_dim, &max_delta);
 
