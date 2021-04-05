@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <vector>
 
 #include "core.hpp"
@@ -80,7 +81,10 @@ struct StdTraits<std::vector<Point, Allocator>, Index> {
 //! \tparam Index Type used for indexing. Defaults to int.
 template <typename Point, typename Allocator, typename Index>
 struct StdTraits<std::reference_wrapper<std::vector<Point, Allocator>>, Index>
-    : public StdTraits<std::vector<Point, Allocator>, Index> {};
+    : public StdTraits<std::vector<Point, Allocator>, Index> {
+  //! \brief The SpaceType of these traits.
+  using SpaceType = std::reference_wrapper<std::vector<Point, Allocator>>;
+};
 
 //! \brief StdTraits provides an interface for
 //! std::reference_wrapper<std::vector<> const> and points supported by
@@ -91,6 +95,9 @@ struct StdTraits<std::reference_wrapper<std::vector<Point, Allocator>>, Index>
 template <typename Point, typename Allocator, typename Index>
 struct StdTraits<
     std::reference_wrapper<std::vector<Point, Allocator> const>,
-    Index> : public StdTraits<std::vector<Point, Allocator>, Index> {};
+    Index> : public StdTraits<std::vector<Point, Allocator>, Index> {
+  //! \brief The SpaceType of these traits.
+  using SpaceType = std::reference_wrapper<std::vector<Point, Allocator> const>;
+};
 
 }  // namespace pico_tree
