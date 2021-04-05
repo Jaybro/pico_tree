@@ -28,7 +28,8 @@ class Point {
 
 namespace pico_tree {
 
-//! \brief Example point trait implementation for use with pico_tree::StdTraits.
+//! \brief Example point traits implementation for use with
+//! pico_tree::StdTraits.
 //! \details An implementation of StdPointTraits<PointType> *must* provide all
 //! the details of this example implementation.
 template <typename Scalar_, int Dim_>

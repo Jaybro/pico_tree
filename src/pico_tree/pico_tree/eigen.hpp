@@ -43,7 +43,7 @@ struct EigenVectorDim<Derived, true> {
 
 //! \brief EigenPointTraits provides an interface for the different point types
 //! that can be used with EigenTraits.
-//! \details Unlike the specialization of StdPointTraits for Eigen types,
+//! \details Unlike the specialization of StdPointTraits for Eigen types, the
 //! internal implementation supports matrix expressions.
 template <typename Derived>
 struct EigenPointTraits : public EigenVectorDim<Derived, Derived::IsRowMajor> {

@@ -56,7 +56,7 @@ void BasicVector() {
   using PointX = Eigen::Vector2f;
   using Scalar = typename PointX::Scalar;
 
-  // Including <pyco_tree/eigen.hpp> provices support for Eigen types with
+  // Including <pico_tree/eigen.hpp> provices support for Eigen types with
   // std::vector.
   pico_tree::KdTree<pico_tree::StdTraits<
       std::vector<PointX, Eigen::aligned_allocator<PointX>>>>
@@ -73,19 +73,18 @@ void BasicVector() {
 
 // Creates a KdTree from an Eigen::Matrix<> and searches for nearest neighbors.
 void BasicMatrix() {
-  using PointX = Eigen::Vector3f;
   using Scalar = typename Eigen::Matrix3Xf::Scalar;
   constexpr int Dim = Eigen::Matrix3Xf::RowsAtCompileTime;
 
   // The KdTree takes the matrix by value. Prevent a copy by:
   // * Using a move.
-  // * Creation an Eigen::Map<>.
+  // * Creating an Eigen::Map<>.
   // TODO Could add an std::reference_wrapper<> version for Eigen.
   pico_tree::KdTree<pico_tree::EigenTraits<Eigen::Matrix3Xf>> tree(
       Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0),
       kMaxLeafCount);
 
-  PointX p = PointX::Random() * kArea / Scalar(2.0);
+  Eigen::Vector3f p = Eigen::Vector3f::Random() * kArea / Scalar(2.0);
 
   pico_tree::Neighbor<Index, Scalar> nn;
   ScopedTimer t("pico_tree eigen matrix", kRunCount);
