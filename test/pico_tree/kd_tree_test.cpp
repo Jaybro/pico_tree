@@ -27,6 +27,7 @@ TEST(KdTreeTest, SplitterMedian) {
 
   std::vector<PointX> ptsx4{
       {0.0f, 4.0f}, {0.0f, 2.0f}, {0.0f, 3.0f}, {0.0f, 1.0f}};
+  SpaceX spcx4(ptsx4);
   std::vector<Index> idx4{0, 1, 2, 3};
 
   pico_tree::internal::Sequence<Scalar, 2> min;
@@ -39,7 +40,7 @@ TEST(KdTreeTest, SplitterMedian) {
   Index split_idx;
   Scalar split_val;
 
-  SplitterX splitter4(ptsx4, &idx4);
+  SplitterX splitter4(spcx4, &idx4);
   splitter4(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 0);
@@ -54,9 +55,10 @@ TEST(KdTreeTest, SplitterMedian) {
       {0.0f, 3.0f},
       {0.0f, 1.0f},
       {1.0f, 7.0f}};
+  SpaceX spcx7(ptsx7);
   std::vector<Index> idx7{0, 1, 2, 3, 4, 5, 6};
 
-  SplitterX splitter7(ptsx7, &idx7);
+  SplitterX splitter7(spcx7, &idx7);
   splitter7(0, 0, 7, min, max, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 0);
@@ -79,9 +81,10 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   using SplitterX = pico_tree::SplitterSlidingMidpoint<Traits<SpaceX>>;
 
   std::vector<PointX> ptsx4{{0.0, 2.0}, {0.0, 1.0}, {0.0, 4.0}, {0.0, 3.0}};
+  SpaceX spcx4(ptsx4);
   std::vector<Index> idx4{0, 1, 2, 3};
 
-  SplitterX splitter(ptsx4, &idx4);
+  SplitterX splitter(spcx4, &idx4);
 
   pico_tree::internal::Sequence<Scalar, 2> min;
   pico_tree::internal::Sequence<Scalar, 2> max;
