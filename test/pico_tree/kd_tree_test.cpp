@@ -1,27 +1,34 @@
 #include <gtest/gtest.h>
 
-#include <pico_toolshed/pico_adaptor.hpp>
+#include <pico_toolshed/point.hpp>
 #include <pico_tree/kd_tree.hpp>
 
 #include "common.hpp"
 
-template <typename PicoAdaptor>
-using KdTree = pico_tree::KdTree<
-    typename PicoAdaptor::IndexType,
-    typename PicoAdaptor::ScalarType,
-    PicoAdaptor::Dim,
-    PicoAdaptor>;
+namespace {
+
+template <typename PointX>
+using Space = std::reference_wrapper<std::vector<PointX>>;
+
+template <typename SpaceX>
+using Traits = pico_tree::StdTraits<SpaceX>;
+
+template <typename PointX>
+using KdTree = pico_tree::KdTree<Traits<Space<PointX>>>;
+
+}  // namespace
 
 TEST(KdTreeTest, SplitterMedian) {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::ScalarType;
-  using AdaptorX = PicoAdaptor<Index, PointX>;
-  constexpr auto Dim = PointX::Dim;
-  std::vector<PointX> pts4{
+  using SpaceX = Space<PointX>;
+  using SplitterX = pico_tree::SplitterLongestMedian<Traits<SpaceX>>;
+
+  std::vector<PointX> ptsx4{
       {0.0f, 4.0f}, {0.0f, 2.0f}, {0.0f, 3.0f}, {0.0f, 1.0f}};
+  SpaceX spcx4(ptsx4);
   std::vector<Index> idx4{0, 1, 2, 3};
-  AdaptorX ptsx4(pts4);
 
   pico_tree::internal::Sequence<Scalar, 2> min;
   pico_tree::internal::Sequence<Scalar, 2> max;
@@ -33,15 +40,14 @@ TEST(KdTreeTest, SplitterMedian) {
   Index split_idx;
   Scalar split_val;
 
-  pico_tree::SplitterLongestMedian<Index, Scalar, Dim, AdaptorX> splitter4(
-      ptsx4, &idx4);
+  SplitterX splitter4(spcx4, &idx4);
   splitter4(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 0);
   EXPECT_EQ(split_idx, 2);
-  EXPECT_EQ(split_val, pts4[2](0));
+  EXPECT_EQ(split_val, ptsx4[2](0));
 
-  std::vector<PointX> pts7{
+  std::vector<PointX> ptsx7{
       {3.0f, 6.0f},
       {0.0f, 4.0f},
       {0.0f, 2.0f},
@@ -49,37 +55,36 @@ TEST(KdTreeTest, SplitterMedian) {
       {0.0f, 3.0f},
       {0.0f, 1.0f},
       {1.0f, 7.0f}};
+  SpaceX spcx7(ptsx7);
   std::vector<Index> idx7{0, 1, 2, 3, 4, 5, 6};
-  AdaptorX ptsx7(pts7);
 
-  pico_tree::SplitterLongestMedian<Index, Scalar, Dim, AdaptorX> splitter7(
-      ptsx7, &idx7);
+  SplitterX splitter7(spcx7, &idx7);
   splitter7(0, 0, 7, min, max, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 0);
   EXPECT_EQ(split_idx, 3);
-  EXPECT_EQ(split_val, pts7[idx7[3]](0));
+  EXPECT_EQ(split_val, ptsx7[idx7[3]](0));
 
   max[1] = 10.0f;
   splitter7(1, 3, 4, min, max, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 5);
-  EXPECT_EQ(split_val, pts7[idx7[5]](1));
+  EXPECT_EQ(split_val, ptsx7[idx7[5]](1));
 }
 
 TEST(KdTreeTest, SplitterSlidingMidpoint) {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::ScalarType;
-  using AdaptorX = PicoAdaptor<Index, PointX>;
-  constexpr auto Dim = PointX::Dim;
-  std::vector<PointX> pts4{{0.0, 2.0}, {0.0, 1.0}, {0.0, 4.0}, {0.0, 3.0}};
-  std::vector<Index> idx4{0, 1, 2, 3};
-  AdaptorX ptsx4(pts4);
+  using SpaceX = Space<PointX>;
+  using SplitterX = pico_tree::SplitterSlidingMidpoint<Traits<SpaceX>>;
 
-  pico_tree::SplitterSlidingMidpoint<Index, Scalar, Dim, AdaptorX> splitter(
-      ptsx4, &idx4);
+  std::vector<PointX> ptsx4{{0.0, 2.0}, {0.0, 1.0}, {0.0, 4.0}, {0.0, 3.0}};
+  SpaceX spcx4(ptsx4);
+  std::vector<Index> idx4{0, 1, 2, 3};
+
+  SplitterX splitter(spcx4, &idx4);
 
   pico_tree::internal::Sequence<Scalar, 2> min;
   pico_tree::internal::Sequence<Scalar, 2> max;
@@ -98,7 +103,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 1);
-  EXPECT_EQ(split_val, pts4[0](1));
+  EXPECT_EQ(split_val, ptsx4[0](1));
   EXPECT_EQ(idx4[0], 1);
   EXPECT_EQ(idx4[1], 0);
 
@@ -110,7 +115,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 3);
-  EXPECT_EQ(split_val, pts4[2](1));
+  EXPECT_EQ(split_val, ptsx4[2](1));
   EXPECT_EQ(idx4[3], 2);
 
   // Clean middle split. A general case where the split value falls somewhere
@@ -129,7 +134,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   EXPECT_EQ(split_dim, 0);
   EXPECT_EQ(split_idx, 3);
-  EXPECT_EQ(split_val, pts4[3](0));
+  EXPECT_EQ(split_val, ptsx4[3](0));
 }
 
 // The anonymous namespace gives the function a unique "name" when there is
@@ -142,11 +147,8 @@ void QueryRange(
     typename PointX::ScalarType const area_size,
     typename PointX::ScalarType const min_v,
     typename PointX::ScalarType const max_v) {
-  using Index = int;
-  using AdaptorX = PicoAdaptor<Index, PointX>;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  AdaptorX adaptor(random);
-  KdTree<AdaptorX> tree(adaptor, 8);
+  KdTree<PointX> tree(random, 8);
 
   TestBox(tree, min_v, max_v);
 }
@@ -156,11 +158,8 @@ void QueryRadius(
     int const point_count,
     typename PointX::ScalarType const area_size,
     typename PointX::ScalarType const radius) {
-  using Index = int;
-  using AdaptorX = PicoAdaptor<Index, PointX>;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  AdaptorX adaptor(random);
-  KdTree<AdaptorX> tree(adaptor, 8);
+  KdTree<PointX> tree(random, 8);
 
   TestRadius(tree, radius);
 }
@@ -170,16 +169,13 @@ void QueryKnn(
     int const point_count,
     typename PointX::ScalarType const area_size,
     int const k) {
-  using Index = int;
-  using AdaptorX = PicoAdaptor<Index, PointX>;
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  AdaptorX adaptor(random);
-  KdTree<AdaptorX> tree(adaptor, 8);
+  KdTree<PointX> tree(random, 8);
 
   // This line compile time "tests" the move capability of the tree.
   auto tree2 = std::move(tree);
 
-  TestKnn(tree2, static_cast<Index>(k));
+  TestKnn(tree2, static_cast<typename KdTree<PointX>::IndexType>(k));
 }
 
 }  // namespace
@@ -203,24 +199,21 @@ TEST(KdTreeTest, QueryKnn10) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 10); }
 TEST(KdTreeTest, WriteRead) {
   using Index = int;
   using Scalar = typename Point2f::ScalarType;
-  int point_count = 100;
+  Index point_count = 100;
   Scalar area_size = 2;
   std::vector<Point2f> random =
       GenerateRandomN<Point2f>(point_count, area_size);
-  using Adaptor = PicoAdaptor<Index, Point2f>;
-
-  Adaptor points(random);
 
   std::string filename = "tree.bin";
 
   {
     // The points are not stored.
-    KdTree<Adaptor> tree(points, 1);
-    KdTree<Adaptor>::Save(tree, filename);
+    KdTree<Point2f> tree(random, 1);
+    KdTree<Point2f>::Save(tree, filename);
   }
   {
     // Points are required to load the tree.
-    KdTree<Adaptor> tree = KdTree<Adaptor>::Load(points, filename);
+    KdTree<Point2f> tree = KdTree<Point2f>::Load(random, filename);
     TestKnn(tree, Index(20));
   }
 

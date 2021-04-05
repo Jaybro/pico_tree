@@ -2,137 +2,254 @@
 
 #include <Eigen/Core>
 
+#include "std_traits.hpp"
+
 namespace pico_tree {
 
 namespace internal {
 
-//! \private
-template <typename Index, typename Matrix, bool RowMajor>
-class EigenAdaptorBase;
+//! \brief A trait that determines if Derived inherits from Eigen::MatrixBase<>.
+template <typename Derived>
+struct is_matrix_base
+    : public std::is_base_of<
+          Eigen::MatrixBase<typename std::decay<Derived>::type>,
+          typename std::decay<Derived>::type> {};
 
-//! \brief ColMajor EigenAdaptor.
-template <typename Index, typename Matrix>
-class EigenAdaptorBase<Index, Matrix, false> {
- public:
-  //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
-  static constexpr int Dim = Matrix::RowsAtCompileTime;
-  //! \brief RowMajor flag that is true if the data is row-major.
-  static constexpr bool RowMajor = false;
+//! \brief Dimension trait for Eigen vectors.
+template <typename Derived, bool IsRowMajor>
+struct EigenVectorDim;
 
-  //! \brief Constructs an EigenAdaptorBase from \p matrix. The matrix must be
-  //! of dynamic size.
-  //! \details To prevent an unwanted (deep) copy:
-  //! \li Move the matrix inside the adaptor.
-  //! \li Copy or move an Eigen::Map. An Eigen::Map can be used as a proxy for a
-  //! matrix.
-  inline EigenAdaptorBase(Matrix matrix) : matrix_(std::move(matrix)) {}
-
-  //! \brief Returns the point at index \p idx.
-  inline Eigen::Block<Matrix const, Dim, 1, !RowMajor> const operator()(
-      Index const idx) const {
-    return matrix_.col(idx);
-  }
-
-  //! \brief Returns the dimension of the space in which the points reside.
-  //! I.e., the amount of coordinates each point has.
-  inline int sdim() const { return static_cast<int>(matrix_.rows()); }
-
-  //! \brief Returns the number of points.
-  inline Index npts() const { return static_cast<Index>(matrix_.cols()); }
-
- protected:
-  //! \private
-  Matrix matrix_;
+//! \brief Provides compile time dimension for ColMajor Eigen types.
+template <typename Derived>
+struct EigenVectorDim<Derived, false> {
+  static_assert(
+      is_matrix_base<Derived>::value, "DERIVED_TYPE_IS_NOT_AN_EIGEN_MATRIX");
+  static_assert(
+      Derived::ColsAtCompileTime == 1, "DERIVED_TYPE_IS_NOT_A_VECTOR");
+  //! \brief Compile time dimension of Derived.
+  static int constexpr Dim = Derived::RowsAtCompileTime;
 };
 
-//! \brief RowMajor EigenAdaptor.
-template <typename Index, typename Matrix>
-class EigenAdaptorBase<Index, Matrix, true> {
- public:
-  //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
-  static constexpr int Dim = Matrix::ColsAtCompileTime;
-  //! \brief RowMajor flag that is true if the data is row-major.
-  static constexpr bool RowMajor = true;
+//! \brief Provides compile time dimension for RowMajor Eigen types.
+template <typename Derived>
+struct EigenVectorDim<Derived, true> {
+  static_assert(
+      is_matrix_base<Derived>::value, "DERIVED_TYPE_IS_NOT_AN_EIGEN_MATRIX");
+  static_assert(
+      Derived::RowsAtCompileTime == 1, "DERIVED_TYPE_IS_NOT_A_VECTOR");
+  //! \brief Compile time dimension of Derived.
+  static int constexpr Dim = Derived::ColsAtCompileTime;
+};
 
-  //! \brief Constructs an EigenAdaptorBase from \p matrix. The matrix must be
-  //! of dynamic size.
-  //! \details To prevent an unwanted (deep) copy:
-  //! \li Move the matrix inside the adaptor.
-  //! \li Copy or move an Eigen::Map. An Eigen::Map can be used as a proxy for a
-  //! matrix.
-  inline EigenAdaptorBase(Matrix matrix) : matrix_(std::move(matrix)) {}
+//! \brief EigenPointTraits provides an interface for the different point types
+//! that can be used with EigenTraits.
+//! \details Unlike the specialization of StdPointTraits for Eigen types,
+//! internal implementation supports matrix expressions.
+template <typename Derived>
+struct EigenPointTraits : public EigenVectorDim<Derived, Derived::IsRowMajor> {
+  //! \brief The scalar type of point coordinates.
+  using ScalarType = typename std::decay<typename Derived::Scalar>::type;
 
-  //! \brief Returns the point at index \p idx.
-  inline Eigen::Block<Matrix const, 1, Dim, RowMajor> const operator()(
-      Index const idx) const {
-    return matrix_.row(idx);
+  //! \brief Returns a pointer to the coordinates of \p point.
+  inline static typename Derived::Scalar const* Coords(
+      Eigen::MatrixBase<Derived> const& point) {
+    return point.derived().data();
   }
+
+  //! \brief Returns the spatial dimension of \p point.
+  inline static int Sdim(Eigen::MatrixBase<Derived> const& point) {
+    return static_cast<int>(point.size());
+  }
+};
+
+//! \brief Provides the Point interface for the different implementations of
+//! EigenTraitsImpl.
+template <typename Derived>
+struct EigenPointBase {
+  //! \brief The scalar type of point coordinates.
+  using ScalarType = typename std::decay<typename Derived::Scalar>::type;
+
+  //! \brief Returns the spatial dimension of \p point.
+  template <typename OtherDerived>
+  inline static int PointSdim(Eigen::MatrixBase<OtherDerived> const& point) {
+    static_assert(
+        std::is_same<
+            typename std::decay<typename Derived::Scalar>::type,
+            typename std::decay<typename OtherDerived::Scalar>::type>::value,
+        "INCOMPATIBLE_SCALAR_TYPES");
+    return EigenPointTraits<OtherDerived>::Sdim(point);
+  }
+
+  //! \brief Returns a pointer to the coordinates of \p point.
+  template <typename OtherDerived>
+  inline static ScalarType const* PointCoords(
+      Eigen::MatrixBase<OtherDerived> const& point) {
+    static_assert(
+        std::is_same<
+            typename std::decay<typename Derived::Scalar>::type,
+            typename std::decay<typename OtherDerived::Scalar>::type>::value,
+        "INCOMPATIBLE_SCALAR_TYPES");
+    return EigenPointTraits<OtherDerived>::Coords(point);
+  }
+};
+
+//! \brief Space and Point traits for Eigen types.
+template <typename Derived, typename Index, bool RowMajor>
+struct EigenTraitsImpl;
+
+//! \brief Space and Point traits for ColMajor Eigen types.
+template <typename Derived, typename Index>
+struct EigenTraitsImpl<Derived, Index, false> : public EigenPointBase<Derived> {
+  //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
+  static constexpr int Dim = Derived::RowsAtCompileTime;
+  //! \brief The point type used by Derived.
+  using PointType = Eigen::Block<Derived const, Dim, 1, true>;
+  //! \brief The index type of point coordinates.
+  using IndexType = Index;
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline int sdim() const { return static_cast<int>(matrix_.cols()); }
+  inline static int SpaceSdim(Eigen::MatrixBase<Derived> const& matrix) {
+    return static_cast<int>(matrix.rows());
+  }
 
   //! \brief Returns the number of points.
-  inline Index npts() const { return static_cast<Index>(matrix_.rows()); }
+  inline static IndexType SpaceNpts(Eigen::MatrixBase<Derived> const& matrix) {
+    return static_cast<IndexType>(matrix.cols());
+  }
 
- protected:
-  //! \private
-  Matrix matrix_;
+  //! \brief Returns the point at index \p idx.
+  inline static PointType PointAt(
+      Eigen::MatrixBase<Derived> const& matrix, IndexType const idx) {
+    return matrix.col(idx);
+  }
+};
+
+//! \brief Space and Point traits for RowMajor Eigen types.
+template <typename Derived, typename Index>
+struct EigenTraitsImpl<Derived, Index, true> : public EigenPointBase<Derived> {
+  //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
+  static constexpr int Dim = Derived::ColsAtCompileTime;
+  //! \brief The point type used by Derived.
+  using PointType = Eigen::Block<Derived const, 1, Dim, true>;
+  //! \brief The index type of point coordinates.
+  using IndexType = Index;
+
+  //! \brief Returns the dimension of the space in which the points reside.
+  //! I.e., the amount of coordinates each point has.
+  inline static int SpaceSdim(Eigen::MatrixBase<Derived> const& matrix) {
+    return static_cast<int>(matrix.cols());
+  }
+
+  //! \brief Returns the number of points.
+  inline static IndexType SpaceNpts(Eigen::MatrixBase<Derived> const& matrix) {
+    return static_cast<IndexType>(matrix.rows());
+  }
+
+  //! \brief Returns the point at index \p idx.
+  inline static PointType PointAt(
+      Eigen::MatrixBase<Derived> const& matrix, IndexType const idx) {
+    return matrix.row(idx);
+  }
+};
+
+//! \private This struct simply reduces some of the template argument overhead.
+template <typename Derived, typename Index>
+struct EigenTraitsBase
+    : public EigenTraitsImpl<Derived, Index, Derived::IsRowMajor> {
+  using SpaceType = Derived;
 };
 
 }  // namespace internal
 
-//! \brief The EigenAdaptor contains or wraps Eigen matrices so they can be used
-//! with any of the pico trees. It supports dynamic matrices and maps of dynamic
-//! matrices. It does not support fixed size matrices or maps of those.
-//! \details Fixed size matrices are mostly useful when they are small. See
-//! section "Fixed vs. Dynamic size" of the following link:
-//! https://eigen.tuxfamily.org/dox/group__TutorialMatrixClass.html . Special
-//! care needs to be taken to work with fixed size matrices as well, adding to
-//! the complexity of this class with little in return. This results in the
-//! choice to not support them through this adaptor.
-//! <p/>
-//! Special care:
-//! * Aligned members of fixed size cannot be copied or moved (a move is a
-//! copy). https://eigen.tuxfamily.org/dox/group__TopicPassingByValue.html
-//! * They may need to be aligned in memory. As members are aligned with respect
-//! to the containing class the EigenAdaptor would need to be aligned as well.
-//! https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
-template <typename Index, typename Matrix>
-class EigenAdaptor
-    : public internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor> {
- public:
-  static_assert(
-      Matrix::RowsAtCompileTime == Eigen::Dynamic ||
-          Matrix::ColsAtCompileTime == Eigen::Dynamic,
-      "EIGEN_ADAPTOR_DOES_NOT_SUPPORT_FIXED_SIZE_MATRICES");
+//! \brief EigenTraits provides an interface for spaces and points when working
+//! with Eigen types.
+//! \tparam Derived An Eigen::Matrix<> or Eigen::Map<Eigen::Matrix<>>.
+//! \tparam Index Type used for indexing. Defaults to int.
+template <typename Derived, typename Index = int>
+struct EigenTraits;
 
-  //! \private
-  using internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>::
-      EigenAdaptorBase;
-  //! \private
-  using internal::EigenAdaptorBase<Index, Matrix, Matrix::IsRowMajor>::matrix_;
+//! \brief EigenTraits provides an interface for Eigen::Matrix<>.
+//! \tparam Index Type used for indexing. Defaults to int.
+template <
+    typename Scalar_,
+    int Rows_,
+    int Cols_,
+    int Options_,
+    int MaxRows_,
+    int MaxCols_,
+    typename Index>
+struct EigenTraits<
+    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+    Index>
+    : internal::EigenTraitsBase<
+          Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+          Index> {};
 
-  //! \brief Index type.
-  using IndexType = Index;
-  //! \brief Scalar type.
-  using ScalarType = typename Matrix::Scalar;
+//! \brief EigenTraits provides an interface for Eigen::Map<Eigen::Matrix<>>.
+//! \tparam Index Type used for indexing. Defaults to int.
+template <
+    typename Scalar_,
+    int Rows_,
+    int Cols_,
+    int Options_,
+    int MaxRows_,
+    int MaxCols_,
+    int MapOptions_,
+    typename StrideType_,
+    typename Index>
+struct EigenTraits<
+    Eigen::Map<
+        Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+        MapOptions_,
+        StrideType_>,
+    Index>
+    : internal::EigenTraitsBase<
+          Eigen::Map<
+              Eigen::
+                  Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+              MapOptions_,
+              StrideType_>,
+          Index> {};
 
-  //! \brief Returns a reference to the Eigen matrix.
-  inline Matrix& matrix() { return matrix_; }
-
-  //! \brief Returns a const reference to the Eigen matrix.
-  inline Matrix const& matrix() const { return matrix_; }
+//! \brief StdPointTraits provides an interface for Eigen::Matrix<>.
+template <
+    typename Scalar_,
+    int Rows_,
+    int Cols_,
+    int Options_,
+    int MaxRows_,
+    int MaxCols_>
+struct StdPointTraits<
+    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>>
+    : internal::EigenPointTraits<
+          Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> {
 };
+
+//! \brief StdPointTraits provides an interface for Eigen::Map<Eigen::Matrix<>>.
+template <
+    typename Scalar_,
+    int Rows_,
+    int Cols_,
+    int Options_,
+    int MaxRows_,
+    int MaxCols_,
+    int MapOptions_,
+    typename StrideType_>
+struct StdPointTraits<Eigen::Map<
+    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+    MapOptions_,
+    StrideType_>>
+    : internal::EigenPointTraits<Eigen::Map<
+          Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+          MapOptions_,
+          StrideType_>> {};
 
 //! \brief EigenL1 metric for measuring the Taxicab or Manhattan distance
 //! between points.
 template <typename Scalar>
 class EigenL1 {
  public:
-  //! \brief Creates an EigenL1.
-  inline explicit EigenL1(int const) {}
-
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
   inline Scalar operator()(
@@ -154,9 +271,6 @@ class EigenL1 {
 template <typename Scalar>
 class EigenL2 {
  public:
-  //! \brief Creates an L2Squared given a spatial dimension.
-  inline explicit EigenL2(int const) {}
-
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
   inline Scalar operator()(
@@ -179,9 +293,6 @@ class EigenL2 {
 template <typename Scalar>
 class EigenL2Squared {
  public:
-  //! \brief Creates an EigenL2Squared.
-  inline explicit EigenL2Squared(int const) {}
-
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
   inline Scalar operator()(

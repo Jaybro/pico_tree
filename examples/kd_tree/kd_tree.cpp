@@ -1,34 +1,45 @@
-#include <pico_toolshed/pico_adaptor.hpp>
+#include <pico_toolshed/point.hpp>
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/kd_tree.hpp>
 
-// Compile time or run time known dimensions.
-void Build() {
+// PicoTree provides default support for std::vector<PointType> as long as a
+// traits class for PointType is implemented. See include
+// <pico_toolshed/point.hpp> for an example of such traits.
+//
+// The KdTree can either fully own the vector or it can be taken by reference.
+void BasicVector() {
   using PointX = Point2f;
   using Index = int;
   using Scalar = typename PointX::ScalarType;
-  using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 
   Index max_leaf_size = 12;
   Index point_count = 1024 * 1024;
   Scalar area_size = 1000;
-  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  // Because the adapter only contains a reference to the vector, we don't care
-  // that it gets copied twice by both trees below.
-  PicoAdaptorX adaptor(random);
 
   {
-    ScopedTimer t("build kd_tree ct");
-    constexpr int Dim = PointX::Dim;
-    pico_tree::KdTree<Index, Scalar, Dim, PicoAdaptorX> tree(
-        adaptor, max_leaf_size);
+    ScopedTimer t("build kd_tree val");
+
+    // This version of pico_tree::StdTraits can be used to either move or copy a
+    // vector of points into the tree. In this example it's moved.
+    pico_tree::KdTree<pico_tree::StdTraits<std::vector<PointX>>> tree(
+        GenerateRandomN<PointX>(point_count, area_size), max_leaf_size);
+
+    pico_tree::Neighbor<Index, Scalar> nn;
+    tree.SearchNn(tree.points()[0], &nn);
   }
 
   {
-    ScopedTimer t("build kd_tree rt");
-    constexpr int Dim = pico_tree::kDynamicDim;
-    pico_tree::KdTree<Index, Scalar, Dim, PicoAdaptorX> tree(
-        adaptor, max_leaf_size);
+    ScopedTimer t("build kd_tree ref");
+    auto random = GenerateRandomN<PointX>(point_count, area_size);
+
+    // To prevent a copy, use the pico_tree::StdTraits with an
+    // std::reference_wrapper.
+    pico_tree::KdTree<
+        pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>>
+        tree(random, max_leaf_size);
+
+    pico_tree::Neighbor<Index, Scalar> nn;
+    tree.SearchNn(random[0], &nn);
   }
 }
 
@@ -79,17 +90,14 @@ void Search() {
   using PointX = Point3f;
   using Index = int;
   using Scalar = typename PointX::ScalarType;
-  constexpr int Dim = PointX::Dim;
-  using PicoAdaptorX = PicoAdaptor<Index, PointX>;
 
   Index run_count = 1024 * 1024;
   Index max_leaf_size = 12;
   Index point_count = 1024 * 1024;
   Scalar area_size = 1000;
-  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  // The tree can fully own the adaptor!
-  pico_tree::KdTree<Index, Scalar, Dim, PicoAdaptorX> tree(
-      PicoAdaptorX(random), max_leaf_size);
+
+  pico_tree::KdTree<pico_tree::StdTraits<std::vector<PointX>>> tree(
+      GenerateRandomN<PointX>(point_count, area_size), max_leaf_size);
 
   Scalar min_v = 25.1f;
   Scalar max_v = 37.9f;
@@ -116,6 +124,7 @@ void Search() {
     ScopedTimer t("kd_tree nn, radius and box", run_count);
     for (Index i = 0; i < run_count; ++i) {
       tree.SearchNn(q, &nn);
+      tree.SearchKnn(q, 1, &knn);
       tree.SearchRadius(q, search_radius_metric, &knn, false);
       tree.SearchBox(min, max, &idxs);
     }
@@ -146,7 +155,7 @@ void Search() {
 }
 
 int main() {
-  Build();
+  BasicVector();
   Search();
   return 0;
 }

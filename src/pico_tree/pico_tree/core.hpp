@@ -6,6 +6,7 @@
 //! \brief Contains various common utilities.
 
 #include <cmath>
+#include <vector>
 
 namespace pico_tree {
 
@@ -54,9 +55,9 @@ inline constexpr bool operator<(
 
 namespace internal {
 
-//! \brief Inserts \p item in O(n) time at the index for which \p comp
-//! first holds true. The sequence must be sorted and remains sorted after
-//! insertion. The last item in the sequence is "pushed out".
+//! \brief Inserts \p item in O(n) time at the index for which \p comp first
+//! holds true. The sequence must be sorted and remains sorted after insertion.
+//! The last item in the sequence is "pushed out".
 //! \details The contents of the indices at which \p comp holds true are moved
 //! to the next index. Thus, starting from the end of the sequence, each item[i]
 //! gets replaced by item[i - 1] until \p comp results in false. The worst case

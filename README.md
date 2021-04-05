@@ -34,10 +34,12 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 The examples show how PicoTree can be used:
 
-* How to create the expected [point](./examples/pico_toolshed/pico_toolshed/point.hpp) and [point set](./examples/pico_toolshed/pico_toolshed/pico_adaptor.hpp) interfaces.
-* Searching using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
+* Working with PicoTree requires implementing a traits class. Some default and example traits are available that show how to write custom ones:
+  * `pico_tree::StdTraits<>` provides the [full](./src/pico_tree/pico_tree/std_traits.hpp) traits interface to supports any `std::vector<Point>`.
+  * [Simple](./examples/pico_toolshed/pico_toolshed/point.hpp) point traits to be used with `pico_tree::StdTraits<>`.
+* Using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
 * Support for [Eigen](./examples/eigen/eigen.cpp) data types.
-* Using the [KdTree with Python](./examples/python/kd_tree.py).
+* How to use the [KdTree with Python](./examples/python/kd_tree.py).
 
 # Requirements
 
@@ -88,16 +90,16 @@ add_executable(myexe main.cpp)
 target_link_libraries(myexe PUBLIC PicoTree::PicoTree)
 ```
 
-Install with pip3:
+Install with pip:
 
 ```console
-$ pip3 install ./pico_tree
+$ pip install ./pico_tree
 ```
 
 Set a generator for use with MinGW:
 
 ```console
-$ pip3 install ./pico_tree --install-option="-GMinGW Makefiles"
+$ pip install ./pico_tree --install-option="-GMinGW Makefiles"
 ```
 
 # References

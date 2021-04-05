@@ -4,17 +4,68 @@
 
 namespace pico_tree {
 
+namespace internal {
+
+//! \brief Calculates the absolute difference between two point coordinates.
+struct AbsDiff {
+  //! \private
+  template <typename Scalar>
+  inline static Scalar Op(Scalar x, Scalar y) {
+    return std::abs(x - y);
+  }
+};
+
+//! \brief Calculates the squared difference between two point coordinates.
+struct SqrdDiff {
+  //! \private
+  template <typename Scalar>
+  inline static Scalar Op(Scalar x, Scalar y) {
+    Scalar const d = x - y;
+    return d * d;
+  }
+};
+
+//! \brief Calculates the difference between all coordinats of two points given
+//! a binary operator.
+//! \tparam Traits Interface for intput points.
+//! \tparam BinOp Operator used to calculate coordinate differences.
+template <typename Traits, typename BinOp>
+struct Sum {
+  //! \private
+  using ScalarType = typename Traits::ScalarType;
+
+  //! \private
+  template <typename P0, typename P1>
+  inline static ScalarType Op(P0 const& p0, P1 const& p1) {
+    assert(Traits::PointSdim(p0) == Traits::PointSdim(p1));
+
+    ScalarType const* c0 = Traits::PointCoords(p0);
+    ScalarType const* c1 = Traits::PointCoords(p1);
+    ScalarType d{};
+
+    for (int i = 0;
+         i < internal::Dimension<Traits::Dim>::Dim(Traits::PointSdim(p0));
+         ++i) {
+      d += BinOp::Op(c0[i], c1[i]);
+    }
+
+    return d;
+  }
+};
+
+}  // namespace internal
+
 //! \brief L1 metric for measuring the Taxicab or Manhattan distance between
 //! points.
 //! \details For more details:
 //! * https://en.wikipedia.org/wiki/Metric_space
 //! * https://en.wikipedia.org/wiki/Lp_space
-template <typename Scalar, int Dim>
+template <typename Traits>
 class L1 {
- public:
-  //! \brief Creates an L1 metric given a spatial dimension.
-  inline explicit L1(int const dim) : dim_{dim} {}
+ private:
+  using Scalar = typename Traits::ScalarType;
 
+ public:
   //! \brief Calculates the distance between points \p p0 and \p p1.
   //! \tparam P0 Point type.
   //! \tparam P1 Point type.
@@ -27,13 +78,7 @@ class L1 {
       !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
       Scalar>::type
   operator()(P0 const& p0, P1 const& p1) const {
-    Scalar d{};
-
-    for (int i = 0; i < internal::Dimension<Dim>::Dim(dim_); ++i) {
-      d += std::abs(p0(i) - p1(i));
-    }
-
-    return d;
+    return internal::Sum<Traits, internal::AbsDiff>::Op(p0, p1);
   }
 
   //! \brief Calculates the distance between two coordinates.
@@ -43,20 +88,17 @@ class L1 {
 
   //! \brief Returns the absolute value of \p x.
   inline Scalar operator()(Scalar const x) const { return std::abs(x); }
-
- private:
-  int const dim_;
 };
 
 //! \brief L2 metric for measuring Euclidean distances between points.
 //! \details https://en.wikipedia.org/wiki/Euclidean_distance
 //! \see L1
-template <typename Scalar, int Dim>
+template <typename Traits>
 class L2 {
- public:
-  //! \brief Creates an L2Squared given a spatial dimension.
-  inline explicit L2(int const dim) : dim_{dim} {}
+ private:
+  using Scalar = typename Traits::ScalarType;
 
+ public:
   //! \brief Calculates the distance between points \p p0 and \p p1.
   //! \tparam P0 Point type.
   //! \tparam P1 Point type.
@@ -69,14 +111,7 @@ class L2 {
       !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
       Scalar>::type
   operator()(P0 const& p0, P1 const& p1) const {
-    Scalar d{};
-
-    for (int i = 0; i < internal::Dimension<Dim>::Dim(dim_); ++i) {
-      Scalar const v = p0(i) - p1(i);
-      d += v * v;
-    }
-
-    return std::sqrt(d);
+    return std::sqrt(internal::Sum<Traits, internal::SqrdDiff>::Op(p0, p1));
   }
 
   //! \brief Calculates the distance between two coordinates.
@@ -86,21 +121,18 @@ class L2 {
 
   //! \brief Returns the absolute value of \p x.
   inline Scalar operator()(Scalar const x) const { return std::abs(x); }
-
- private:
-  int const dim_;
 };
 
 //! \brief The L2Squared semimetric measures squared Euclidean distances between
 //! points. It does not satisfy the triangle inequality.
 //! \see L1
 //! \see L2
-template <typename Scalar, int Dim>
+template <typename Traits>
 class L2Squared {
- public:
-  //! \brief Creates an L2Squared given a spatial dimension.
-  inline explicit L2Squared(int const dim) : dim_{dim} {}
+ private:
+  using Scalar = typename Traits::ScalarType;
 
+ public:
   //! \brief Calculates the distance between points \p p0 and \p p1.
   //! \tparam P0 Point type.
   //! \tparam P1 Point type.
@@ -113,14 +145,7 @@ class L2Squared {
       !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
       Scalar>::type
   operator()(P0 const& p0, P1 const& p1) const {
-    Scalar d{};
-
-    for (int i = 0; i < internal::Dimension<Dim>::Dim(dim_); ++i) {
-      Scalar const v = p0(i) - p1(i);
-      d += v * v;
-    }
-
-    return d;
+    return internal::Sum<Traits, internal::SqrdDiff>::Op(p0, p1);
   }
 
   //! \brief Calculates the distance between two coordinates.
@@ -131,9 +156,6 @@ class L2Squared {
 
   //! \brief Returns the squared value of \p x.
   inline Scalar operator()(Scalar const x) const { return x * x; }
-
- private:
-  int const dim_;
 };
 
 }  // namespace pico_tree

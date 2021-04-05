@@ -21,13 +21,13 @@ struct StringTraits<double> {
   static std::string String() { return "float64"; }
 };
 
-template <typename Scalar, int Dim>
-struct StringTraits<pico_tree::L1<Scalar, Dim>> {
+template <typename Traits>
+struct StringTraits<pico_tree::L1<Traits>> {
   static std::string String() { return "L1"; }
 };
 
-template <typename Scalar, int Dim>
-struct StringTraits<pico_tree::L2Squared<Scalar, Dim>> {
+template <typename Traits>
+struct StringTraits<pico_tree::L2Squared<Traits>> {
   static std::string String() { return "L2Squared"; }
 };
 
