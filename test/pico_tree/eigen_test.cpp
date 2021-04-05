@@ -56,53 +56,46 @@ TEST(EigenTest, EigenL2Squared) {
   EXPECT_FLOAT_EQ(metric(-3.1f), 9.61f);
 }
 
+template <int Dim, typename Matrix>
+void EigenCheckTypes(
+    Matrix const& matrix, Eigen::Index sdim, Eigen::Index npts) {
+  static_assert(
+      std::is_same<typename pico_tree::EigenTraits<Matrix>::SpaceType, Matrix>::
+          value,
+      "TRAITS_SPACE_TYPE_INCORRECT");
+
+  static_assert(
+      pico_tree::EigenTraits<Matrix>::Dim == Dim,
+      "TRAITS_DIM_NOT_EQUAL_TO_EXPECTED_DIM");
+
+  static_assert(
+      std::is_same<typename pico_tree::EigenTraits<Matrix>::IndexType, int>::
+          value,
+      "TRAITS_INDEX_TYPE_NOT_INT");
+
+  static_assert(
+      std::is_same<
+          typename pico_tree::EigenTraits<Matrix, std::size_t>::IndexType,
+          std::size_t>::value,
+      "TRAITS_INDEX_TYPE_NOT_SIZE_T");
+
+  EXPECT_EQ(
+      static_cast<int>(sdim),
+      pico_tree::EigenTraits<Matrix>::SpaceSdim(matrix));
+  EXPECT_EQ(
+      static_cast<int>(npts),
+      pico_tree::EigenTraits<Matrix>::SpaceNpts(matrix));
+}
+
 template <typename ColMatrix, typename RowMatrix>
 void CheckEigenAdaptorInterface() {
-  static_assert(
-      pico_tree::EigenTraits<ColMatrix>::Dim == ColMatrix::RowsAtCompileTime,
-      "TRAITS_DIM_NOT_EQUAL_TO_MATRIX_ROWSATCOMPILETIME");
-
-  static_assert(
-      pico_tree::EigenTraits<RowMatrix>::Dim == ColMatrix::ColsAtCompileTime,
-      "TRAITS_DIM_NOT_EQUAL_TO_MATRIX_COLSATCOMPILETIME");
-
-  static_assert(
-      std::is_same<typename pico_tree::EigenTraits<ColMatrix>::IndexType, int>::
-          value,
-      "TRAITS_INDEX_TYPE_NOT_INT");
-
-  static_assert(
-      std::is_same<typename pico_tree::EigenTraits<RowMatrix>::IndexType, int>::
-          value,
-      "TRAITS_INDEX_TYPE_NOT_INT");
-
-  static_assert(
-      std::is_same<
-          typename pico_tree::EigenTraits<ColMatrix, std::size_t>::IndexType,
-          std::size_t>::value,
-      "TRAITS_INDEX_TYPE_NOT_SIZE_T");
-
-  static_assert(
-      std::is_same<
-          typename pico_tree::EigenTraits<RowMatrix, std::size_t>::IndexType,
-          std::size_t>::value,
-      "TRAITS_INDEX_TYPE_NOT_SIZE_T");
-
   ColMatrix col_matrix = ColMatrix::Random(4, 8);
   RowMatrix row_matrix = RowMatrix::Random(4, 8);
 
-  EXPECT_EQ(
-      col_matrix.rows(),
-      pico_tree::EigenTraits<ColMatrix>::SpaceSdim(col_matrix));
-  EXPECT_EQ(
-      col_matrix.cols(),
-      pico_tree::EigenTraits<ColMatrix>::SpaceNpts(col_matrix));
-  EXPECT_EQ(
-      row_matrix.cols(),
-      pico_tree::EigenTraits<RowMatrix>::SpaceSdim(row_matrix));
-  EXPECT_EQ(
-      row_matrix.rows(),
-      pico_tree::EigenTraits<RowMatrix>::SpaceNpts(row_matrix));
+  EigenCheckTypes<ColMatrix::RowsAtCompileTime>(
+      col_matrix, col_matrix.rows(), col_matrix.cols());
+  EigenCheckTypes<RowMatrix::ColsAtCompileTime>(
+      row_matrix, row_matrix.cols(), row_matrix.rows());
 
   EXPECT_TRUE(pico_tree::EigenTraits<ColMatrix>::PointAt(col_matrix, 0)
                   .isApprox(col_matrix.col(0)));
