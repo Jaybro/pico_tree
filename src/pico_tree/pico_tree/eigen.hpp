@@ -157,6 +157,29 @@ struct EigenTraitsImpl<Derived, Index, true> : public EigenPointBase<Derived> {
 template <typename Derived, typename Index>
 struct EigenTraitsBase
     : public EigenTraitsImpl<Derived, Index, Derived::IsRowMajor> {
+  // EigenTraits provides an interface for Eigen matrices so they can be used
+  // with any of the pico trees. It supports dynamic matrices and maps of
+  // dynamic matrices. Support for fixed size matrices or maps of those is
+  // disabled. Fixed size matrices are mostly useful when they are small. See
+  // section "Fixed vs. Dynamic size" of the following link:
+  // * https://eigen.tuxfamily.org/dox/group__TutorialMatrixClass.html
+  // <p/>
+  // Special care needs to be taken to work with fixed size matrices as well,
+  // adding to the complexity of this library with very little in return. This
+  // results in the choice to not support them through EigenTraits.
+  // <p/>
+  // Special care:
+  // * Aligned members of fixed size cannot be copied or moved (a move is a
+  // copy). https://eigen.tuxfamily.org/dox/group__TopicPassingByValue.html
+  // * They may need to be aligned in memory. As members are aligned with
+  // respect to the containing class the EigenAdaptor would need to be aligned
+  // as well.
+  // https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
+  static_assert(
+      Derived::RowsAtCompileTime == Eigen::Dynamic ||
+          Derived::ColsAtCompileTime == Eigen::Dynamic,
+      "FIXED_SIZE_MATRICES_ARE_NOT_SUPPORTED");
+
   using SpaceType = Derived;
 };
 
