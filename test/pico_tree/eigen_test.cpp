@@ -97,6 +97,11 @@ void CheckEigenAdaptorInterface() {
   EigenCheckTypes<RowMatrix::ColsAtCompileTime>(
       row_matrix, row_matrix.cols(), row_matrix.rows());
 
+  EigenCheckTypes<ColMatrix::RowsAtCompileTime>(
+      std::ref(col_matrix), col_matrix.rows(), col_matrix.cols());
+  EigenCheckTypes<RowMatrix::ColsAtCompileTime>(
+      std::cref(row_matrix), row_matrix.cols(), row_matrix.rows());
+
   EXPECT_TRUE(pico_tree::EigenTraits<ColMatrix>::PointAt(col_matrix, 0)
                   .isApprox(col_matrix.col(0)));
   EXPECT_TRUE(pico_tree::EigenTraits<ColMatrix>::PointAt(

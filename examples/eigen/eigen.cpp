@@ -76,20 +76,37 @@ void BasicMatrix() {
   using Scalar = typename Eigen::Matrix3Xf::Scalar;
   constexpr int Dim = Eigen::Matrix3Xf::RowsAtCompileTime;
 
+  Eigen::Vector3f p = Eigen::Vector3f::Random() * kArea / Scalar(2.0);
+
   // The KdTree takes the matrix by value. Prevent a copy by:
   // * Using a move.
   // * Creating an Eigen::Map<>.
-  // TODO Could add an std::reference_wrapper<> version for Eigen.
-  pico_tree::KdTree<pico_tree::EigenTraits<Eigen::Matrix3Xf>> tree(
-      Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0),
-      kMaxLeafCount);
+  // * Wrap with an std::reference_wrapper<>.
+  {
+    pico_tree::KdTree<pico_tree::EigenTraits<Eigen::Matrix3Xf>> tree(
+        Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0),
+        kMaxLeafCount);
 
-  Eigen::Vector3f p = Eigen::Vector3f::Random() * kArea / Scalar(2.0);
+    pico_tree::Neighbor<Index, Scalar> nn;
+    ScopedTimer t("pico_tree eigen val", kRunCount);
+    for (std::size_t i = 0; i < kRunCount; ++i) {
+      tree.SearchNn(p, &nn);
+    }
+  }
 
-  pico_tree::Neighbor<Index, Scalar> nn;
-  ScopedTimer t("pico_tree eigen matrix", kRunCount);
-  for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchNn(p, &nn);
+  {
+    Eigen::Matrix3Xf matrix =
+        Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0);
+
+    pico_tree::KdTree<
+        pico_tree::EigenTraits<std::reference_wrapper<Eigen::Matrix3Xf>>>
+        tree(matrix, kMaxLeafCount);
+
+    pico_tree::Neighbor<Index, Scalar> nn;
+    ScopedTimer t("pico_tree eigen ref", kRunCount);
+    for (std::size_t i = 0; i < kRunCount; ++i) {
+      tree.SearchNn(p, &nn);
+    }
   }
 }
 
