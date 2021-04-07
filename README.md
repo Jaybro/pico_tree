@@ -34,9 +34,9 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 The examples show how PicoTree can be used:
 
-* Working with PicoTree requires implementing a traits class. Some default and example traits are available that show how to write custom ones:
-  * `pico_tree::StdTraits<>` provides the [full](./src/pico_tree/pico_tree/std_traits.hpp) traits interface to support any `std::vector<PointType>`.
-  * [Simple](./examples/pico_toolshed/pico_toolshed/point.hpp) point traits to be used with `pico_tree::StdTraits<>`.
+* PicoTree supports interfacing with any type of point or point set through a traits class. This can be one of the default traits classes or a custom implementation:
+  * `pico_tree::StdTraits<>` provides a traits interface to support any `std::vector<PointType>`. It requires a specialization of `pico_tree::StdPointTraits<>` for each different [PointType](./examples/pico_toolshed/pico_toolshed/point.hpp).
+  * The implementation of `pico_tree::StdTraits<>` can be used as an example to create a [custom](./src/pico_tree/pico_tree/std_traits.hpp) traits class.
 * Using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
 * Support for [Eigen](./examples/eigen/eigen.cpp) data types.
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).

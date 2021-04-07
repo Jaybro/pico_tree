@@ -61,12 +61,16 @@ struct StdTraits<std::vector<Point, Allocator>, Index> {
   }
 
   //! \brief Returns the spatial dimension of \p point.
+  //! \details Allowing the input type to be different from PointType gives us
+  //! greater interfacing flexibility.
   template <typename OtherPoint>
   inline static int PointSdim(OtherPoint const& point) {
     return StdPointTraits<OtherPoint>::Sdim(point);
   }
 
   //! \brief Returns a pointer to the coordinates of \p point.
+  //! \details Allowing the input type to be different from PointType gives us
+  //! greater interfacing flexibility.
   template <typename OtherPoint>
   inline static ScalarType const* PointCoords(OtherPoint const& point) {
     return StdPointTraits<OtherPoint>::Coords(point);
@@ -83,6 +87,10 @@ template <typename Point, typename Allocator, typename Index>
 struct StdTraits<std::reference_wrapper<std::vector<Point, Allocator>>, Index>
     : public StdTraits<std::vector<Point, Allocator>, Index> {
   //! \brief The SpaceType of these traits.
+  //! \details This overrides the SpaceType of the base class. No other
+  //! interface changes are required as an std::reference_wrapper can implicitly
+  //! be converted to its contained reference, which is a reference to an object
+  //! of the exact same type as that of the SpaceType of the basse class.
   using SpaceType = std::reference_wrapper<std::vector<Point, Allocator>>;
 };
 
@@ -97,6 +105,10 @@ struct StdTraits<
     std::reference_wrapper<std::vector<Point, Allocator> const>,
     Index> : public StdTraits<std::vector<Point, Allocator>, Index> {
   //! \brief The SpaceType of these traits.
+  //! \details This overrides the SpaceType of the base class. No other
+  //! interface changes are required as an std::reference_wrapper can implicitly
+  //! be converted to its contained reference, which is a reference to an object
+  //! of the exact same type as that of the SpaceType of the basse class.
   using SpaceType = std::reference_wrapper<std::vector<Point, Allocator> const>;
 };
 
