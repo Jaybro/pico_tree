@@ -654,7 +654,7 @@ class KdTree {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      Scalar const v = x(node->data.branch.split_dim);
+      Scalar const v = Traits::PointCoords(x)[node->data.branch.split_dim];
       Node const* node_1st;
       Node const* node_2nd;
 
