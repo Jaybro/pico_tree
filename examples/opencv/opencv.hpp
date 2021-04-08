@@ -1,0 +1,135 @@
+#pragma once
+
+#include <opencv2/core.hpp>
+#include <pico_tree/std_traits.hpp>
+
+namespace pico_tree {
+
+template <typename Scalar_>
+struct StdPointTraits<cv::Point_<Scalar_>> {
+  static_assert(sizeof(cv::Point_<Scalar_>) == (sizeof(Scalar_) * 2), "");
+
+  using ScalarType = Scalar_;
+  static constexpr int Dim = 2;
+
+  inline static ScalarType const* Coords(cv::Point_<Scalar_> const& point) {
+    return &point.x;
+  }
+
+  inline static int constexpr Sdim(cv::Point_<Scalar_> const&) { return Dim; }
+};
+
+template <typename Scalar_>
+struct StdPointTraits<cv::Point3_<Scalar_>> {
+  static_assert(sizeof(cv::Point3_<Scalar_>) == (sizeof(Scalar_) * 3), "");
+
+  using ScalarType = Scalar_;
+  static constexpr int Dim = 3;
+
+  inline static Scalar_ const* Coords(cv::Point3_<Scalar_> const& point) {
+    return &point.x;
+  }
+
+  inline static int constexpr Sdim(cv::Point3_<Scalar_> const&) { return Dim; }
+};
+
+template <typename Scalar_, int Dim_>
+struct StdPointTraits<cv::Vec<Scalar_, Dim_>> {
+  using ScalarType = Scalar_;
+  static constexpr int Dim = Dim_;
+
+  inline static Scalar_ const* Coords(cv::Vec<Scalar_, Dim_> const& point) {
+    return point.val;
+  }
+
+  inline static int constexpr Sdim(cv::Vec<Scalar_, Dim_> const&) {
+    return Dim;
+  }
+};
+
+//! \brief A wrapper class for storing the row of a cv::Mat.
+//! \details This wrapper is used to support compile and run time dimensions.
+//! Storing a pointer and reference is a smaller footprint than the cv::Mat of a
+//! row.
+template <typename Scalar_, int Dim_>
+class CvMatRow {
+ public:
+  using ScalarType = Scalar_;
+  static constexpr int Dim = Dim_;
+
+  inline CvMatRow(int idx, cv::Mat const& space)
+      : coords_(space.ptr<Scalar_>(idx)), space_(space) {}
+
+  inline Scalar_ const* coords() const { return coords_; }
+
+  //! \brief Returns the amount of spatial dimensions of this point.
+  inline int sdim() const {
+    // TODO This run time version is actually quite expensive when used. Perhaps
+    // there is an alternative.
+    return space_.step1();
+  }
+
+ private:
+  Scalar_ const* coords_;
+  cv::Mat const& space_;
+};
+
+template <typename Scalar_, int Dim_>
+struct StdPointTraits<CvMatRow<Scalar_, Dim_>> {
+  using ScalarType = Scalar_;
+  static constexpr int Dim = Dim_;
+
+  inline static Scalar_ const* Coords(CvMatRow<Scalar_, Dim_> const& point) {
+    return point.coords();
+  }
+
+  inline static int Sdim(CvMatRow<Scalar_, Dim_> const& point) {
+    return point.sdim();
+  }
+};
+
+template <typename Scalar_, int Dim_>
+struct CvTraits {
+  //! \brief The SpaceType of these traits.
+  using SpaceType = cv::Mat;
+  //! \brief The point type used by SpaceType.
+  using PointType = CvMatRow<Scalar_, Dim_>;
+  //! \brief The scalar type of point coordinates.
+  using ScalarType = Scalar_;
+  //! \brief The index type of point coordinates.
+  using IndexType = int;
+  //! \brief Compile time spatial dimension.
+  static constexpr int Dim = Dim_;
+
+  //! \brief Returns the dimension of the space in which the points reside.
+  //! I.e., the amount of coordinates each point has.
+  inline static int SpaceSdim(cv::Mat const& space) {
+    return static_cast<int>(space.step1());
+  }
+
+  //! \brief Returns number of points contained by \p space.
+  inline static IndexType SpaceNpts(cv::Mat const& space) { return space.rows; }
+
+  //! \brief Returns the point at \p idx from \p space.
+  inline static PointType PointAt(cv::Mat const& space, IndexType const idx) {
+    return {idx, space};
+  }
+
+  //! \brief Returns the spatial dimension of \p point.
+  //! \details Allowing the input type to be different from PointType gives us
+  //! greater interfacing flexibility.
+  template <typename OtherPoint>
+  inline static int PointSdim(OtherPoint const& point) {
+    return StdPointTraits<OtherPoint>::Sdim(point);
+  }
+
+  //! \brief Returns a pointer to the coordinates of \p point.
+  //! \details Allowing the input type to be different from PointType gives us
+  //! greater interfacing flexibility.
+  template <typename OtherPoint>
+  inline static ScalarType const* PointCoords(OtherPoint const& point) {
+    return StdPointTraits<OtherPoint>::Coords(point);
+  }
+};
+
+}  // namespace pico_tree
