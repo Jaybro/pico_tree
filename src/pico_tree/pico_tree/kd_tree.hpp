@@ -25,8 +25,7 @@ inline void LongestAxisBox(
 
   *p_max_value = std::numeric_limits<Scalar>::lowest();
 
-  for (int i = 0; i < Dimension<Dim>::Dim(static_cast<int>(box_min.size()));
-       ++i) {
+  for (int i = 0; i < static_cast<int>(box_min.size()); ++i) {
     Scalar const delta = box_max[i] - box_min[i];
     if (delta > *p_max_value) {
       *p_max_index = i;
@@ -610,9 +609,7 @@ class KdTree {
 
     for (Index j = 0; j < Traits::SpaceNpts(points_); ++j) {
       Scalar const* const p = Traits::PointCoords(Traits::PointAt(points_, j));
-      for (int i = 0;
-           i < internal::Dimension<Dim>::Dim(Traits::SpaceSdim(points_));
-           ++i) {
+      for (int i = 0; i < internal::Dimension<Traits>::Dim(points_); ++i) {
         Scalar const v = p[i];
         if (v < min[i]) {
           min[i] = v;
@@ -686,9 +683,7 @@ class KdTree {
   //! point on the edge considered inside the box.
   template <typename P0, typename P1>
   inline bool PointInBox(P0 const& x, P1 const& min, P1 const& max) const {
-    for (int i = 0;
-         i < internal::Dimension<Dim>::Dim(Traits::SpaceSdim(points_));
-         ++i) {
+    for (int i = 0; i < internal::Dimension<Traits>::Dim(points_); ++i) {
       if (min[i] > x[i] || max[i] < x[i]) {
         return false;
       }

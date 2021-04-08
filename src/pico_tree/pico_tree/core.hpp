@@ -86,17 +86,33 @@ inline void InsertSorted(
 }
 
 //! \brief Compile time dimension count handling.
-template <int Dim_>
+template <typename Traits, int Dim_ = Traits::Dim>
 struct Dimension {
-  //! \brief Returns the compile time dimension.
-  inline static constexpr int Dim(int) { return Dim_; }
+  //! \brief Returns the compile time dimension of a space.
+  inline static constexpr int Dim(typename Traits::SpaceType const&) {
+    return Dim_;
+  }
+
+  //! \brief Returns the compile time dimension of a point.
+  template <typename P>
+  inline static constexpr int Dim(P const&) {
+    return Dim_;
+  }
 };
 
 //! \brief Run time dimension count handling.
-template <>
-struct Dimension<kDynamicDim> {
-  //! \brief Returns the run time dimension.
-  inline static int Dim(int dim) { return dim; }
+template <typename Traits>
+struct Dimension<Traits, pico_tree::kDynamicDim> {
+  //! \brief Returns the run time dimension of a space.
+  inline static int Dim(typename Traits::SpaceType const& space) {
+    return Traits::SpaceSdim(space);
+  }
+
+  //! \brief Returns the run time dimension of a point.
+  template <typename P>
+  inline static int Dim(P const& point) {
+    return Traits::PointSdim(point);
+  }
 };
 
 //! \brief Returns the maximum amount of leaves given \p num_points and \p

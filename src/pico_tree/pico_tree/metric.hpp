@@ -43,9 +43,7 @@ struct Sum {
     ScalarType const* c1 = Traits::PointCoords(p1);
     ScalarType d{};
 
-    for (int i = 0;
-         i < internal::Dimension<Traits::Dim>::Dim(Traits::PointSdim(p0));
-         ++i) {
+    for (int i = 0; i < internal::Dimension<Traits>::Dim(p0); ++i) {
       d += BinOp::Op(c0[i], c1[i]);
     }
 
