@@ -35,16 +35,6 @@ class Sequence {
     return sequence_[i];
   }
 
-  //! \brief Access data contained in the Sequence.
-  inline Scalar& operator()(std::size_t const i) noexcept {
-    return sequence_[i];
-  }
-
-  //! \brief Access data contained in the Sequence.
-  inline Scalar const& operator()(std::size_t const i) const noexcept {
-    return sequence_[i];
-  }
-
   //! \brief Fills the sequence with value \p v.
   inline void Fill(std::size_t const, Scalar const v) {
     // The first argument is the size s. It should be the same as Dim.
@@ -85,16 +75,6 @@ class Sequence<Scalar, kDynamicDim> {
 
   //! \brief Access data contained in the Sequence.
   inline Scalar const& operator[](std::size_t const i) const noexcept {
-    return sequence_[i];
-  }
-
-  //! \brief Access data contained in the Sequence.
-  inline Scalar& operator()(std::size_t const i) noexcept {
-    return sequence_[i];
-  }
-
-  //! \brief Access data contained in the Sequence.
-  inline Scalar const& operator()(std::size_t const i) const noexcept {
     return sequence_[i];
   }
 
