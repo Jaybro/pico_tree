@@ -34,7 +34,7 @@ using PointsMapRm = Eigen::Map<
 
 std::size_t const kRunCount = 1024 * 1024;
 int const kNumPoints = 1024 * 1024 * 2;
-double const kArea = 1000.0;
+float const kArea = 1000.0;
 Index const kMaxLeafCount = 16;
 
 // Certain fixed size matrices require us to use aligned memory.
