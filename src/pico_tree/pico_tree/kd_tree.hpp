@@ -542,7 +542,12 @@ class KdTree {
     // then the search is slower. So unless many queries don't intersect there
     // is no point in adding it.
     SearchBox(
-        root_, min, max, Sequence(root_box_min_), Sequence(root_box_max_), i);
+        root_,
+        Traits::PointCoords(min),
+        Traits::PointCoords(max),
+        Sequence(root_box_min_),
+        Sequence(root_box_max_),
+        i);
   }
 
   //! \brief Point set used by the tree.
@@ -684,7 +689,7 @@ class KdTree {
     for (int i = 0;
          i < internal::Dimension<Dim>::Dim(Traits::SpaceSdim(points_));
          ++i) {
-      if (min(i) > x(i) || max(i) < x(i)) {
+      if (min[i] > x[i] || max[i] < x[i]) {
         return false;
       }
     }
@@ -711,11 +716,10 @@ class KdTree {
   //! the box of the query. We don't store the bounding box of each node but
   //! calculate them at run time. This slows down SearchBox in favor of
   //! SearchNn.
-  template <typename P>
   inline void SearchBox(
       Node const* const node,
-      P const& rng_min,
-      P const& rng_max,
+      Scalar const* const rng_min,
+      Scalar const* const rng_max,
       typename Sequence::MoveReturnType box_min,
       typename Sequence::MoveReturnType box_max,
       std::vector<Index>* idxs) const {
@@ -723,7 +727,10 @@ class KdTree {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         Index const idx = indices_[i];
-        if (PointInBox(Traits::PointAt(points_, idx), rng_min, rng_max)) {
+        if (PointInBox(
+                Traits::PointCoords(Traits::PointAt(points_, idx)),
+                rng_min,
+                rng_max)) {
           idxs->push_back(idx);
         }
       }
@@ -738,7 +745,7 @@ class KdTree {
           PointInBox(left_box_max, rng_min, rng_max)) {
         ReportNode(node->left, idxs);
       } else if (
-          rng_min(node->data.branch.split_dim) < node->data.branch.split_val) {
+          rng_min[node->data.branch.split_dim] < node->data.branch.split_val) {
         SearchBox(
             node->left,
             rng_min,
@@ -756,7 +763,7 @@ class KdTree {
           PointInBox(box_max, rng_min, rng_max)) {
         ReportNode(node->right, idxs);
       } else if (
-          rng_max(node->data.branch.split_dim) > node->data.branch.split_val) {
+          rng_max[node->data.branch.split_dim] > node->data.branch.split_val) {
         SearchBox(
             node->right,
             rng_min,
