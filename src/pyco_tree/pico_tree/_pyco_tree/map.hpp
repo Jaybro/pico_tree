@@ -10,32 +10,33 @@ namespace py = pybind11;
 
 namespace pyco_tree {
 
-template <typename Index, typename Scalar, int Dim_>
-class Map;
-
-template <typename Index, typename Scalar, int Dim_>
+template <typename Map_>
 class Block {
  public:
-  inline Block(Scalar const* const data, Map<Index, Scalar, Dim_> const& space)
+  using ScalarType = typename Map_::ScalarType;
+  static int constexpr Dim = Map_::Dim;
+
+  inline Block(ScalarType const* const data, Map_ const& space)
       : data_(data), space_(space) {}
 
-  inline Scalar const& operator()(int const i) const { return data_[i]; }
+  inline ScalarType const& operator()(int const i) const { return data_[i]; }
 
-  inline Scalar const* data() const { return data_; }
+  inline ScalarType const* data() const { return data_; }
 
   inline int sdim() const { return space_.sdim(); }
 
  private:
-  Scalar const* const data_;
-  Map<Index, Scalar, Dim_> const& space_;
+  ScalarType const* const data_;
+  Map_ const& space_;
 };
 
-template <typename Index, typename Scalar, int Dim_>
+// TODO Probably remove the Index argument in the future.
+template <typename Scalar, int Dim_, typename Index>
 class Map {
  public:
-  using IndexType = Index;
   using ScalarType = Scalar;
-  static constexpr int Dim = Dim_;
+  static int constexpr Dim = Dim_;
+  using IndexType = Index;
 
   explicit Map(py::array_t<Scalar, 0> const pts) {
     ArrayLayout<Scalar> layout(pts);
@@ -61,8 +62,8 @@ class Map {
     row_major_ = layout.row_major;
   }
 
-  inline Block<Index, Scalar, Dim_> operator()(Index const idx) const {
-    return Block<Index, Scalar, Dim_>(data_ + idx * sdim_, *this);
+  inline Block<Map> operator()(Index const idx) const {
+    return Block<Map>(data_ + idx * sdim_, *this);
   }
 
   inline Scalar const* data() const { return data_; }
@@ -84,18 +85,16 @@ class Map {
 
 namespace pico_tree {
 
-template <typename Index_, typename Scalar_, int Dim_>
-struct StdPointTraits<typename pyco_tree::Block<Index_, Scalar_, Dim_>> {
-  using ScalarType = Scalar_;
-  static constexpr int Dim = Dim_;
+template <typename Map_>
+struct StdPointTraits<typename pyco_tree::Block<Map_>> {
+  using ScalarType = typename Map_::ScalarType;
+  static constexpr int Dim = Map_::Dim;
 
-  inline static ScalarType const* Coords(
-      pyco_tree::Block<Index_, Scalar_, Dim_> const& point) {
+  inline static ScalarType const* Coords(pyco_tree::Block<Map_> const& point) {
     return point.data();
   }
 
-  inline static int constexpr Sdim(
-      pyco_tree::Block<Index_, Scalar_, Dim_> const& point) {
+  inline static int constexpr Sdim(pyco_tree::Block<Map_> const& point) {
     return point.sdim();
   }
 };
@@ -104,10 +103,10 @@ struct StdPointTraits<typename pyco_tree::Block<Index_, Scalar_, Dim_>> {
 
 namespace pyco_tree {
 
-template <typename Index_, typename Scalar_, int Dim_>
+template <typename Scalar_, int Dim_, typename Index_>
 struct MapTraits {
-  using SpaceType = Map<Index_, Scalar_, Dim_>;
-  using PointType = Block<Index_, Scalar_, Dim_>;
+  using SpaceType = Map<Scalar_, Dim_, Index_>;
+  using PointType = Block<SpaceType>;
   using ScalarType = Scalar_;
   static constexpr int Dim = Dim_;
   using IndexType = Index_;

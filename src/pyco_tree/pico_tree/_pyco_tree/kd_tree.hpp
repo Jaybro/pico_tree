@@ -43,7 +43,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       py::array_t<Scalar, 0> const pts,
       Index const k,
       py::array_t<NeighborType, 0> nns) const {
-    Map<Index, Scalar, Dim> query(pts);
+    Map<Scalar, Dim, Index> query(pts);
     EnsureSize(query, k, nns);
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
@@ -65,7 +65,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       Index const k,
       Scalar const e,
       py::array_t<NeighborType, 0> nns) const {
-    Map<Index, Scalar, Dim> query(pts);
+    Map<Scalar, Dim, Index> query(pts);
     EnsureSize(query, k, nns);
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
@@ -87,7 +87,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       Scalar const radius,
       DArray* nns,
       bool const sort) const {
-    Map<Index, Scalar, Dim> query(pts);
+    Map<Scalar, Dim, Index> query(pts);
 
     auto& nns_data = nns->data<NeighborType>();
     nns_data.resize(query.npts());
@@ -112,8 +112,8 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       py::array_t<Scalar, 0> const min,
       py::array_t<Scalar, 0> const max,
       DArray* box) const {
-    Map<Index, Scalar, Dim> query_min(min);
-    Map<Index, Scalar, Dim> query_max(max);
+    Map<Scalar, Dim, Index> query_min(min);
+    Map<Scalar, Dim, Index> query_max(max);
 
     if (query_min.npts() != query_max.npts()) {
       throw std::invalid_argument("Query min and max don't have equal size.");
