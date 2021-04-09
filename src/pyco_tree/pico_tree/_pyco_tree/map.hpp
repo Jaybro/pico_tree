@@ -11,13 +11,12 @@ namespace py = pybind11;
 namespace pyco_tree {
 
 template <typename Index, typename Scalar, int Dim_>
-class PycoAdaptor;
+class Map;
 
 template <typename Index, typename Scalar, int Dim_>
-class SpaceRow {
+class Block {
  public:
-  inline SpaceRow(
-      Scalar const* const data, PycoAdaptor<Index, Scalar, Dim_> const& space)
+  inline Block(Scalar const* const data, Map<Index, Scalar, Dim_> const& space)
       : data_(data), space_(space) {}
 
   inline Scalar const& operator()(int const i) const { return data_[i]; }
@@ -28,17 +27,17 @@ class SpaceRow {
 
  private:
   Scalar const* const data_;
-  PycoAdaptor<Index, Scalar, Dim_> const& space_;
+  Map<Index, Scalar, Dim_> const& space_;
 };
 
 template <typename Index, typename Scalar, int Dim_>
-class PycoAdaptor {
+class Map {
  public:
   using IndexType = Index;
   using ScalarType = Scalar;
   static constexpr int Dim = Dim_;
 
-  explicit PycoAdaptor(py::array_t<Scalar, 0> const pts) {
+  explicit Map(py::array_t<Scalar, 0> const pts) {
     ArrayLayout<Scalar> layout(pts);
 
     if (layout.info.ndim != 2) {
@@ -62,8 +61,8 @@ class PycoAdaptor {
     row_major_ = layout.row_major;
   }
 
-  inline SpaceRow<Index, Scalar, Dim_> operator()(Index const idx) const {
-    return SpaceRow<Index, Scalar, Dim_>(data_ + idx * sdim_, *this);
+  inline Block<Index, Scalar, Dim_> operator()(Index const idx) const {
+    return Block<Index, Scalar, Dim_>(data_ + idx * sdim_, *this);
   }
 
   inline Scalar const* data() const { return data_; }
@@ -86,17 +85,17 @@ class PycoAdaptor {
 namespace pico_tree {
 
 template <typename Index_, typename Scalar_, int Dim_>
-struct StdPointTraits<typename pyco_tree::SpaceRow<Index_, Scalar_, Dim_>> {
+struct StdPointTraits<typename pyco_tree::Block<Index_, Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static constexpr int Dim = Dim_;
 
   inline static ScalarType const* Coords(
-      pyco_tree::SpaceRow<Index_, Scalar_, Dim_> const& point) {
+      pyco_tree::Block<Index_, Scalar_, Dim_> const& point) {
     return point.data();
   }
 
   inline static int constexpr Sdim(
-      pyco_tree::SpaceRow<Index_, Scalar_, Dim_> const& point) {
+      pyco_tree::Block<Index_, Scalar_, Dim_> const& point) {
     return point.sdim();
   }
 };
@@ -107,8 +106,8 @@ namespace pyco_tree {
 
 template <typename Index_, typename Scalar_, int Dim_>
 struct MapTraits {
-  using SpaceType = pyco_tree::PycoAdaptor<Index_, Scalar_, Dim_>;
-  using PointType = pyco_tree::SpaceRow<Index_, Scalar_, Dim_>;
+  using SpaceType = Map<Index_, Scalar_, Dim_>;
+  using PointType = Block<Index_, Scalar_, Dim_>;
   using ScalarType = Scalar_;
   static constexpr int Dim = Dim_;
   using IndexType = Index_;
