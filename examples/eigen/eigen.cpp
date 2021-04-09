@@ -56,7 +56,7 @@ void BasicVector() {
   using PointX = Eigen::Vector2f;
   using Scalar = typename PointX::Scalar;
 
-  // Including <pico_tree/eigen.hpp> provices support for Eigen types with
+  // Including <pico_tree/eigen.hpp> provides support for Eigen types with
   // std::vector.
   pico_tree::KdTree<pico_tree::StdTraits<
       std::vector<PointX, Eigen::aligned_allocator<PointX>>>>
