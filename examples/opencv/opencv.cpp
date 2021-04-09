@@ -27,6 +27,7 @@ std::vector<cv::Point3_<Scalar_>> GenerateRandomPoint3N(int n, Scalar_ size) {
   return random;
 }
 
+// This example shows to build a KdTree from a vector of cv::Point3.
 void BasicVector() {
   using PointX = cv::Point3_<Scalar>;
   std::vector<PointX> random = GenerateRandomPoint3N(kNumPoints, kArea);
@@ -44,14 +45,16 @@ void BasicVector() {
   }
 }
 
+// This example shows to build a KdTree using a cv::Mat.
 void BasicMatrix() {
+  // Multiple columns based on the amount of coordinates in a point.
   {
-    using PointX = cv::Point3_<Scalar>;
-    std::vector<PointX> random = GenerateRandomPoint3N(kNumPoints, kArea);
+    cv::Mat random(kNumPoints, 3, CV_32FC1);
+    cv::randu(random, Scalar(0.0), kArea);
 
-    pico_tree::KdTree<pico_tree::CvTraits<Scalar, 3>> tree(cv::Mat(random), 10);
+    pico_tree::KdTree<pico_tree::CvTraits<Scalar, 3>> tree(random, 10);
 
-    PointX p = random[random.size() / 2];
+    pico_tree::CvMatRow<Scalar, 3> p(tree.points().rows / 2, tree.points());
 
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree cv mat", kRunCount);
@@ -60,13 +63,14 @@ void BasicMatrix() {
     }
   }
 
+  // Single column cv::Mat based on a vector of points.
   {
-    cv::Mat random(kNumPoints, 3, CV_32FC1);
-    cv::randu(random, Scalar(0.0), kArea);
+    using PointX = cv::Point3_<Scalar>;
+    std::vector<PointX> random = GenerateRandomPoint3N(kNumPoints, kArea);
 
     pico_tree::KdTree<pico_tree::CvTraits<Scalar, 3>> tree(cv::Mat(random), 10);
 
-    pico_tree::CvMatRow<Scalar, 3> p(tree.points().rows / 2, tree.points());
+    PointX p = random[random.size() / 2];
 
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree cv mat", kRunCount);

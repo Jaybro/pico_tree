@@ -3,6 +3,14 @@
 #include <opencv2/core.hpp>
 #include <pico_tree/std_traits.hpp>
 
+//! \file opencv.hpp
+//! \brief Contains traits and classes that provide OpenCV support for PicoTree.
+//! \details The following is supported:
+//! * std::vector<cv::Point_<>> via pico_tree::StdTraits<>
+//! * std::vector<cv::Point3_<>> via pico_tree::StdTraits<>
+//! * std::vector<cv::Vec_<>> via pico_tree::StdTraits<>
+//! * cv::Mat via pico_tree::CvTraits<>
+
 namespace pico_tree {
 
 template <typename Scalar_>
@@ -88,6 +96,11 @@ struct StdPointTraits<CvMatRow<Scalar_, Dim_>> {
   }
 };
 
+//! \brief CvTraits provides an interface for cv::Mat. Each row is considered a
+//! point.
+//! \tparam Scalar_ Point coordinate type.
+//! \tparam Dim_ The spatial dimension of each point. Set to
+//! pico_tree::kDynamicDim when the dimension is only known at run-time.
 template <typename Scalar_, int Dim_>
 struct CvTraits {
   //! \brief The SpaceType of these traits.

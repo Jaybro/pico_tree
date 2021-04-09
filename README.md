@@ -34,7 +34,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 The examples show how PicoTree can be used:
 
-* PicoTree supports interfacing with any type of point or point set through a traits class. This can be one of the default traits classes or a custom implementation:
+* PicoTree supports interfacing with different types of points or point sets through a traits class. This can be one of the default traits classes or a custom implementation:
   * `pico_tree::StdTraits<>` provides a traits interface to support any `std::vector<PointType>`. It requires a specialization of `pico_tree::StdPointTraits<>` for each different [PointType](./examples/pico_toolshed/pico_toolshed/point.hpp).
   * The implementation of `pico_tree::StdTraits<>` can be used as an example to create a [custom](./src/pico_tree/pico_tree/std_traits.hpp) traits class.
 * Using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
@@ -53,6 +53,7 @@ Optional:
 * [Doxygen](https://www.doxygen.nl). Needed for generating documentation.
 * [Google Test](https://github.com/google/googletest). Used for running unit tests.
 * [Eigen](http://eigen.tuxfamily.org). To run the example that shows how Eigen data types can be used in combination with PicoTree.
+* [OpenCV](https://opencv.org/). Like the Eigen example, it shows how to work with OpenCV data types.
 * [nanoflann](https://github.com/jlblancoc/nanoflann), [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run the comparison [benchmark](./docs/benchmark.md) between nanoflann and PicoTree.
 
 Python bindings:
