@@ -162,6 +162,7 @@ struct EigenTraitsBase
           Derived::ColsAtCompileTime == Eigen::Dynamic,
       "FIXED_SIZE_MATRICES_ARE_NOT_SUPPORTED");
 
+  //! \brief The SpaceType of these traits.
   using SpaceType = Derived;
 };
 
