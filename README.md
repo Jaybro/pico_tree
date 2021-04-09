@@ -53,7 +53,7 @@ Optional:
 * [Doxygen](https://www.doxygen.nl). Needed for generating documentation.
 * [Google Test](https://github.com/google/googletest). Used for running unit tests.
 * [Eigen](http://eigen.tuxfamily.org). To run the example that shows how Eigen data types can be used in combination with PicoTree.
-* [OpenCV](https://opencv.org/). Like the Eigen example, it shows how to work with OpenCV data types.
+* [OpenCV](https://opencv.org/). To run the OpenCV example, that like the Eigen one, shows how to work with OpenCV data types.
 * [nanoflann](https://github.com/jlblancoc/nanoflann), [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run the comparison [benchmark](./docs/benchmark.md) between nanoflann and PicoTree.
 
 Python bindings:
