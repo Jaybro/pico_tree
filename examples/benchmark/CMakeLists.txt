@@ -16,20 +16,33 @@ function(add_benchmark BM_TARGET_NAME)
 endfunction()
 
 ################################################################################
-# bm_nanoflann, bm_pico_kd_tree, bm_pico_cover_tree
+# bm_pico_kd_tree, bm_pico_cover_tree, bm_nanoflann, bm_opencv_flann
 ################################################################################
 
-add_benchmark(bm_nanoflann)
-target_link_libraries(bm_nanoflann
-    PRIVATE
-         nanoflann::nanoflann
-)
 add_benchmark(bm_pico_kd_tree)
+
 add_benchmark(bm_pico_cover_tree)
-target_link_libraries(bm_pico_cover_tree
-    PRIVATE
-         pico_understory
-)
+target_link_libraries(bm_pico_cover_tree PRIVATE pico_understory)
+
+find_package(nanoflann QUIET)
+if(nanoflann_FOUND)
+    message(STATUS "nanoflann found. Building nanoflann benchmark.")
+    add_benchmark(bm_nanoflann)
+    target_link_libraries(bm_nanoflann PRIVATE nanoflann::nanoflann)
+else()
+    message(STATUS "nanoflann not found. nanoflann benchmark skipped.")
+endif()
+
+# The FLANN respository does not provide a flannConfig.cmake. So it's more
+# easy to go with the OpenCV one.
+find_package(OpenCV QUIET)
+if(OpenCV_FOUND)
+    message(STATUS "OpenCV found. Building OpenCV FLANN benchmark.")
+    add_benchmark(bm_opencv_flann)
+    target_link_libraries(bm_opencv_flann PRIVATE ${OpenCV_LIBS})
+else()
+    message(STATUS "OpenCV not found. OpenCV FLANN benchmark skipped.")
+endif()
 
 ################################################################################
 # uosr_to_bin
