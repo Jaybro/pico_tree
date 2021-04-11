@@ -75,7 +75,7 @@ def main():
     args = parser.parse_args()
 
     benchmarks = get_benchmarks(json.load(args.json_file))
-    re_info = r'^Bm(?P<tree>.+)/(Build|Knn|Nn|Radius)(?P<type>(Ct|Rt)[^/]*)/(?P<x>\d+)(/(?P<arg>\d+))?$'
+    re_info = r'^Bm(?P<tree>.+)/(Build|Knn|Nn|Radius)(?P<type>(Ct|Rt)[^/]*)/(?P<x>\d+)(/(?P<arg>\d+))?(_mean)?$'
     plots = [get_plots(b, re.compile(re_info)) for b in benchmarks]
 
     # Format is determined by filename extension
