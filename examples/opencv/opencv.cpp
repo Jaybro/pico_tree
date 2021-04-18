@@ -48,7 +48,7 @@ void BasicVector() {
 void BasicMatrix() {
   // Multiple columns based on the amount of coordinates in a point.
   {
-    cv::Mat random(kNumPoints, 3, CV_32FC1);
+    cv::Mat random(kNumPoints, 3, cv::DataType<Scalar>::type);
     cv::randu(random, Scalar(0.0), kArea);
 
     pico_tree::KdTree<pico_tree::CvTraits<Scalar, 3>> tree(random, 10);
