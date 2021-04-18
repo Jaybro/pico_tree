@@ -1,7 +1,8 @@
 #pragma once
 
 #include <opencv2/core.hpp>
-#include <pico_tree/std_traits.hpp>
+
+#include "std_traits.hpp"
 
 //! \file opencv.hpp
 //! \brief Contains traits and classes that provide OpenCV support for PicoTree.
