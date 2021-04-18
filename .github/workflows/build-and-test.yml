@@ -28,8 +28,8 @@ jobs:
         working-directory: ${{runner.workspace}}/pico_tree
         shell: bash
         run: |
-          git clone https://gitlab.com/libeigen/eigen.git && cd eigen
-          git checkout -b 3.3.9 tags/3.3.9
+          git clone https://gitlab.com/libeigen/eigen.git --branch 3.3.9 --depth 1 && cd eigen
+          git switch -c 3.3.9
 
       - name: Create Build Environment
         shell: bash
