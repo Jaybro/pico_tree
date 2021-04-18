@@ -31,6 +31,12 @@ jobs:
           git clone https://gitlab.com/libeigen/eigen.git --branch 3.3.9 --depth 1 && cd eigen
           git switch -c 3.3.9
 
+      - uses: actions/checkout@v2
+        with:
+          repository: opencv/opencv
+          ref: 4.5.2
+          path: ${{ runner.workspace }}/pico_tree/opencv
+
       - name: Create Build Environment
         shell: bash
         # Within the Windows environment the GITHUB_WORKSPACE variable uses a \ as a separator. MinGW cmake cannot handle this.
@@ -52,6 +58,13 @@ jobs:
         with:
           path-cmake-lists: ${{ runner.workspace }}/pico_tree/eigen
           cmake-configure-flags: -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE//'\'/'/'}/install
+          cmake-install: true
+
+      - name: CMake OpenCV
+        uses: ./.github/actions/cmake
+        with:
+          path-cmake-lists: ${{ runner.workspace }}/pico_tree/opencv
+          cmake-configure-flags: -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE//'\'/'/'}/install -DBUILD_LIST=core -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_JPEG=OFF -DBUILD_ZLIB=OFF -DBUILD_OPENJPEG=OFF -DVIDEOIO_ENABLE_PLUGINS=OFF -DWITH_OPENJPEG=OFF -DWITH_LAPACK=OFF -DWITH_CUDA=OFF -DWITH_OPENMP=OFF -DWITH_DIRECTX=OFF -DWITH_OPENGL=OFF -DCV_DISABLE_OPTIMIZATION=ON -DCV_ENABLE_INTRINSICS=OFF -DCV_TRACE=OFF -DCPU_BASELINE="" -DOPENCV_DNN_CUDA=OFF -DWITH_OPENCL=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCL_D3D11_NV=OFF -DWITH_OPENCL_SVM=OFF
           cmake-install: true
 
       - name: CMake PicoTree
