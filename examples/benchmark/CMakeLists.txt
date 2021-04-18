@@ -35,7 +35,7 @@ endif()
 
 # The FLANN respository does not provide a flannConfig.cmake. So it's more
 # easy to go with the OpenCV one.
-find_package(OpenCV QUIET)
+find_package(OpenCV COMPONENTS core flann QUIET)
 if(OpenCV_FOUND)
     message(STATUS "OpenCV found. Building OpenCV FLANN benchmark.")
     add_benchmark(bm_opencv_flann)
