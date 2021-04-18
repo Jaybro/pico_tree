@@ -1,7 +1,5 @@
 include(GoogleTest)
 
-find_package(Eigen3 QUIET)
-
 set(TEST_TARGET_NAME ${PROJECT_NAME}_test)
 add_executable(${TEST_TARGET_NAME})
 set_target_properties(${TEST_TARGET_NAME}
@@ -23,6 +21,7 @@ set(TEST_TARGET_SOURCES
 
 # gtest_add_tests fails on generator expressions like:
 #$<$<TARGET_EXISTS:Eigen3::Eigen>:${CMAKE_CURRENT_LIST_DIR}/eigen.cpp>
+find_package(Eigen3 QUIET)
 if(Eigen3_FOUND)
     message(STATUS "Eigen3 found. Building Eigen unit tests.")
     set(TEST_TARGET_SOURCES
@@ -31,6 +30,17 @@ if(Eigen3_FOUND)
     )
 else()
     message(STATUS "Eigen3 not found. Eigen unit tests skipped.")
+endif()
+
+find_package(OpenCV QUIET)
+if(OpenCV_FOUND)
+    message(STATUS "OpenCV found. Building OpenCV unit tests.")
+    set(TEST_TARGET_SOURCES
+        ${TEST_TARGET_SOURCES}
+        ${CMAKE_CURRENT_LIST_DIR}/opencv_test.cpp
+    )
+else()
+    message(STATUS "OpenCV not found. OpenCV unit tests skipped.")
 endif()
 
 target_sources(${TEST_TARGET_NAME} PRIVATE ${TEST_TARGET_SOURCES})
@@ -42,6 +52,7 @@ target_link_libraries(${TEST_TARGET_NAME}
     GTest::GTest
     GTest::Main
     $<$<TARGET_EXISTS:Eigen3::Eigen>:Eigen3::Eigen>
+    $<$<TARGET_EXISTS:opencv_core>:opencv_core>
 )
 
 gtest_add_tests(
