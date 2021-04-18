@@ -14,6 +14,7 @@
 
 namespace pico_tree {
 
+//! \brief StdPointTraits provides an interface for cv::Point_<>.
 template <typename Scalar_>
 struct StdPointTraits<cv::Point_<Scalar_>> {
   static_assert(sizeof(cv::Point_<Scalar_>) == (sizeof(Scalar_) * 2), "");
@@ -28,6 +29,7 @@ struct StdPointTraits<cv::Point_<Scalar_>> {
   inline static int constexpr Sdim(cv::Point_<Scalar_> const&) { return Dim; }
 };
 
+//! \brief StdPointTraits provides an interface for cv::Point3_<>.
 template <typename Scalar_>
 struct StdPointTraits<cv::Point3_<Scalar_>> {
   static_assert(sizeof(cv::Point3_<Scalar_>) == (sizeof(Scalar_) * 3), "");
@@ -42,6 +44,7 @@ struct StdPointTraits<cv::Point3_<Scalar_>> {
   inline static int constexpr Sdim(cv::Point3_<Scalar_> const&) { return Dim; }
 };
 
+//! \brief StdPointTraits provides an interface for cv::Vec<>.
 template <typename Scalar_, int Dim_>
 struct StdPointTraits<cv::Vec<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
@@ -63,12 +66,17 @@ struct StdPointTraits<cv::Vec<Scalar_, Dim_>> {
 template <typename Scalar_, int Dim_>
 class CvMatRow {
  public:
+  //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
+  //! \brief Compile time spatial dimension.
   static constexpr int Dim = Dim_;
 
+  //! \brief Constructs a CvMatRow given the index \p idx of a row and a matrix
+  //! \p space.
   inline CvMatRow(int idx, cv::Mat const& space)
       : coords_(space.ptr<Scalar_>(idx)), space_(space) {}
 
+  //! \brief Returns a pointer to this point's coordinates.
   inline Scalar_ const* coords() const { return coords_; }
 
   //! \brief Returns the amount of spatial dimensions of this point.
@@ -83,6 +91,7 @@ class CvMatRow {
   cv::Mat const& space_;
 };
 
+//! \brief StdPointTraits provides an interface for CvMatRow<>.
 template <typename Scalar_, int Dim_>
 struct StdPointTraits<CvMatRow<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
