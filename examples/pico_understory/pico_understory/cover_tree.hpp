@@ -588,7 +588,7 @@ class CoverTree {
           return a.second < b.second;
         });
 
-    for (auto const m : sorted) {
+    for (auto const& m : sorted) {
       // Algorithm 1 from paper "Faster Cover Trees" has a mistake. It checks
       // with respect to the nearest point, not the query point itself,
       // intersecting the wrong spheres.
