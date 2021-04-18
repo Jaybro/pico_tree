@@ -41,7 +41,10 @@ jobs:
         shell: bash
         # Within the Windows environment the GITHUB_WORKSPACE variable uses a \ as a separator. MinGW cmake cannot handle this.
         # ${GITHUB_WORKSPACE//'\'/'/'} replaces \ with / using the bash shell.
-        run: cmake -E make_directory ${GITHUB_WORKSPACE//'\'/'/'}/install
+        run: |
+          cmake -E make_directory ${GITHUB_WORKSPACE//'\'/'/'}/install
+          echo "${GITHUB_WORKSPACE//'\'/'/'}/install" >> $GITHUB_PATH
+          echo "${GITHUB_WORKSPACE//'\'/'/'}/install/bin" >> $GITHUB_PATH
 
       - name: CMake Google Test
         uses: ./.github/actions/cmake
