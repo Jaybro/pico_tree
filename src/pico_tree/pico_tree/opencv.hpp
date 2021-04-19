@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <opencv2/core.hpp>
 
 #include "std_traits.hpp"
@@ -81,6 +82,7 @@ class CvMatRow {
 
   //! \brief Returns the amount of spatial dimensions of this point.
   inline int sdim() const {
+    assert(Dim == kDynamicDim || Dim == space.step1());
     // TODO This run time version is actually quite expensive when used. Perhaps
     // there is an alternative.
     return space_.step1();
@@ -127,6 +129,9 @@ struct CvTraits {
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
   inline static int SpaceSdim(cv::Mat const& space) {
+    assert(Dim == kDynamicDim || Dim == space.step1());
+    // TODO This run time version is actually quite expensive when used. Perhaps
+    // there is an alternative.
     return static_cast<int>(space.step1());
   }
 
