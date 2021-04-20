@@ -10,22 +10,8 @@ TEST(OpenCvTest, Interface) {
   int constexpr Dim = 3;
   using Traits = pico_tree::CvTraits<Scalar, Dim>;
 
-  static_assert(
-      std::is_same<typename Traits::SpaceType, cv::Mat>::value,
-      "TRAITS_SPACE_TYPE_INCORRECT");
-
-  static_assert(Traits::Dim == Dim, "TRAITS_DIM_NOT_EQUAL_TO_EXPECTED_DIM");
-
-  static_assert(
-      std::is_same<typename Traits::IndexType, int>::value,
-      "TRAITS_INDEX_TYPE_NOT_INT");
-
-  int rows = 8;
-  int cols = 3;
-  cv::Mat matrix(rows, cols, cv::DataType<Scalar>::type);
-
-  EXPECT_EQ(cols, Traits::SpaceSdim(matrix));
-  EXPECT_EQ(rows, Traits::SpaceNpts(matrix));
+  cv::Mat matrix(8, 3, cv::DataType<Scalar>::type);
+  CheckTraits<Traits, Dim, int>(matrix, matrix.cols, matrix.rows);
 }
 
 TEST(OpenCvTest, TreeCompatibility) {

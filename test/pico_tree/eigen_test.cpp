@@ -56,62 +56,35 @@ TEST(EigenTest, EigenL2Squared) {
   EXPECT_FLOAT_EQ(metric(-3.1f), 9.61f);
 }
 
-template <int Dim, typename Matrix>
-void EigenCheckTypes(
-    Matrix const& matrix, Eigen::Index sdim, Eigen::Index npts) {
-  static_assert(
-      std::is_same<typename pico_tree::EigenTraits<Matrix>::SpaceType, Matrix>::
-          value,
-      "TRAITS_SPACE_TYPE_INCORRECT");
-
-  static_assert(
-      pico_tree::EigenTraits<Matrix>::Dim == Dim,
-      "TRAITS_DIM_NOT_EQUAL_TO_EXPECTED_DIM");
-
-  static_assert(
-      std::is_same<typename pico_tree::EigenTraits<Matrix>::IndexType, int>::
-          value,
-      "TRAITS_INDEX_TYPE_NOT_INT");
-
-  static_assert(
-      std::is_same<
-          typename pico_tree::EigenTraits<Matrix, std::size_t>::IndexType,
-          std::size_t>::value,
-      "TRAITS_INDEX_TYPE_NOT_SIZE_T");
-
-  EXPECT_EQ(
-      static_cast<int>(sdim),
-      pico_tree::EigenTraits<Matrix>::SpaceSdim(matrix));
-  EXPECT_EQ(
-      static_cast<int>(npts),
-      pico_tree::EigenTraits<Matrix>::SpaceNpts(matrix));
-}
-
 template <typename ColMatrix, typename RowMatrix>
 void CheckEigenAdaptorInterface() {
   ColMatrix col_matrix = ColMatrix::Random(4, 8);
   RowMatrix row_matrix = RowMatrix::Random(4, 8);
+  using ValColTraits = pico_tree::EigenTraits<ColMatrix>;
+  using ValRowTraits = pico_tree::EigenTraits<RowMatrix>;
+  using RefColTraits =
+      pico_tree::EigenTraits<std::reference_wrapper<ColMatrix>, std::size_t>;
+  using RefRowTraits = pico_tree::
+      EigenTraits<std::reference_wrapper<RowMatrix const>, std::size_t>;
 
-  EigenCheckTypes<ColMatrix::RowsAtCompileTime>(
+  CheckTraits<ValColTraits, ColMatrix::RowsAtCompileTime, int>(
       col_matrix, col_matrix.rows(), col_matrix.cols());
-  EigenCheckTypes<RowMatrix::ColsAtCompileTime>(
+  CheckTraits<ValRowTraits, RowMatrix::ColsAtCompileTime, int>(
       row_matrix, row_matrix.cols(), row_matrix.rows());
 
-  EigenCheckTypes<ColMatrix::RowsAtCompileTime>(
+  CheckTraits<RefColTraits, ColMatrix::RowsAtCompileTime, std::size_t>(
       std::ref(col_matrix), col_matrix.rows(), col_matrix.cols());
-  EigenCheckTypes<RowMatrix::ColsAtCompileTime>(
+  CheckTraits<RefRowTraits, RowMatrix::ColsAtCompileTime, std::size_t>(
       std::cref(row_matrix), row_matrix.cols(), row_matrix.rows());
 
-  EXPECT_TRUE(pico_tree::EigenTraits<ColMatrix>::PointAt(col_matrix, 0)
-                  .isApprox(col_matrix.col(0)));
-  EXPECT_TRUE(pico_tree::EigenTraits<ColMatrix>::PointAt(
-                  col_matrix, static_cast<int>(col_matrix.cols()) - 1)
-                  .isApprox(col_matrix.col(col_matrix.cols() - 1)));
-  EXPECT_TRUE(pico_tree::EigenTraits<RowMatrix>::PointAt(row_matrix, 0)
-                  .isApprox(row_matrix.row(0)));
-  EXPECT_TRUE(pico_tree::EigenTraits<RowMatrix>::PointAt(
-                  row_matrix, static_cast<int>(row_matrix.rows()) - 1)
-                  .isApprox(row_matrix.row(row_matrix.rows() - 1)));
+  EXPECT_TRUE(ValColTraits::PointAt(col_matrix, 0).isApprox(col_matrix.col(0)));
+  EXPECT_TRUE(
+      ValColTraits::PointAt(col_matrix, static_cast<int>(col_matrix.cols()) - 1)
+          .isApprox(col_matrix.col(col_matrix.cols() - 1)));
+  EXPECT_TRUE(ValRowTraits::PointAt(row_matrix, 0).isApprox(row_matrix.row(0)));
+  EXPECT_TRUE(
+      ValRowTraits::PointAt(row_matrix, static_cast<int>(row_matrix.rows()) - 1)
+          .isApprox(row_matrix.row(row_matrix.rows() - 1)));
 }
 
 TEST(EigenTest, Interface) {

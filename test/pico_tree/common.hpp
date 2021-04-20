@@ -1,5 +1,27 @@
 #pragma once
 
+template <
+    typename Traits,
+    int Dim,
+    typename IndexType,
+    typename SpaceType,
+    typename SdimType,
+    typename NptsType>
+void CheckTraits(SpaceType const& space, SdimType sdim, NptsType npts) {
+  static_assert(
+      std::is_same<typename Traits::SpaceType, SpaceType>::value,
+      "TRAITS_SPACE_TYPE_INCORRECT");
+
+  static_assert(Traits::Dim == Dim, "TRAITS_DIM_NOT_EQUAL_TO_EXPECTED_DIM");
+
+  static_assert(
+      std::is_same<typename Traits::IndexType, IndexType>::value,
+      "TRAITS_INDEX_TYPE_INCORRECT");
+
+  EXPECT_EQ(static_cast<int>(sdim), Traits::SpaceSdim(space));
+  EXPECT_EQ(static_cast<IndexType>(npts), Traits::SpaceNpts(space));
+}
+
 template <typename Traits, typename Index, typename Metric>
 void SearchKnn(
     typename Traits::PointType const& point,
