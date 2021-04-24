@@ -27,7 +27,7 @@ def compile_cmake_args():
 
     cxx_flags = compile_cxx_flags()
     if cxx_flags:
-        cmake_args.append('-DCMAKE_CXX_FLAGS=' + ' '.join(cxx_flags))
+        cmake_args.append('-DCMAKE_CXX_FLAGS="' + ' '.join(cxx_flags) + '"')
 
     return cmake_args
 
