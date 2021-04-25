@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(pico_tree
     LANGUAGES CXX
-    VERSION 0.7.0
+    VERSION 0.7.1
     DESCRIPTION "PicoTree is a C++ header only library with Python bindings for nearest neighbor searches and range searches using a KdTree."
     HOMEPAGE_URL "https://github.com/Jaybro/pico_tree")
 

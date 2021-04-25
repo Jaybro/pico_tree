@@ -13,7 +13,7 @@ See the table below to get an impression of the performance provided by the [KdT
 | [SciPy cKDTree][spck] v1.5.0        | ...       | 9.6s          | ...       | 14.1s       |
 | [Scikit-learn KDTree][skck] 0.22.2  | ...       | 27.1s         | ...       | 55.4s       |
 | [OpenCV FLANN][cvfn] 4.5.1          | 4.1s      | ...           | 7.0s      | ...         |
-| PicoTree KdTree v0.7.0              | 1.8s      | 2.0s          | 3.1s      | 4.1s        |
+| PicoTree KdTree v0.7.1              | 1.8s      | 2.0s          | 3.1s      | 4.1s        |
 
 The comparison was generated using 13729039 3d points from a [LiDAR](./docs/benchmark.md) scan, float64, with k=1 for queries and OMP_NUM_THREADS=1. Note that a different C++ back-end was used for each of the `Knn C++` and `Knn Python` benchmarks. This means that they shouldn't be compared directly. See the [Python comparison](./examples/python/kd_tree.py) for more details. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
