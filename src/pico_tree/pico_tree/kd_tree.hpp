@@ -51,7 +51,6 @@ class SplitterLongestMedian {
  private:
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
-  static constexpr int Dim = Traits::Dim;
   using Space = typename Traits::SpaceType;
   template <int Dim_>
   using Sequence = typename internal::Sequence<Scalar, Dim_>;
