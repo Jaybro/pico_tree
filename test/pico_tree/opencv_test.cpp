@@ -11,7 +11,9 @@ TEST(OpenCvTest, Interface) {
   using Traits = pico_tree::CvTraits<Scalar, Dim>;
 
   cv::Mat matrix(8, 3, cv::DataType<Scalar>::type);
-  CheckTraits<Traits, Dim, int>(matrix, matrix.cols, matrix.rows);
+  cv::Mat row = matrix.row(matrix.rows - 1);
+  CheckTraits<Traits, Dim, int>(
+      matrix, matrix.cols, matrix.rows, matrix.rows - 1, row.ptr<Scalar>());
 }
 
 TEST(OpenCvTest, TreeCompatibility) {

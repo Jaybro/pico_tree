@@ -1,13 +1,31 @@
 #pragma once
 
+inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
+
+inline void FloatEq(double val1, double val2) { EXPECT_DOUBLE_EQ(val1, val2); }
+
+inline void FloatLe(float val1, float val2) {
+  EXPECT_PRED_FORMAT2(testing::FloatLE, val1, val2);
+}
+
+inline void FloatLe(double val1, double val2) {
+  EXPECT_PRED_FORMAT2(testing::DoubleLE, val1, val2);
+}
+
 template <
     typename Traits,
     int Dim,
     typename IndexType,
     typename SpaceType,
     typename SdimType,
-    typename NptsType>
-void CheckTraits(SpaceType const& space, SdimType sdim, NptsType npts) {
+    typename NptsType,
+    typename ScalarType>
+void CheckTraits(
+    SpaceType const& space,
+    SdimType sdim,
+    NptsType npts,
+    NptsType point_index,
+    ScalarType const* point_data_ref) {
   static_assert(
       std::is_same<typename Traits::SpaceType, SpaceType>::value,
       "TRAITS_SPACE_TYPE_INCORRECT");
@@ -18,8 +36,19 @@ void CheckTraits(SpaceType const& space, SdimType sdim, NptsType npts) {
       std::is_same<typename Traits::IndexType, IndexType>::value,
       "TRAITS_INDEX_TYPE_INCORRECT");
 
+  static_assert(
+      std::is_same<typename Traits::ScalarType, ScalarType>::value,
+      "TRAITS_SCALAR_TYPE_INCORRECT");
+
   EXPECT_EQ(static_cast<int>(sdim), Traits::SpaceSdim(space));
   EXPECT_EQ(static_cast<IndexType>(npts), Traits::SpaceNpts(space));
+
+  ScalarType const* point_data_tst = Traits::PointCoords(
+      Traits::PointAt(space, static_cast<IndexType>(point_index)));
+
+  for (int i = 0; i < sdim; ++i) {
+    FloatEq(point_data_ref[i], point_data_tst[i]);
+  }
 }
 
 template <typename Traits, typename Index, typename Metric>
@@ -118,18 +147,6 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
   }
 
   EXPECT_EQ(count, results.size());
-}
-
-inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
-
-inline void FloatEq(double val1, double val2) { EXPECT_DOUBLE_EQ(val1, val2); }
-
-inline void FloatLe(float val1, float val2) {
-  EXPECT_PRED_FORMAT2(testing::FloatLE, val1, val2);
-}
-
-inline void FloatLe(double val1, double val2) {
-  EXPECT_PRED_FORMAT2(testing::DoubleLE, val1, val2);
 }
 
 template <typename Tree>
