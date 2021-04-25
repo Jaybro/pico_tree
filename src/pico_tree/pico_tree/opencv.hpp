@@ -20,13 +20,17 @@ template <typename Scalar_>
 struct StdPointTraits<cv::Point_<Scalar_>> {
   static_assert(sizeof(cv::Point_<Scalar_>) == (sizeof(Scalar_) * 2), "");
 
+  //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
+  //! \brief Compile time spatial dimension.
   static constexpr int Dim = 2;
 
+  //! \brief Returns a pointer to the coordinates of \p point.
   inline static ScalarType const* Coords(cv::Point_<Scalar_> const& point) {
     return &point.x;
   }
 
+  //! \brief Returns the spatial dimension of a cv::Point_.
   inline static int constexpr Sdim(cv::Point_<Scalar_> const&) { return Dim; }
 };
 
@@ -35,26 +39,34 @@ template <typename Scalar_>
 struct StdPointTraits<cv::Point3_<Scalar_>> {
   static_assert(sizeof(cv::Point3_<Scalar_>) == (sizeof(Scalar_) * 3), "");
 
+  //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
+  //! \brief Compile time spatial dimension.
   static constexpr int Dim = 3;
 
+  //! \brief Returns a pointer to the coordinates of \p point.
   inline static Scalar_ const* Coords(cv::Point3_<Scalar_> const& point) {
     return &point.x;
   }
 
+  //! \brief Returns the spatial dimension of a cv::Point3_.
   inline static int constexpr Sdim(cv::Point3_<Scalar_> const&) { return Dim; }
 };
 
 //! \brief StdPointTraits provides an interface for cv::Vec<>.
 template <typename Scalar_, int Dim_>
 struct StdPointTraits<cv::Vec<Scalar_, Dim_>> {
+  //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
+  //! \brief Compile time spatial dimension.
   static constexpr int Dim = Dim_;
 
+  //! \brief Returns a pointer to the coordinates of \p point.
   inline static Scalar_ const* Coords(cv::Vec<Scalar_, Dim_> const& point) {
     return point.val;
   }
 
+  //! \brief Returns the spatial dimension of a cv::Vec.
   inline static int constexpr Sdim(cv::Vec<Scalar_, Dim_> const&) {
     return Dim;
   }
@@ -80,7 +92,7 @@ class CvMatRow {
   //! \brief Returns a pointer to this point's coordinates.
   inline Scalar_ const* coords() const { return coords_; }
 
-  //! \brief Returns the amount of spatial dimensions of this point.
+  //! \brief Returns the spatial dimension of this point.
   inline int sdim() const {
     assert(Dim == kDynamicDim || Dim == space.step1());
     // TODO This run time version is actually quite expensive when used. Perhaps
@@ -96,13 +108,17 @@ class CvMatRow {
 //! \brief StdPointTraits provides an interface for CvMatRow<>.
 template <typename Scalar_, int Dim_>
 struct StdPointTraits<CvMatRow<Scalar_, Dim_>> {
+  //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
+  //! \brief Compile time spatial dimension.
   static constexpr int Dim = Dim_;
 
+  //! \brief Returns a pointer to the coordinates of \p point.
   inline static Scalar_ const* Coords(CvMatRow<Scalar_, Dim_> const& point) {
     return point.coords();
   }
 
+  //! \brief Returns the spatial dimension of \p point.
   inline static int Sdim(CvMatRow<Scalar_, Dim_> const& point) {
     return point.sdim();
   }
