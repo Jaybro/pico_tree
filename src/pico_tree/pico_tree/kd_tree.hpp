@@ -385,7 +385,9 @@ class KdTree {
   //! \see internal::SearchAknn
   template <typename P, typename V>
   inline void SearchNearest(P const& x, V* visitor) const {
-    SearchNearest(root_, x, visitor);
+    Sequence node_box_offset;
+    node_box_offset.Fill(Traits::SpaceSdim(points_), Scalar(0.0));
+    SearchNearest(root_, x, Scalar(0.0), &node_box_offset, visitor);
   }
 
   //! \brief Searches for the nearest neighbor of point \p x.
@@ -394,7 +396,7 @@ class KdTree {
   template <typename P>
   inline void SearchNn(P const& x, NeighborType* nn) const {
     internal::SearchNn<NeighborType> v(nn);
-    SearchNearest(root_, x, &v);
+    SearchNearest(x, &v);
   }
 
   //! \brief Searches for the k nearest neighbors of point \p x, where k equals
@@ -414,7 +416,7 @@ class KdTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
-    SearchNearest(root_, x, &v);
+    SearchNearest(x, &v);
   }
 
   //! \brief Searches for the \p k nearest neighbors of point \p x and stores
@@ -455,7 +457,7 @@ class KdTree {
       std::vector<NeighborType>* n,
       bool const sort = false) const {
     internal::SearchRadius<NeighborType> v(radius, n);
-    SearchNearest(root_, x, &v);
+    SearchNearest(x, &v);
 
     if (sort) {
       v.Sort();
@@ -508,7 +510,7 @@ class KdTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
-    SearchNearest(root_, x, &v);
+    SearchNearest(x, &v);
   }
 
   //! \brief Searches for the \p k approximate nearest neighbors of point \p x
@@ -643,7 +645,11 @@ class KdTree {
   //! on their selection by visitor \p visitor for node \p node .
   template <typename P, typename V>
   inline void SearchNearest(
-      Node const* const node, P const& x, V* visitor) const {
+      Node const* const node,
+      P const& x,
+      Scalar node_box_distance,
+      Sequence* node_box_offset,
+      V* visitor) const {
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
@@ -671,9 +677,29 @@ class KdTree {
         node_2nd = node->left;
       }
 
-      SearchNearest(node_1st, x, visitor);
-      if (visitor->max() >= metric_(node->data.branch.split_val, v)) {
-        SearchNearest(node_2nd, x, visitor);
+      // S. Arya and D. M. Mount. Algorithms for fast vector quantization. In
+      // IEEE Data Compression Conference, pages 381–390, March 1993
+      // https://www.cs.umd.edu/~mount/Papers/DCC.pdf
+      // This paper describes the "Incremental Distance Calculation" technique
+      // to speed up nearest neighbor queries.
+
+      // The distance and offset for node_1st is the same as that of its parent.
+      SearchNearest(node_1st, x, node_box_distance, node_box_offset, visitor);
+
+      // Calculate the distance to node_2nd.
+      // NOTE: This method only works with Lp norms to which the exponent is not
+      // applied.
+      Scalar old_offset = (*node_box_offset)[node->data.branch.split_dim];
+      Scalar new_offset = metric_(node->data.branch.split_val, v);
+      node_box_distance = node_box_distance - old_offset + new_offset;
+
+      // The value visitor->max() contains the current nearest neighbor distance
+      // or otherwise current maximum search distance. When testing against the
+      // split value we determine if we should go into the neighboring node.
+      if (visitor->max() >= node_box_distance) {
+        (*node_box_offset)[node->data.branch.split_dim] = new_offset;
+        SearchNearest(node_2nd, x, node_box_distance, node_box_offset, visitor);
+        (*node_box_offset)[node->data.branch.split_dim] = old_offset;
       }
     }
   }
