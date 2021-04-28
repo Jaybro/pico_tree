@@ -5,4 +5,5 @@ target_link_libraries(pico_understory INTERFACE PicoTree::PicoTree)
 target_sources(pico_understory
     INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/pico_understory/cover_tree.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/pico_understory/metric.hpp
 )

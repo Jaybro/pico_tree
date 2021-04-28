@@ -4,8 +4,9 @@
 #include <numeric>
 #include <pico_tree/internal/memory.hpp>
 #include <pico_tree/internal/search_visitor.hpp>
-#include <pico_tree/metric.hpp>
 #include <random>
+
+#include "metric.hpp"
 
 // Use this define to enable a simplified version of the nearest ancestor tree
 // or disable it to use the regular one from "Faster Cover Trees".
