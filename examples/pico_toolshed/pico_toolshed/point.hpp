@@ -10,6 +10,8 @@
 //! \tparam Dim_ The dimension of the space in which the point resides.
 template <typename Scalar_, int Dim_>
 class Point {
+  static_assert(Dim_ > 0, "INVALID_SPATIAL_DIMENSION_POINT");
+
  public:
   using ScalarType = Scalar_;
   static constexpr int Dim = Dim_;
@@ -21,6 +23,15 @@ class Point {
     for (int i = 0; i < Dim; ++i) {
       data[i] = v;
     }
+  }
+
+  template <typename OtherScalarType>
+  inline Point<OtherScalarType, Dim> Cast() const {
+    Point<OtherScalarType, Dim> other;
+    for (int i = 0; i < Dim; ++i) {
+      other.data[i] = static_cast<OtherScalarType>(data[i]);
+    }
+    return other;
   }
 
   ScalarType data[Dim];
