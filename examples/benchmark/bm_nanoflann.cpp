@@ -26,7 +26,7 @@ class BmNanoflann : public pico_tree::Benchmark {
 
 BENCHMARK_DEFINE_F(BmNanoflann, BuildCt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  NanoAdaptorX adaptor(points_);
+  NanoAdaptorX adaptor(points_tree_);
   for (auto _ : state) {
     NanoKdTreeCt<NanoAdaptorX> tree(
         PointX::Dim,
@@ -38,7 +38,7 @@ BENCHMARK_DEFINE_F(BmNanoflann, BuildCt)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(BmNanoflann, BuildRt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  NanoAdaptorX adaptor(points_);
+  NanoAdaptorX adaptor(points_tree_);
   for (auto _ : state) {
     NanoKdTreeRt<NanoAdaptorX> tree(
         PointX::Dim,
@@ -66,7 +66,7 @@ BENCHMARK_REGISTER_F(BmNanoflann, BuildRt)
 BENCHMARK_DEFINE_F(BmNanoflann, KnnCt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
-  NanoAdaptorX adaptor(points_);
+  NanoAdaptorX adaptor(points_tree_);
   NanoKdTreeCt<NanoAdaptorX> tree(
       PointX::Dim,
       adaptor,
@@ -77,7 +77,7 @@ BENCHMARK_DEFINE_F(BmNanoflann, KnnCt)(benchmark::State& state) {
     std::vector<Index> indices(knn_count);
     std::vector<Scalar> distances(knn_count);
     std::size_t sum = 0;
-    for (auto const& p : points_) {
+    for (auto const& p : points_test_) {
       benchmark::DoNotOptimize(
           sum +=
           tree.knnSearch(p.data, knn_count, indices.data(), distances.data()));
@@ -120,9 +120,9 @@ BENCHMARK_REGISTER_F(BmNanoflann, KnnCt)
 
 BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  double radius = static_cast<double>(state.range(1)) / 10.0;
-  double squared = radius * radius;
-  NanoAdaptorX adaptor(points_);
+  Scalar radius = static_cast<Scalar>(state.range(1)) / 10.0;
+  Scalar squared = radius * radius;
+  NanoAdaptorX adaptor(points_tree_);
   NanoKdTreeCt<NanoAdaptorX> tree(
       PointX::Dim,
       adaptor,
@@ -132,7 +132,7 @@ BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
   for (auto _ : state) {
     std::vector<std::pair<Index, Scalar>> results;
     std::size_t sum = 0;
-    for (auto const& p : points_) {
+    for (auto const& p : points_test_) {
       benchmark::DoNotOptimize(
           sum += tree.radiusSearch(
               p.data, squared, results, nanoflann::SearchParams{0, 0, false}));

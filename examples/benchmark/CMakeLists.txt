@@ -51,7 +51,6 @@ endif()
 add_executable(uosr_to_bin)
 target_sources(uosr_to_bin
     PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/format_uosr.cpp
         ${CMAKE_CURRENT_LIST_DIR}/uosr_to_bin.cpp
 )
 target_link_libraries(uosr_to_bin PRIVATE pico_toolshed)

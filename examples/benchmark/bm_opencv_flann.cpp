@@ -19,7 +19,8 @@ class BmOpenCvFlann : public pico_tree::Benchmark {
 
 BENCHMARK_DEFINE_F(BmOpenCvFlann, BuildRt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  cvflann::Matrix<Scalar> matrix(points_.data()->data, points_.size(), 3);
+  cvflann::Matrix<Scalar> matrix(
+      points_tree_.data()->data, points_tree_.size(), 3);
   // Reorder will change the order of the input to fit the generated indices,
   // but it will replace (delete) the original input.
   cvflann::KDTreeSingleIndexParams pindex(max_leaf_size, false);
@@ -43,7 +44,8 @@ BENCHMARK_DEFINE_F(BmOpenCvFlann, KnnRt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
 
-  cvflann::Matrix<Scalar> matrix(points_.data()->data, points_.size(), 3);
+  cvflann::Matrix<Scalar> matrix(
+      points_tree_.data()->data, points_tree_.size(), 3);
   // Reorder will change the order of the input to fit the generated indices,
   // but it will replace (and delete) the original input. Note that the reorder
   // option does not appear to have effect on the performance of the queries.
@@ -68,7 +70,7 @@ BENCHMARK_DEFINE_F(BmOpenCvFlann, KnnRt)(benchmark::State& state) {
     cvflann::Matrix<Index> mat_indices(indices.data(), 1, knn_count);
     cvflann::Matrix<Scalar> mat_distances(distances.data(), 1, knn_count);
 
-    for (auto& p : points_) {
+    for (auto& p : points_test_) {
       cvflann::Matrix<Scalar> query(p.data, 1, 3);
       tree.knnSearch(query, mat_indices, mat_distances, knn_count, psearch);
     }

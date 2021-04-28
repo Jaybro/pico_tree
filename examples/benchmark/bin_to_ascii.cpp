@@ -15,7 +15,7 @@ int main() {
     std::cout << path_bin.string() << " doesn't exist." << std::endl;
   } else if (!std::filesystem::exists(path_ascii)) {
     std::cout << "Reading points in bin format..." << std::endl;
-    std::vector<Point3d> points;
+    std::vector<Point3f> points;
     pico_tree::ReadBin(path_bin.string(), &points);
     std::cout << "Read " << points.size() << " points." << std::endl;
     std::cout << "Writing points to ascii xyz format..." << std::endl;
