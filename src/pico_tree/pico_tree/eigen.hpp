@@ -337,27 +337,6 @@ class EigenL1 {
   inline Scalar operator()(Scalar const x) const { return std::abs(x); }
 };
 
-//! \brief EigenL2 metric for measuring Euclidean distances between points.
-template <typename Scalar>
-class EigenL2 {
- public:
-  //! \brief Calculates the distance between points \p p0 and \p p1.
-  template <typename Derived0, typename Derived1>
-  inline Scalar operator()(
-      Eigen::MatrixBase<Derived0> const& p0,
-      Eigen::MatrixBase<Derived1> const& p1) const {
-    return (p0 - p1).norm();
-  }
-
-  //! \brief Calculates the distance between two coordinates.
-  inline Scalar operator()(Scalar const x, Scalar const y) const {
-    return std::abs(x - y);
-  }
-
-  //! \brief Returns the absolute value of \p x.
-  inline Scalar operator()(Scalar const x) const { return std::abs(x); }
-};
-
 //! \brief The EigenL2Squared semimetric measures squared Euclidean distances
 //! between points.
 template <typename Scalar>

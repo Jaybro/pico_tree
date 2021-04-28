@@ -28,20 +28,6 @@ TEST(EigenTest, EigenL1) {
   EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
 }
 
-TEST(EigenTest, EigenL2) {
-  using PointX = Eigen::Vector2f;
-  using Scalar = typename PointX::Scalar;
-
-  PointX p0{10.0f, 1.0f};
-  PointX p1{7.0f, 5.0f};
-
-  pico_tree::EigenL2<Scalar> metric;
-
-  EXPECT_FLOAT_EQ(metric(p0, p1), 5.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 12.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
-}
-
 TEST(EigenTest, EigenL2Squared) {
   using PointX = Eigen::Vector2f;
   using Scalar = typename PointX::Scalar;
