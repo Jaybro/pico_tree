@@ -144,17 +144,17 @@ BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
 // Argument 2: Search radius (divided by 10.0).
 BENCHMARK_REGISTER_F(BmNanoflann, RadiusCt)
     ->Unit(benchmark::kMillisecond)
-    ->Args({1, 2})
-    ->Args({6, 2})
-    ->Args({8, 2})
-    ->Args({10, 2})
-    ->Args({12, 2})
-    ->Args({14, 2})
-    ->Args({1, 4})
-    ->Args({6, 4})
-    ->Args({8, 4})
-    ->Args({10, 4})
-    ->Args({12, 4})
-    ->Args({14, 4});
+    ->Args({1, 15})
+    ->Args({6, 15})
+    ->Args({8, 15})
+    ->Args({10, 15})
+    ->Args({12, 15})
+    ->Args({14, 15})
+    ->Args({1, 30})
+    ->Args({6, 30})
+    ->Args({8, 30})
+    ->Args({10, 30})
+    ->Args({12, 30})
+    ->Args({14, 30});
 
 BENCHMARK_MAIN();
