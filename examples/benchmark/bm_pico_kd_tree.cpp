@@ -113,16 +113,6 @@ BENCHMARK_REGISTER_F(BmPicoKdTree, KnnCtSldMid)
     ->Args({12, 12})
     ->Args({14, 12});
 
-// The 2nd argument is used to keep plot_benchmarks.py the same.
-BENCHMARK_REGISTER_F(BmPicoKdTree, NnCtSldMid)
-    ->Unit(benchmark::kMillisecond)
-    ->Args({1, 1})
-    ->Args({6, 1})
-    ->Args({8, 1})
-    ->Args({10, 1})
-    ->Args({12, 1})
-    ->Args({14, 1});
-
 // ****************************************************************************
 // Radius
 // ****************************************************************************
