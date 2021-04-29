@@ -112,18 +112,20 @@ def performance_test_pico_tree():
     # benchmark", explains how to generate a scans.bin file from an online
     # dataset.
     try:
-        p = np.fromfile(Path(__file__).parent / "scans.bin",
-                        np.float64).reshape((-1, 3))
+        p0 = np.fromfile(Path(__file__).parent / "scans0.bin",
+                         np.float32).reshape((-1, 3))
+        p1 = np.fromfile(Path(__file__).parent / "scans1.bin",
+                         np.float32).reshape((-1, 3))
     except FileNotFoundError as e:
         print(f"Skipping test. File does not exist: {e.filename}")
         return
 
     cnt_build_time_before = perf_counter()
     # Tree creation is only slightly slower in Python vs C++ using the bindings.
-    t = pt.KdTree(p, pt.Metric.L2Squared, 10)
-    #t = spKDTree(p, leafsize=10)
-    #t = spcKDTree(p, leafsize=10)
-    #t = skKDTree(p, leaf_size=10)
+    t = pt.KdTree(p0, pt.Metric.L2Squared, 10)
+    #t = spKDTree(p0, leafsize=10)
+    #t = spcKDTree(p0, leafsize=10)
+    #t = skKDTree(p0, leaf_size=10)
     cnt_build_time_after = perf_counter()
     print(f"{t} was built in {(cnt_build_time_after - cnt_build_time_before) * 1000.0}ms")
     # Use the OMP_NUM_THREADS environment variable to influence the number of
@@ -142,11 +144,11 @@ def performance_test_pico_tree():
     # TODO The actual overhead is probably very similar to that of the KdTree
     # creation, but it would be nice to measure the overhead w.r.t. the actual
     # query.
-    unused_knns = t.search_knn(p, k)
-    # unused_dd, unused_ii = t.query(p, k=k)
+    unused_knns = t.search_knn(p1, k)
+    #unused_dd, unused_ii = t.query(p1, k=k)
     cnt_query_time_after = perf_counter()
     print(
-        f"{len(p)} points queried in {(cnt_query_time_after - cnt_query_time_before) * 1000.0}ms")
+        f"{len(p1)} points queried in {(cnt_query_time_after - cnt_query_time_before) * 1000.0}ms")
     print()
 
 
