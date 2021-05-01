@@ -6,8 +6,8 @@
 // simply include the original FLANN <flann/flann.hpp> and replace the cvflann
 // namespace by the flann namespace and the benchmark will still work.
 // NOTE: The OpenCV version of FLANN performs quite a bit faster for queries
-// than https://github.com/flann-lib/flann. About an order of magnitude for a
-// single NN. Tree build times are the same.
+// than https://github.com/flann-lib/flann version 1.9.1. About an order of
+// magnitude for a single NN. Tree build times are the same.
 class BmOpenCvFlann : public pico_tree::Benchmark {
  public:
 };
