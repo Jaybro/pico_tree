@@ -4,6 +4,10 @@
 
 #include "benchmark.hpp"
 
+class BmPicoCoverTree : public pico_tree::Benchmark {
+ public:
+};
+
 // Index explicitly set to int.
 template <typename PointX>
 using PicoTraits =
@@ -11,10 +15,6 @@ using PicoTraits =
 
 template <typename PointX>
 using PicoCoverTree = pico_tree::CoverTree<PicoTraits<PointX>>;
-
-class BmPicoCoverTree : public pico_tree::Benchmark {
- public:
-};
 
 // ****************************************************************************
 // Building the tree

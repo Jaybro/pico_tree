@@ -3,6 +3,10 @@
 
 #include "benchmark.hpp"
 
+class BmPicoKdTree : public pico_tree::Benchmark {
+ public:
+};
+
 // Index explicitly set to int.
 template <typename PointX>
 using PicoTraits =
@@ -17,10 +21,6 @@ using PicoKdTreeRtSldMid = pico_tree::KdTree<
     pico_tree::L2Squared<PicoTraits<PointX>>,
     pico_tree::SplitterSlidingMidpoint<PicoTraits<PointX>>,
     pico_tree::kDynamicDim>;
-
-class BmPicoKdTree : public pico_tree::Benchmark {
- public:
-};
 
 // ****************************************************************************
 // Building the tree

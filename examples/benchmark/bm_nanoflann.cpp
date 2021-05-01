@@ -1,6 +1,11 @@
 #include "benchmark.hpp"
 #include "nano_adaptor.hpp"
 
+class BmNanoflann : public pico_tree::Benchmark {
+ public:
+  using NanoAdaptorX = NanoAdaptor<Index, PointX>;
+};
+
 template <typename NanoAdaptor>
 using NanoKdTreeCt = nanoflann::KDTreeSingleIndexAdaptor<
     nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::ScalarType, NanoAdaptor>,
@@ -14,11 +19,6 @@ using NanoKdTreeRt = nanoflann::KDTreeSingleIndexAdaptor<
     NanoAdaptor,
     -1,
     typename NanoAdaptor::IndexType>;
-
-class BmNanoflann : public pico_tree::Benchmark {
- public:
-  using NanoAdaptorX = NanoAdaptor<Index, PointX>;
-};
 
 // ****************************************************************************
 // Building the tree
