@@ -25,7 +25,7 @@ The running time of the benchmark was kept reasonable by using two subsets of po
 
 Both parts are 360 degree scans taken from different positions. The first is used to build a tree and the second for querying that tree. Note that each run time describes a single invocation of a build algorithm and n invocations of the others.
 
-Results were generated on: 12-04-2021 using MinGW GCC 10.1.
+Results were generated on: 01-05-2021 using MinGW GCC 10.1.
 
 ![Build Time](./images/benchmark_gauss_build_time.png)![Radius Search Time](./images/benchmark_gauss_radius_search_time.png)
 

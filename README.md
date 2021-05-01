@@ -4,6 +4,25 @@
 
 PicoTree is a C++ header only library with [Python bindings](https://github.com/pybind/pybind11) for nearest neighbor searches and range searches using a KdTree.
 
+See the table below to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library versus several other implementations:
+
+|                                     | Build C++ | Build Python  | Knn C++    | Knn Python  |
+| ----------------------------------- | --------- | ------------- | ---------- | ----------- |
+| [nanoflann][nano] v1.3.2            | 1.5s      | ...           | 3.2s       | ...         |
+| [SciPy KDTree][sppk] v1.5.0         | ...       | 75.1s         | ...        | +inf        |
+| [SciPy cKDTree][spck] v1.5.0        | ...       | 5.0s          | ...        | 547.2s      |
+| [Scikit-learn KDTree][skck] 0.22.2  | ...       | 12.2s         | ...        | 44.5s       |
+| [OpenCV FLANN][cvfn] 4.5.2          | 1.9s      | ...           | 4.7s       | ...         |
+| PicoTree KdTree master              | 0.8s      | 1.0s          | 3.0s       | 3.9s        |
+
+It compares the performance of the build and query algorithms using two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863. The first is used to compare build times and both to compare query times. All benchmarks used the following parameters: `max_leaf_size=10`, `knn=1` for queries and `OMP_NUM_THREADS=1`. Note that a different C++ back-end was used for each of the `Knn C++` and `Knn Python` benchmarks. This means that they shouldn't be compared directly. See the [Python comparison](./examples/python/kd_tree.py) for more details. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
+
+[nano]: https://github.com/jlblancoc/nanoflann
+[sppk]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.html
+[spck]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.html
+[skck]: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KDTree.html
+[cvfn]: https://github.com/opencv/opencv
+
 Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 # Capabilities
@@ -37,7 +56,7 @@ Optional:
 * [Google Test](https://github.com/google/googletest). Used for running unit tests.
 * [Eigen](http://eigen.tuxfamily.org). To run the example that shows how Eigen data types can be used in combination with PicoTree.
 * [OpenCV](https://opencv.org/). To run the OpenCV example that shows how to work with OpenCV data types.
-* [nanoflann](https://github.com/jlblancoc/nanoflann), [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run the comparison benchmark between nanoflann and PicoTree.
+* [nanoflann](https://github.com/jlblancoc/nanoflann), [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run the comparison [benchmark](./docs/benchmark.md) between nanoflann and PicoTree.
 
 Python bindings:
 * [Python](https://www.python.org/). Version 3.5 or higher.
