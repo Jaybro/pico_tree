@@ -11,17 +11,20 @@ TEST(OpenCvTest, Interface) {
   using Traits = pico_tree::CvTraits<Scalar, Dim>;
 
   cv::Mat matrix(8, 3, cv::DataType<Scalar>::type);
+  cv::randu(matrix, -Scalar(1.0), Scalar(1.0));
   cv::Mat row = matrix.row(matrix.rows - 1);
+
   CheckTraits<Traits, Dim, int>(
       matrix, matrix.cols, matrix.rows, matrix.rows - 1, row.ptr<Scalar>());
 }
 
 TEST(OpenCvTest, TreeCompatibility) {
   using Scalar = float;
-  cv::Mat random(8, 4, cv::DataType<Scalar>::type);
+
+  cv::Mat random(1024, 4, cv::DataType<Scalar>::type);
   cv::randu(random, -Scalar(1.0), Scalar(1.0));
 
   pico_tree::KdTree<pico_tree::CvTraits<Scalar, 4>> tree(random, 10);
 
-  TestKnn(tree, 2);
+  TestKnn(tree, 20);
 }
