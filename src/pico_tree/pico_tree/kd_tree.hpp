@@ -610,7 +610,7 @@ class KdTree {
 
     for (Index j = 0; j < Traits::SpaceNpts(points_); ++j) {
       Scalar const* const p = Traits::PointCoords(Traits::PointAt(points_, j));
-      for (int i = 0; i < internal::Dimension<Traits>::Dim(points_); ++i) {
+      for (int i = 0; i < internal::Dimension<Traits, Dim>::Dim(points_); ++i) {
         Scalar const v = p[i];
         if (v < min[i]) {
           min[i] = v;
@@ -708,7 +708,7 @@ class KdTree {
   //! point on the edge considered inside the box.
   template <typename P0, typename P1>
   inline bool PointInBox(P0 const& x, P1 const& min, P1 const& max) const {
-    for (int i = 0; i < internal::Dimension<Traits>::Dim(points_); ++i) {
+    for (int i = 0; i < internal::Dimension<Traits, Dim>::Dim(points_); ++i) {
       if (min[i] > x[i] || max[i] < x[i]) {
         return false;
       }
