@@ -35,6 +35,8 @@ class ListPool {
   };
 
  public:
+  using ValueType = T;
+
   //! \brief Creates a ListPool using the default constructor.
   ListPool() : end_(nullptr), index_(ChunkSize) {}
 
@@ -93,6 +95,8 @@ class ListPool {
 template <typename T>
 class StaticBuffer {
  public:
+  using ValueType = T;
+
   //! Creates a StaticBuffer having space for \p size elements.
   inline explicit StaticBuffer(std::size_t const size) {
     buffer_.reserve(size);
@@ -116,6 +120,8 @@ class StaticBuffer {
 template <typename T>
 class DynamicBuffer : public ListPool<T, 256> {
  public:
+  using ValueType = typename ListPool<T, 256>::ValueType;
+
   //! Creates a DynamicBuffer.
   inline DynamicBuffer() = default;
   //! Creates a DynamicBuffer. Ignores the argument in favor of a common
