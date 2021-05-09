@@ -94,7 +94,7 @@ class CvMatRow {
 
   //! \brief Returns the spatial dimension of this point.
   inline int sdim() const {
-    assert(Dim == kDynamicDim || Dim == space.step1());
+    assert(Dim == kDynamicDim || Dim == space_.step1());
     // TODO This run time version is actually quite expensive when used. Perhaps
     // there is an alternative.
     return space_.step1();
