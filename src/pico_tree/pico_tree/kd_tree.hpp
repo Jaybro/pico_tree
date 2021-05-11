@@ -48,13 +48,13 @@ struct BranchRange {
   int split_dim;
   //! \brief Coordinate value used for splitting the children of a node.
   Scalar split_val;
-  //! \brief Min box value of this node for split_dim.
+  //! \brief Min box value of this node at the split_dim coordinate.
   Scalar min_val;
-  //! \brief Max box value of this node for split_dim.
+  //! \brief Max box value of this node at the split_dim coordinate.
   Scalar max_val;
 };
 
-//! \brief Data is used to either store branch or leaf information. Which
+//! \brief NodeData is used to either store branch or leaf information. Which
 //! union member is used can be tested with IsBranch() or IsLeaf().
 template <typename Leaf, typename Branch>
 union NodeData {
@@ -64,27 +64,44 @@ union NodeData {
   Leaf leaf;
 };
 
-//! \brief KdTree Node.
+//! \brief KdTree node for a Euclidean space.
 template <typename Index, typename Scalar>
 struct NodeEuclidean : public NodeBase<NodeEuclidean<Index, Scalar>> {
   NodeData<Leaf<Index>, BranchSplit<Scalar>> data;
 };
 
-//! \brief KdTree Node.
+//! \brief KdTree node for a topological space.
 template <typename Index, typename Scalar>
 struct NodeTopological : public NodeBase<NodeEuclidean<Index, Scalar>> {
   NodeData<Leaf<Index>, BranchRange<Scalar>> data;
 };
 
+template <typename SpaceTag>
+struct SpaceTagTraits;
+
+template <>
+struct SpaceTagTraits<EuclideanSpaceTag> {
+  template <typename Index, typename Scalar>
+  using Node = NodeEuclidean<Index, Scalar>;
+};
+
+template <>
+struct SpaceTagTraits<TopologicalSpaceTag> {
+  template <typename Index, typename Scalar>
+  using Node = NodeTopological<Index, Scalar>;
+};
+
 //! KdTree builder.
-template <typename Index, typename Scalar, int Dim_, typename Splitter>
+template <typename Traits, typename SpaceTag, typename Splitter, int Dim_>
 class Builder {
  public:
-  using Node = NodeEuclidean<Index, Scalar>;
+  using Index = typename Traits::IndexType;
+  using Scalar = typename Traits::ScalarType;
+  using Node = typename SpaceTagTraits<SpaceTag>::Node<Index, Scalar>;
   using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
   using Sequence = Sequence<Scalar, Dim_>;
 
-  Builder(
+  inline Builder(
       Index const max_leaf_size, Splitter const& splitter, MemoryBuffer* nodes)
       : max_leaf_size_{max_leaf_size}, splitter_{splitter}, nodes_{*nodes} {}
 
@@ -105,16 +122,21 @@ class Builder {
       node->left = nullptr;
       node->right = nullptr;
     } else {
+      int split_dim;
       Index split_idx;
+      Scalar split_val;
       splitter_(
           depth,
           offset,
           size,
           box_min,
           box_max,
-          &node->data.branch.split_dim,
+          &split_dim,
           &split_idx,
-          &node->data.branch.split_val);
+          &split_val);
+
+      SetBranch(box_min, box_max, split_dim, split_val, node);
+
       // The split_idx is used as the first index of the right branch.
       Index const left_size = split_idx - offset;
       Index const right_size = size - left_size;
@@ -139,6 +161,28 @@ class Builder {
   }
 
  private:
+  inline void SetBranch(
+      Sequence const& box_min,
+      Sequence const& box_max,
+      int const& split_dim,
+      Scalar const& split_val,
+      NodeEuclidean<Index, Scalar>* node) const {
+    node->data.branch.split_dim = split_dim;
+    node->data.branch.split_val = split_val;
+  }
+
+  inline void SetBranch(
+      Sequence const& box_min,
+      Sequence const& box_max,
+      int const& split_dim,
+      Scalar const& split_val,
+      NodeTopological<Index, Scalar>* node) const {
+    node->data.branch.split_dim = split_dim;
+    node->data.branch.split_val = split_val;
+    node->data.branch.min_val = box_min[split_dim];
+    node->data.branch.max_val = box_max[split_dim];
+  }
+
   Index const max_leaf_size_;
   Splitter const& splitter_;
   MemoryBuffer& nodes_;
@@ -442,11 +486,12 @@ class KdTree {
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
-  using Node = internal::NodeEuclidean<Index, Scalar>;
+  using Builder =
+      internal::Builder<Traits, typename Metric::SpaceTag, Splitter, Dim_>;
+  using Node = typename Builder::Node;
   //! Either an array or vector (compile time vs. run time).
   using Sequence = typename internal::Sequence<Scalar, Dim_>;
   using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
-  using Builder = internal::Builder<Index, Scalar, Dim_, Splitter>;
 
  public:
   //! \brief Index type.
