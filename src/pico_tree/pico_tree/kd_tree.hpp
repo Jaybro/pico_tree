@@ -873,13 +873,11 @@ class KdTree {
     stream->Read(&is_leaf);
 
     if (is_leaf) {
-      stream->Read(&node->data.leaf.begin_idx);
-      stream->Read(&node->data.leaf.end_idx);
+      stream->Read(&node->data.leaf);
       node->left = nullptr;
       node->right = nullptr;
     } else {
-      stream->Read(&node->data.branch.split_dim);
-      stream->Read(&node->data.branch.split_val);
+      stream->Read(&node->data.branch);
       node->left = ReadNode(stream);
       node->right = ReadNode(stream);
     }
@@ -892,12 +890,10 @@ class KdTree {
       Node const* const node, internal::Stream* stream) const {
     if (node->IsLeaf()) {
       stream->Write(true);
-      stream->Write(node->data.leaf.begin_idx);
-      stream->Write(node->data.leaf.end_idx);
+      stream->Write(node->data.leaf);
     } else {
       stream->Write(false);
-      stream->Write(node->data.branch.split_dim);
-      stream->Write(node->data.branch.split_val);
+      stream->Write(node->data.branch);
       WriteNode(node->left, stream);
       WriteNode(node->right, stream);
     }
