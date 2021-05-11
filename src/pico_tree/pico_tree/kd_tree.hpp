@@ -99,7 +99,6 @@ class Builder {
   using Scalar = typename Traits::ScalarType;
   using Node = typename SpaceTagTraits<SpaceTag>::template Node<Index, Scalar>;
   using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
-  using SequenceType = Sequence<Scalar, Dim_>;
 
   inline Builder(
       Index const max_leaf_size, Splitter const& splitter, MemoryBuffer* nodes)
@@ -112,8 +111,8 @@ class Builder {
       Index const depth,
       Index const offset,
       Index const size,
-      typename SequenceType::MoveReturnType box_min,
-      typename SequenceType::MoveReturnType box_max) const {
+      typename Sequence<Scalar, Dim_>::MoveReturnType box_min,
+      typename Sequence<Scalar, Dim_>::MoveReturnType box_max) const {
     Node* node = nodes_.Allocate();
     //
     if (size <= max_leaf_size_) {
@@ -141,10 +140,10 @@ class Builder {
       Index const left_size = split_idx - offset;
       Index const right_size = size - left_size;
 
-      SequenceType left_box_max = box_max;
+      Sequence<Scalar, Dim_> left_box_max = box_max;
       left_box_max[node->data.branch.split_dim] = node->data.branch.split_val;
 
-      SequenceType right_box_min = box_min;
+      Sequence<Scalar, Dim_> right_box_min = box_min;
       right_box_min[node->data.branch.split_dim] = node->data.branch.split_val;
 
       node->left = SplitIndices(
@@ -162,8 +161,8 @@ class Builder {
 
  private:
   inline void SetBranch(
-      SequenceType const& box_min,
-      SequenceType const& box_max,
+      Sequence<Scalar, Dim_> const& box_min,
+      Sequence<Scalar, Dim_> const& box_max,
       int const& split_dim,
       Scalar const& split_val,
       NodeEuclidean<Index, Scalar>* node) const {
@@ -172,8 +171,8 @@ class Builder {
   }
 
   inline void SetBranch(
-      SequenceType const& box_min,
-      SequenceType const& box_max,
+      Sequence<Scalar, Dim_> const& box_min,
+      Sequence<Scalar, Dim_> const& box_max,
       int const& split_dim,
       Scalar const& split_val,
       NodeTopological<Index, Scalar>* node) const {
@@ -199,7 +198,6 @@ class SearchNearestEuclidean {
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
-  using Sequence = Sequence<Scalar, Dim_>;
 
  public:
   using Node = NodeEuclidean<Index, Scalar>;
@@ -282,7 +280,7 @@ class SearchNearestEuclidean {
   Metric const& metric_;
   std::vector<Index> const& indices_;
   Point const& point_;
-  Sequence node_box_offset_;
+  Sequence<Scalar, Dim_> node_box_offset_;
   Visitor* visitor_;
 };
 
