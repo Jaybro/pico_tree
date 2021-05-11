@@ -23,35 +23,57 @@ struct NodeBase {
   Derived* right;
 };
 
+//! \brief Tree leaf.
+template <typename Index>
+struct Leaf {
+  //! \private
+  Index begin_idx;
+  //! \private
+  Index end_idx;
+};
+
+//! \brief Tree branch.
+template <typename Scalar>
+struct BranchSplit {
+  //! \brief Split coordinate / index of the KdTree spatial dimension.
+  int split_dim;
+  //! \brief Coordinate value used for splitting the children of a node.
+  Scalar split_val;
+};
+
+//! \brief Tree branch.
+template <typename Scalar>
+struct BranchRange {
+  //! \brief Split coordinate / index of the KdTree spatial dimension.
+  int split_dim;
+  //! \brief Coordinate value used for splitting the children of a node.
+  Scalar split_val;
+  //! \brief Min box value of this node for split_dim.
+  Scalar min_val;
+  //! \brief Max box value of this node for split_dim.
+  Scalar max_val;
+};
+
+//! \brief Data is used to either store branch or leaf information. Which
+//! union member is used can be tested with IsBranch() or IsLeaf().
+template <typename Leaf, typename Branch>
+union NodeData {
+  //! \brief Union branch data.
+  Branch branch;
+  //! \brief Union leaf data.
+  Leaf leaf;
+};
+
 //! \brief KdTree Node.
 template <typename Index, typename Scalar>
 struct NodeEuclidean : public NodeBase<NodeEuclidean<Index, Scalar>> {
-  //! \brief Data is used to either store branch or leaf information. Which
-  //! union member is used can be tested with IsBranch() or IsLeaf().
-  union Data {
-    //! \brief Tree branch.
-    struct Branch {
-      //! \brief Split coordinate / index of the KdTree spatial dimension.
-      int split_dim;
-      //! \brief Coordinate value used for splitting the children of a node.
-      Scalar split_val;
-    };
+  NodeData<Leaf<Index>, BranchSplit<Scalar>> data;
+};
 
-    //! \brief Tree leaf.
-    struct Leaf {
-      //! \private
-      Index begin_idx;
-      //! \private
-      Index end_idx;
-    };
-
-    //! \brief Union branch data.
-    Branch branch;
-    //! \brief Union leaf data.
-    Leaf leaf;
-  };
-
-  Data data;
+//! \brief KdTree Node.
+template <typename Index, typename Scalar>
+struct NodeTopological : public NodeBase<NodeEuclidean<Index, Scalar>> {
+  NodeData<Leaf<Index>, BranchRange<Scalar>> data;
 };
 
 //! KdTree builder.
