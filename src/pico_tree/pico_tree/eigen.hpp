@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 
+#include "metric.hpp"
 #include "std_traits.hpp"
 
 namespace pico_tree {
@@ -320,6 +321,9 @@ struct StdPointTraits<Eigen::Map<
 template <typename Scalar>
 class EigenL1 {
  public:
+  //! \brief This tag specifies the supported space by this metric.
+  using SpaceTag = EuclideanSpaceTag;
+
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
   inline Scalar operator()(
@@ -342,6 +346,9 @@ class EigenL1 {
 template <typename Scalar>
 class EigenL2Squared {
  public:
+  //! \brief This tag specifies the supported space by this metric.
+  using SpaceTag = EuclideanSpaceTag;
+
   //! \brief Calculates the distance between points \p p0 and \p p1.
   template <typename Derived0, typename Derived1>
   inline Scalar operator()(

@@ -53,6 +53,17 @@ struct Sum {
 
 }  // namespace internal
 
+//! \brief Identifies a metric to support the most generic space that can be
+//! used with PicoTree's search structures.
+//! \details A space tag is used by PicoTree to select the most optimal
+//! algorithms for use with a particular space.
+class TopologicalSpaceTag {};
+
+//! \brief Identifies a metric to support the Euclidean space with PicoTree's
+//! search structures.
+//! \see TopologicalSpaceTag
+class EuclideanSpaceTag : public TopologicalSpaceTag {};
+
 //! \brief L1 metric for measuring the Taxicab or Manhattan distance between
 //! points.
 //! \details For more details:
@@ -64,6 +75,9 @@ class L1 {
   using Scalar = typename Traits::ScalarType;
 
  public:
+  //! \brief This tag specifies the supported space by this metric.
+  using SpaceTag = EuclideanSpaceTag;
+
   //! \brief Calculates the distance between points \p p0 and \p p1.
   //! \tparam P0 Point type.
   //! \tparam P1 Point type.
@@ -98,6 +112,9 @@ class L2Squared {
   using Scalar = typename Traits::ScalarType;
 
  public:
+  //! \brief This tag specifies the supported space by this metric.
+  using SpaceTag = EuclideanSpaceTag;
+
   //! \brief Calculates the distance between points \p p0 and \p p1.
   //! \tparam P0 Point type.
   //! \tparam P1 Point type.
