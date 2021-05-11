@@ -312,12 +312,12 @@ inline void LongestAxisBox(
 //! \details A version of the median of medians algorithm. The tree is build in
 //! O(n log n) time on average.
 //!
-//! Although it builds the tree slower compared to using
-//! SplitterSlidingMidpoint, it will query a single nearest neighbor faster.
-//! Faster queries can offset the extra build costs in scenarios such as ICP.
-//!
-//! Note that this splitter is not recommended when searching for more than a
-//! single neighbor.
+//! This splitting technique is generally slower compared to
+//! SplitterSlidingMidpoint but results in a balanced KdTree. In case the same
+//! point cloud is both used for building the tree and querying it, this
+//! technique could possibly be used for faster single nearest neighbor queries
+//! as compared to SplitterSlidingMidpoint. However, this is only useful when
+//! querying many (2n-4n) times as the build time of the tree is still slower.
 template <typename Traits>
 class SplitterLongestMedian {
  private:
@@ -373,17 +373,17 @@ class SplitterLongestMedian {
   std::vector<Index>& indices_;
 };
 
-//! \brief Splits a tree node halfway the longest axis of the bounding box that
-//! contains it.
+//! \brief Bounding boxes of tree nodes are split in the middle along the
+//! longest axis unless this results in an empty sub-node. In this case the
+//! split gets adjusted to fit a single point into this sub-node.
 //! \details Based on the paper "It's okay to be skinny, if your friends are
 //! fat". The aspect ratio of the split is at most 2:1 unless that results in an
-//! empty leaf. Then at least one point is moved into the empty leaf and the
-//! split is adjusted.
+//! empty sub-node.
 //!
 //! * http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf
 //!
-//! The tree is build in O(n log n) time and tree creation is faster than using
-//! SplitterLongestMedian.
+//! The tree is build in O(n log n) time and results in a tree that is both
+//! faster to build and query as compared to SplitterLongestMedian.
 //!
 //! This splitter can be used to answer an approximate nearest neighbor query in
 //! O(1/e^d log n) time.
