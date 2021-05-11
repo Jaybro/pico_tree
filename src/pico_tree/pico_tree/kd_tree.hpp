@@ -97,7 +97,7 @@ class Builder {
  public:
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
-  using Node = typename SpaceTagTraits<SpaceTag>::Node<Index, Scalar>;
+  using Node = typename SpaceTagTraits<SpaceTag>::template Node<Index, Scalar>;
   using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
   using Sequence = Sequence<Scalar, Dim_>;
 
