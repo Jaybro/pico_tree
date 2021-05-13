@@ -61,10 +61,17 @@ struct Sum {
 //! used with PicoTree's search structures.
 //! \details A space tag is used by PicoTree to select the most optimal
 //! algorithms for use with a particular space.
+//!
+//! Usings the TopologicalSpaceTag for metrics allows support for
+//! identifications in point sets. A practical example is that of the unit
+//! circle represented by the interval [-PI, PI]. Here, -PI and PI are the same
+//! point on the circle and performing a radius query around both values should
+//! result in the same point set.
 class TopologicalSpaceTag {};
 
 //! \brief Identifies a metric to support the Euclidean space with PicoTree's
 //! search structures.
+//! \details Supports the fastest queries doesn't support identificatons.
 //! \see TopologicalSpaceTag
 class EuclideanSpaceTag : public TopologicalSpaceTag {};
 
@@ -146,8 +153,10 @@ class L2Squared {
 
 //! \brief The SO2 metric measures distances on the unit circle S1. It is the
 //! intrinsic metric of points in R2 on S1 given by the great-circel distance.
-//! \details Named after the Special Orthogonal Group of dimension 2. For more
-//! details:
+//! \details Named after the Special Orthogonal Group of dimension 2. The circle
+//! S1 is represented by the range [-PI, PI] / -PI ~ PI.
+//!
+//! For more details:
 //! * https://en.wikipedia.org/wiki/Intrinsic_metric
 //! * https://en.wikipedia.org/wiki/Great-circle_distance
 template <typename Traits>
@@ -178,12 +187,12 @@ class SO2 {
     return operator()(*Traits::PointCoords(p0), *Traits::PointCoords(p1));
   }
 
-  //! \brief Calculates the distance between x and the rectangle defined by
-  //! [min, max].
+  //! \brief Calculates the distance between x and the box defined by [min,
+  //! max].
   inline Scalar operator()(
       Scalar const x, Scalar const min, Scalar const max) const {
-    // Rectangles currently can't be around the identity of PI ~ -PI where the
-    // minimum is larger than he maximum.
+    // Rectangles currently can't be around the identification of PI ~ -PI where
+    // the minimum is larger than he maximum.
     if (x < min || x > max) {
       return std::min(operator()(x, min), operator()(x, max));
     }

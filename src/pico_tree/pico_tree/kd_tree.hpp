@@ -43,9 +43,9 @@ struct KdTreeBranchSplit {
 };
 
 //! \brief Tree branch.
-//! \details This branch version allows topological identies (wrapping around)
-//! by storing the boundaries of the box that corresponds to the current node.
-//! The split value allows arbitrary splitting techniques.
+//! \details This branch version allows identifications (wrapping around) by
+//! storing the boundaries of the box that corresponds to the current node. The
+//! split value allows arbitrary splitting techniques.
 template <typename Scalar>
 struct KdTreeBranchRange {
   //! \brief Split coordinate / index of the KdTree spatial dimension.
