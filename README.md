@@ -30,7 +30,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 * KdTree
   * Nearest neighbors, approximate nearest neighbors, radius, and box searches.
   * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
-  * Support for topological spaces with identifications. E.g., points on a circle represented by the interval `[-pi, pi]`.
+  * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
   * Compile time and run time known dimensions.
   * Static tree builds.
   * Thread safe queries.
