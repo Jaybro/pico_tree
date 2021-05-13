@@ -78,10 +78,11 @@ using Point3d = Point<double, 3>;
 
 //! Generates \p n points in a square of size \p size .
 template <typename Point>
-std::vector<Point> GenerateRandomN(int n, typename Point::ScalarType size) {
+inline std::vector<Point> GenerateRandomN(
+    int n, typename Point::ScalarType min, typename Point::ScalarType max) {
   std::random_device rd;
   std::mt19937 e2(rd());
-  std::uniform_real_distribution<typename Point::ScalarType> dist(0, size);
+  std::uniform_real_distribution<typename Point::ScalarType> dist(min, max);
 
   std::vector<Point> random(n);
   for (auto& p : random) {
@@ -91,4 +92,10 @@ std::vector<Point> GenerateRandomN(int n, typename Point::ScalarType size) {
   }
 
   return random;
+}
+
+template <typename Point>
+inline std::vector<Point> GenerateRandomN(
+    int n, typename Point::ScalarType size) {
+  return GenerateRandomN<Point>(n, typename Point::ScalarType(0.0), size);
 }
