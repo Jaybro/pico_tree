@@ -206,7 +206,10 @@ TEST(KdTreeTest, QuerySo2Knn4) {
 
   pico_tree::KdTree<TraitsX, pico_tree::SO2<TraitsX>> tree(random, 10);
 
-  TestKnn(tree, static_cast<typename KdTree<PointX>::IndexType>(4));
+  TestKnn(
+      tree,
+      static_cast<typename KdTree<PointX>::IndexType>(8),
+      PointX{typename KdTree<PointX>::ScalarType(pico_tree::internal::kPi)});
 }
 
 TEST(KdTreeTest, WriteRead) {
