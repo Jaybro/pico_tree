@@ -167,8 +167,8 @@ class KdTreeBuilder {
 
  private:
   inline void SetBranch(
-      Sequence<Scalar, Dim_> const& box_min,
-      Sequence<Scalar, Dim_> const& box_max,
+      Sequence<Scalar, Dim_> const&,
+      Sequence<Scalar, Dim_> const&,
       int const& split_dim,
       Scalar const& split_val,
       KdTreeNodeEuclidean<Index, Scalar>* node) const {
