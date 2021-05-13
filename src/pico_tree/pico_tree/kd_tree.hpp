@@ -14,8 +14,9 @@ namespace pico_tree {
 
 namespace internal {
 
+//!\brief Binary node base.
 template <typename Derived>
-struct NodeBase {
+struct KdTreeNodeBase {
   inline bool IsBranch() const { return left != nullptr && right != nullptr; }
   inline bool IsLeaf() const { return left == nullptr && right == nullptr; }
 
@@ -25,7 +26,7 @@ struct NodeBase {
 
 //! \brief Tree leaf.
 template <typename Index>
-struct Leaf {
+struct KdTreeLeaf {
   //! \private
   Index begin_idx;
   //! \private
@@ -34,7 +35,7 @@ struct Leaf {
 
 //! \brief Tree branch.
 template <typename Scalar>
-struct BranchSplit {
+struct KdTreeBranchSplit {
   //! \brief Split coordinate / index of the KdTree spatial dimension.
   int split_dim;
   //! \brief Coordinate value used for splitting the children of a node.
@@ -42,8 +43,11 @@ struct BranchSplit {
 };
 
 //! \brief Tree branch.
+//! \details This branch version allows topological identies (wrapping around)
+//! by storing the boundaries of the box that corresponds to the current node.
+//! The split value allows arbitrary splitting techniques.
 template <typename Scalar>
-struct BranchRange {
+struct KdTreeBranchRange {
   //! \brief Split coordinate / index of the KdTree spatial dimension.
   int split_dim;
   //! \brief Coordinate value used for splitting the children of a node.
@@ -57,7 +61,7 @@ struct BranchRange {
 //! \brief NodeData is used to either store branch or leaf information. Which
 //! union member is used can be tested with IsBranch() or IsLeaf().
 template <typename Leaf, typename Branch>
-union NodeData {
+union KdTreeNodeData {
   //! \brief Union branch data.
   Branch branch;
   //! \brief Union leaf data.
@@ -66,14 +70,16 @@ union NodeData {
 
 //! \brief KdTree node for a Euclidean space.
 template <typename Index, typename Scalar>
-struct NodeEuclidean : public NodeBase<NodeEuclidean<Index, Scalar>> {
-  NodeData<Leaf<Index>, BranchSplit<Scalar>> data;
+struct KdTreeNodeEuclidean
+    : public KdTreeNodeBase<KdTreeNodeEuclidean<Index, Scalar>> {
+  KdTreeNodeData<KdTreeLeaf<Index>, KdTreeBranchSplit<Scalar>> data;
 };
 
 //! \brief KdTree node for a topological space.
 template <typename Index, typename Scalar>
-struct NodeTopological : public NodeBase<NodeEuclidean<Index, Scalar>> {
-  NodeData<Leaf<Index>, BranchRange<Scalar>> data;
+struct KdTreeNodeTopological
+    : public KdTreeNodeBase<KdTreeNodeTopological<Index, Scalar>> {
+  KdTreeNodeData<KdTreeLeaf<Index>, KdTreeBranchRange<Scalar>> data;
 };
 
 template <typename SpaceTag>
@@ -82,25 +88,25 @@ struct SpaceTagTraits;
 template <>
 struct SpaceTagTraits<EuclideanSpaceTag> {
   template <typename Index, typename Scalar>
-  using Node = NodeEuclidean<Index, Scalar>;
+  using Node = KdTreeNodeEuclidean<Index, Scalar>;
 };
 
 template <>
 struct SpaceTagTraits<TopologicalSpaceTag> {
   template <typename Index, typename Scalar>
-  using Node = NodeTopological<Index, Scalar>;
+  using Node = KdTreeNodeTopological<Index, Scalar>;
 };
 
 //! KdTree builder.
 template <typename Traits, typename SpaceTag, typename Splitter, int Dim_>
-class Builder {
+class KdTreeBuilder {
  public:
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
   using Node = typename SpaceTagTraits<SpaceTag>::template Node<Index, Scalar>;
   using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
 
-  inline Builder(
+  inline KdTreeBuilder(
       Index const max_leaf_size, Splitter const& splitter, MemoryBuffer* nodes)
       : max_leaf_size_{max_leaf_size}, splitter_{splitter}, nodes_{*nodes} {}
 
@@ -165,7 +171,7 @@ class Builder {
       Sequence<Scalar, Dim_> const& box_max,
       int const& split_dim,
       Scalar const& split_val,
-      NodeEuclidean<Index, Scalar>* node) const {
+      KdTreeNodeEuclidean<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
     node->data.branch.split_val = split_val;
   }
@@ -175,7 +181,7 @@ class Builder {
       Sequence<Scalar, Dim_> const& box_max,
       int const& split_dim,
       Scalar const& split_val,
-      NodeTopological<Index, Scalar>* node) const {
+      KdTreeNodeTopological<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
     node->data.branch.split_val = split_val;
     node->data.branch.min_val = box_min[split_dim];
@@ -200,7 +206,7 @@ class SearchNearestEuclidean {
   using Space = typename Traits::SpaceType;
 
  public:
-  using Node = NodeEuclidean<Index, Scalar>;
+  using Node = KdTreeNodeEuclidean<Index, Scalar>;
 
   SearchNearestEuclidean(
       Space const& points,
@@ -216,11 +222,13 @@ class SearchNearestEuclidean {
     node_box_offset_.Fill(Traits::SpaceSdim(points_), Scalar(0.0));
   }
 
+  //! \brief Search nearest neighbors starting from \p node.
   inline void operator()(Node const* const node) {
     SearchNearest(node, Scalar(0.0));
   }
 
  private:
+  //! \private
   inline void SearchNearest(Node const* const node, Scalar node_box_distance) {
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
@@ -263,6 +271,99 @@ class SearchNearestEuclidean {
       // applied.
       Scalar const old_offset = node_box_offset_[node->data.branch.split_dim];
       Scalar const new_offset = metric_(node->data.branch.split_val, v);
+      node_box_distance = node_box_distance - old_offset + new_offset;
+
+      // The value visitor->max() contains the current nearest neighbor distance
+      // or otherwise current maximum search distance. When testing against the
+      // split value we determine if we should go into the neighboring node.
+      if (visitor_->max() >= node_box_distance) {
+        node_box_offset_[node->data.branch.split_dim] = new_offset;
+        SearchNearest(node_2nd, node_box_distance);
+        node_box_offset_[node->data.branch.split_dim] = old_offset;
+      }
+    }
+  }
+
+  Space const& points_;
+  Metric const& metric_;
+  std::vector<Index> const& indices_;
+  Point const& point_;
+  Sequence<Scalar, Dim_> node_box_offset_;
+  Visitor* visitor_;
+};
+
+template <
+    typename Traits,
+    typename Metric,
+    int Dim_,
+    typename Point,
+    typename Visitor>
+class SearchNearestTopological {
+ private:
+  using Index = typename Traits::IndexType;
+  using Scalar = typename Traits::ScalarType;
+  using Space = typename Traits::SpaceType;
+
+ public:
+  using Node = KdTreeNodeTopological<Index, Scalar>;
+
+  //! \private
+  SearchNearestTopological(
+      Space const& points,
+      Metric const& metric,
+      std::vector<Index> const& indices,
+      Point const& point,
+      Visitor* visitor)
+      : points_(points),
+        metric_(metric),
+        indices_(indices),
+        point_(point),
+        visitor_(visitor) {
+    node_box_offset_.Fill(Traits::SpaceSdim(points_), Scalar(0.0));
+  }
+
+  //! \brief Search nearest neighbors starting from \p node.
+  inline void operator()(Node const* const node) {
+    SearchNearest(node, Scalar(0.0));
+  }
+
+ private:
+  inline void SearchNearest(Node const* const node, Scalar node_box_distance) {
+    if (node->IsLeaf()) {
+      for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+           ++i) {
+        Scalar const d = metric_(point_, Traits::PointAt(points_, indices_[i]));
+        if (visitor_->max() > d) {
+          (*visitor_)(indices_[i], d);
+        }
+      }
+    } else {
+      // Go left or right and then check if we should still go down the other
+      // side based on the current minimum distance.
+      Scalar const v = Traits::PointCoords(point_)[node->data.branch.split_dim];
+      // Determine the distance to the boxes of the children of this node.
+      Scalar const d1 =
+          metric_(v, node->data.branch.min_val, node->data.branch.split_val);
+      Scalar const d2 =
+          metric_(v, node->data.branch.split_val, node->data.branch.max_val);
+      Node const* node_1st;
+      Node const* node_2nd;
+      Scalar new_offset;
+
+      // Visit the closest child/box first.
+      if (d1 < d2) {
+        node_1st = node->left;
+        node_2nd = node->right;
+        new_offset = d2;
+      } else {
+        node_1st = node->right;
+        node_2nd = node->left;
+        new_offset = d1;
+      }
+
+      SearchNearest(node_1st, node_box_distance);
+
+      Scalar const old_offset = node_box_offset_[node->data.branch.split_dim];
       node_box_distance = node_box_distance - old_offset + new_offset;
 
       // The value visitor->max() contains the current nearest neighbor distance
@@ -484,8 +585,8 @@ class KdTree {
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
-  using Builder =
-      internal::Builder<Traits, typename Metric::SpaceTag, Splitter, Dim_>;
+  using Builder = internal::
+      KdTreeBuilder<Traits, typename Metric::SpaceTag, Splitter, Dim_>;
   using Node = typename Builder::Node;
   //! Either an array or vector (compile time vs. run time).
   using Sequence = typename internal::Sequence<Scalar, Dim_>;
@@ -555,7 +656,7 @@ class KdTree {
   //! \see internal::SearchAknn
   template <typename P, typename V>
   inline void SearchNearest(P const& x, V* visitor) const {
-    SearchNearest(root_, x, visitor);
+    SearchNearest(root_, x, visitor, typename Metric::SpaceTag());
   }
 
   //! \brief Searches for the nearest neighbor of point \p x.
@@ -810,11 +911,23 @@ class KdTree {
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
-  //! on their selection by visitor \p visitor for node \p node .
+  //! on their selection by visitor \p visitor for node \p node.
   template <typename P, typename V>
   inline void SearchNearest(
-      Node const* const node, P const& x, V* visitor) const {
+      Node const* const node, P const& x, V* visitor, EuclideanSpaceTag) const {
     internal::SearchNearestEuclidean<Traits, Metric, Dim, P, V>(
+        points_, metric_, indices_, x, visitor)(node);
+  }
+
+  //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
+  //! on their selection by visitor \p visitor for node \p node.
+  template <typename P, typename V>
+  inline void SearchNearest(
+      Node const* const node,
+      P const& x,
+      V* visitor,
+      TopologicalSpaceTag) const {
+    internal::SearchNearestTopological<Traits, Metric, Dim, P, V>(
         points_, metric_, indices_, x, visitor)(node);
   }
 
