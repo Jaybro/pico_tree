@@ -970,6 +970,10 @@ class KdTree {
       typename Sequence::MoveReturnType box_min,
       typename Sequence::MoveReturnType box_max,
       std::vector<Index>* idxs) const {
+    // TODO Perhaps we can support it for both topological and Euclidean spaces.
+    static_assert(
+        std::is_same<typename Metric::SpaceTag, EuclideanSpaceTag>::value,
+        "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
