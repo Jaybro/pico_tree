@@ -30,6 +30,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 * KdTree
   * Nearest neighbors, approximate nearest neighbors, radius, and box searches.
   * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
+  * Support for topological spaces with identifications. E.g., points on a circle represented by the interval `[-pi, pi]`.
   * Compile time and run time known dimensions.
   * Static tree builds.
   * Thread safe queries.
@@ -111,4 +112,4 @@ $ pip install ./pico_tree --install-option="-GMinGW Makefiles"
 * S. Maneewongvatana and D. M. Mount. [It's okay to be skinny, if your friends are fat.](http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf) 4th Annual CGC Workshop on Computational Geometry, 1999.
 * S. Arya and H. Y. Fu. [Expected-case complexity of approximate nearest neighbor searching.](https://www.cse.ust.hk/faculty/arya/pub/exp.pdf) InProceedings of the 11th ACM-SIAM Symposium on Discrete Algorithms, 2000.
 * S. Arya and D. M. Mount. [Algorithms for fast vector quantization.](https://www.cs.umd.edu/~mount/Papers/DCC.pdf) In IEEE Data Compression Conference, pages 381–390, March 1993.
-* https://en.wikipedia.org/wiki/K-d_tree
+* A. Yershova and S. M. LaValle, [Improving Motion-Planning Algorithms by Efficient Nearest-Neighbor Searching.](http://msl.cs.uiuc.edu/~lavalle/papers/YerLav06.pdf) In IEEE Transactions on Robotics, vol. 23, no. 1, pp. 151-157, Feb. 2007.

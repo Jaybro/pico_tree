@@ -149,15 +149,15 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
   EXPECT_EQ(count, results.size());
 }
 
-template <typename Tree>
-void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
+template <typename Tree, typename Point>
+void TestKnn(
+    Tree const& tree, typename Tree::IndexType const k, Point const& p) {
   using TraitsX = typename Tree::TraitsType;
   using Index = typename Tree::IndexType;
   using Scalar = typename Tree::ScalarType;
 
   // The data doesn't have to be by reference_wrapper, but that prevents a copy.
   auto const points = tree.points();
-  auto const p = TraitsX::PointAt(points, TraitsX::SpaceNpts(points) / 2);
   Scalar ratio = tree.metric()(Scalar(1.5));
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_exact;
@@ -177,4 +177,13 @@ void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
     // the check below is the same as: approx <= exact * ratio
     FloatLe(results_apprx[i].distance, results_exact[i].distance);
   }
+}
+
+template <typename Tree>
+void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
+  using TraitsX = typename Tree::TraitsType;
+
+  auto const points = tree.points();
+  auto const p = TraitsX::PointAt(points, TraitsX::SpaceNpts(points) / 2);
+  TestKnn(tree, k, p);
 }

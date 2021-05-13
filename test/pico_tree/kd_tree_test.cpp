@@ -196,6 +196,16 @@ TEST(KdTreeTest, QueryKnn1) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 1); }
 
 TEST(KdTreeTest, QueryKnn10) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 10); }
 
+TEST(KdTreeTest, QuerySo2Knn4) {
+  using PointX = Point1f;
+  using TraitsX = Traits<Space<PointX>>;
+
+  const auto pi = typename KdTree<PointX>::ScalarType(pico_tree::internal::kPi);
+  std::vector<PointX> random = GenerateRandomN<PointX>(256 * 256, -pi, pi);
+  pico_tree::KdTree<TraitsX, pico_tree::SO2<TraitsX>> tree(random, 10);
+  TestKnn(tree, static_cast<typename KdTree<PointX>::IndexType>(8), PointX{pi});
+}
+
 TEST(KdTreeTest, WriteRead) {
   using Index = int;
   using Scalar = typename Point2f::ScalarType;

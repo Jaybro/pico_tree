@@ -86,7 +86,7 @@ class SearchNnCounter {
 };
 
 // Different search options.
-void Search() {
+void Search3d() {
   using PointX = Point3f;
   using Index = int;
   using Scalar = typename PointX::ScalarType;
@@ -154,8 +154,32 @@ void Search() {
   std::cout << "Custom visitor # nns considered: " << v.count() << std::endl;
 }
 
+// Search on the circle.
+void SearchS1() {
+  using PointX = Point1f;
+  using TraitsX = pico_tree::StdTraits<std::vector<PointX>>;
+  using NeighborX =
+      pico_tree::KdTree<TraitsX, pico_tree::SO2<TraitsX>>::NeighborType;
+
+  const auto pi = typename PointX::ScalarType(3.1415926537);
+
+  pico_tree::KdTree<TraitsX, pico_tree::SO2<TraitsX>> tree(
+      GenerateRandomN<PointX>(512, -pi, pi), 10);
+
+  std::array<NeighborX, 8> knn;
+  tree.SearchKnn(PointX{pi}, knn.begin(), knn.end());
+
+  // These prints show that wrapping around near point -PI ~ PI is supported.
+  std::cout << "Closest angles (index, distance, value): " << std::endl;
+  for (auto const& nn : knn) {
+    std::cout << "  " << nn.index << ", " << nn.distance << ", "
+              << tree.points()[nn.index] << std::endl;
+  }
+}
+
 int main() {
   BasicVector();
-  Search();
+  Search3d();
+  SearchS1();
   return 0;
 }
