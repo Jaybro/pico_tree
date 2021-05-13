@@ -6,6 +6,10 @@ namespace pico_tree {
 
 namespace internal {
 
+//! Mathematical constant pi. It is defined as the ratio of a circle's
+//! circumference to its diameter. Only available from C++20.
+static constexpr long double kPi = 3.14159265358979323846l;
+
 //! \brief Calculates the absolute difference between two point coordinates.
 struct AbsDiff {
   //! \private
@@ -138,6 +142,63 @@ class L2Squared {
 
   //! \brief Returns the squared value of \p x.
   inline Scalar operator()(Scalar const x) const { return x * x; }
+};
+
+//! \brief The SO2 metric measures distances on the unit circle S1. It is the
+//! intrinsic metric of points in R2 on S1 given by the great-circel distance.
+//! \details Named after the Special Orthogonal Group of dimension 2. For more
+//! details:
+//! * https://en.wikipedia.org/wiki/Intrinsic_metric
+//! * https://en.wikipedia.org/wiki/Great-circle_distance
+template <typename Traits>
+class SO2 {
+ private:
+  using Scalar = typename Traits::ScalarType;
+  static constexpr auto kTwoPi = static_cast<Scalar>(internal::kPi * 2.0l);
+
+ public:
+  //! \brief This tag specifies the supported space by this metric.
+  using SpaceTag = TopologicalSpaceTag;
+
+  //! \brief Calculates the distance between points \p p0 and \p p1.
+  //! \tparam P0 Point type.
+  //! \tparam P1 Point type.
+  //! \param p0 Point.
+  //! \param p1 Point.
+  template <typename P0, typename P1>
+  // The enable_if is not required but it forces implicit casts which are
+  // handled by operator()(Scalar, Scalar).
+  inline typename std::enable_if<
+      !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
+      Scalar>::type
+  operator()(P0 const& p0, P1 const& p1) const {
+    assert(Traits::PointSdim(p0) == Traits::PointSdim(p1));
+    assert(Traits::PointSdim(p0) == 1);
+
+    return operator()(*Traits::PointCoords(p0), *Traits::PointCoords(p1));
+  }
+
+  //! \brief Calculates the distance between x and the rectangle defined by
+  //! [min, max].
+  inline Scalar operator()(
+      Scalar const x, Scalar const min, Scalar const max) const {
+    // Rectangles currently can't be around the identity of PI ~ -PI where the
+    // minimum is larger than he maximum.
+    if (x < min || x > max) {
+      return std::min(operator()(x, min), operator()(x, max));
+    }
+
+    return Scalar(0.0);
+  }
+
+  //! \brief Calculates the distance between two coordinates.
+  inline Scalar operator()(Scalar const x, Scalar const y) const {
+    Scalar const d = std::abs(x - y);
+    return std::min(d, kTwoPi - d);
+  }
+
+  //! \brief Returns the absolute value of \p x.
+  inline Scalar operator()(Scalar const x) const { return std::abs(x); }
 };
 
 }  // namespace pico_tree
