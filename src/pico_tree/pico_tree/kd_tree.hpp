@@ -342,10 +342,16 @@ class SearchNearestTopological {
       // side based on the current minimum distance.
       Scalar const v = Traits::PointCoords(point_)[node->data.branch.split_dim];
       // Determine the distance to the boxes of the children of this node.
-      Scalar const d1 =
-          metric_(v, node->data.branch.min_val, node->data.branch.split_val);
-      Scalar const d2 =
-          metric_(v, node->data.branch.split_val, node->data.branch.max_val);
+      Scalar const d1 = metric_(
+          v,
+          node->data.branch.min_val,
+          node->data.branch.split_val,
+          node->data.branch.split_dim);
+      Scalar const d2 = metric_(
+          v,
+          node->data.branch.split_val,
+          node->data.branch.max_val,
+          node->data.branch.split_dim);
       Node const* node_1st;
       Node const* node_2nd;
       Scalar new_offset;

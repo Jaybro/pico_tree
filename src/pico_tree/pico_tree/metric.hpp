@@ -187,10 +187,22 @@ class SO2 {
     return operator()(*Traits::PointCoords(p0), *Traits::PointCoords(p1));
   }
 
-  //! \brief Calculates the distance between x and the box defined by [min,
-  //! max].
+  //! \brief Calculates the distance between two coordinates.
+  //! \details The last argument is the dimension. It can be used to support
+  //! Cartesian products of spaces but it is ignored here.
+  inline Scalar operator()(Scalar const x, Scalar const y, int const) const {
+    return operator()(x, y);
+  }
+
+  //! \brief Returns the absolute value of \p x.
+  inline Scalar operator()(Scalar const x) const { return std::abs(x); }
+
+  //! \brief Calculates the distance between \p x and the box defined by [ \p
+  //! min, \p max ].
+  //! \details The last argument is the dimension. It can be used to support
+  //! Cartesian products of spaces but it is ignored here.
   inline Scalar operator()(
-      Scalar const x, Scalar const min, Scalar const max) const {
+      Scalar const x, Scalar const min, Scalar const max, int const) const {
     // Rectangles currently can't be around the identification of PI ~ -PI where
     // the minimum is larger than he maximum.
     if (x < min || x > max) {
@@ -200,14 +212,12 @@ class SO2 {
     return Scalar(0.0);
   }
 
+ private:
   //! \brief Calculates the distance between two coordinates.
   inline Scalar operator()(Scalar const x, Scalar const y) const {
     Scalar const d = std::abs(x - y);
     return std::min(d, kTwoPi - d);
   }
-
-  //! \brief Returns the absolute value of \p x.
-  inline Scalar operator()(Scalar const x) const { return std::abs(x); }
 };
 
 }  // namespace pico_tree

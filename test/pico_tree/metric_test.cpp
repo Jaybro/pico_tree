@@ -49,8 +49,8 @@ TEST(MetricTest, SO2) {
 
   EXPECT_FLOAT_EQ(metric(p0, p1), 0.1f);
   EXPECT_FLOAT_EQ(metric(-0.1f), 0.1f);
-  EXPECT_TRUE(metric(-3.14f, 3.14f) < 0.1f);
-  EXPECT_FLOAT_EQ(metric(-0.1f, -0.3f, -0.2f), metric(-0.1f, -0.2f));
-  EXPECT_FLOAT_EQ(metric(-0.4f, -0.3f, -0.2f), metric(-0.4f, -0.3f));
-  EXPECT_FLOAT_EQ(metric(-0.25f, -0.3f, -0.2f), 0.0f);
+  EXPECT_TRUE(metric(-3.14f, 3.14f, 0) < 0.1f);
+  EXPECT_FLOAT_EQ(metric(-0.1f, -0.3f, -0.2f, 0), metric(-0.1f, -0.2f, 0));
+  EXPECT_FLOAT_EQ(metric(-0.4f, -0.3f, -0.2f, 0), metric(-0.4f, -0.3f, 0));
+  EXPECT_FLOAT_EQ(metric(-0.25f, -0.3f, -0.2f, 0), 0.0f);
 }
