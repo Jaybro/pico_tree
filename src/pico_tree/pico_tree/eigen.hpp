@@ -5,6 +5,9 @@
 #include "metric.hpp"
 #include "std_traits.hpp"
 
+//! \file eigen.hpp
+//! \brief Contains traits and classes that provide Eigen support for PicoTree.
+
 namespace pico_tree {
 
 namespace internal {

@@ -843,8 +843,9 @@ class KdTree {
   //! load a KdTree on a single machine.
   //! \li Does not take memory endianness into account.
   //! \li Does not check if the stored tree structure is valid for the given
-  //! point set. \li Does not check if the stored tree structure is valid for
-  //! the given template arguments.
+  //! point set.
+  //! \li Does not check if the stored tree structure is valid for the given
+  //! template arguments.
   static KdTree Load(Space points, std::iostream* stream) {
     internal::Stream s(stream);
     return KdTree(std::move(points), &s);

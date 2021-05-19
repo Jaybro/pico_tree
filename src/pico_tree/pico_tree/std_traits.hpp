@@ -90,7 +90,7 @@ struct StdTraits<std::reference_wrapper<std::vector<Point, Allocator>>, Index>
   //! \details This overrides the SpaceType of the base class. No other
   //! interface changes are required as an std::reference_wrapper can implicitly
   //! be converted to its contained reference, which is a reference to an object
-  //! of the exact same type as that of the SpaceType of the basse class.
+  //! of the exact same type as that of the SpaceType of the base class.
   using SpaceType = std::reference_wrapper<std::vector<Point, Allocator>>;
 };
 
@@ -108,7 +108,7 @@ struct StdTraits<
   //! \details This overrides the SpaceType of the base class. No other
   //! interface changes are required as an std::reference_wrapper can implicitly
   //! be converted to its contained reference, which is a reference to an object
-  //! of the exact same type as that of the SpaceType of the basse class.
+  //! of the exact same type as that of the SpaceType of the base class.
   using SpaceType = std::reference_wrapper<std::vector<Point, Allocator> const>;
 };
 
