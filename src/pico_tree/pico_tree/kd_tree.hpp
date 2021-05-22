@@ -228,7 +228,7 @@ class SearchNearestEuclidean {
   using Node = KdTreeNodeEuclidean<Index, Scalar>;
 
   //! \private
-  SearchNearestEuclidean(
+  inline SearchNearestEuclidean(
       Space const& points,
       Metric const& metric,
       std::vector<Index> const& indices,
@@ -330,7 +330,7 @@ class SearchNearestTopological {
   using Node = KdTreeNodeTopological<Index, Scalar>;
 
   //! \private
-  SearchNearestTopological(
+  inline SearchNearestTopological(
       Space const& points,
       Metric const& metric,
       std::vector<Index> const& indices,
