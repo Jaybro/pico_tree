@@ -238,12 +238,11 @@ class SearchNearestEuclidean {
         metric_(metric),
         indices_(indices),
         point_(point),
-        visitor_(visitor) {
-    node_box_offset_.Fill(Traits::SpaceSdim(points_), Scalar(0.0));
-  }
+        visitor_(*visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
   inline void operator()(Node const* const node) {
+    node_box_offset_.Fill(Traits::SpaceSdim(points_), Scalar(0.0));
     SearchNearest(node, Scalar(0.0));
   }
 
@@ -254,8 +253,8 @@ class SearchNearestEuclidean {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         Scalar const d = metric_(point_, Traits::PointAt(points_, indices_[i]));
-        if (visitor_->max() > d) {
-          (*visitor_)(indices_[i], d);
+        if (visitor_.max() > d) {
+          visitor_(indices_[i], d);
         }
       }
     } else {
@@ -296,7 +295,7 @@ class SearchNearestEuclidean {
       // The value visitor->max() contains the current nearest neighbor distance
       // or otherwise current maximum search distance. When testing against the
       // split value we determine if we should go into the neighboring node.
-      if (visitor_->max() >= node_box_distance) {
+      if (visitor_.max() >= node_box_distance) {
         node_box_offset_[node->data.branch.split_dim] = new_offset;
         SearchNearest(node_2nd, node_box_distance);
         node_box_offset_[node->data.branch.split_dim] = old_offset;
@@ -309,7 +308,7 @@ class SearchNearestEuclidean {
   std::vector<Index> const& indices_;
   Point const& point_;
   Sequence<Scalar, Dim_> node_box_offset_;
-  Visitor* visitor_;
+  Visitor& visitor_;
 };
 
 //! \brief This class provides a search nearest function for topological spaces.
@@ -340,12 +339,11 @@ class SearchNearestTopological {
         metric_(metric),
         indices_(indices),
         point_(point),
-        visitor_(visitor) {
-    node_box_offset_.Fill(Traits::SpaceSdim(points_), Scalar(0.0));
-  }
+        visitor_(*visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
   inline void operator()(Node const* const node) {
+    node_box_offset_.Fill(Traits::SpaceSdim(points_), Scalar(0.0));
     SearchNearest(node, Scalar(0.0));
   }
 
@@ -355,8 +353,8 @@ class SearchNearestTopological {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         Scalar const d = metric_(point_, Traits::PointAt(points_, indices_[i]));
-        if (visitor_->max() > d) {
-          (*visitor_)(indices_[i], d);
+        if (visitor_.max() > d) {
+          visitor_(indices_[i], d);
         }
       }
     } else {
@@ -397,7 +395,7 @@ class SearchNearestTopological {
       // The value visitor->max() contains the current nearest neighbor distance
       // or otherwise current maximum search distance. When testing against the
       // split value we determine if we should go into the neighboring node.
-      if (visitor_->max() >= node_box_distance) {
+      if (visitor_.max() >= node_box_distance) {
         node_box_offset_[node->data.branch.split_dim] = new_offset;
         SearchNearest(node_2nd, node_box_distance);
         node_box_offset_[node->data.branch.split_dim] = old_offset;
@@ -410,7 +408,7 @@ class SearchNearestTopological {
   std::vector<Index> const& indices_;
   Point const& point_;
   Sequence<Scalar, Dim_> node_box_offset_;
-  Visitor* visitor_;
+  Visitor& visitor_;
 };
 
 //! \brief See which axis of the box is the longest.
