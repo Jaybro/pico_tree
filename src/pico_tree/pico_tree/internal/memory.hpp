@@ -35,6 +35,7 @@ class ListPool {
   };
 
  public:
+  //! \brief Type allocated and stored by the ListPool.
   using ValueType = T;
 
   //! \brief Creates a ListPool using the default constructor.
@@ -95,6 +96,7 @@ class ListPool {
 template <typename T>
 class StaticBuffer {
  public:
+  //! \brief Type allocated and stored by the buffer.
   using ValueType = T;
 
   //! Creates a StaticBuffer having space for \p size elements.
@@ -120,6 +122,7 @@ class StaticBuffer {
 template <typename T>
 class DynamicBuffer : public ListPool<T, 256> {
  public:
+  //! \brief Type allocated and stored by the buffer.
   using ValueType = typename ListPool<T, 256>::ValueType;
 
   //! Creates a DynamicBuffer.

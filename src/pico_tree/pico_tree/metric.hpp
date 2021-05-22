@@ -203,8 +203,8 @@ class SO2 {
   //! Cartesian products of spaces but it is ignored here.
   inline Scalar operator()(
       Scalar const x, Scalar const min, Scalar const max, int const) const {
-    // Rectangles currently can't be around the identification of PI ~ -PI where
-    // the minimum is larger than he maximum.
+    // Rectangles can't currently wrap around the identification of PI ~ -PI
+    // where the minimum is larger than he maximum.
     if (x < min || x > max) {
       return std::min(operator()(x, min), operator()(x, max));
     }

@@ -17,10 +17,14 @@ namespace internal {
 //!\brief Binary node base.
 template <typename Derived>
 struct KdTreeNodeBase {
+  //! \brief Returns if the current node is a branch.
   inline bool IsBranch() const { return left != nullptr && right != nullptr; }
+  //! \brief Returns if the current node is a leaf.
   inline bool IsLeaf() const { return left == nullptr && right == nullptr; }
 
+  //! \brief Left child.
   Derived* left;
+  //! \brief Right child.
   Derived* right;
 };
 
@@ -72,6 +76,7 @@ union KdTreeNodeData {
 template <typename Index, typename Scalar>
 struct KdTreeNodeEuclidean
     : public KdTreeNodeBase<KdTreeNodeEuclidean<Index, Scalar>> {
+  //! \brief Node data as a union of a leaf and branch.
   KdTreeNodeData<KdTreeLeaf<Index>, KdTreeBranchSplit<Scalar>> data;
 };
 
@@ -79,39 +84,51 @@ struct KdTreeNodeEuclidean
 template <typename Index, typename Scalar>
 struct KdTreeNodeTopological
     : public KdTreeNodeBase<KdTreeNodeTopological<Index, Scalar>> {
+  //! \brief Node data as a union of a leaf and branch.
   KdTreeNodeData<KdTreeLeaf<Index>, KdTreeBranchRange<Scalar>> data;
 };
 
+//! \brief KdTree meta information depending on the SpaceTag template argument.
 template <typename SpaceTag>
-struct SpaceTagTraits;
+struct KdTreeSpaceTagTraits;
 
+//! \brief KdTree meta information for the EuclideanSpaceTag.
 template <>
-struct SpaceTagTraits<EuclideanSpaceTag> {
+struct KdTreeSpaceTagTraits<EuclideanSpaceTag> {
+  //! \brief Supported node type.
   template <typename Index, typename Scalar>
   using Node = KdTreeNodeEuclidean<Index, Scalar>;
 };
 
+//! \brief KdTree meta information for the TopologicalSpaceTag.
 template <>
-struct SpaceTagTraits<TopologicalSpaceTag> {
+struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
+  //! \brief Supported node type.
   template <typename Index, typename Scalar>
   using Node = KdTreeNodeTopological<Index, Scalar>;
 };
 
-//! KdTree builder.
+//! \brief This class provides the build algorithm of the KdTree. How the KdTree
+//! is build depends on the Splitter template argument.
 template <typename Traits, typename SpaceTag, typename Splitter, int Dim_>
 class KdTreeBuilder {
- public:
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
-  using Node = typename SpaceTagTraits<SpaceTag>::template Node<Index, Scalar>;
+
+ public:
+  //! \brief Node type supported by KdTreeBuilder based on SpaceTag.
+  using Node =
+      typename KdTreeSpaceTagTraits<SpaceTag>::template Node<Index, Scalar>;
+  //! \brief Memory buffer type supported by KdTreeBuilder based on SpaceTag.
   using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
 
+  //! \brief Constructs a KdTreeBuilder.
   inline KdTreeBuilder(
       Index const max_leaf_size, Splitter const& splitter, MemoryBuffer* nodes)
       : max_leaf_size_{max_leaf_size}, splitter_{splitter}, nodes_{*nodes} {}
 
-  //! Creates a tree node for a range of indices, splits the range in two and
-  //! recursively does the same for each sub set of indices until the index
+  //! \brief Creates a tree node for a range of indices, splits the range in two
+  //! and recursively does the same for each sub set of indices until the index
   //! range \p size is less than or equal to \p max_leaf_size .
   inline Node* SplitIndices(
       Index const depth,
@@ -193,6 +210,7 @@ class KdTreeBuilder {
   MemoryBuffer& nodes_;
 };
 
+//! \brief This class provides a search nearest function for Euclidean spaces.
 template <
     typename Traits,
     typename Metric,
@@ -206,8 +224,10 @@ class SearchNearestEuclidean {
   using Space = typename Traits::SpaceType;
 
  public:
+  //! \brief Node type supported by this SearchNearestEuclidean.
   using Node = KdTreeNodeEuclidean<Index, Scalar>;
 
+  //! \private
   SearchNearestEuclidean(
       Space const& points,
       Metric const& metric,
@@ -292,6 +312,7 @@ class SearchNearestEuclidean {
   Visitor* visitor_;
 };
 
+//! \brief This class provides a search nearest function for topological spaces.
 template <
     typename Traits,
     typename Metric,
@@ -305,6 +326,7 @@ class SearchNearestTopological {
   using Space = typename Traits::SpaceType;
 
  public:
+  //! \brief Node type supported by this SearchNearestTopological.
   using Node = KdTreeNodeTopological<Index, Scalar>;
 
   //! \private
