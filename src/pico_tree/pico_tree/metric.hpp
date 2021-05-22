@@ -187,13 +187,6 @@ class SO2 {
     return operator()(*Traits::PointCoords(p0), *Traits::PointCoords(p1));
   }
 
-  //! \brief Calculates the distance between two coordinates.
-  //! \details The last argument is the dimension. It can be used to support
-  //! Cartesian products of spaces but it is ignored here.
-  inline Scalar operator()(Scalar const x, Scalar const y, int const) const {
-    return operator()(x, y);
-  }
-
   //! \brief Returns the absolute value of \p x.
   inline Scalar operator()(Scalar const x) const { return std::abs(x); }
 
