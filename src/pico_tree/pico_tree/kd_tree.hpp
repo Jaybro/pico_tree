@@ -175,9 +175,14 @@ class KdTreeBuilder {
       node->data.leaf.end_idx = offset + size;
       node->left = nullptr;
       node->right = nullptr;
-
-      CalculateBoundingBox(
-          node->data.leaf.begin_idx, node->data.leaf.end_idx, box_min, box_max);
+      // Keep the original box in case it was empty.
+      if (size > 0) {
+        CalculateBoundingBox(
+            node->data.leaf.begin_idx,
+            node->data.leaf.end_idx,
+            box_min,
+            box_max);
+      }
     } else {
       int split_dim;
       Index split_idx;
@@ -343,6 +348,9 @@ class SearchNearestEuclidean {
       // handled by the if statement below this one: the check that max search
       // radius still hits the split value after having traversed the first
       // branch.
+      // If left_max - v > 0, this means that the point is inside the left node,
+      // if right_min - v < 0 it's inside the right one. For the area in between
+      // we just pick the closest one by summing them.
       if ((node->data.branch.left_max + node->data.branch.right_min - v - v) >
           0) {
         node_1st = node->left;
