@@ -27,7 +27,7 @@ class SearchNn {
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return nn_.distance; }
+  inline Scalar max() const { return nn_.distance; }
 
  private:
   Neighbor& nn_;
@@ -82,7 +82,7 @@ class SearchKnn {
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return std::prev(end_)->distance; }
+  inline Scalar max() const { return std::prev(end_)->distance; }
 
  private:
   RandomAccessIterator begin_;
@@ -114,7 +114,7 @@ class SearchRadius {
   inline void Sort() const { std::sort(n_.begin(), n_.end()); }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return radius_; }
+  inline Scalar max() const { return radius_; }
 
  private:
   Scalar const radius_;
@@ -171,7 +171,7 @@ class SearchAknn {
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar const& max() const { return std::prev(end_)->distance; }
+  inline Scalar max() const { return std::prev(end_)->distance; }
 
  private:
   Scalar re_;
