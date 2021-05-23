@@ -42,8 +42,10 @@ template <typename Scalar>
 struct KdTreeBranchSplit {
   //! \brief Split coordinate / index of the KdTree spatial dimension.
   int split_dim;
-  //! \brief Coordinate value used for splitting the children of a node.
-  Scalar split_val;
+  //! \brief Maximum coordinate value of the left node box for split_dim.
+  Scalar left_max;
+  //! \brief Minimum coordinate value of the right node box for split_dim.
+  Scalar right_min;
 };
 
 //! \brief Tree branch.
@@ -54,12 +56,14 @@ template <typename Scalar>
 struct KdTreeBranchRange {
   //! \brief Split coordinate / index of the KdTree spatial dimension.
   int split_dim;
-  //! \brief Coordinate value used for splitting the children of a node.
-  Scalar split_val;
-  //! \brief Min box value of this node at the split_dim coordinate.
-  Scalar min_val;
-  //! \brief Max box value of this node at the split_dim coordinate.
-  Scalar max_val;
+  //! \brief Minimum coordinate value of the left node box for split_dim.
+  Scalar left_min;
+  //! \brief Maximum coordinate value of the left node box for split_dim.
+  Scalar left_max;
+  //! \brief Minimum coordinate value of the right node box for split_dim.
+  Scalar right_min;
+  //! \brief Maximum coordinate value of the right node box for split_dim.
+  Scalar right_max;
 };
 
 //! \brief NodeData is used to either store branch or leaf information. Which
@@ -114,6 +118,7 @@ template <typename Traits, typename SpaceTag, typename Splitter, int Dim_>
 class KdTreeBuilder {
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
+  using Space = typename Traits::SpaceType;
 
  public:
   //! \brief Node type supported by KdTreeBuilder based on SpaceTag.
@@ -124,18 +129,45 @@ class KdTreeBuilder {
 
   //! \brief Constructs a KdTreeBuilder.
   inline KdTreeBuilder(
-      Index const max_leaf_size, Splitter const& splitter, MemoryBuffer* nodes)
-      : max_leaf_size_{max_leaf_size}, splitter_{splitter}, nodes_{*nodes} {}
+      Space const& space,
+      std::vector<Index> const& indices,
+      Index const max_leaf_size,
+      Splitter const& splitter,
+      MemoryBuffer* nodes)
+      : space_(space),
+        indices_(indices),
+        max_leaf_size_{max_leaf_size},
+        splitter_{splitter},
+        nodes_{*nodes} {}
 
+  //! \brief Creates the full set of nodes for a KdTree.
+  inline Node* operator()(
+      Sequence<Scalar, Dim_> const& box_min,
+      Sequence<Scalar, Dim_> const& box_max) const {
+    Sequence<Scalar, Dim_> copy_box_min = box_min;
+    Sequence<Scalar, Dim_> copy_box_max = box_max;
+
+    return SplitIndices(
+        0, 0, Traits::SpaceNpts(space_), &copy_box_min, &copy_box_max);
+  }
+
+ private:
   //! \brief Creates a tree node for a range of indices, splits the range in two
   //! and recursively does the same for each sub set of indices until the index
-  //! range \p size is less than or equal to \p max_leaf_size .
+  //! range \p size is less than or equal to max_leaf_size_.
+  //! \details While descending the tree we split nodes based on the root box
+  //! until leaf nodes are reached. Inside the leaf nodes the boxes are updated
+  //! to be the bounding boxes of the points they contain. While unwinding the
+  //! recursion we update the split information for each branch node based on
+  //! merging leaf nodes. Since the updated split informaton based on the leaf
+  //! nodes can have smaller bounding boxes than the original ones, we can
+  //! improve query times.
   inline Node* SplitIndices(
       Index const depth,
       Index const offset,
       Index const size,
-      typename Sequence<Scalar, Dim_>::MoveReturnType box_min,
-      typename Sequence<Scalar, Dim_>::MoveReturnType box_max) const {
+      Sequence<Scalar, Dim_>* box_min,
+      Sequence<Scalar, Dim_>* box_max) const {
     Node* node = nodes_.Allocate();
     //
     if (size <= max_leaf_size_) {
@@ -143,6 +175,9 @@ class KdTreeBuilder {
       node->data.leaf.end_idx = offset + size;
       node->left = nullptr;
       node->right = nullptr;
+
+      CalculateBoundingBox(
+          node->data.leaf.begin_idx, node->data.leaf.end_idx, box_min, box_max);
     } else {
       int split_dim;
       Index split_idx;
@@ -151,60 +186,99 @@ class KdTreeBuilder {
           depth,
           offset,
           size,
-          box_min,
-          box_max,
+          *box_min,
+          *box_max,
           &split_dim,
           &split_idx,
           &split_val);
-
-      SetBranch(box_min, box_max, split_dim, split_val, node);
 
       // The split_idx is used as the first index of the right branch.
       Index const left_size = split_idx - offset;
       Index const right_size = size - left_size;
 
-      Sequence<Scalar, Dim_> left_box_max = box_max;
-      left_box_max[node->data.branch.split_dim] = node->data.branch.split_val;
+      Sequence<Scalar, Dim_> left_box_max = *box_max;
+      left_box_max[split_dim] = split_val;
 
-      Sequence<Scalar, Dim_> right_box_min = box_min;
-      right_box_min[node->data.branch.split_dim] = node->data.branch.split_val;
+      Sequence<Scalar, Dim_> right_box_min = *box_min;
+      right_box_min[split_dim] = split_val;
 
-      node->left = SplitIndices(
-          depth + 1, offset, left_size, box_min.Move(), left_box_max.Move());
+      node->left =
+          SplitIndices(depth + 1, offset, left_size, box_min, &left_box_max);
       node->right = SplitIndices(
-          depth + 1,
-          split_idx,
-          right_size,
-          right_box_min.Move(),
-          box_max.Move());
+          depth + 1, split_idx, right_size, &right_box_min, box_max);
+
+      SetBranch(
+          *box_min, left_box_max, right_box_min, *box_max, split_dim, node);
+
+      // This loop merges both child boxes. We can expect any of the min max
+      // values to change except for the one of split_dim.
+      for (int i = 0; i < Dimension<Traits, Dim_>::Dim(space_); ++i) {
+        if ((*box_min)[i] > right_box_min[i]) {
+          (*box_min)[i] = right_box_min[i];
+        }
+
+        if ((*box_max)[i] < left_box_max[i]) {
+          (*box_max)[i] = left_box_max[i];
+        }
+      }
     }
 
     return node;
   }
 
- private:
+  inline void CalculateBoundingBox(
+      Index const begin_idx,
+      Index const end_idx,
+      Sequence<Scalar, Dim_>* p_min,
+      Sequence<Scalar, Dim_>* p_max) const {
+    auto& min = *p_min;
+    auto& max = *p_max;
+    min.Fill(Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::max());
+    max.Fill(Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::lowest());
+
+    for (Index j = begin_idx; j < end_idx; ++j) {
+      Scalar const* const p =
+          Traits::PointCoords(Traits::PointAt(space_, indices_[j]));
+      for (int i = 0; i < Dimension<Traits, Dim_>::Dim(space_); ++i) {
+        Scalar const v = p[i];
+        if (v < min[i]) {
+          min[i] = v;
+        }
+        if (v > max[i]) {
+          max[i] = v;
+        }
+      }
+    }
+  }
+
   inline void SetBranch(
       Sequence<Scalar, Dim_> const&,
+      Sequence<Scalar, Dim_> const& left_max,
+      Sequence<Scalar, Dim_> const& right_min,
       Sequence<Scalar, Dim_> const&,
-      int const& split_dim,
-      Scalar const& split_val,
+      int const split_dim,
       KdTreeNodeEuclidean<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
-    node->data.branch.split_val = split_val;
+    node->data.branch.left_max = left_max[split_dim];
+    node->data.branch.right_min = right_min[split_dim];
   }
 
   inline void SetBranch(
-      Sequence<Scalar, Dim_> const& box_min,
-      Sequence<Scalar, Dim_> const& box_max,
-      int const& split_dim,
-      Scalar const& split_val,
+      Sequence<Scalar, Dim_> const& left_min,
+      Sequence<Scalar, Dim_> const& left_max,
+      Sequence<Scalar, Dim_> const& right_min,
+      Sequence<Scalar, Dim_> const& right_max,
+      int const split_dim,
       KdTreeNodeTopological<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
-    node->data.branch.split_val = split_val;
-    node->data.branch.min_val = box_min[split_dim];
-    node->data.branch.max_val = box_max[split_dim];
+    node->data.branch.left_min = left_min[split_dim];
+    node->data.branch.left_max = left_max[split_dim];
+    node->data.branch.right_min = right_min[split_dim];
+    node->data.branch.right_max = right_max[split_dim];
   }
 
+  Space const& space_;
+  std::vector<Index> const& indices_;
   Index const max_leaf_size_;
   Splitter const& splitter_;
   MemoryBuffer& nodes_;
@@ -261,6 +335,7 @@ class SearchNearestEuclidean {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
       Scalar const v = Traits::PointCoords(point_)[node->data.branch.split_dim];
+      Scalar new_offset;
       Node const* node_1st;
       Node const* node_2nd;
 
@@ -268,12 +343,15 @@ class SearchNearestEuclidean {
       // handled by the if statement below this one: the check that max search
       // radius still hits the split value after having traversed the first
       // branch.
-      if (v < node->data.branch.split_val) {
+      if ((node->data.branch.left_max + node->data.branch.right_min - v - v) >
+          0) {
         node_1st = node->left;
         node_2nd = node->right;
+        new_offset = metric_(node->data.branch.right_min, v);
       } else {
         node_1st = node->right;
         node_2nd = node->left;
+        new_offset = metric_(node->data.branch.left_max, v);
       }
 
       // S. Arya and D. M. Mount. Algorithms for fast vector quantization. In
@@ -289,7 +367,6 @@ class SearchNearestEuclidean {
       // NOTE: This method only works with Lp norms to which the exponent is not
       // applied.
       Scalar const old_offset = node_box_offset_[node->data.branch.split_dim];
-      Scalar const new_offset = metric_(node->data.branch.split_val, v);
       node_box_distance = node_box_distance - old_offset + new_offset;
 
       // The value visitor->max() contains the current nearest neighbor distance
@@ -364,13 +441,13 @@ class SearchNearestTopological {
       // Determine the distance to the boxes of the children of this node.
       Scalar const d1 = metric_(
           v,
-          node->data.branch.min_val,
-          node->data.branch.split_val,
+          node->data.branch.left_min,
+          node->data.branch.left_max,
           node->data.branch.split_dim);
       Scalar const d2 = metric_(
           v,
-          node->data.branch.split_val,
-          node->data.branch.max_val,
+          node->data.branch.right_min,
+          node->data.branch.right_max,
           node->data.branch.split_dim);
       Node const* node_1st;
       Node const* node_2nd;
@@ -929,12 +1006,8 @@ class KdTree {
     CalculateBoundingBox(&root_box_min_, &root_box_max_);
 
     Splitter splitter(points_, &indices_);
-    return Builder{max_leaf_size, splitter, &nodes_}.SplitIndices(
-        0,
-        0,
-        Traits::SpaceNpts(points_),
-        Sequence(root_box_min_),
-        Sequence(root_box_max_));
+    return Builder{points_, indices_, max_leaf_size, splitter, &nodes_}(
+        Sequence(root_box_min_), Sequence(root_box_max_));
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
@@ -1014,7 +1087,7 @@ class KdTree {
       }
     } else {
       Sequence left_box_max = box_max;
-      left_box_max[node->data.branch.split_dim] = node->data.branch.split_val;
+      left_box_max[node->data.branch.split_dim] = node->data.branch.left_max;
 
       // Check if the left node is fully contained. If true, report all its
       // indices. Else, if its partially contained, continue the range search
@@ -1023,7 +1096,7 @@ class KdTree {
           PointInBox(left_box_max, rng_min, rng_max)) {
         ReportNode(node->left, idxs);
       } else if (
-          rng_min[node->data.branch.split_dim] < node->data.branch.split_val) {
+          rng_min[node->data.branch.split_dim] < node->data.branch.left_max) {
         SearchBox(
             node->left,
             rng_min,
@@ -1034,14 +1107,14 @@ class KdTree {
       }
 
       Sequence right_box_min = box_min;
-      right_box_min[node->data.branch.split_dim] = node->data.branch.split_val;
+      right_box_min[node->data.branch.split_dim] = node->data.branch.right_min;
 
       // Same as the left side.
       if (PointInBox(right_box_min, rng_min, rng_max) &&
           PointInBox(box_max, rng_min, rng_max)) {
         ReportNode(node->right, idxs);
       } else if (
-          rng_max[node->data.branch.split_dim] > node->data.branch.split_val) {
+          rng_max[node->data.branch.split_dim] > node->data.branch.right_min) {
         SearchBox(
             node->right,
             rng_min,
