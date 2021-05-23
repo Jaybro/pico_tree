@@ -42,10 +42,10 @@ TEST(MetricTest, L2Squared) {
 }
 
 TEST(MetricTest, SO2) {
-  PointX p0{1.0f};
-  PointX p1{1.1f};
+  Point1f p0{1.0f};
+  Point1f p1{1.1f};
 
-  pico_tree::SO2<TraitsX> metric;
+  pico_tree::SO2<pico_tree::StdTraits<std::vector<Point1f>>> metric;
 
   EXPECT_FLOAT_EQ(metric(p0, p1), 0.1f);
   EXPECT_FLOAT_EQ(metric(-0.1f), 0.1f);
