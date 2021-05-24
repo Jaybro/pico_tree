@@ -132,7 +132,7 @@ def performance_test_pico_tree():
     # threads used for querying: export OMP_NUM_THREADS=1
     k = 1
     cnt_query_time_before = perf_counter()
-    # Searching for nearest neighbors is close to a constant second slower
+    # Searching for nearest neighbors is a constant amount of time slower
     # using the bindings as compared to the C++ benchmark (regardless of k).
     # The following must be noted however: The Python benchmark simply calls
     # the knn function provided by the Python bindings. As such it does not
