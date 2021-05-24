@@ -129,7 +129,7 @@ class KdTreeBuilder {
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
-  using SequenceBox = SequenceBox<Scalar, Dim_>;
+  using SequenceBoxType = SequenceBox<Scalar, Dim_>;
 
  public:
   //! \brief Node type supported by KdTreeBuilder based on SpaceTag.
@@ -152,8 +152,8 @@ class KdTreeBuilder {
         nodes_{*nodes} {}
 
   //! \brief Creates the full set of nodes for a KdTree.
-  inline Node* operator()(SequenceBox const& root_box) const {
-    SequenceBox box(root_box);
+  inline Node* operator()(SequenceBoxType const& root_box) const {
+    SequenceBoxType box(root_box);
     return SplitIndices(0, 0, Traits::SpaceNpts(space_), &box);
   }
 
@@ -172,7 +172,7 @@ class KdTreeBuilder {
       Index const depth,
       Index const offset,
       Index const size,
-      SequenceBox* box) const {
+      SequenceBoxType* box) const {
     Node* node = nodes_.Allocate();
     //
     if (size <= max_leaf_size_) {
@@ -203,7 +203,7 @@ class KdTreeBuilder {
       Index const left_size = split_idx - offset;
       Index const right_size = size - left_size;
 
-      SequenceBox right = *box;
+      SequenceBoxType right = *box;
       // Argument box will function as the left bounding box until we merge left
       // and right again at the end of this code section.
       box->max[split_dim] = split_val;
@@ -231,7 +231,7 @@ class KdTreeBuilder {
   }
 
   inline void CalculateBoundingBox(
-      Index const begin_idx, Index const end_idx, SequenceBox* box) const {
+      Index const begin_idx, Index const end_idx, SequenceBoxType* box) const {
     box->min.Fill(
         Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::max());
     box->max.Fill(
@@ -253,8 +253,8 @@ class KdTreeBuilder {
   }
 
   inline void SetBranch(
-      SequenceBox const& left,
-      SequenceBox const& right,
+      SequenceBoxType const& left,
+      SequenceBoxType const& right,
       int const split_dim,
       KdTreeNodeEuclidean<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
@@ -263,8 +263,8 @@ class KdTreeBuilder {
   }
 
   inline void SetBranch(
-      SequenceBox const& left,
-      SequenceBox const& right,
+      SequenceBoxType const& left,
+      SequenceBoxType const& right,
       int const split_dim,
       KdTreeNodeTopological<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
