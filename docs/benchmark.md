@@ -2,6 +2,8 @@
 
 One of the PicoTree examples is a small [benchmark](../examples/benchmark/) that compares the KdTree of this library with that of [nanoflann](https://github.com/jlblancoc/nanoflann). This page describes the benchmark output and how to reproduce the exact same input that was used for benchmarking.
 
+Results were generated on: 24-05-2021 using MinGW GCC 10.1 using PicoTree 0.7.3.
+
 # Data sets
 
 The [Robotic 3D Scan Repository](http://kos.informatik.uni-osnabrueck.de/3Dscans/) provides several 3D point clouds that have been generated using a LiDAR scanner. The following has been used for the comparison benchmark:
@@ -24,8 +26,6 @@ The running time of the benchmark was kept reasonable by using two subsets of po
 * Part 2: 7200863 points.
 
 Both parts are 360 degree scans taken from different positions. The first is used to build a tree and the second for querying that tree. Note that each run time describes a single invocation of a build algorithm and n invocations of the others.
-
-Results were generated on: 01-05-2021 using MinGW GCC 10.1.
 
 ![Build Time](./images/benchmark_gauss_build_time.png)![Radius Search Time](./images/benchmark_gauss_radius_search_time.png)
 
