@@ -112,6 +112,16 @@ struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
   using Node = KdTreeNodeTopological<Index, Scalar>;
 };
 
+//! \brief A SequenceBox can be used as a bounding box. It uses a Sequence for
+//! storing the min and max coordinate of the box.
+template <typename Scalar_, int Dim_>
+struct SequenceBox {
+  //! \brief Minimum box coordinate.
+  Sequence<Scalar_, Dim_> min;
+  //! \brief Maximum box coordinate.
+  Sequence<Scalar_, Dim_> max;
+};
+
 //! \brief This class provides the build algorithm of the KdTree. How the KdTree
 //! is build depends on the Splitter template argument.
 template <typename Traits, typename SpaceTag, typename Splitter, int Dim_>
@@ -119,6 +129,7 @@ class KdTreeBuilder {
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
+  using SequenceBox = SequenceBox<Scalar, Dim_>;
 
  public:
   //! \brief Node type supported by KdTreeBuilder based on SpaceTag.
@@ -141,14 +152,9 @@ class KdTreeBuilder {
         nodes_{*nodes} {}
 
   //! \brief Creates the full set of nodes for a KdTree.
-  inline Node* operator()(
-      Sequence<Scalar, Dim_> const& box_min,
-      Sequence<Scalar, Dim_> const& box_max) const {
-    Sequence<Scalar, Dim_> copy_box_min = box_min;
-    Sequence<Scalar, Dim_> copy_box_max = box_max;
-
-    return SplitIndices(
-        0, 0, Traits::SpaceNpts(space_), &copy_box_min, &copy_box_max);
+  inline Node* operator()(SequenceBox const& root_box) const {
+    SequenceBox box(root_box);
+    return SplitIndices(0, 0, Traits::SpaceNpts(space_), &box);
   }
 
  private:
@@ -166,8 +172,7 @@ class KdTreeBuilder {
       Index const depth,
       Index const offset,
       Index const size,
-      Sequence<Scalar, Dim_>* box_min,
-      Sequence<Scalar, Dim_>* box_max) const {
+      SequenceBox* box) const {
     Node* node = nodes_.Allocate();
     //
     if (size <= max_leaf_size_) {
@@ -178,10 +183,7 @@ class KdTreeBuilder {
       // Keep the original box in case it was empty.
       if (size > 0) {
         CalculateBoundingBox(
-            node->data.leaf.begin_idx,
-            node->data.leaf.end_idx,
-            box_min,
-            box_max);
+            node->data.leaf.begin_idx, node->data.leaf.end_idx, box);
       }
     } else {
       int split_dim;
@@ -191,8 +193,8 @@ class KdTreeBuilder {
           depth,
           offset,
           size,
-          *box_min,
-          *box_max,
+          box->min,
+          box->max,
           &split_dim,
           &split_idx,
           &split_val);
@@ -201,29 +203,26 @@ class KdTreeBuilder {
       Index const left_size = split_idx - offset;
       Index const right_size = size - left_size;
 
-      Sequence<Scalar, Dim_> left_box_max = *box_max;
-      left_box_max[split_dim] = split_val;
+      SequenceBox right = *box;
+      // Argument box will function as the left bounding box until we merge left
+      // and right again at the end of this code section.
+      box->max[split_dim] = split_val;
+      right.min[split_dim] = split_val;
 
-      Sequence<Scalar, Dim_> right_box_min = *box_min;
-      right_box_min[split_dim] = split_val;
+      node->left = SplitIndices(depth + 1, offset, left_size, box);
+      node->right = SplitIndices(depth + 1, split_idx, right_size, &right);
 
-      node->left =
-          SplitIndices(depth + 1, offset, left_size, box_min, &left_box_max);
-      node->right = SplitIndices(
-          depth + 1, split_idx, right_size, &right_box_min, box_max);
-
-      SetBranch(
-          *box_min, left_box_max, right_box_min, *box_max, split_dim, node);
+      SetBranch(*box, right, split_dim, node);
 
       // This loop merges both child boxes. We can expect any of the min max
       // values to change except for the one of split_dim.
       for (int i = 0; i < Dimension<Traits, Dim_>::Dim(space_); ++i) {
-        if ((*box_min)[i] > right_box_min[i]) {
-          (*box_min)[i] = right_box_min[i];
+        if (box->min[i] > right.min[i]) {
+          box->min[i] = right.min[i];
         }
 
-        if ((*box_max)[i] < left_box_max[i]) {
-          (*box_max)[i] = left_box_max[i];
+        if (box->max[i] < right.max[i]) {
+          box->max[i] = right.max[i];
         }
       }
     }
@@ -232,54 +231,47 @@ class KdTreeBuilder {
   }
 
   inline void CalculateBoundingBox(
-      Index const begin_idx,
-      Index const end_idx,
-      Sequence<Scalar, Dim_>* p_min,
-      Sequence<Scalar, Dim_>* p_max) const {
-    auto& min = *p_min;
-    auto& max = *p_max;
-    min.Fill(Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::max());
-    max.Fill(Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::lowest());
+      Index const begin_idx, Index const end_idx, SequenceBox* box) const {
+    box->min.Fill(
+        Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::max());
+    box->max.Fill(
+        Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::lowest());
 
     for (Index j = begin_idx; j < end_idx; ++j) {
       Scalar const* const p =
           Traits::PointCoords(Traits::PointAt(space_, indices_[j]));
       for (int i = 0; i < Dimension<Traits, Dim_>::Dim(space_); ++i) {
         Scalar const v = p[i];
-        if (v < min[i]) {
-          min[i] = v;
+        if (v < box->min[i]) {
+          box->min[i] = v;
         }
-        if (v > max[i]) {
-          max[i] = v;
+        if (v > box->max[i]) {
+          box->max[i] = v;
         }
       }
     }
   }
 
   inline void SetBranch(
-      Sequence<Scalar, Dim_> const&,
-      Sequence<Scalar, Dim_> const& left_max,
-      Sequence<Scalar, Dim_> const& right_min,
-      Sequence<Scalar, Dim_> const&,
+      SequenceBox const& left,
+      SequenceBox const& right,
       int const split_dim,
       KdTreeNodeEuclidean<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
-    node->data.branch.left_max = left_max[split_dim];
-    node->data.branch.right_min = right_min[split_dim];
+    node->data.branch.left_max = left.max[split_dim];
+    node->data.branch.right_min = right.min[split_dim];
   }
 
   inline void SetBranch(
-      Sequence<Scalar, Dim_> const& left_min,
-      Sequence<Scalar, Dim_> const& left_max,
-      Sequence<Scalar, Dim_> const& right_min,
-      Sequence<Scalar, Dim_> const& right_max,
+      SequenceBox const& left,
+      SequenceBox const& right,
       int const split_dim,
       KdTreeNodeTopological<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
-    node->data.branch.left_min = left_min[split_dim];
-    node->data.branch.left_max = left_max[split_dim];
-    node->data.branch.right_min = right_min[split_dim];
-    node->data.branch.right_max = right_max[split_dim];
+    node->data.branch.left_min = left.min[split_dim];
+    node->data.branch.left_max = left.max[split_dim];
+    node->data.branch.right_min = right.min[split_dim];
+    node->data.branch.right_max = right.max[split_dim];
   }
 
   Space const& space_;
@@ -701,6 +693,7 @@ class KdTree {
   using Node = typename Builder::Node;
   //! Either an array or vector (compile time vs. run time).
   using Sequence = typename internal::Sequence<Scalar, Dim_>;
+  using SequenceBox = typename internal::SequenceBox<Scalar, Dim_>;
   using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
 
  public:
@@ -925,8 +918,8 @@ class KdTree {
         root_,
         Traits::PointCoords(min),
         Traits::PointCoords(max),
-        Sequence(root_box_min_),
-        Sequence(root_box_max_),
+        Sequence(root_box_.min),
+        Sequence(root_box_.max),
         i);
   }
 
@@ -983,21 +976,21 @@ class KdTree {
         indices_(Traits::SpaceNpts(points_)),
         root_(Load(stream)) {}
 
-  inline void CalculateBoundingBox(Sequence* p_min, Sequence* p_max) {
-    Sequence& min = *p_min;
-    Sequence& max = *p_max;
-    min.Fill(Traits::SpaceSdim(points_), std::numeric_limits<Scalar>::max());
-    max.Fill(Traits::SpaceSdim(points_), std::numeric_limits<Scalar>::lowest());
+  inline void CalculateBoundingBox(SequenceBox* p_box) {
+    auto& box = *p_box;
+    auto sdim = Traits::SpaceSdim(points_);
+    box.min.Fill(sdim, std::numeric_limits<Scalar>::max());
+    box.max.Fill(sdim, std::numeric_limits<Scalar>::lowest());
 
     for (Index j = 0; j < Traits::SpaceNpts(points_); ++j) {
       Scalar const* const p = Traits::PointCoords(Traits::PointAt(points_, j));
       for (int i = 0; i < internal::Dimension<Traits, Dim>::Dim(points_); ++i) {
         Scalar const v = p[i];
-        if (v < min[i]) {
-          min[i] = v;
+        if (v < box.min[i]) {
+          box.min[i] = v;
         }
-        if (v > max[i]) {
-          max[i] = v;
+        if (v > box.max[i]) {
+          box.max[i] = v;
         }
       }
     }
@@ -1011,11 +1004,11 @@ class KdTree {
 
     std::iota(indices_.begin(), indices_.end(), 0);
 
-    CalculateBoundingBox(&root_box_min_, &root_box_max_);
+    CalculateBoundingBox(&root_box_);
 
     Splitter splitter(points_, &indices_);
-    return Builder{points_, indices_, max_leaf_size, splitter, &nodes_}(
-        Sequence(root_box_min_), Sequence(root_box_max_));
+    return Builder{
+        points_, indices_, max_leaf_size, splitter, &nodes_}(root_box_);
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
@@ -1170,32 +1163,30 @@ class KdTree {
   //! \private
   inline Node* Load(internal::Stream* stream) {
     stream->Read(&indices_);
-    stream->Read(&root_box_min_);
-    stream->Read(&root_box_max_);
+    stream->Read(&root_box_.min);
+    stream->Read(&root_box_.max);
     return ReadNode(stream);
   }
 
   //! \private
   inline void Save(internal::Stream* stream) const {
     stream->Write(indices_);
-    stream->Write(root_box_min_);
-    stream->Write(root_box_max_);
+    stream->Write(root_box_.min);
+    stream->Write(root_box_.max);
     WriteNode(root_, stream);
   }
 
-  //! Point set adapter used for querying point data.
+  //! \brief Point set adapter used for querying point data.
   Space points_;
-  //! Metric used for comparing distances.
+  //! \brief Metric used for comparing distances.
   Metric metric_;
-  //! Memory buffer for tree nodes.
+  //! \brief Memory buffer for tree nodes.
   MemoryBuffer nodes_;
-  //! Sorted indices that refer to points inside points_.
+  //! \brief Sorted indices that refer to points inside points_.
   std::vector<Index> indices_;
-  //! Min coordinate of the root node box.
-  Sequence root_box_min_;
-  //! Max coordinate of the root node box.
-  Sequence root_box_max_;
-  //! Root of the KdTree.
+  //! \brief Bounding box of the root node.
+  SequenceBox root_box_;
+  //! \brief Root of the KdTree.
   Node* root_;
 };
 
