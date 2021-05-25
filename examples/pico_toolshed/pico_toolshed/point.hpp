@@ -42,17 +42,22 @@ namespace pico_tree {
 //! \brief Example point traits implementation for use with
 //! pico_tree::StdTraits.
 //! \details An implementation of StdPointTraits<PointType> *must* provide all
-//! the details of this example implementation.
+//! the details of this example.
 template <typename Scalar_, int Dim_>
 struct StdPointTraits<Point<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static constexpr int Dim = Dim_;
 
-  inline static ScalarType const* Coords(Point<ScalarType, Dim> const& point) {
+  //! \brief Returns a pointer to the coordinates of \p point.
+  inline static ScalarType const* Coords(Point<ScalarType, Dim_> const& point) {
     return point.data;
   }
 
-  inline static int constexpr Sdim(Point<ScalarType, Dim> const&) {
+  //! \brief Returns the spatial dimension of a Point instance.
+  //! \details The input argument is ignored because the spatial dimension is
+  //! known at compile time. Also, the return value does not have to be
+  //! constexpr in case the point type supports run-time dimensions.
+  inline static int constexpr Sdim(Point<ScalarType, Dim_> const&) {
     return Dim_;
   }
 };
