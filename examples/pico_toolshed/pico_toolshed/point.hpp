@@ -43,6 +43,9 @@ namespace pico_tree {
 //! pico_tree::StdTraits.
 //! \details An implementation of StdPointTraits<PointType> *must* provide all
 //! the details of this example.
+//!
+//! A specialization of StdPointTraits must reside within the pico_tree
+//! namespace.
 template <typename Scalar_, int Dim_>
 struct StdPointTraits<Point<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
@@ -81,7 +84,8 @@ using Point1d = Point<double, 1>;
 using Point2d = Point<double, 2>;
 using Point3d = Point<double, 3>;
 
-//! Generates \p n points in a square of size \p size .
+//! \brief Generates \p n random points uniformly distributed between the box
+//! defined by \p min and \p max.
 template <typename Point>
 inline std::vector<Point> GenerateRandomN(
     int n, typename Point::ScalarType min, typename Point::ScalarType max) {
@@ -99,6 +103,8 @@ inline std::vector<Point> GenerateRandomN(
   return random;
 }
 
+//! \brief Generates \p n random points uniformly distributed over a box of size
+//! \p size.
 template <typename Point>
 inline std::vector<Point> GenerateRandomN(
     int n, typename Point::ScalarType size) {

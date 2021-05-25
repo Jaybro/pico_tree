@@ -64,8 +64,7 @@ class SearchNnCounter {
   //! finds a point that is closer to the query than the result of this
   //! visitors' max() function. I.e., it found a new nearest neighbor.
   //! \param idx Point index.
-  //! \param d Point distance
-  //! (that depends on the metric).
+  //! \param d Point distance (that depends on the metric).
   inline void operator()(Index const idx, Scalar const dst) {
     count_++;
     nn_ = {idx, dst};
