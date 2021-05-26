@@ -510,16 +510,11 @@ inline void LongestAxisBox(
 
 }  // namespace internal
 
-//! \brief Splits a tree node on the median of the longest dimension.
-//! \details A version of the median of medians algorithm. The tree is build in
-//! O(n log n) time on average.
-//!
-//! This splitting technique is generally slower compared to
-//! SplitterSlidingMidpoint but results in a balanced KdTree. In case the same
-//! point cloud is both used for building the tree and querying it, this
-//! technique could possibly be used for faster single nearest neighbor queries
-//! as compared to SplitterSlidingMidpoint. However, this is only useful when
-//! querying many (2n-4n) times as the build time of the tree is still slower.
+//! \brief Splits a node on the median of the longest dimension of its box. Also
+//! known as the standard split rule.
+//! \details This splitting build a tree in O(n log n) time on average. It's
+//! generally slower compared to SplitterSlidingMidpoint but results in a
+//! balanced KdTree.
 template <typename Traits>
 class SplitterLongestMedian {
  private:
@@ -584,11 +579,11 @@ class SplitterLongestMedian {
 //!
 //! * http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf
 //!
-//! The tree is build in O(n log n) time and results in a tree that is both
-//! faster to build and query as compared to SplitterLongestMedian.
-//!
 //! This splitter can be used to answer an approximate nearest neighbor query in
 //! O(1/e^d log n) time.
+//!
+//! The tree is build in O(n log n) time and results in a tree that is both
+//! faster to build and query as compared to SplitterLongestMedian.
 template <typename Traits>
 class SplitterSlidingMidpoint {
  private:
