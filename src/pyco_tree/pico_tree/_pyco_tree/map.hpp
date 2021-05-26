@@ -94,7 +94,7 @@ struct StdPointTraits<typename pyco_tree::Block<Map_>> {
     return point.data();
   }
 
-  inline static int constexpr Sdim(pyco_tree::Block<Map_> const& point) {
+  inline static int Sdim(pyco_tree::Block<Map_> const& point) {
     return point.sdim();
   }
 };
