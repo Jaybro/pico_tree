@@ -34,12 +34,15 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * Compile time and run time known dimensions.
   * Static tree builds.
   * Thread safe queries.
+* PicoTree can interface with different types of points or point sets through a traits class. This can be a custom implementation or one of the traits classes provided by this library:
+  * `pico_tree::StdTraits<>` supports interfacing with any `std::vector<PointType>`. It requires a specialization of `pico_tree::StdPointTraits<>` for each `PointType`. There are default `pico_tree::StdPointTraits<>` available for Eigen and OpenCV point types.
+  * `pico_tree::EigenTraits<>` supports interfacing with Eigen matrices.
+  * `pico_tree::CvTraits<>` supports interfacing with OpenCV matrices.
 
 The examples show how PicoTree can be used:
 
-* PicoTree supports interfacing with different types of points or point sets through a traits class. This can be one of the default traits classes or a custom implementation:
-  * `pico_tree::StdTraits<>` provides a traits interface to support any `std::vector<PointType>`. It requires a specialization of `pico_tree::StdPointTraits<>` for each different [PointType](./examples/pico_toolshed/pico_toolshed/point.hpp).
-  * The implementation of `pico_tree::StdTraits<>` can be used as an example to create a [custom](./src/pico_tree/pico_tree/std_traits.hpp) traits class.
+* Creating [custom](./examples/pico_toolshed/pico_toolshed/point.hpp) `pico_tree::StdPointTraits<>`.
+* `pico_tree::StdTraits<>` can be used as an example to create a [custom](./src/pico_tree/pico_tree/std_traits.hpp) traits class.
 * Using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).
