@@ -17,12 +17,14 @@ class NanoAdaptor {
 
   NanoAdaptor(std::vector<Point> const& points) : points_(points) {}
 
-  //! Returns the number of points.
-  inline Index kdtree_get_point_count() const { return points_.size(); }
+  //! \brief Returns the number of points.
+  inline Index kdtree_get_point_count() const {
+    return static_cast<Index>(points_.size());
+  }
 
-  //! Returns the dim'th component of the idx'th point in the class:
+  //! \brief Returns the dim'th component of the idx'th point in the class:
   inline Scalar kdtree_get_pt(Index const idx, Index const dim) const {
-    return points_[idx](dim);
+    return points_[idx].data[dim];
   }
 
   // Optional bounding-box computation: return false to default to a standard
