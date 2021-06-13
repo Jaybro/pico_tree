@@ -49,6 +49,14 @@ class Sequence {
     return sequence_.size();
   }
 
+  //! \brief Returns a const reference to the underlying container.
+  inline constexpr std::array<Scalar, Dim_> const& container() const noexcept {
+    return sequence_;
+  }
+
+  //! \brief Returns a reference to the underlying container.
+  inline std::array<Scalar, Dim_>& container() noexcept { return sequence_; }
+
  private:
   //! \brief Storage.
   std::array<Scalar, Dim_> sequence_;
@@ -91,6 +99,14 @@ class Sequence<Scalar, kDynamicDim> {
   inline constexpr std::size_t size() const noexcept {
     return sequence_.size();
   }
+
+  //! \brief Returns a const reference to the underlying container.
+  inline std::vector<Scalar> const& container() const noexcept {
+    return sequence_;
+  }
+
+  //! \brief Returns a reference to the underlying container.
+  inline std::vector<Scalar>& container() noexcept { return sequence_; }
 
  private:
   //! \brief Storage.

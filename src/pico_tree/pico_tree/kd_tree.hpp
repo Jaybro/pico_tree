@@ -1158,16 +1158,16 @@ class KdTree {
   //! \private
   inline Node* Load(internal::Stream* stream) {
     stream->Read(&indices_);
-    stream->Read(&root_box_.min);
-    stream->Read(&root_box_.max);
+    stream->Read(&root_box_.min.container());
+    stream->Read(&root_box_.max.container());
     return ReadNode(stream);
   }
 
   //! \private
   inline void Save(internal::Stream* stream) const {
     stream->Write(indices_);
-    stream->Write(root_box_.min);
-    stream->Write(root_box_.max);
+    stream->Write(root_box_.min.container());
+    stream->Write(root_box_.max.container());
     WriteNode(root_, stream);
   }
 

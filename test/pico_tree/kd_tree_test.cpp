@@ -16,6 +16,33 @@ using Traits = pico_tree::StdTraits<SpaceX>;
 template <typename PointX>
 using KdTree = pico_tree::KdTree<Traits<Space<PointX>>>;
 
+// Wraps a vector and provides a dynamic spatial dimension.
+template <typename Point>
+class DynamicSpace {
+ public:
+  DynamicSpace(std::vector<Point> const& space, int sdim)
+      : space_(space), sdim_(sdim) {}
+
+  inline operator std::vector<Point> const &() const { return space_; }
+
+  int sdim() const { return sdim_; }
+
+ private:
+  std::vector<Point> const& space_;
+  int sdim_;
+};
+
+// Supports a dynamic spatial dimension for vectors.
+template <typename Point>
+struct DynamicSpaceTraits : public pico_tree::StdTraits<std::vector<Point>> {
+  using SpaceType = DynamicSpace<Point>;
+  static constexpr int Dim = pico_tree::kDynamicDim;
+
+  inline static int SpaceSdim(DynamicSpace<Point> const& space) {
+    return space.sdim();
+  }
+};
+
 }  // namespace
 
 TEST(KdTreeTest, SplitterMedian) {
@@ -216,6 +243,7 @@ TEST(KdTreeTest, WriteRead) {
 
   std::string filename = "tree.bin";
 
+  // Compile time known dimensions.
   {
     // The points are not stored.
     KdTree<Point2f> tree(random, 1);
@@ -224,6 +252,26 @@ TEST(KdTreeTest, WriteRead) {
   {
     // Points are required to load the tree.
     KdTree<Point2f> tree = KdTree<Point2f>::Load(random, filename);
+    TestKnn(tree, Index(20));
+  }
+
+  EXPECT_EQ(std::remove(filename.c_str()), 0);
+
+  // Run time known dimensions.
+  using DSpace = DynamicSpace<Point2f>;
+  using DTraits = DynamicSpaceTraits<Point2f>;
+
+  DSpace drandom(random, 2);
+
+  {
+    // The points are not stored.
+    pico_tree::KdTree<DTraits> tree(drandom, 1);
+    pico_tree::KdTree<DTraits>::Save(tree, filename);
+  }
+  {
+    // Points are required to load the tree.
+    pico_tree::KdTree<DTraits> tree =
+        pico_tree::KdTree<DTraits>::Load(drandom, filename);
     TestKnn(tree, Index(20));
   }
 
