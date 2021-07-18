@@ -17,7 +17,34 @@ class Point {
   static constexpr int Dim = Dim_;
 
   inline ScalarType const& operator()(int const i) const { return data[i]; }
+
   inline ScalarType& operator()(int const i) { return data[i]; }
+
+  inline Point& operator+=(ScalarType const v) {
+    for (int i = 0; i < Dim; ++i) {
+      data[i] += v;
+    }
+    return *this;
+  }
+
+  inline Point operator+(ScalarType const v) const {
+    Point p = *this;
+    p += v;
+    return p;
+  }
+
+  inline Point& operator-=(ScalarType const v) {
+    for (int i = 0; i < Dim; ++i) {
+      data[i] -= v;
+    }
+    return *this;
+  }
+
+  inline Point operator-(ScalarType const v) const {
+    Point p = *this;
+    p -= v;
+    return p;
+  }
 
   inline void Fill(ScalarType const v) {
     for (int i = 0; i < Dim; ++i) {
