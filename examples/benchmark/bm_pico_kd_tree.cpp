@@ -151,4 +151,37 @@ BENCHMARK_REGISTER_F(BmPicoKdTree, RadiusCtSldMid)
     ->Args({12, 30})
     ->Args({14, 30});
 
+// ****************************************************************************
+// Box
+// ****************************************************************************
+
+BENCHMARK_DEFINE_F(BmPicoKdTree, BoxCtSldMid)(benchmark::State& state) {
+  int max_leaf_size = state.range(0);
+  Scalar radius = static_cast<Scalar>(state.range(1)) / 10.0;
+
+  PicoKdTreeCtSldMid<PointX> tree(points_tree_, max_leaf_size);
+
+  for (auto _ : state) {
+    std::vector<Index> results;
+    std::size_t sum = 0;
+    for (auto const& p : points_test_) {
+      auto min = p - radius;
+      auto max = p + radius;
+      tree.SearchBox(min, max, &results);
+      benchmark::DoNotOptimize(sum += results.size());
+    }
+  }
+}
+
+// Argument 1: Maximum leaf size.
+// Argument 2: Search radius (half the width of the box divided by 10.0).
+BENCHMARK_REGISTER_F(BmPicoKdTree, BoxCtSldMid)
+    ->Unit(benchmark::kMillisecond)
+    ->Args({1, 15})
+    ->Args({6, 15})
+    ->Args({8, 15})
+    ->Args({10, 15})
+    ->Args({12, 15})
+    ->Args({14, 15});
+
 BENCHMARK_MAIN();
