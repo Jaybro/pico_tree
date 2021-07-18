@@ -531,9 +531,9 @@ class SearchBox {
            ++i) {
         Index const idx = indices_[i];
         if (PointInBox(
-                Traits::PointCoords(Traits::PointAt(points_, idx)),
                 rng_min_,
-                rng_max_)) {
+                rng_max_,
+                Traits::PointCoords(Traits::PointAt(points_, idx)))) {
           idxs_.push_back(idx);
         }
       }
@@ -544,8 +544,8 @@ class SearchBox {
       // Check if the left node is fully contained. If true, report all its
       // indices. Else, if its partially contained, continue the range search
       // down the left node.
-      if (PointInBox(box_min, rng_min_, rng_max_) &&
-          PointInBox(left_box_max, rng_min_, rng_max_)) {
+      if (PointInBox(rng_min_, rng_max_, box_min) &&
+          PointInBox(rng_min_, rng_max_, left_box_max)) {
         ReportNode(node->left, &idxs_);
       } else if (
           rng_min_[node->data.branch.split_dim] < node->data.branch.left_max) {
@@ -556,8 +556,8 @@ class SearchBox {
       right_box_min[node->data.branch.split_dim] = node->data.branch.right_min;
 
       // Same as the left side.
-      if (PointInBox(right_box_min, rng_min_, rng_max_) &&
-          PointInBox(box_max, rng_min_, rng_max_)) {
+      if (PointInBox(rng_min_, rng_max_, right_box_min) &&
+          PointInBox(rng_min_, rng_max_, box_max)) {
         ReportNode(node->right, &idxs_);
       } else if (
           rng_max_[node->data.branch.split_dim] > node->data.branch.right_min) {
@@ -570,7 +570,7 @@ class SearchBox {
   //! Checks if \p x is contained in the box defined by \p min and \p max. A
   //! point on the edge considered inside the box.
   template <typename P0, typename P1>
-  inline bool PointInBox(P0 const& x, P1 const& min, P1 const& max) const {
+  inline bool PointInBox(P0 const& min, P0 const& max, P1 const& x) const {
     for (int i = 0; i < internal::Dimension<Traits, Dim_>::Dim(points_); ++i) {
       if (min[i] > x[i] || max[i] < x[i]) {
         return false;
