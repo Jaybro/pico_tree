@@ -488,6 +488,121 @@ class SearchNearestTopological {
   Visitor& visitor_;
 };
 
+//! \brief This class provides the search box function.
+template <typename Traits, typename Metric, int Dim_>
+class SearchBox {
+ private:
+  using Index = typename Traits::IndexType;
+  using Scalar = typename Traits::ScalarType;
+  using Space = typename Traits::SpaceType;
+
+ public:
+  //! \private
+  inline SearchBox(
+      Space const& points,
+      Metric const& metric,
+      std::vector<Index> const& indices,
+      Scalar const* const rng_min,
+      Scalar const* const rng_max,
+      std::vector<Index>* idxs)
+      : points_(points),
+        metric_(metric),
+        indices_(indices),
+        rng_min_(rng_min),
+        rng_max_(rng_max),
+        idxs_(*idxs) {}
+
+  //! \brief Returns all points within the box defined by \p rng_min and \p
+  //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dim)+k).
+  //! \details Many tree nodes are excluded by checking if they intersect with
+  //! the box of the query. We don't store the bounding box of each node but
+  //! calculate them at run time. This slows down SearchBox in favor of
+  //! SearchNn.
+  template <typename Node>
+  inline void operator()(
+      Node const* const node,
+      typename Sequence<Scalar, Dim_>::MoveReturnType box_min,
+      typename Sequence<Scalar, Dim_>::MoveReturnType box_max) const {
+    // TODO Perhaps we can support it for both topological and Euclidean spaces.
+    static_assert(
+        std::is_same<typename Metric::SpaceTag, EuclideanSpaceTag>::value,
+        "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
+    if (node->IsLeaf()) {
+      for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+           ++i) {
+        Index const idx = indices_[i];
+        if (PointInBox(
+                Traits::PointCoords(Traits::PointAt(points_, idx)),
+                rng_min_,
+                rng_max_)) {
+          idxs_.push_back(idx);
+        }
+      }
+    } else {
+      Sequence<Scalar, Dim_> left_box_max = box_max;
+      left_box_max[node->data.branch.split_dim] = node->data.branch.left_max;
+
+      // Check if the left node is fully contained. If true, report all its
+      // indices. Else, if its partially contained, continue the range search
+      // down the left node.
+      if (PointInBox(box_min, rng_min_, rng_max_) &&
+          PointInBox(left_box_max, rng_min_, rng_max_)) {
+        ReportNode(node->left, &idxs_);
+      } else if (
+          rng_min_[node->data.branch.split_dim] < node->data.branch.left_max) {
+        operator()(node->left, box_min.Move(), left_box_max.Move());
+      }
+
+      Sequence<Scalar, Dim_> right_box_min = box_min;
+      right_box_min[node->data.branch.split_dim] = node->data.branch.right_min;
+
+      // Same as the left side.
+      if (PointInBox(right_box_min, rng_min_, rng_max_) &&
+          PointInBox(box_max, rng_min_, rng_max_)) {
+        ReportNode(node->right, &idxs_);
+      } else if (
+          rng_max_[node->data.branch.split_dim] > node->data.branch.right_min) {
+        operator()(node->right, right_box_min.Move(), box_max.Move());
+      }
+    }
+  }
+
+ private:
+  //! Checks if \p x is contained in the box defined by \p min and \p max. A
+  //! point on the edge considered inside the box.
+  template <typename P0, typename P1>
+  inline bool PointInBox(P0 const& x, P1 const& min, P1 const& max) const {
+    for (int i = 0; i < internal::Dimension<Traits, Dim_>::Dim(points_); ++i) {
+      if (min[i] > x[i] || max[i] < x[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  //! Reports all indices contained by \p node.
+  template <typename Node>
+  inline void ReportNode(
+      Node const* const node, std::vector<Index>* idxs) const {
+    if (node->IsLeaf()) {
+      std::copy(
+          indices_.cbegin() + node->data.leaf.begin_idx,
+          indices_.cbegin() + node->data.leaf.end_idx,
+          std::back_inserter(*idxs));
+    } else {
+      ReportNode(node->left, idxs);
+      ReportNode(node->right, idxs);
+    }
+  }
+
+  Space const& points_;
+  Metric const& metric_;
+  std::vector<Index> const& indices_;
+  Scalar const* const rng_min_;
+  Scalar const* const rng_max_;
+  std::vector<Index>& idxs_;
+};
+
 //! \brief See which axis of the box is the longest.
 template <typename Scalar, int Dim>
 inline void LongestAxisBox(
@@ -903,19 +1018,20 @@ class KdTree {
   //! \tparam P Point type.
   template <typename P>
   inline void SearchBox(
-      P const& min, P const& max, std::vector<Index>* i) const {
-    i->clear();
+      P const& min, P const& max, std::vector<Index>* idxs) const {
+    idxs->clear();
     // Note that it's never checked if the bounding box intersects at all. For
     // now it is assumed that this check is not worth it: If there was overlap
     // then the search is slower. So unless many queries don't intersect there
     // is no point in adding it.
-    SearchBox(
-        root_,
+
+    internal::SearchBox<Traits, Metric, Dim>(
+        points_,
+        metric_,
+        indices_,
         Traits::PointCoords(min),
         Traits::PointCoords(max),
-        Sequence(root_box_.min),
-        Sequence(root_box_.max),
-        i);
+        idxs)(root_, Sequence(root_box_.min), Sequence(root_box_.max));
   }
 
   //! \brief Point set used by the tree.
@@ -1025,101 +1141,6 @@ class KdTree {
       TopologicalSpaceTag) const {
     internal::SearchNearestTopological<Traits, Metric, Dim, P, V>(
         points_, metric_, indices_, x, visitor)(node);
-  }
-
-  //! Checks if \p x is contained in the box defined by \p min and \p max. A
-  //! point on the edge considered inside the box.
-  template <typename P0, typename P1>
-  inline bool PointInBox(P0 const& x, P1 const& min, P1 const& max) const {
-    for (int i = 0; i < internal::Dimension<Traits, Dim>::Dim(points_); ++i) {
-      if (min[i] > x[i] || max[i] < x[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  //! Reports all indices contained by \p node.
-  inline void ReportNode(
-      Node const* const node, std::vector<Index>* idxs) const {
-    if (node->IsLeaf()) {
-      std::copy(
-          indices_.cbegin() + node->data.leaf.begin_idx,
-          indices_.cbegin() + node->data.leaf.end_idx,
-          std::back_inserter(*idxs));
-    } else {
-      ReportNode(node->left, idxs);
-      ReportNode(node->right, idxs);
-    }
-  }
-
-  //! \brief Returns all points within the box defined by \p rng_min and \p
-  //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dim)+k).
-  //! \details Many tree nodes are excluded by checking if they intersect with
-  //! the box of the query. We don't store the bounding box of each node but
-  //! calculate them at run time. This slows down SearchBox in favor of
-  //! SearchNn.
-  inline void SearchBox(
-      Node const* const node,
-      Scalar const* const rng_min,
-      Scalar const* const rng_max,
-      typename Sequence::MoveReturnType box_min,
-      typename Sequence::MoveReturnType box_max,
-      std::vector<Index>* idxs) const {
-    // TODO Perhaps we can support it for both topological and Euclidean spaces.
-    static_assert(
-        std::is_same<typename Metric::SpaceTag, EuclideanSpaceTag>::value,
-        "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
-    if (node->IsLeaf()) {
-      for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
-           ++i) {
-        Index const idx = indices_[i];
-        if (PointInBox(
-                Traits::PointCoords(Traits::PointAt(points_, idx)),
-                rng_min,
-                rng_max)) {
-          idxs->push_back(idx);
-        }
-      }
-    } else {
-      Sequence left_box_max = box_max;
-      left_box_max[node->data.branch.split_dim] = node->data.branch.left_max;
-
-      // Check if the left node is fully contained. If true, report all its
-      // indices. Else, if its partially contained, continue the range search
-      // down the left node.
-      if (PointInBox(box_min, rng_min, rng_max) &&
-          PointInBox(left_box_max, rng_min, rng_max)) {
-        ReportNode(node->left, idxs);
-      } else if (
-          rng_min[node->data.branch.split_dim] < node->data.branch.left_max) {
-        SearchBox(
-            node->left,
-            rng_min,
-            rng_max,
-            box_min.Move(),
-            left_box_max.Move(),
-            idxs);
-      }
-
-      Sequence right_box_min = box_min;
-      right_box_min[node->data.branch.split_dim] = node->data.branch.right_min;
-
-      // Same as the left side.
-      if (PointInBox(right_box_min, rng_min, rng_max) &&
-          PointInBox(box_max, rng_min, rng_max)) {
-        ReportNode(node->right, idxs);
-      } else if (
-          rng_max[node->data.branch.split_dim] > node->data.branch.right_min) {
-        SearchBox(
-            node->right,
-            rng_min,
-            rng_max,
-            right_box_min.Move(),
-            box_max.Move(),
-            idxs);
-      }
-    }
   }
 
   //! \brief Recursively reads the Node and its descendants.
