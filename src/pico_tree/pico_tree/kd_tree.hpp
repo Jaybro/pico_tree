@@ -497,7 +497,12 @@ class SearchBox {
   using Space = typename Traits::SpaceType;
 
  public:
-  //! \private
+  //! \brief Returns all points within the box defined by \p rng_min and \p
+  //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dim)+k).
+  //! \details Many tree nodes are excluded by checking if they intersect with
+  //! the box of the query. We don't store the bounding box of each node but
+  //! calculate them at run time. This slows down SearchBox in favor of having
+  //! faster nearest neighbor searches.
   inline SearchBox(
       Space const& points,
       Metric const& metric,
@@ -512,12 +517,6 @@ class SearchBox {
         rng_max_(rng_max),
         idxs_(*idxs) {}
 
-  //! \brief Returns all points within the box defined by \p rng_min and \p
-  //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dim)+k).
-  //! \details Many tree nodes are excluded by checking if they intersect with
-  //! the box of the query. We don't store the bounding box of each node but
-  //! calculate them at run time. This slows down SearchBox in favor of
-  //! SearchNn.
   template <typename Node>
   inline void operator()(
       Node const* const node,
