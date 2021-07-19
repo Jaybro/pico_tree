@@ -519,9 +519,7 @@ class SearchBox {
 
   template <typename Node>
   inline void operator()(
-      Node const* const node,
-      typename Sequence<Scalar, Dim_>::MoveReturnType box_min,
-      typename Sequence<Scalar, Dim_>::MoveReturnType box_max) const {
+      Node const* const node, SequenceBox<Scalar, Dim_>* box) const {
     // TODO Perhaps we can support it for both topological and Euclidean spaces.
     static_assert(
         std::is_same<typename Metric::SpaceTag, EuclideanSpaceTag>::value,
@@ -538,31 +536,34 @@ class SearchBox {
         }
       }
     } else {
-      Sequence<Scalar, Dim_> left_box_max = box_max;
-      left_box_max[node->data.branch.split_dim] = node->data.branch.left_max;
+      Scalar old_value = box->max[node->data.branch.split_dim];
+      box->max[node->data.branch.split_dim] = node->data.branch.left_max;
 
       // Check if the left node is fully contained. If true, report all its
       // indices. Else, if its partially contained, continue the range search
       // down the left node.
-      if (PointInBox(rng_min_, rng_max_, box_min) &&
-          PointInBox(rng_min_, rng_max_, left_box_max)) {
+      if (PointInBox(rng_min_, rng_max_, box->min) &&
+          PointInBox(rng_min_, rng_max_, box->max)) {
         ReportNode(node->left, &idxs_);
       } else if (
           rng_min_[node->data.branch.split_dim] < node->data.branch.left_max) {
-        operator()(node->left, box_min.Move(), left_box_max.Move());
+        operator()(node->left, box);
       }
 
-      Sequence<Scalar, Dim_> right_box_min = box_min;
-      right_box_min[node->data.branch.split_dim] = node->data.branch.right_min;
+      box->max[node->data.branch.split_dim] = old_value;
+      old_value = box->min[node->data.branch.split_dim];
+      box->min[node->data.branch.split_dim] = node->data.branch.right_min;
 
       // Same as the left side.
-      if (PointInBox(rng_min_, rng_max_, right_box_min) &&
-          PointInBox(rng_min_, rng_max_, box_max)) {
+      if (PointInBox(rng_min_, rng_max_, box->min) &&
+          PointInBox(rng_min_, rng_max_, box->max)) {
         ReportNode(node->right, &idxs_);
       } else if (
           rng_max_[node->data.branch.split_dim] > node->data.branch.right_min) {
-        operator()(node->right, right_box_min.Move(), box_max.Move());
+        operator()(node->right, box);
       }
+
+      box->min[node->data.branch.split_dim] = old_value;
     }
   }
 
@@ -1024,13 +1025,14 @@ class KdTree {
     // then the search is slower. So unless many queries don't intersect there
     // is no point in adding it.
 
+    SequenceBox root_box(root_box_);
     internal::SearchBox<Traits, Metric, Dim>(
         points_,
         metric_,
         indices_,
         Traits::PointCoords(min),
         Traits::PointCoords(max),
-        idxs)(root_, Sequence(root_box_.min), Sequence(root_box_.max));
+        idxs)(root_, &root_box);
   }
 
   //! \brief Point set used by the tree.
