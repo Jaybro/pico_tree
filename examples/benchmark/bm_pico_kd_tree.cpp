@@ -184,4 +184,37 @@ BENCHMARK_REGISTER_F(BmPicoKdTree, BoxCtSldMid)
     ->Args({12, 15})
     ->Args({14, 15});
 
+BENCHMARK_DEFINE_F(BmPicoKdTree, BoxRtSldMid)(benchmark::State& state) {
+  int max_leaf_size = state.range(0);
+  Scalar radius = static_cast<Scalar>(state.range(1)) / 10.0;
+
+  PicoKdTreeRtSldMid<PointX> tree(points_tree_, max_leaf_size);
+
+  for (auto _ : state) {
+    std::vector<Index> results;
+    std::size_t sum = 0;
+    for (auto const& p : points_test_) {
+      auto min = p - radius;
+      auto max = p + radius;
+      tree.SearchBox(min, max, &results);
+      benchmark::DoNotOptimize(sum += results.size());
+    }
+  }
+}
+
+// The run-time version of the box-search is interesting to test because it
+// internally maintains bounding boxes that are represented differently
+// depending whether we know the dimension of the space at compile-time or
+// run-time.
+// Argument 1: Maximum leaf size.
+// Argument 2: Search radius (half the width of the box divided by 10.0).
+BENCHMARK_REGISTER_F(BmPicoKdTree, BoxRtSldMid)
+    ->Unit(benchmark::kMillisecond)
+    ->Args({1, 15})
+    ->Args({6, 15})
+    ->Args({8, 15})
+    ->Args({10, 15})
+    ->Args({12, 15})
+    ->Args({14, 15});
+
 BENCHMARK_MAIN();
