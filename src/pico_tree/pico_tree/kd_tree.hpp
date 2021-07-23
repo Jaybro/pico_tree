@@ -217,11 +217,11 @@ class KdTreeBuilder {
       // This loop merges both child boxes. We can expect any of the min max
       // values to change except for the one of split_dim.
       for (int i = 0; i < Dimension<Traits, Dim_>::Dim(space_); ++i) {
-        if (box->min[i] > right.min[i]) {
+        if (right.min[i] < box->min[i]) {
           box->min[i] = right.min[i];
         }
 
-        if (box->max[i] < right.max[i]) {
+        if (right.max[i] > box->max[i]) {
           box->max[i] = right.max[i];
         }
       }
@@ -245,6 +245,7 @@ class KdTreeBuilder {
         if (v < box->min[i]) {
           box->min[i] = v;
         }
+
         if (v > box->max[i]) {
           box->max[i] = v;
         }
@@ -544,7 +545,7 @@ class SearchBox {
       // down the left node.
       if (PointInBox(rng_min_, rng_max_, box->min) &&
           PointInBox(rng_min_, rng_max_, box->max)) {
-        ReportNode(node->left, &idxs_);
+        ReportNode(node->left);
       } else if (
           rng_min_[node->data.branch.split_dim] < node->data.branch.left_max) {
         operator()(node->left, box);
@@ -557,7 +558,7 @@ class SearchBox {
       // Same as the left side.
       if (PointInBox(rng_min_, rng_max_, box->min) &&
           PointInBox(rng_min_, rng_max_, box->max)) {
-        ReportNode(node->right, &idxs_);
+        ReportNode(node->right);
       } else if (
           rng_max_[node->data.branch.split_dim] > node->data.branch.right_min) {
         operator()(node->right, box);
@@ -582,16 +583,15 @@ class SearchBox {
 
   //! Reports all indices contained by \p node.
   template <typename Node>
-  inline void ReportNode(
-      Node const* const node, std::vector<Index>* idxs) const {
+  inline void ReportNode(Node const* const node) const {
     if (node->IsLeaf()) {
       std::copy(
           indices_.cbegin() + node->data.leaf.begin_idx,
           indices_.cbegin() + node->data.leaf.end_idx,
-          std::back_inserter(*idxs));
+          std::back_inserter(idxs_));
     } else {
-      ReportNode(node->left, idxs);
-      ReportNode(node->right, idxs);
+      ReportNode(node->left);
+      ReportNode(node->right);
     }
   }
 
