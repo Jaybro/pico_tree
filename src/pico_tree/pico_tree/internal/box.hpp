@@ -21,7 +21,7 @@ class BoxBase {
   inline bool Contains(ScalarType const* const x) const {
     // We use derived().size() which includes the constexpr part. Otherwise a
     // small trait needs to be written.
-    for (int i = 0; i < derived().size(); ++i) {
+    for (std::size_t i = 0; i < derived().size(); ++i) {
       if (min()[i] > x[i] || max()[i] < x[i]) {
         return false;
       }
@@ -33,6 +33,24 @@ class BoxBase {
   inline bool Contains(BoxBase<OtherDerived> const& x) const {
     return Contains(x.derived().min().container().data()) &&
            Contains(x.derived().max().container().data());
+  }
+
+  inline void FillInverseMax() {
+    for (std::size_t i = 0; i < derived().size(); ++i) {
+      derived().min()[i] = std::numeric_limits<ScalarType>::max();
+      derived().max()[i] = std::numeric_limits<ScalarType>::lowest();
+    }
+  }
+
+  inline void Update(ScalarType const* const p) {
+    for (std::size_t i = 0; i < derived().size(); ++i) {
+      if (p[i] < derived().min()[i]) {
+        derived().min()[i] = p[i];
+      }
+      if (p[i] > derived().max()[i]) {
+        derived().max()[i] = p[i];
+      }
+    }
   }
 
   //! Returns a const reference to the derived class.
@@ -58,11 +76,13 @@ struct SequenceBox : public BoxBase<SequenceBox<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
 
+  inline explicit SequenceBox(std::size_t size) : min_(size), max_(size) {}
+
   inline Sequence<Scalar_, Dim_> const& min() const { return min_; }
   inline Sequence<Scalar_, Dim_>& min() { return min_; }
   inline Sequence<Scalar_, Dim_> const& max() const { return max_; }
   inline Sequence<Scalar_, Dim_>& max() { return max_; }
-  inline int constexpr size() const { return min_.size(); }
+  inline std::size_t constexpr size() const { return min_.size(); }
 
  protected:
   //! \brief Minimum box coordinate.
@@ -77,13 +97,16 @@ class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
 
-  inline BoxMap(ScalarType* min, ScalarType* max, int) : min_(min), max_(max) {}
+  inline BoxMap(ScalarType* min, ScalarType* max, std::size_t)
+      : min_(min), max_(max) {}
 
   inline ScalarType const* const min() const { return min_; }
   inline ScalarType* min() { return min_; }
   inline ScalarType const* const max() const { return max_; }
   inline ScalarType* max() { return max_; }
-  inline static int constexpr size() { return Dim_; }
+  inline static std::size_t constexpr size() {
+    return static_cast<std::size_t>(Dim_);
+  }
 
  protected:
   ScalarType* min_;
@@ -97,19 +120,19 @@ class BoxMap<Scalar_, kDynamicDim>
   using ScalarType = Scalar_;
   static int constexpr Dim = kDynamicDim;
 
-  inline BoxMap(ScalarType* min, ScalarType* max, int size)
+  inline BoxMap(ScalarType* min, ScalarType* max, std::size_t size)
       : min_(min), max_(max), size_(size) {}
 
   inline ScalarType const* const min() const { return min_; }
   inline ScalarType* min() { return min_; }
   inline ScalarType const* const max() const { return max_; }
   inline ScalarType* max() { return max_; }
-  inline int size() const { return size_; }
+  inline std::size_t size() const { return size_; }
 
  protected:
   ScalarType* min_;
   ScalarType* max_;
-  int size_;
+  std::size_t size_;
 };
 
 template <typename Scalar_, int Dim_>

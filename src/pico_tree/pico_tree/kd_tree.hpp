@@ -173,7 +173,7 @@ class KdTreeBuilder {
       node->right = nullptr;
       // Keep the original box in case it was empty.
       if (size > 0) {
-        CalculateBoundingBox(
+        ComputeBoundingBox(
             node->data.leaf.begin_idx, node->data.leaf.end_idx, box);
       }
     } else {
@@ -221,26 +221,11 @@ class KdTreeBuilder {
     return node;
   }
 
-  inline void CalculateBoundingBox(
+  inline void ComputeBoundingBox(
       Index const begin_idx, Index const end_idx, SequenceBoxType* box) const {
-    box->min().Fill(
-        Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::max());
-    box->max().Fill(
-        Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::lowest());
-
+    box->FillInverseMax();
     for (Index j = begin_idx; j < end_idx; ++j) {
-      Scalar const* const p =
-          Traits::PointCoords(Traits::PointAt(space_, indices_[j]));
-      for (int i = 0; i < Dimension<Traits, Dim_>::Dim(space_); ++i) {
-        Scalar const v = p[i];
-        if (v < box->min()[i]) {
-          box->min()[i] = v;
-        }
-
-        if (v > box->max()[i]) {
-          box->max()[i] = v;
-        }
-      }
+      box->Update(Traits::PointCoords(Traits::PointAt(space_, indices_[j])));
     }
   }
 
@@ -301,11 +286,12 @@ class SearchNearestEuclidean {
         metric_(metric),
         indices_(indices),
         point_(point),
+        node_box_offset_(Traits::SpaceSdim(points)),
         visitor_(*visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
   inline void operator()(Node const* const node) {
-    node_box_offset_.Fill(Traits::SpaceSdim(points_), Scalar(0.0));
+    node_box_offset_.Fill(Scalar(0.0));
     SearchNearest(node, Scalar(0.0));
   }
 
@@ -408,11 +394,12 @@ class SearchNearestTopological {
         metric_(metric),
         indices_(indices),
         point_(point),
+        node_box_offset_(Traits::SpaceSdim(points)),
         visitor_(*visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
   inline void operator()(Node const* const node) {
-    node_box_offset_.Fill(Traits::SpaceSdim(points_), Scalar(0.0));
+    node_box_offset_.Fill(Scalar(0.0));
     SearchNearest(node, Scalar(0.0));
   }
 
@@ -838,6 +825,7 @@ class KdTree {
         metric_(),
         nodes_(internal::MaxNodesFromPoints(Traits::SpaceNpts(points_))),
         indices_(Traits::SpaceNpts(points_)),
+        root_box_(Traits::SpaceSdim(points_)),
         root_(Build(max_leaf_size)) {}
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
@@ -1064,25 +1052,13 @@ class KdTree {
         metric_(),
         nodes_(internal::MaxNodesFromPoints(Traits::SpaceNpts(points_))),
         indices_(Traits::SpaceNpts(points_)),
+        root_box_(Traits::SpaceSdim(points_)),
         root_(Load(stream)) {}
 
-  inline void CalculateBoundingBox(SequenceBox* p_box) {
-    auto& box = *p_box;
-    auto sdim = Traits::SpaceSdim(points_);
-    box.min().Fill(sdim, std::numeric_limits<Scalar>::max());
-    box.max().Fill(sdim, std::numeric_limits<Scalar>::lowest());
-
-    for (Index j = 0; j < Traits::SpaceNpts(points_); ++j) {
-      Scalar const* const p = Traits::PointCoords(Traits::PointAt(points_, j));
-      for (int i = 0; i < internal::Dimension<Traits, Dim>::Dim(points_); ++i) {
-        Scalar const v = p[i];
-        if (v < box.min()[i]) {
-          box.min()[i] = v;
-        }
-        if (v > box.max()[i]) {
-          box.max()[i] = v;
-        }
-      }
+  inline void ComputeBoundingBox(SequenceBox* box) {
+    box->FillInverseMax();
+    for (Index i = 0; i < Traits::SpaceNpts(points_); ++i) {
+      box->Update(Traits::PointCoords(Traits::PointAt(points_, i)));
     }
   }
 
@@ -1094,7 +1070,7 @@ class KdTree {
 
     std::iota(indices_.begin(), indices_.end(), 0);
 
-    CalculateBoundingBox(&root_box_);
+    ComputeBoundingBox(&root_box_);
 
     Splitter splitter(points_, &indices_);
     return Builder{

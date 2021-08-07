@@ -57,8 +57,8 @@ TEST(KdTreeTest, SplitterMedian) {
   SpaceX spcx4(ptsx4);
   std::vector<Index> idx4{0, 1, 2, 3};
 
-  pico_tree::internal::Sequence<Scalar, 2> min;
-  pico_tree::internal::Sequence<Scalar, 2> max;
+  pico_tree::internal::Sequence<Scalar, 2> min(2);
+  pico_tree::internal::Sequence<Scalar, 2> max(2);
   min[0] = 0.0f;
   min[1] = 0.0f;
   max[0] = 1.0f;
@@ -113,8 +113,8 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   SplitterX splitter(spcx4, &idx4);
 
-  pico_tree::internal::Sequence<Scalar, 2> min;
-  pico_tree::internal::Sequence<Scalar, 2> max;
+  pico_tree::internal::Sequence<Scalar, 2> min(2);
+  pico_tree::internal::Sequence<Scalar, 2> max(2);
   Index split_dim;
   Index split_idx;
   Scalar split_val;
