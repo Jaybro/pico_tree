@@ -180,15 +180,7 @@ class KdTreeBuilder {
       int split_dim;
       Index split_idx;
       Scalar split_val;
-      splitter_(
-          depth,
-          offset,
-          size,
-          box->min(),
-          box->max(),
-          &split_dim,
-          &split_idx,
-          &split_val);
+      splitter_(depth, offset, size, *box, &split_dim, &split_idx, &split_val);
 
       // The split_idx is used as the first index of the right branch.
       Index const left_size = split_idx - offset;
@@ -602,7 +594,7 @@ class SplitterLongestMedian {
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
   template <int Dim_>
-  using Sequence = typename internal::Sequence<Scalar, Dim_>;
+  using SequenceBox = typename internal::SequenceBox<Scalar, Dim_>;
 
  public:
   //! \brief Buffer type used with this splitter.
@@ -619,13 +611,12 @@ class SplitterLongestMedian {
       Index const,  // depth
       Index const offset,
       Index const size,
-      Sequence<Dim_> const& box_min,
-      Sequence<Dim_> const& box_max,
+      SequenceBox<Dim_> const& box,
       int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
     Scalar max_delta;
-    internal::LongestAxisBox(box_min, box_max, split_dim, &max_delta);
+    internal::LongestAxisBox(box.min(), box.max(), split_dim, &max_delta);
 
     *split_idx = size / 2 + offset;
 
@@ -671,7 +662,7 @@ class SplitterSlidingMidpoint {
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
   template <int Dim_>
-  using Sequence = typename internal::Sequence<Scalar, Dim_>;
+  using SequenceBox = typename internal::SequenceBox<Scalar, Dim_>;
 
  public:
   //! \brief Buffer type used with this splitter.
@@ -688,14 +679,13 @@ class SplitterSlidingMidpoint {
       Index const,  // depth
       Index const offset,
       Index const size,
-      Sequence<Dim_> const& box_min,
-      Sequence<Dim_> const& box_max,
+      SequenceBox<Dim_> const& box,
       int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
     Scalar max_delta;
-    internal::LongestAxisBox(box_min, box_max, split_dim, &max_delta);
-    *split_val = max_delta / Scalar(2.0) + box_min[*split_dim];
+    internal::LongestAxisBox(box.min(), box.max(), split_dim, &max_delta);
+    *split_val = max_delta / Scalar(2.0) + box.min()[*split_dim];
 
     // Everything smaller than split_val goes left, the rest right.
     auto const comp = [this, &split_dim, &split_val](Index const a) -> bool {

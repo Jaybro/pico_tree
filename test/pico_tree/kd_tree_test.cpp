@@ -57,18 +57,17 @@ TEST(KdTreeTest, SplitterMedian) {
   SpaceX spcx4(ptsx4);
   std::vector<Index> idx4{0, 1, 2, 3};
 
-  pico_tree::internal::Sequence<Scalar, 2> min(2);
-  pico_tree::internal::Sequence<Scalar, 2> max(2);
-  min[0] = 0.0f;
-  min[1] = 0.0f;
-  max[0] = 1.0f;
-  max[1] = 0.0f;
+  pico_tree::internal::SequenceBox<Scalar, 2> box(2);
+  box.min()[0] = 0.0f;
+  box.min()[1] = 0.0f;
+  box.max()[0] = 1.0f;
+  box.max()[1] = 0.0f;
   Index split_dim;
   Index split_idx;
   Scalar split_val;
 
   SplitterX splitter4(spcx4, &idx4);
-  splitter4(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
+  splitter4(0, 0, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 0);
   EXPECT_EQ(split_idx, 2);
@@ -86,14 +85,14 @@ TEST(KdTreeTest, SplitterMedian) {
   std::vector<Index> idx7{0, 1, 2, 3, 4, 5, 6};
 
   SplitterX splitter7(spcx7, &idx7);
-  splitter7(0, 0, 7, min, max, &split_dim, &split_idx, &split_val);
+  splitter7(0, 0, 7, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 0);
   EXPECT_EQ(split_idx, 3);
   EXPECT_EQ(split_val, ptsx7[idx7[3]](0));
 
-  max[1] = 10.0f;
-  splitter7(1, 3, 4, min, max, &split_dim, &split_idx, &split_val);
+  box.max()[1] = 10.0f;
+  splitter7(1, 3, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 5);
@@ -113,8 +112,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   SplitterX splitter(spcx4, &idx4);
 
-  pico_tree::internal::Sequence<Scalar, 2> min(2);
-  pico_tree::internal::Sequence<Scalar, 2> max(2);
+  pico_tree::internal::SequenceBox<Scalar, 2> box(2);
   Index split_dim;
   Index split_idx;
   Scalar split_val;
@@ -122,11 +120,11 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   // Everything is forced to the right leaf. This means we want a single point
   // to the left (the lowest value) and internally the splitter needs to reorder
   // the indices such that on index 1 we get value 2.
-  min[0] = Scalar{0.0};
-  min[1] = Scalar{0.0};
-  max[0] = Scalar{0.0};
-  max[1] = Scalar{1.0};
-  splitter(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
+  box.min()[0] = Scalar{0.0};
+  box.min()[1] = Scalar{0.0};
+  box.max()[0] = Scalar{0.0};
+  box.max()[1] = Scalar{1.0};
+  splitter(0, 0, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 1);
@@ -137,8 +135,8 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   // Everything is forced to the left leaf. This means we want a single point
   // to the right (the highest value) and internally the splitter needs to
   // reorder the indices such that on index 3 we get value 4.
-  max[1] = Scalar{9.0};
-  splitter(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
+  box.max()[1] = Scalar{9.0};
+  splitter(0, 0, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 3);
@@ -147,17 +145,17 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   // Clean middle split. A general case where the split value falls somewhere
   // inbetween the range of numbers.
-  max[1] = Scalar{5.0};
-  splitter(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
+  box.max()[1] = Scalar{5.0};
+  splitter(0, 0, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 2);
-  EXPECT_EQ(split_val, (max[1] + min[1]) / Scalar{2.0});
+  EXPECT_EQ(split_val, (box.max()[1] + box.min()[1]) / Scalar{2.0});
 
   // On dimension 0 we test what happens when all values are equal. Again
   // everything moves to the left. So we want to split on index 3.
-  max[0] = Scalar{15.0};
-  splitter(0, 0, 4, min, max, &split_dim, &split_idx, &split_val);
+  box.max()[0] = Scalar{15.0};
+  splitter(0, 0, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 0);
   EXPECT_EQ(split_idx, 3);
