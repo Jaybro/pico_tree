@@ -77,8 +77,7 @@ class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
 
-  inline BoxMap(ScalarType const* const min, ScalarType const* const max, int)
-      : min_(min), max_(max) {}
+  inline BoxMap(ScalarType* min, ScalarType* max, int) : min_(min), max_(max) {}
 
   inline ScalarType const* const min() const { return min_; }
   inline ScalarType* min() { return min_; }
@@ -87,8 +86,8 @@ class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
   inline static int constexpr size() { return Dim_; }
 
  protected:
-  ScalarType const* const min_;
-  ScalarType const* const max_;
+  ScalarType* min_;
+  ScalarType* max_;
 };
 
 template <typename Scalar_>
@@ -98,8 +97,7 @@ class BoxMap<Scalar_, kDynamicDim>
   using ScalarType = Scalar_;
   static int constexpr Dim = kDynamicDim;
 
-  inline BoxMap(
-      ScalarType const* const min, ScalarType const* const max, int size)
+  inline BoxMap(ScalarType* min, ScalarType* max, int size)
       : min_(min), max_(max), size_(size) {}
 
   inline ScalarType const* const min() const { return min_; }
@@ -109,8 +107,8 @@ class BoxMap<Scalar_, kDynamicDim>
   inline int size() const { return size_; }
 
  protected:
-  ScalarType const* const min_;
-  ScalarType const* const max_;
+  ScalarType* min_;
+  ScalarType* max_;
   int size_;
 };
 

@@ -577,7 +577,7 @@ class SearchBoxEuclidean {
   Space const& points_;
   Metric const& metric_;
   std::vector<Index> const& indices_;
-  BoxMap<Scalar, Dim_> query_;
+  BoxMap<Scalar const, Dim_> query_;
   std::vector<Index>& idxs_;
 };
 
