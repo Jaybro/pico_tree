@@ -4,6 +4,7 @@
 #include <cassert>
 #include <numeric>
 
+#include "pico_tree/internal/box.hpp"
 #include "pico_tree/internal/memory.hpp"
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/internal/sequence.hpp"
@@ -112,16 +113,6 @@ struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
   using Node = KdTreeNodeTopological<Index, Scalar>;
 };
 
-//! \brief A SequenceBox can be used as a bounding box. It uses a Sequence for
-//! storing the min and max coordinate of the box.
-template <typename Scalar_, int Dim_>
-struct SequenceBox {
-  //! \brief Minimum box coordinate.
-  Sequence<Scalar_, Dim_> min;
-  //! \brief Maximum box coordinate.
-  Sequence<Scalar_, Dim_> max;
-};
-
 //! \brief This class provides the build algorithm of the KdTree. How the KdTree
 //! is build depends on the Splitter template argument.
 template <typename Traits, typename SpaceTag, typename Splitter, int Dim_>
@@ -193,8 +184,8 @@ class KdTreeBuilder {
           depth,
           offset,
           size,
-          box->min,
-          box->max,
+          box->min(),
+          box->max(),
           &split_dim,
           &split_idx,
           &split_val);
@@ -206,8 +197,8 @@ class KdTreeBuilder {
       SequenceBoxType right = *box;
       // Argument box will function as the left bounding box until we merge left
       // and right again at the end of this code section.
-      box->max[split_dim] = split_val;
-      right.min[split_dim] = split_val;
+      box->max()[split_dim] = split_val;
+      right.min()[split_dim] = split_val;
 
       node->left = SplitIndices(depth + 1, offset, left_size, box);
       node->right = SplitIndices(depth + 1, split_idx, right_size, &right);
@@ -217,12 +208,12 @@ class KdTreeBuilder {
       // This loop merges both child boxes. We can expect any of the min max
       // values to change except for the one of split_dim.
       for (int i = 0; i < Dimension<Traits, Dim_>::Dim(space_); ++i) {
-        if (right.min[i] < box->min[i]) {
-          box->min[i] = right.min[i];
+        if (right.min()[i] < box->min()[i]) {
+          box->min()[i] = right.min()[i];
         }
 
-        if (right.max[i] > box->max[i]) {
-          box->max[i] = right.max[i];
+        if (right.max()[i] > box->max()[i]) {
+          box->max()[i] = right.max()[i];
         }
       }
     }
@@ -232,9 +223,9 @@ class KdTreeBuilder {
 
   inline void CalculateBoundingBox(
       Index const begin_idx, Index const end_idx, SequenceBoxType* box) const {
-    box->min.Fill(
+    box->min().Fill(
         Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::max());
-    box->max.Fill(
+    box->max().Fill(
         Traits::SpaceSdim(space_), std::numeric_limits<Scalar>::lowest());
 
     for (Index j = begin_idx; j < end_idx; ++j) {
@@ -242,12 +233,12 @@ class KdTreeBuilder {
           Traits::PointCoords(Traits::PointAt(space_, indices_[j]));
       for (int i = 0; i < Dimension<Traits, Dim_>::Dim(space_); ++i) {
         Scalar const v = p[i];
-        if (v < box->min[i]) {
-          box->min[i] = v;
+        if (v < box->min()[i]) {
+          box->min()[i] = v;
         }
 
-        if (v > box->max[i]) {
-          box->max[i] = v;
+        if (v > box->max()[i]) {
+          box->max()[i] = v;
         }
       }
     }
@@ -259,8 +250,8 @@ class KdTreeBuilder {
       int const split_dim,
       KdTreeNodeEuclidean<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
-    node->data.branch.left_max = left.max[split_dim];
-    node->data.branch.right_min = right.min[split_dim];
+    node->data.branch.left_max = left.max()[split_dim];
+    node->data.branch.right_min = right.min()[split_dim];
   }
 
   inline void SetBranch(
@@ -269,10 +260,10 @@ class KdTreeBuilder {
       int const split_dim,
       KdTreeNodeTopological<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
-    node->data.branch.left_min = left.min[split_dim];
-    node->data.branch.left_max = left.max[split_dim];
-    node->data.branch.right_min = right.min[split_dim];
-    node->data.branch.right_max = right.max[split_dim];
+    node->data.branch.left_min = left.min()[split_dim];
+    node->data.branch.left_max = left.max()[split_dim];
+    node->data.branch.right_min = right.min()[split_dim];
+    node->data.branch.right_max = right.max()[split_dim];
   }
 
   Space const& space_;
@@ -491,20 +482,23 @@ class SearchNearestTopological {
 
 //! \brief This class provides the search box function.
 template <typename Traits, typename Metric, int Dim_>
-class SearchBox {
+class SearchBoxEuclidean {
  private:
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
 
  public:
+  //! \brief Node type supported by this class.
+  using Node = KdTreeNodeEuclidean<Index, Scalar>;
+
   //! \brief Returns all points within the box defined by \p rng_min and \p
   //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dim)+k).
   //! \details Many tree nodes are excluded by checking if they intersect with
   //! the box of the query. We don't store the bounding box of each node but
   //! calculate them at run time. This slows down SearchBox in favor of having
   //! faster nearest neighbor searches.
-  inline SearchBox(
+  inline SearchBoxEuclidean(
       Space const& points,
       Metric const& metric,
       std::vector<Index> const& indices,
@@ -514,8 +508,7 @@ class SearchBox {
       : points_(points),
         metric_(metric),
         indices_(indices),
-        rng_min_(rng_min),
-        rng_max_(rng_max),
+        query_(rng_min, rng_max, Dimension<Traits, Dim_>::Dim(points)),
         idxs_(*idxs) {}
 
   template <typename Node>
@@ -529,58 +522,44 @@ class SearchBox {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         Index const idx = indices_[i];
-        if (PointInBox(
-                rng_min_,
-                rng_max_,
+        if (query_.Contains(
                 Traits::PointCoords(Traits::PointAt(points_, idx)))) {
           idxs_.push_back(idx);
         }
       }
     } else {
-      Scalar old_value = box->max[node->data.branch.split_dim];
-      box->max[node->data.branch.split_dim] = node->data.branch.left_max;
+      Scalar old_value = box->max()[node->data.branch.split_dim];
+      box->max()[node->data.branch.split_dim] = node->data.branch.left_max;
 
       // Check if the left node is fully contained. If true, report all its
       // indices. Else, if its partially contained, continue the range search
       // down the left node.
-      if (PointInBox(rng_min_, rng_max_, box->min) &&
-          PointInBox(rng_min_, rng_max_, box->max)) {
+      if (query_.Contains(*box)) {
         ReportNode(node->left);
       } else if (
-          rng_min_[node->data.branch.split_dim] < node->data.branch.left_max) {
+          query_.min()[node->data.branch.split_dim] <
+          node->data.branch.left_max) {
         operator()(node->left, box);
       }
 
-      box->max[node->data.branch.split_dim] = old_value;
-      old_value = box->min[node->data.branch.split_dim];
-      box->min[node->data.branch.split_dim] = node->data.branch.right_min;
+      box->max()[node->data.branch.split_dim] = old_value;
+      old_value = box->min()[node->data.branch.split_dim];
+      box->min()[node->data.branch.split_dim] = node->data.branch.right_min;
 
       // Same as the left side.
-      if (PointInBox(rng_min_, rng_max_, box->min) &&
-          PointInBox(rng_min_, rng_max_, box->max)) {
+      if (query_.Contains(*box)) {
         ReportNode(node->right);
       } else if (
-          rng_max_[node->data.branch.split_dim] > node->data.branch.right_min) {
+          query_.max()[node->data.branch.split_dim] >
+          node->data.branch.right_min) {
         operator()(node->right, box);
       }
 
-      box->min[node->data.branch.split_dim] = old_value;
+      box->min()[node->data.branch.split_dim] = old_value;
     }
   }
 
  private:
-  //! Checks if \p x is contained in the box defined by \p min and \p max. A
-  //! point on the edge considered inside the box.
-  template <typename P0, typename P1>
-  inline bool PointInBox(P0 const& min, P0 const& max, P1 const& x) const {
-    for (int i = 0; i < internal::Dimension<Traits, Dim_>::Dim(points_); ++i) {
-      if (min[i] > x[i] || max[i] < x[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   //! Reports all indices contained by \p node.
   template <typename Node>
   inline void ReportNode(Node const* const node) const {
@@ -598,8 +577,7 @@ class SearchBox {
   Space const& points_;
   Metric const& metric_;
   std::vector<Index> const& indices_;
-  Scalar const* const rng_min_;
-  Scalar const* const rng_max_;
+  BoxMap<Scalar, Dim_> query_;
   std::vector<Index>& idxs_;
 };
 
@@ -1026,7 +1004,7 @@ class KdTree {
     // is no point in adding it.
 
     SequenceBox root_box(root_box_);
-    internal::SearchBox<Traits, Metric, Dim>(
+    internal::SearchBoxEuclidean<Traits, Metric, Dim>(
         points_,
         metric_,
         indices_,
@@ -1091,18 +1069,18 @@ class KdTree {
   inline void CalculateBoundingBox(SequenceBox* p_box) {
     auto& box = *p_box;
     auto sdim = Traits::SpaceSdim(points_);
-    box.min.Fill(sdim, std::numeric_limits<Scalar>::max());
-    box.max.Fill(sdim, std::numeric_limits<Scalar>::lowest());
+    box.min().Fill(sdim, std::numeric_limits<Scalar>::max());
+    box.max().Fill(sdim, std::numeric_limits<Scalar>::lowest());
 
     for (Index j = 0; j < Traits::SpaceNpts(points_); ++j) {
       Scalar const* const p = Traits::PointCoords(Traits::PointAt(points_, j));
       for (int i = 0; i < internal::Dimension<Traits, Dim>::Dim(points_); ++i) {
         Scalar const v = p[i];
-        if (v < box.min[i]) {
-          box.min[i] = v;
+        if (v < box.min()[i]) {
+          box.min()[i] = v;
         }
-        if (v > box.max[i]) {
-          box.max[i] = v;
+        if (v > box.max()[i]) {
+          box.max()[i] = v;
         }
       }
     }
@@ -1180,16 +1158,16 @@ class KdTree {
   //! \private
   inline Node* Load(internal::Stream* stream) {
     stream->Read(&indices_);
-    stream->Read(&root_box_.min.container());
-    stream->Read(&root_box_.max.container());
+    stream->Read(&root_box_.min().container());
+    stream->Read(&root_box_.max().container());
     return ReadNode(stream);
   }
 
   //! \private
   inline void Save(internal::Stream* stream) const {
     stream->Write(indices_);
-    stream->Write(root_box_.min.container());
-    stream->Write(root_box_.max.container());
+    stream->Write(root_box_.min().container());
+    stream->Write(root_box_.max().container());
     WriteNode(root_, stream);
   }
 
