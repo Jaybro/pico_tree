@@ -150,7 +150,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   EXPECT_EQ(split_dim, 1);
   EXPECT_EQ(split_idx, 2);
-  EXPECT_EQ(split_val, (box.max()[1] + box.min()[1]) / Scalar{2.0});
+  EXPECT_EQ(split_val, (box.max(1) + box.min(1)) / Scalar{2.0});
 
   // On dimension 0 we test what happens when all values are equal. Again
   // everything moves to the left. So we want to split on index 3.
