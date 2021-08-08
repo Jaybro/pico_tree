@@ -657,7 +657,7 @@ class SplitterSlidingMidpoint {
       Scalar* split_val) const {
     Scalar max_delta;
     box.LongestAxis(split_dim, &max_delta);
-    *split_val = max_delta / Scalar(2.0) + box.min()[*split_dim];
+    *split_val = max_delta / Scalar(2.0) + box.min(*split_dim);
 
     // Everything smaller than split_val goes left, the rest right.
     auto const comp = [this, &split_dim, &split_val](Index const a) -> bool {

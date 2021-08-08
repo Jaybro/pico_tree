@@ -58,10 +58,10 @@ TEST(KdTreeTest, SplitterMedian) {
   std::vector<Index> idx4{0, 1, 2, 3};
 
   pico_tree::internal::Box<Scalar, 2> box(2);
-  box.min()[0] = 0.0f;
-  box.min()[1] = 0.0f;
-  box.max()[0] = 1.0f;
-  box.max()[1] = 0.0f;
+  box.min(0) = 0.0f;
+  box.min(1) = 0.0f;
+  box.max(0) = 1.0f;
+  box.max(1) = 0.0f;
   Index split_dim;
   Index split_idx;
   Scalar split_val;
@@ -91,7 +91,7 @@ TEST(KdTreeTest, SplitterMedian) {
   EXPECT_EQ(split_idx, 3);
   EXPECT_EQ(split_val, ptsx7[idx7[3]](0));
 
-  box.max()[1] = 10.0f;
+  box.max(1) = 10.0f;
   splitter7(1, 3, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
@@ -120,10 +120,10 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   // Everything is forced to the right leaf. This means we want a single point
   // to the left (the lowest value) and internally the splitter needs to reorder
   // the indices such that on index 1 we get value 2.
-  box.min()[0] = Scalar{0.0};
-  box.min()[1] = Scalar{0.0};
-  box.max()[0] = Scalar{0.0};
-  box.max()[1] = Scalar{1.0};
+  box.min(0) = Scalar{0.0};
+  box.min(1) = Scalar{0.0};
+  box.max(0) = Scalar{0.0};
+  box.max(1) = Scalar{1.0};
   splitter(0, 0, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
@@ -135,7 +135,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   // Everything is forced to the left leaf. This means we want a single point
   // to the right (the highest value) and internally the splitter needs to
   // reorder the indices such that on index 3 we get value 4.
-  box.max()[1] = Scalar{9.0};
+  box.max(1) = Scalar{9.0};
   splitter(0, 0, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
@@ -145,7 +145,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   // Clean middle split. A general case where the split value falls somewhere
   // inbetween the range of numbers.
-  box.max()[1] = Scalar{5.0};
+  box.max(1) = Scalar{5.0};
   splitter(0, 0, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 1);
@@ -154,7 +154,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   // On dimension 0 we test what happens when all values are equal. Again
   // everything moves to the left. So we want to split on index 3.
-  box.max()[0] = Scalar{15.0};
+  box.max(0) = Scalar{15.0};
   splitter(0, 0, 4, box, &split_dim, &split_idx, &split_val);
 
   EXPECT_EQ(split_dim, 0);
