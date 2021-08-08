@@ -107,12 +107,6 @@ class Box : public BoxBase<Box<Scalar_, Dim_>> {
   inline ScalarType* max() { return max_.container().data(); }
   inline std::size_t constexpr size() const { return min_.size(); }
 
-  // TODO Remove in the future.
-  inline Sequence<Scalar_, Dim_> const& min_seq() const { return min_; }
-  inline Sequence<Scalar_, Dim_>& min_seq() { return min_; }
-  inline Sequence<Scalar_, Dim_> const& max_seq() const { return max_; }
-  inline Sequence<Scalar_, Dim_>& max_seq() { return max_; }
-
  protected:
   //! \brief Minimum box coordinate.
   Sequence<Scalar_, Dim_> min_;
