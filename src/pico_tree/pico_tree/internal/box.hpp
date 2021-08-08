@@ -30,14 +30,13 @@ class BoxBase {
 
   template <typename OtherDerived>
   inline bool Contains(BoxBase<OtherDerived> const& x) const {
-    return Contains(x.derived().min().container().data()) &&
-           Contains(x.derived().max().container().data());
+    return Contains(x.min()) && Contains(x.max());
   }
 
   inline void FillInverseMax() {
     for (std::size_t i = 0; i < derived().size(); ++i) {
-      derived().min()[i] = std::numeric_limits<ScalarType>::max();
-      derived().max()[i] = std::numeric_limits<ScalarType>::lowest();
+      min()[i] = std::numeric_limits<ScalarType>::max();
+      max()[i] = std::numeric_limits<ScalarType>::lowest();
     }
   }
 
@@ -46,7 +45,7 @@ class BoxBase {
     *p_max_value = std::numeric_limits<ScalarType>::lowest();
 
     for (int i = 0; i < static_cast<int>(derived().size()); ++i) {
-      ScalarType const delta = derived().max()[i] - derived().min()[i];
+      ScalarType const delta = max()[i] - min()[i];
       if (delta > *p_max_value) {
         *p_max_index = i;
         *p_max_value = delta;
@@ -56,11 +55,11 @@ class BoxBase {
 
   inline void Update(ScalarType const* const x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
-      if (x[i] < derived().min()[i]) {
-        derived().min()[i] = x[i];
+      if (x[i] < min()[i]) {
+        min()[i] = x[i];
       }
-      if (x[i] > derived().max()[i]) {
-        derived().max()[i] = x[i];
+      if (x[i] > max()[i]) {
+        max()[i] = x[i];
       }
     }
   }
@@ -68,12 +67,12 @@ class BoxBase {
   template <typename OtherDerived>
   inline void Update(BoxBase<OtherDerived> const& x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
-      if (x.derived().min()[i] < derived().min()[i]) {
-        derived().min()[i] = x.derived().min()[i];
+      if (x.min()[i] < min()[i]) {
+        min()[i] = x.min()[i];
       }
 
-      if (x.derived().max()[i] > derived().max()[i]) {
-        derived().max()[i] = x.derived().max()[i];
+      if (x.max()[i] > max()[i]) {
+        max()[i] = x.max()[i];
       }
     }
   }
@@ -85,9 +84,9 @@ class BoxBase {
   //! Returns a reference to the derived class.
   inline Derived& derived() { return *static_cast<Derived*>(this); }
 
-  inline ScalarType const* const min() const { return derived().min(); }
+  inline ScalarType const* min() const { return derived().min(); }
   inline ScalarType* min() { return derived().min(); }
-  inline ScalarType const* const max() const { return derived().max(); }
+  inline ScalarType const* max() const { return derived().max(); }
   inline ScalarType* max() { return derived().max(); }
   inline int size() const { return derived().size(); }
 };
@@ -102,11 +101,17 @@ class Box : public BoxBase<Box<Scalar_, Dim_>> {
 
   inline explicit Box(std::size_t size) : min_(size), max_(size) {}
 
-  inline Sequence<Scalar_, Dim_> const& min() const { return min_; }
-  inline Sequence<Scalar_, Dim_>& min() { return min_; }
-  inline Sequence<Scalar_, Dim_> const& max() const { return max_; }
-  inline Sequence<Scalar_, Dim_>& max() { return max_; }
+  inline ScalarType const* min() const { return min_.container().data(); }
+  inline ScalarType* min() { return min_.container().data(); }
+  inline ScalarType const* max() const { return max_.container().data(); }
+  inline ScalarType* max() { return max_.container().data(); }
   inline std::size_t constexpr size() const { return min_.size(); }
+
+  // TODO Remove in the future.
+  inline Sequence<Scalar_, Dim_> const& min_seq() const { return min_; }
+  inline Sequence<Scalar_, Dim_>& min_seq() { return min_; }
+  inline Sequence<Scalar_, Dim_> const& max_seq() const { return max_; }
+  inline Sequence<Scalar_, Dim_>& max_seq() { return max_; }
 
  protected:
   //! \brief Minimum box coordinate.
@@ -124,11 +129,11 @@ class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
   inline BoxMap(ScalarType* min, ScalarType* max, std::size_t)
       : min_(min), max_(max) {}
 
-  inline ScalarType const* const min() const { return min_; }
+  inline ScalarType const* min() const { return min_; }
   inline ScalarType* min() { return min_; }
-  inline ScalarType const* const max() const { return max_; }
+  inline ScalarType const* max() const { return max_; }
   inline ScalarType* max() { return max_; }
-  inline static std::size_t constexpr size() {
+  inline std::size_t constexpr size() const {
     return static_cast<std::size_t>(Dim_);
   }
 
@@ -147,9 +152,9 @@ class BoxMap<Scalar_, kDynamicDim>
   inline BoxMap(ScalarType* min, ScalarType* max, std::size_t size)
       : min_(min), max_(max), size_(size) {}
 
-  inline ScalarType const* const min() const { return min_; }
+  inline ScalarType const* min() const { return min_; }
   inline ScalarType* min() { return min_; }
-  inline ScalarType const* const max() const { return max_; }
+  inline ScalarType const* max() const { return max_; }
   inline ScalarType* max() { return max_; }
   inline std::size_t size() const { return size_; }
 

@@ -473,17 +473,18 @@ class SearchBoxEuclidean {
       Space const& points,
       Metric const& metric,
       std::vector<Index> const& indices,
-      Scalar const* const rng_min,
-      Scalar const* const rng_max,
+      Box<Scalar, Dim_> const& root_box,
+      BoxMap<Scalar const, Dim_> const& query,
       std::vector<Index>* idxs)
       : points_(points),
         metric_(metric),
         indices_(indices),
-        query_(rng_min, rng_max, Dimension<Traits, Dim_>::Dim(points)),
+        box_(root_box),
+        query_(query),
         idxs_(*idxs) {}
 
   template <typename Node>
-  inline void operator()(Node const* const node, Box<Scalar, Dim_>* box) const {
+  inline void operator()(Node const* const node) {
     // TODO Perhaps we can support it for both topological and Euclidean spaces.
     static_assert(
         std::is_same<typename Metric::SpaceTag, EuclideanSpaceTag>::value,
@@ -498,34 +499,34 @@ class SearchBoxEuclidean {
         }
       }
     } else {
-      Scalar old_value = box->max()[node->data.branch.split_dim];
-      box->max()[node->data.branch.split_dim] = node->data.branch.left_max;
+      Scalar old_value = box_.max()[node->data.branch.split_dim];
+      box_.max()[node->data.branch.split_dim] = node->data.branch.left_max;
 
       // Check if the left node is fully contained. If true, report all its
       // indices. Else, if its partially contained, continue the range search
       // down the left node.
-      if (query_.Contains(*box)) {
+      if (query_.Contains(box_)) {
         ReportNode(node->left);
       } else if (
           query_.min()[node->data.branch.split_dim] <
           node->data.branch.left_max) {
-        operator()(node->left, box);
+        operator()(node->left);
       }
 
-      box->max()[node->data.branch.split_dim] = old_value;
-      old_value = box->min()[node->data.branch.split_dim];
-      box->min()[node->data.branch.split_dim] = node->data.branch.right_min;
+      box_.max()[node->data.branch.split_dim] = old_value;
+      old_value = box_.min()[node->data.branch.split_dim];
+      box_.min()[node->data.branch.split_dim] = node->data.branch.right_min;
 
       // Same as the left side.
-      if (query_.Contains(*box)) {
+      if (query_.Contains(box_)) {
         ReportNode(node->right);
       } else if (
           query_.max()[node->data.branch.split_dim] >
           node->data.branch.right_min) {
-        operator()(node->right, box);
+        operator()(node->right);
       }
 
-      box->min()[node->data.branch.split_dim] = old_value;
+      box_.min()[node->data.branch.split_dim] = old_value;
     }
   }
 
@@ -547,7 +548,8 @@ class SearchBoxEuclidean {
   Space const& points_;
   Metric const& metric_;
   std::vector<Index> const& indices_;
-  BoxMap<Scalar const, Dim_> query_;
+  Box<Scalar, Dim_> box_;
+  BoxMap<Scalar const, Dim_> const& query_;
   std::vector<Index>& idxs_;
 };
 
@@ -951,15 +953,16 @@ class KdTree {
     // now it is assumed that this check is not worth it: If there was overlap
     // then the search is slower. So unless many queries don't intersect there
     // is no point in adding it.
-
-    Box root_box(root_box_);
     internal::SearchBoxEuclidean<Traits, Metric, Dim>(
         points_,
         metric_,
         indices_,
-        Traits::PointCoords(min),
-        Traits::PointCoords(max),
-        idxs)(root_, &root_box);
+        root_box_,
+        internal::BoxMap<Scalar const, Dim>(
+            Traits::PointCoords(min),
+            Traits::PointCoords(max),
+            Traits::SpaceSdim(points_)),
+        idxs)(root_);
   }
 
   //! \brief Point set used by the tree.
@@ -1095,16 +1098,16 @@ class KdTree {
   //! \private
   inline Node* Load(internal::Stream* stream) {
     stream->Read(&indices_);
-    stream->Read(&root_box_.min().container());
-    stream->Read(&root_box_.max().container());
+    stream->Read(&root_box_.min_seq().container());
+    stream->Read(&root_box_.max_seq().container());
     return ReadNode(stream);
   }
 
   //! \private
   inline void Save(internal::Stream* stream) const {
     stream->Write(indices_);
-    stream->Write(root_box_.min().container());
-    stream->Write(root_box_.max().container());
+    stream->Write(root_box_.min_seq().container());
+    stream->Write(root_box_.max_seq().container());
     WriteNode(root_, stream);
   }
 
