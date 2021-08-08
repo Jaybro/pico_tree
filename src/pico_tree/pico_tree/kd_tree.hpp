@@ -460,9 +460,6 @@ class SearchBoxEuclidean {
   using Space = typename Traits::SpaceType;
 
  public:
-  //! \brief Node type supported by this class.
-  using Node = KdTreeNodeEuclidean<Index, Scalar>;
-
   //! \brief Returns all points within the box defined by \p rng_min and \p
   //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dim)+k).
   //! \details Many tree nodes are excluded by checking if they intersect with
