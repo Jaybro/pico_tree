@@ -560,26 +560,6 @@ class SearchBoxEuclidean {
   std::vector<Index>& idxs_;
 };
 
-//! \brief See which axis of the box is the longest.
-template <typename Scalar, int Dim>
-inline void LongestAxisBox(
-    Sequence<Scalar, Dim> const& box_min,
-    Sequence<Scalar, Dim> const& box_max,
-    int* p_max_index,
-    Scalar* p_max_value) {
-  assert(box_min.size() == box_max.size());
-
-  *p_max_value = std::numeric_limits<Scalar>::lowest();
-
-  for (int i = 0; i < static_cast<int>(box_min.size()); ++i) {
-    Scalar const delta = box_max[i] - box_min[i];
-    if (delta > *p_max_value) {
-      *p_max_index = i;
-      *p_max_value = delta;
-    }
-  }
-}
-
 }  // namespace internal
 
 //! \brief Splits a node on the median of the longest dimension of its box. Also
@@ -616,7 +596,7 @@ class SplitterLongestMedian {
       Index* split_idx,
       Scalar* split_val) const {
     Scalar max_delta;
-    internal::LongestAxisBox(box.min(), box.max(), split_dim, &max_delta);
+    box.LongestAxis(split_dim, &max_delta);
 
     *split_idx = size / 2 + offset;
 
@@ -684,7 +664,7 @@ class SplitterSlidingMidpoint {
       Index* split_idx,
       Scalar* split_val) const {
     Scalar max_delta;
-    internal::LongestAxisBox(box.min(), box.max(), split_dim, &max_delta);
+    box.LongestAxis(split_dim, &max_delta);
     *split_val = max_delta / Scalar(2.0) + box.min()[*split_dim];
 
     // Everything smaller than split_val goes left, the rest right.
