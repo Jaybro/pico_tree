@@ -17,7 +17,7 @@ class BoxBase {
 
   //! \brief Checks if \p x is contained. A point on the edge considered inside
   //! the box.
-  inline bool Contains(ScalarType const* const x) const {
+  inline bool Contains(ScalarType const* x) const {
     // We use derived().size() which includes the constexpr part. Otherwise a
     // small trait needs to be written.
     for (std::size_t i = 0; i < derived().size(); ++i) {
@@ -53,7 +53,7 @@ class BoxBase {
     }
   }
 
-  inline void Update(ScalarType const* const x) {
+  inline void Update(ScalarType const* x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
       if (x[i] < min()[i]) {
         min()[i] = x[i];
@@ -100,11 +100,11 @@ class Box final : public BoxBase<Box<Scalar_, Dim_>> {
 
   inline explicit Box(std::size_t) {}
 
-  inline ScalarType const* min() const { return min_.data(); }
-  inline ScalarType* min() { return min_.data(); }
-  inline ScalarType const* max() const { return max_.data(); }
-  inline ScalarType* max() { return max_.data(); }
-  inline std::size_t constexpr size() const { return min_.size(); }
+  inline ScalarType const* min() const noexcept { return min_.data(); }
+  inline ScalarType* min() noexcept { return min_.data(); }
+  inline ScalarType const* max() const noexcept { return max_.data(); }
+  inline ScalarType* max() noexcept { return max_.data(); }
+  inline std::size_t constexpr size() const noexcept { return min_.size(); }
 
  private:
   //! \brief Minimum box coordinate.
@@ -123,11 +123,11 @@ class Box<Scalar_, kDynamicDim> final
 
   inline explicit Box(std::size_t size) : min_(size * 2), size_(size) {}
 
-  inline ScalarType const* min() const { return min_.data(); }
-  inline ScalarType* min() { return min_.data(); }
-  inline ScalarType const* max() const { return min_.data() + size_; }
-  inline ScalarType* max() { return min_.data() + size_; }
-  inline std::size_t size() const { return size_; }
+  inline ScalarType const* min() const noexcept { return min_.data(); }
+  inline ScalarType* min() noexcept { return min_.data(); }
+  inline ScalarType const* max() const noexcept { return min_.data() + size_; }
+  inline ScalarType* max() noexcept { return min_.data() + size_; }
+  inline std::size_t size() const noexcept { return size_; }
 
  private:
   //! \brief Minimum and maximum box coordinates aligned in memory.
@@ -144,11 +144,11 @@ class BoxMap final : public BoxBase<BoxMap<Scalar_, Dim_>> {
   inline BoxMap(ScalarType* min, ScalarType* max, std::size_t)
       : min_(min), max_(max) {}
 
-  inline ScalarType const* min() const { return min_; }
-  inline ScalarType* min() { return min_; }
-  inline ScalarType const* max() const { return max_; }
-  inline ScalarType* max() { return max_; }
-  inline std::size_t constexpr size() const {
+  inline ScalarType const* min() const noexcept { return min_; }
+  inline ScalarType* min() noexcept { return min_; }
+  inline ScalarType const* max() const noexcept { return max_; }
+  inline ScalarType* max() noexcept { return max_; }
+  inline std::size_t constexpr size() const noexcept {
     return static_cast<std::size_t>(Dim_);
   }
 
@@ -167,11 +167,11 @@ class BoxMap<Scalar_, kDynamicDim> final
   inline BoxMap(ScalarType* min, ScalarType* max, std::size_t size)
       : min_(min), max_(max), size_(size) {}
 
-  inline ScalarType const* min() const { return min_; }
-  inline ScalarType* min() { return min_; }
-  inline ScalarType const* max() const { return max_; }
-  inline ScalarType* max() { return max_; }
-  inline std::size_t size() const { return size_; }
+  inline ScalarType const* min() const noexcept { return min_; }
+  inline ScalarType* min() noexcept { return min_; }
+  inline ScalarType const* max() const noexcept { return max_; }
+  inline ScalarType* max() noexcept { return max_; }
+  inline std::size_t size() const noexcept { return size_; }
 
  private:
   ScalarType* min_;
@@ -181,13 +181,13 @@ class BoxMap<Scalar_, kDynamicDim> final
 
 template <typename Scalar_, int Dim_>
 struct BoxTraits<Box<Scalar_, Dim_>> {
-  using ScalarType = Scalar_;
+  using ScalarType = typename std::remove_const<Scalar_>::type;
   static int constexpr Dim = Dim_;
 };
 
 template <typename Scalar_, int Dim_>
 struct BoxTraits<BoxMap<Scalar_, Dim_>> {
-  using ScalarType = Scalar_;
+  using ScalarType = typename std::remove_const<Scalar_>::type;
   static int constexpr Dim = Dim_;
 };
 
