@@ -6,7 +6,7 @@ namespace pico_tree {
 
 namespace internal {
 
-template <typename Box>
+template <typename Box_>
 struct BoxTraits;
 
 template <typename Derived>
@@ -85,11 +85,11 @@ class BoxBase {
 //! \brief A SequenceBox can be used as a bounding box. It uses a Sequence for
 //! storing the min and max coordinate of the box.
 template <typename Scalar_, int Dim_>
-struct SequenceBox : public BoxBase<SequenceBox<Scalar_, Dim_>> {
+struct Box : public BoxBase<Box<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
 
-  inline explicit SequenceBox(std::size_t size) : min_(size), max_(size) {}
+  inline explicit Box(std::size_t size) : min_(size), max_(size) {}
 
   inline Sequence<Scalar_, Dim_> const& min() const { return min_; }
   inline Sequence<Scalar_, Dim_>& min() { return min_; }
@@ -149,7 +149,7 @@ class BoxMap<Scalar_, kDynamicDim>
 };
 
 template <typename Scalar_, int Dim_>
-struct BoxTraits<SequenceBox<Scalar_, Dim_>> {
+struct BoxTraits<Box<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
 };

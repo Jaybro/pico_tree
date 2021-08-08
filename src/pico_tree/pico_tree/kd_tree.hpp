@@ -120,7 +120,7 @@ class KdTreeBuilder {
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
-  using SequenceBoxType = SequenceBox<Scalar, Dim_>;
+  using BoxType = Box<Scalar, Dim_>;
 
  public:
   //! \brief Node type supported by KdTreeBuilder based on SpaceTag.
@@ -143,8 +143,8 @@ class KdTreeBuilder {
         nodes_{*nodes} {}
 
   //! \brief Creates the full set of nodes for a KdTree.
-  inline Node* operator()(SequenceBoxType const& root_box) const {
-    SequenceBoxType box(root_box);
+  inline Node* operator()(BoxType const& root_box) const {
+    BoxType box(root_box);
     return SplitIndices(0, 0, Traits::SpaceNpts(space_), &box);
   }
 
@@ -163,7 +163,7 @@ class KdTreeBuilder {
       Index const depth,
       Index const offset,
       Index const size,
-      SequenceBoxType* box) const {
+      BoxType* box) const {
     Node* node = nodes_.Allocate();
     //
     if (size <= max_leaf_size_) {
@@ -186,7 +186,7 @@ class KdTreeBuilder {
       Index const left_size = split_idx - offset;
       Index const right_size = size - left_size;
 
-      SequenceBoxType right = *box;
+      BoxType right = *box;
       // Argument box will function as the left bounding box until we merge left
       // and right again at the end of this code section.
       box->max()[split_dim] = split_val;
@@ -214,7 +214,7 @@ class KdTreeBuilder {
   }
 
   inline void ComputeBoundingBox(
-      Index const begin_idx, Index const end_idx, SequenceBoxType* box) const {
+      Index const begin_idx, Index const end_idx, BoxType* box) const {
     box->FillInverseMax();
     for (Index j = begin_idx; j < end_idx; ++j) {
       box->Update(Traits::PointCoords(Traits::PointAt(space_, indices_[j])));
@@ -222,8 +222,8 @@ class KdTreeBuilder {
   }
 
   inline void SetBranch(
-      SequenceBoxType const& left,
-      SequenceBoxType const& right,
+      BoxType const& left,
+      BoxType const& right,
       int const split_dim,
       KdTreeNodeEuclidean<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
@@ -232,8 +232,8 @@ class KdTreeBuilder {
   }
 
   inline void SetBranch(
-      SequenceBoxType const& left,
-      SequenceBoxType const& right,
+      BoxType const& left,
+      BoxType const& right,
       int const split_dim,
       KdTreeNodeTopological<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
@@ -491,8 +491,7 @@ class SearchBoxEuclidean {
         idxs_(*idxs) {}
 
   template <typename Node>
-  inline void operator()(
-      Node const* const node, SequenceBox<Scalar, Dim_>* box) const {
+  inline void operator()(Node const* const node, Box<Scalar, Dim_>* box) const {
     // TODO Perhaps we can support it for both topological and Euclidean spaces.
     static_assert(
         std::is_same<typename Metric::SpaceTag, EuclideanSpaceTag>::value,
@@ -574,7 +573,7 @@ class SplitterLongestMedian {
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
   template <int Dim_>
-  using SequenceBox = typename internal::SequenceBox<Scalar, Dim_>;
+  using Box = typename internal::Box<Scalar, Dim_>;
 
  public:
   //! \brief Buffer type used with this splitter.
@@ -591,7 +590,7 @@ class SplitterLongestMedian {
       Index const,  // depth
       Index const offset,
       Index const size,
-      SequenceBox<Dim_> const& box,
+      Box<Dim_> const& box,
       int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
@@ -642,7 +641,7 @@ class SplitterSlidingMidpoint {
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
   template <int Dim_>
-  using SequenceBox = typename internal::SequenceBox<Scalar, Dim_>;
+  using Box = typename internal::Box<Scalar, Dim_>;
 
  public:
   //! \brief Buffer type used with this splitter.
@@ -659,7 +658,7 @@ class SplitterSlidingMidpoint {
       Index const,  // depth
       Index const offset,
       Index const size,
-      SequenceBox<Dim_> const& box,
+      Box<Dim_> const& box,
       int* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
@@ -738,7 +737,7 @@ class KdTree {
   using Node = typename Builder::Node;
   //! Either an array or vector (compile time vs. run time).
   using Sequence = typename internal::Sequence<Scalar, Dim_>;
-  using SequenceBox = typename internal::SequenceBox<Scalar, Dim_>;
+  using Box = typename internal::Box<Scalar, Dim_>;
   using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
 
  public:
@@ -961,7 +960,7 @@ class KdTree {
     // then the search is slower. So unless many queries don't intersect there
     // is no point in adding it.
 
-    SequenceBox root_box(root_box_);
+    Box root_box(root_box_);
     internal::SearchBoxEuclidean<Traits, Metric, Dim>(
         points_,
         metric_,
@@ -1025,7 +1024,7 @@ class KdTree {
         root_box_(Traits::SpaceSdim(points_)),
         root_(Load(stream)) {}
 
-  inline void ComputeBoundingBox(SequenceBox* box) {
+  inline void ComputeBoundingBox(Box* box) {
     box->FillInverseMax();
     for (Index i = 0; i < Traits::SpaceNpts(points_); ++i) {
       box->Update(Traits::PointCoords(Traits::PointAt(points_, i)));
@@ -1126,7 +1125,7 @@ class KdTree {
   //! \brief Sorted indices that refer to points inside points_.
   std::vector<Index> indices_;
   //! \brief Bounding box of the root node.
-  SequenceBox root_box_;
+  Box root_box_;
   //! \brief Root of the KdTree.
   Node* root_;
 };
