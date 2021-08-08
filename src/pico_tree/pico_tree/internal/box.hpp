@@ -11,7 +11,6 @@ struct BoxTraits;
 
 template <typename Derived>
 class BoxBase {
- private:
  public:
   using ScalarType = typename BoxTraits<Derived>::ScalarType;
   static constexpr int Dim = BoxTraits<Derived>::Dim;
@@ -55,13 +54,26 @@ class BoxBase {
     }
   }
 
-  inline void Update(ScalarType const* const p) {
+  inline void Update(ScalarType const* const x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
-      if (p[i] < derived().min()[i]) {
-        derived().min()[i] = p[i];
+      if (x[i] < derived().min()[i]) {
+        derived().min()[i] = x[i];
       }
-      if (p[i] > derived().max()[i]) {
-        derived().max()[i] = p[i];
+      if (x[i] > derived().max()[i]) {
+        derived().max()[i] = x[i];
+      }
+    }
+  }
+
+  template <typename OtherDerived>
+  inline void Update(BoxBase<OtherDerived> const& x) {
+    for (std::size_t i = 0; i < derived().size(); ++i) {
+      if (x.derived().min()[i] < derived().min()[i]) {
+        derived().min()[i] = x.derived().min()[i];
+      }
+
+      if (x.derived().max()[i] > derived().max()[i]) {
+        derived().max()[i] = x.derived().max()[i];
       }
     }
   }
@@ -78,14 +90,13 @@ class BoxBase {
   inline ScalarType const* const max() const { return derived().max(); }
   inline ScalarType* max() { return derived().max(); }
   inline int size() const { return derived().size(); }
-
- private:
 };
 
 //! \brief A SequenceBox can be used as a bounding box. It uses a Sequence for
 //! storing the min and max coordinate of the box.
 template <typename Scalar_, int Dim_>
-struct Box : public BoxBase<Box<Scalar_, Dim_>> {
+class Box : public BoxBase<Box<Scalar_, Dim_>> {
+ public:
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
 

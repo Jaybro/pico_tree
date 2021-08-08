@@ -197,17 +197,9 @@ class KdTreeBuilder {
 
       SetBranch(*box, right, split_dim, node);
 
-      // This loop merges both child boxes. We can expect any of the min max
-      // values to change except for the one of split_dim.
-      for (int i = 0; i < Dimension<Traits, Dim_>::Dim(space_); ++i) {
-        if (right.min()[i] < box->min()[i]) {
-          box->min()[i] = right.min()[i];
-        }
-
-        if (right.max()[i] > box->max()[i]) {
-          box->max()[i] = right.max()[i];
-        }
-      }
+      // Merges both child boxes. We can expect any of the min max values to
+      // change except for the ones of split_dim.
+      box->Update(right);
     }
 
     return node;
