@@ -46,6 +46,13 @@ class Stream {
     stream_.read(reinterpret_cast<char*>(&(*values)[0]), sizeof(T) * size);
   }
 
+  //! \brief Reads an array of values from the stream.
+  //! \tparam T Type of a value.
+  template <typename T>
+  inline void Read(T* values, std::size_t size) {
+    stream_.read(reinterpret_cast<char*>(values), sizeof(T) * size);
+  }
+
   //! \brief Writes a single value to the stream.
   //! \tparam T Type of the value.
   template <typename T>
@@ -61,6 +68,13 @@ class Stream {
     Write(values.size());
     stream_.write(
         reinterpret_cast<char const*>(&values[0]), sizeof(T) * values.size());
+  }
+
+  //! \brief Writes an array of values to the stream.
+  //! \tparam T Type of a value.
+  template <typename T>
+  inline void Write(T const* values, std::size_t size) {
+    stream_.write(reinterpret_cast<char const*>(values), sizeof(T) * size);
   }
 
  private:
