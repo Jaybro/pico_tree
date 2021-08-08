@@ -88,34 +88,55 @@ class BoxBase {
   inline ScalarType* min() { return derived().min(); }
   inline ScalarType const* max() const { return derived().max(); }
   inline ScalarType* max() { return derived().max(); }
-  inline int size() const { return derived().size(); }
+  inline std::size_t size() const { return derived().size(); }
 };
 
-//! \brief A SequenceBox can be used as a bounding box. It uses a Sequence for
-//! storing the min and max coordinate of the box.
+//! \brief An axis aligned box represented by a min and max coordinate.
 template <typename Scalar_, int Dim_>
-class Box : public BoxBase<Box<Scalar_, Dim_>> {
+class Box final : public BoxBase<Box<Scalar_, Dim_>> {
  public:
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
 
-  inline explicit Box(std::size_t size) : min_(size), max_(size) {}
+  inline explicit Box(std::size_t) {}
 
-  inline ScalarType const* min() const { return min_.container().data(); }
-  inline ScalarType* min() { return min_.container().data(); }
-  inline ScalarType const* max() const { return max_.container().data(); }
-  inline ScalarType* max() { return max_.container().data(); }
+  inline ScalarType const* min() const { return min_.data(); }
+  inline ScalarType* min() { return min_.data(); }
+  inline ScalarType const* max() const { return max_.data(); }
+  inline ScalarType* max() { return max_.data(); }
   inline std::size_t constexpr size() const { return min_.size(); }
 
- protected:
+ private:
   //! \brief Minimum box coordinate.
-  Sequence<Scalar_, Dim_> min_;
+  std::array<Scalar_, Dim_> min_;
   //! \brief Maximum box coordinate.
-  Sequence<Scalar_, Dim_> max_;
+  std::array<Scalar_, Dim_> max_;
+};
+
+//! \brief An axis aligned box represented by a min and max coordinate.
+template <typename Scalar_>
+class Box<Scalar_, kDynamicDim> final
+    : public BoxBase<Box<Scalar_, kDynamicDim>> {
+ public:
+  using ScalarType = Scalar_;
+  static int constexpr Dim = kDynamicDim;
+
+  inline explicit Box(std::size_t size) : min_(size * 2), size_(size) {}
+
+  inline ScalarType const* min() const { return min_.data(); }
+  inline ScalarType* min() { return min_.data(); }
+  inline ScalarType const* max() const { return min_.data() + size_; }
+  inline ScalarType* max() { return min_.data() + size_; }
+  inline std::size_t size() const { return size_; }
+
+ private:
+  //! \brief Minimum and maximum box coordinates aligned in memory.
+  std::vector<ScalarType> min_;
+  std::size_t size_;
 };
 
 template <typename Scalar_, int Dim_>
-class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
+class BoxMap final : public BoxBase<BoxMap<Scalar_, Dim_>> {
  public:
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
@@ -131,13 +152,13 @@ class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
     return static_cast<std::size_t>(Dim_);
   }
 
- protected:
+ private:
   ScalarType* min_;
   ScalarType* max_;
 };
 
 template <typename Scalar_>
-class BoxMap<Scalar_, kDynamicDim>
+class BoxMap<Scalar_, kDynamicDim> final
     : public BoxBase<BoxMap<Scalar_, kDynamicDim>> {
  public:
   using ScalarType = Scalar_;
@@ -152,7 +173,7 @@ class BoxMap<Scalar_, kDynamicDim>
   inline ScalarType* max() { return max_; }
   inline std::size_t size() const { return size_; }
 
- protected:
+ private:
   ScalarType* min_;
   ScalarType* max_;
   std::size_t size_;
