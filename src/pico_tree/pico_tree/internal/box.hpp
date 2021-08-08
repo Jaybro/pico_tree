@@ -21,7 +21,7 @@ class BoxBase {
     // We use derived().size() which includes the constexpr part. Otherwise a
     // small trait needs to be written.
     for (std::size_t i = 0; i < derived().size(); ++i) {
-      if (min()[i] > x[i] || max()[i] < x[i]) {
+      if (min(i) > x[i] || max(i) < x[i]) {
         return false;
       }
     }
@@ -35,8 +35,8 @@ class BoxBase {
 
   inline void FillInverseMax() {
     for (std::size_t i = 0; i < derived().size(); ++i) {
-      min()[i] = std::numeric_limits<ScalarType>::max();
-      max()[i] = std::numeric_limits<ScalarType>::lowest();
+      min(i) = std::numeric_limits<ScalarType>::max();
+      max(i) = std::numeric_limits<ScalarType>::lowest();
     }
   }
 
@@ -45,7 +45,7 @@ class BoxBase {
     *p_max_value = std::numeric_limits<ScalarType>::lowest();
 
     for (int i = 0; i < static_cast<int>(derived().size()); ++i) {
-      ScalarType const delta = max()[i] - min()[i];
+      ScalarType const delta = max(i) - min(i);
       if (delta > *p_max_value) {
         *p_max_index = i;
         *p_max_value = delta;
@@ -55,11 +55,11 @@ class BoxBase {
 
   inline void Update(ScalarType const* x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
-      if (x[i] < min()[i]) {
-        min()[i] = x[i];
+      if (x[i] < min(i)) {
+        min(i) = x[i];
       }
-      if (x[i] > max()[i]) {
-        max()[i] = x[i];
+      if (x[i] > max(i)) {
+        max(i) = x[i];
       }
     }
   }
@@ -67,12 +67,12 @@ class BoxBase {
   template <typename OtherDerived>
   inline void Update(BoxBase<OtherDerived> const& x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
-      if (x.min()[i] < min()[i]) {
-        min()[i] = x.min()[i];
+      if (x.min(i) < min(i)) {
+        min(i) = x.min(i);
       }
 
-      if (x.max()[i] > max()[i]) {
-        max()[i] = x.max()[i];
+      if (x.max(i) > max(i)) {
+        max(i) = x.max(i);
       }
     }
   }
@@ -84,11 +84,19 @@ class BoxBase {
   //! Returns a reference to the derived class.
   inline Derived& derived() { return *static_cast<Derived*>(this); }
 
-  inline ScalarType const* min() const { return derived().min(); }
-  inline ScalarType* min() { return derived().min(); }
-  inline ScalarType const* max() const { return derived().max(); }
-  inline ScalarType* max() { return derived().max(); }
-  inline std::size_t size() const { return derived().size(); }
+  inline ScalarType const* min() const noexcept { return derived().min(); }
+  inline ScalarType* min() noexcept { return derived().min(); }
+  inline ScalarType const* max() const noexcept { return derived().max(); }
+  inline ScalarType* max() noexcept { return derived().max(); }
+  inline ScalarType const& min(std::size_t i) const noexcept {
+    return derived().min(i);
+  }
+  inline ScalarType& min(std::size_t i) noexcept { return derived().min(i); }
+  inline ScalarType const& max(std::size_t i) const noexcept {
+    return derived().max(i);
+  }
+  inline ScalarType& max(std::size_t i) noexcept { return derived().max(i); }
+  inline std::size_t size() const noexcept { return derived().size(); }
 };
 
 //! \brief An axis aligned box represented by a min and max coordinate.
@@ -104,6 +112,10 @@ class Box final : public BoxBase<Box<Scalar_, Dim_>> {
   inline ScalarType* min() noexcept { return min_.data(); }
   inline ScalarType const* max() const noexcept { return max_.data(); }
   inline ScalarType* max() noexcept { return max_.data(); }
+  inline ScalarType const& min(std::size_t i) const { return min_[i]; }
+  inline ScalarType& min(std::size_t i) { return min_[i]; }
+  inline ScalarType const& max(std::size_t i) const { return max_[i]; }
+  inline ScalarType& max(std::size_t i) { return max_[i]; }
   inline std::size_t constexpr size() const noexcept { return min_.size(); }
 
  private:
@@ -112,6 +124,9 @@ class Box final : public BoxBase<Box<Scalar_, Dim_>> {
   //! \brief Maximum box coordinate.
   std::array<Scalar_, Dim_> max_;
 };
+
+// TODO Not using a vector, but having custom memory management would allow us
+// to store max and avoid applying offsets.
 
 //! \brief An axis aligned box represented by a min and max coordinate.
 template <typename Scalar_>
@@ -127,6 +142,10 @@ class Box<Scalar_, kDynamicDim> final
   inline ScalarType* min() noexcept { return min_.data(); }
   inline ScalarType const* max() const noexcept { return min_.data() + size_; }
   inline ScalarType* max() noexcept { return min_.data() + size_; }
+  inline ScalarType const& min(std::size_t i) const { return min_[i]; }
+  inline ScalarType& min(std::size_t i) { return min_[i]; }
+  inline ScalarType const& max(std::size_t i) const { return min_[i + size_]; }
+  inline ScalarType& max(std::size_t i) { return min_[i + size_]; }
   inline std::size_t size() const noexcept { return size_; }
 
  private:
@@ -148,6 +167,10 @@ class BoxMap final : public BoxBase<BoxMap<Scalar_, Dim_>> {
   inline ScalarType* min() noexcept { return min_; }
   inline ScalarType const* max() const noexcept { return max_; }
   inline ScalarType* max() noexcept { return max_; }
+  inline ScalarType const& min(std::size_t i) const { return min_[i]; }
+  inline ScalarType& min(std::size_t i) { return min_[i]; }
+  inline ScalarType const& max(std::size_t i) const { return max_[i]; }
+  inline ScalarType& max(std::size_t i) { return max_[i]; }
   inline std::size_t constexpr size() const noexcept {
     return static_cast<std::size_t>(Dim_);
   }
@@ -171,6 +194,10 @@ class BoxMap<Scalar_, kDynamicDim> final
   inline ScalarType* min() noexcept { return min_; }
   inline ScalarType const* max() const noexcept { return max_; }
   inline ScalarType* max() noexcept { return max_; }
+  inline ScalarType const& min(std::size_t i) const { return min_[i]; }
+  inline ScalarType& min(std::size_t i) { return min_[i]; }
+  inline ScalarType const& max(std::size_t i) const { return max_[i]; }
+  inline ScalarType& max(std::size_t i) { return max_[i]; }
   inline std::size_t size() const noexcept { return size_; }
 
  private:

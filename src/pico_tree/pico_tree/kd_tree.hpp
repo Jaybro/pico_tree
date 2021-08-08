@@ -189,8 +189,8 @@ class KdTreeBuilder {
       BoxType right = *box;
       // Argument box will function as the left bounding box until we merge left
       // and right again at the end of this code section.
-      box->max()[split_dim] = split_val;
-      right.min()[split_dim] = split_val;
+      box->max(split_dim) = split_val;
+      right.min(split_dim) = split_val;
 
       node->left = SplitIndices(depth + 1, offset, left_size, box);
       node->right = SplitIndices(depth + 1, split_idx, right_size, &right);
@@ -219,8 +219,8 @@ class KdTreeBuilder {
       int const split_dim,
       KdTreeNodeEuclidean<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
-    node->data.branch.left_max = left.max()[split_dim];
-    node->data.branch.right_min = right.min()[split_dim];
+    node->data.branch.left_max = left.max(split_dim);
+    node->data.branch.right_min = right.min(split_dim);
   }
 
   inline void SetBranch(
@@ -229,10 +229,10 @@ class KdTreeBuilder {
       int const split_dim,
       KdTreeNodeTopological<Index, Scalar>* node) const {
     node->data.branch.split_dim = split_dim;
-    node->data.branch.left_min = left.min()[split_dim];
-    node->data.branch.left_max = left.max()[split_dim];
-    node->data.branch.right_min = right.min()[split_dim];
-    node->data.branch.right_max = right.max()[split_dim];
+    node->data.branch.left_min = left.min(split_dim);
+    node->data.branch.left_max = left.max(split_dim);
+    node->data.branch.right_min = right.min(split_dim);
+    node->data.branch.right_max = right.max(split_dim);
   }
 
   Space const& space_;
@@ -499,8 +499,8 @@ class SearchBoxEuclidean {
         }
       }
     } else {
-      Scalar old_value = box_.max()[node->data.branch.split_dim];
-      box_.max()[node->data.branch.split_dim] = node->data.branch.left_max;
+      Scalar old_value = box_.max(node->data.branch.split_dim);
+      box_.max(node->data.branch.split_dim) = node->data.branch.left_max;
 
       // Check if the left node is fully contained. If true, report all its
       // indices. Else, if its partially contained, continue the range search
@@ -508,25 +508,25 @@ class SearchBoxEuclidean {
       if (query_.Contains(box_)) {
         ReportNode(node->left);
       } else if (
-          query_.min()[node->data.branch.split_dim] <
+          query_.min(node->data.branch.split_dim) <
           node->data.branch.left_max) {
         operator()(node->left);
       }
 
-      box_.max()[node->data.branch.split_dim] = old_value;
-      old_value = box_.min()[node->data.branch.split_dim];
-      box_.min()[node->data.branch.split_dim] = node->data.branch.right_min;
+      box_.max(node->data.branch.split_dim) = old_value;
+      old_value = box_.min(node->data.branch.split_dim);
+      box_.min(node->data.branch.split_dim) = node->data.branch.right_min;
 
       // Same as the left side.
       if (query_.Contains(box_)) {
         ReportNode(node->right);
       } else if (
-          query_.max()[node->data.branch.split_dim] >
+          query_.max(node->data.branch.split_dim) >
           node->data.branch.right_min) {
         operator()(node->right);
       }
 
-      box_.min()[node->data.branch.split_dim] = old_value;
+      box_.min(node->data.branch.split_dim) = old_value;
     }
   }
 
