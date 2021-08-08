@@ -8,17 +8,23 @@ namespace pico_tree {
 
 namespace internal {
 
+//! \brief BoxTraits exposes metadata for each of the different box types.
+//! \see Box
+//! \see BoxMap
 template <typename Box_>
 struct BoxTraits;
 
+//! \brief BoxBase exposes various box utilities.
+//! \details CRTP based base class for any of the box child classes.
+//! \tparam Derived Any of the box child classes.
 template <typename Derived>
 class BoxBase {
  public:
   using ScalarType = typename BoxTraits<Derived>::ScalarType;
   static constexpr int Dim = BoxTraits<Derived>::Dim;
 
-  //! \brief Checks if \p x is contained. A point on the edge considered inside
-  //! the box.
+  //! \brief Returns true if \p x is contained. A point on the edge considered
+  //! inside the box.
   inline bool Contains(ScalarType const* x) const {
     // We use derived().size() which includes the constexpr part. Otherwise a
     // small trait needs to be written.
@@ -30,11 +36,18 @@ class BoxBase {
     return true;
   }
 
+  //! \brief Returns true if \p x is contained. When the input box is identical,
+  //! it is considered contained.
   template <typename OtherDerived>
   inline bool Contains(BoxBase<OtherDerived> const& x) const {
     return Contains(x.min()) && Contains(x.max());
   }
 
+  //! \brief Sets the values of min and max to be an inverted maximum bounding
+  //! box.
+  //! \details The values for min and max are set to respectively the maximum
+  //! and minimum possible values for integers or floating points. This is
+  //! useful for growing a bounding box in combination with the Update function.
   inline void FillInverseMax() {
     for (std::size_t i = 0; i < derived().size(); ++i) {
       min(i) = std::numeric_limits<ScalarType>::max();
@@ -43,6 +56,8 @@ class BoxBase {
   }
 
   //! \brief See which axis of the box is the longest.
+  //! \param p_max_index Output parameter for the index of the longest axis.
+  //! \param p_max_value Output parameter for the range of the longest axis.
   inline void LongestAxis(int* p_max_index, ScalarType* p_max_value) const {
     *p_max_value = std::numeric_limits<ScalarType>::lowest();
 
@@ -55,6 +70,8 @@ class BoxBase {
     }
   }
 
+  //! \brief Updates the min and/or max vectors of this box so that it can fit
+  //! input point \p x.
   inline void Update(ScalarType const* x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
       if (x[i] < min(i)) {
@@ -66,6 +83,8 @@ class BoxBase {
     }
   }
 
+  //! \brief Updates the min and/or max vectors of this box so that it can fit
+  //! input box \p x.
   template <typename OtherDerived>
   inline void Update(BoxBase<OtherDerived> const& x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
@@ -79,11 +98,11 @@ class BoxBase {
     }
   }
 
-  //! Returns a const reference to the derived class.
+  //! \brief Returns a const reference to the derived class.
   inline Derived const& derived() const {
     return *static_cast<Derived const*>(this);
   }
-  //! Returns a reference to the derived class.
+  //! \brief Returns a reference to the derived class.
   inline Derived& derived() { return *static_cast<Derived*>(this); }
 
   inline ScalarType const* min() const noexcept { return derived().min(); }
@@ -99,9 +118,15 @@ class BoxBase {
   }
   inline ScalarType& max(std::size_t i) noexcept { return derived().max(i); }
   inline std::size_t size() const noexcept { return derived().size(); }
+
+ protected:
+  //! \private
+  BoxBase() = default;
 };
 
 //! \brief An axis aligned box represented by a min and max coordinate.
+//! \details This specialization supports a compile time known spatial
+//! dimension.
 template <typename Scalar_, int Dim_>
 class Box final : public BoxBase<Box<Scalar_, Dim_>> {
  public:
@@ -131,6 +156,7 @@ class Box final : public BoxBase<Box<Scalar_, Dim_>> {
 // to store max and avoid applying offsets.
 
 //! \brief An axis aligned box represented by a min and max coordinate.
+//! \details This specialization supports a run time known spatial dimension.
 template <typename Scalar_>
 class Box<Scalar_, kDynamicDim> final
     : public BoxBase<Box<Scalar_, kDynamicDim>> {
@@ -156,6 +182,10 @@ class Box<Scalar_, kDynamicDim> final
   std::size_t size_;
 };
 
+//! \brief An axis aligned box represented by a min and max coordinate. It maps
+//! raw pointers.
+//! \details This specialization supports a compile time known spatial
+//! dimension.
 template <typename Scalar_, int Dim_>
 class BoxMap final : public BoxBase<BoxMap<Scalar_, Dim_>> {
  public:
@@ -182,6 +212,9 @@ class BoxMap final : public BoxBase<BoxMap<Scalar_, Dim_>> {
   ScalarType* max_;
 };
 
+//! \brief An axis aligned box represented by a min and max coordinate. It maps
+//! raw pointers.
+//! \details This specialization supports a run time known spatial dimension.
 template <typename Scalar_>
 class BoxMap<Scalar_, kDynamicDim> final
     : public BoxBase<BoxMap<Scalar_, kDynamicDim>> {

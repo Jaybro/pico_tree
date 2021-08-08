@@ -544,6 +544,7 @@ class SearchBoxEuclidean {
   Space const& points_;
   Metric const& metric_;
   std::vector<Index> const& indices_;
+  // This variable is used for maintaining a running bounding box.
   Box<Scalar, Dim_> box_;
   BoxMap<Scalar const, Dim_> const& query_;
   std::vector<Index>& idxs_;
@@ -1015,7 +1016,7 @@ class KdTree {
         root_box_(Traits::SpaceSdim(points_)),
         root_(Load(stream)) {}
 
-  inline void ComputeBoundingBox(Box* box) {
+  inline void ComputeBoundingBox(Box* box) const {
     box->FillInverseMax();
     for (Index i = 0; i < Traits::SpaceNpts(points_); ++i) {
       box->Update(Traits::PointCoords(Traits::PointAt(points_, i)));
