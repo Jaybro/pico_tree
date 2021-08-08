@@ -492,10 +492,9 @@ class SearchBoxEuclidean {
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        Index const idx = indices_[i];
         if (query_.Contains(
-                Traits::PointCoords(Traits::PointAt(points_, idx)))) {
-          idxs_.push_back(idx);
+                Traits::PointCoords(Traits::PointAt(points_, indices_[i])))) {
+          idxs_.push_back(indices_[i]);
         }
       }
     } else {
