@@ -1,6 +1,8 @@
 #pragma once
 
-#include "sequence.hpp"
+#include <array>
+
+#include "pico_tree/core.hpp"
 
 namespace pico_tree {
 
