@@ -148,9 +148,9 @@ class Box final : public BoxBase<Box<Scalar_, Dim_>> {
 
  private:
   //! \brief Minimum box coordinate.
-  std::array<Scalar_, Dim_> min_;
+  std::array<ScalarType, Dim> min_;
   //! \brief Maximum box coordinate.
-  std::array<Scalar_, Dim_> max_;
+  std::array<ScalarType, Dim> max_;
 };
 
 // TODO Not using a vector, but having custom memory management would allow us
