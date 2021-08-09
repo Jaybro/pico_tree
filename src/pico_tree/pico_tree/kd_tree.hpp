@@ -455,6 +455,11 @@ class SearchNearestTopological {
 template <typename Traits, typename Metric, int Dim_>
 class SearchBoxEuclidean {
  private:
+  // TODO Perhaps we can support it for both topological and Euclidean spaces.
+  static_assert(
+      std::is_same<typename Metric::SpaceTag, EuclideanSpaceTag>::value,
+      "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
+
   using Index = typename Traits::IndexType;
   using Scalar = typename Traits::ScalarType;
   using Space = typename Traits::SpaceType;
@@ -482,10 +487,6 @@ class SearchBoxEuclidean {
 
   template <typename Node>
   inline void operator()(Node const* const node) {
-    // TODO Perhaps we can support it for both topological and Euclidean spaces.
-    static_assert(
-        std::is_same<typename Metric::SpaceTag, EuclideanSpaceTag>::value,
-        "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
     if (node->IsLeaf()) {
       for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
