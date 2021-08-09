@@ -177,7 +177,7 @@ class KdTreeBuilder {
             node->data.leaf.begin_idx, node->data.leaf.end_idx, box);
       }
     } else {
-      int split_dim;
+      std::size_t split_dim;
       Index split_idx;
       Scalar split_val;
       splitter_(depth, offset, size, *box, &split_dim, &split_idx, &split_val);
@@ -218,7 +218,7 @@ class KdTreeBuilder {
       BoxType const& right,
       int const split_dim,
       KdTreeNodeEuclidean<Index, Scalar>* node) const {
-    node->data.branch.split_dim = split_dim;
+    node->data.branch.split_dim = static_cast<int>(split_dim);
     node->data.branch.left_max = left.max(split_dim);
     node->data.branch.right_min = right.min(split_dim);
   }
@@ -228,7 +228,7 @@ class KdTreeBuilder {
       BoxType const& right,
       int const split_dim,
       KdTreeNodeTopological<Index, Scalar>* node) const {
-    node->data.branch.split_dim = split_dim;
+    node->data.branch.split_dim = static_cast<int>(split_dim);
     node->data.branch.left_min = left.min(split_dim);
     node->data.branch.left_max = left.max(split_dim);
     node->data.branch.right_min = right.min(split_dim);
@@ -582,7 +582,7 @@ class SplitterLongestMedian {
       Index const offset,
       Index const size,
       Box<Dim_> const& box,
-      int* split_dim,
+      std::size_t* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
     Scalar max_delta;
@@ -650,7 +650,7 @@ class SplitterSlidingMidpoint {
       Index const offset,
       Index const size,
       Box<Dim_> const& box,
-      int* split_dim,
+      std::size_t* split_dim,
       Index* split_idx,
       Scalar* split_val) const {
     Scalar max_delta;

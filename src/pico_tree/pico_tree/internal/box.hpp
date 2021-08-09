@@ -58,10 +58,11 @@ class BoxBase {
   //! \brief See which axis of the box is the longest.
   //! \param p_max_index Output parameter for the index of the longest axis.
   //! \param p_max_value Output parameter for the range of the longest axis.
-  inline void LongestAxis(int* p_max_index, ScalarType* p_max_value) const {
+  inline void LongestAxis(
+      std::size_t* p_max_index, ScalarType* p_max_value) const {
     *p_max_value = std::numeric_limits<ScalarType>::lowest();
 
-    for (int i = 0; i < static_cast<int>(derived().size()); ++i) {
+    for (std::size_t i = 0; i < derived().size(); ++i) {
       ScalarType const delta = max(i) - min(i);
       if (delta > *p_max_value) {
         *p_max_index = i;

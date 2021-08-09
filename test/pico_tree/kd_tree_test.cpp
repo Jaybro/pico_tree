@@ -62,7 +62,7 @@ TEST(KdTreeTest, SplitterMedian) {
   box.min(1) = 0.0f;
   box.max(0) = 1.0f;
   box.max(1) = 0.0f;
-  Index split_dim;
+  std::size_t split_dim;
   Index split_idx;
   Scalar split_val;
 
@@ -113,7 +113,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   SplitterX splitter(spcx4, &idx4);
 
   pico_tree::internal::Box<Scalar, 2> box(2);
-  Index split_dim;
+  std::size_t split_dim;
   Index split_idx;
   Scalar split_val;
 
