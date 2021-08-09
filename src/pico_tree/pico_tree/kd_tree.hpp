@@ -216,7 +216,7 @@ class KdTreeBuilder {
   inline void SetBranch(
       BoxType const& left,
       BoxType const& right,
-      int const split_dim,
+      std::size_t const split_dim,
       KdTreeNodeEuclidean<Index, Scalar>* node) const {
     node->data.branch.split_dim = static_cast<int>(split_dim);
     node->data.branch.left_max = left.max(split_dim);
@@ -226,7 +226,7 @@ class KdTreeBuilder {
   inline void SetBranch(
       BoxType const& left,
       BoxType const& right,
-      int const split_dim,
+      std::size_t const split_dim,
       KdTreeNodeTopological<Index, Scalar>* node) const {
     node->data.branch.split_dim = static_cast<int>(split_dim);
     node->data.branch.left_min = left.min(split_dim);
