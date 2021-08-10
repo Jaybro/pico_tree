@@ -604,7 +604,7 @@ class SplitterLongestMedian {
 
  private:
   inline Scalar const& PointCoord(
-      Index const point_idx, int const coord_idx) const {
+      Index point_idx, std::size_t coord_idx) const {
     return Traits::PointCoords(Traits::PointAt(points_, point_idx))[coord_idx];
   }
 
@@ -698,7 +698,8 @@ class SplitterSlidingMidpoint {
   }
 
  private:
-  inline Scalar const& PointCoord(Index point_idx, int coord_idx) const {
+  inline Scalar const& PointCoord(
+      Index point_idx, std::size_t coord_idx) const {
     return Traits::PointCoords(Traits::PointAt(points_, point_idx))[coord_idx];
   }
 
