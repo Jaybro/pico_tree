@@ -120,7 +120,7 @@ BENCHMARK_REGISTER_F(BmNanoflann, KnnCt)
 
 BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  Scalar radius = static_cast<Scalar>(state.range(1)) / 10.0;
+  Scalar radius = static_cast<Scalar>(state.range(1)) / Scalar(10.0);
   Scalar squared = radius * radius;
   NanoAdaptorX adaptor(points_tree_);
   NanoKdTreeCt<NanoAdaptorX> tree(
