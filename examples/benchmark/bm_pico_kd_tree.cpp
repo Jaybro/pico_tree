@@ -73,19 +73,6 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, KnnCtSldMid)(benchmark::State& state) {
   }
 }
 
-BENCHMARK_DEFINE_F(BmPicoKdTree, NnCtSldMid)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
-
-  PicoKdTreeCtSldMid<PointX> tree(points_tree_, max_leaf_size);
-
-  for (auto _ : state) {
-    pico_tree::Neighbor<Index, Scalar> result;
-    for (auto const& p : points_test_) {
-      tree.SearchNn(p, &result);
-    }
-  }
-}
-
 BENCHMARK_REGISTER_F(BmPicoKdTree, KnnCtSldMid)
     ->Unit(benchmark::kMillisecond)
     ->Args({1, 1})
