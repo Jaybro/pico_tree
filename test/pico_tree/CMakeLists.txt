@@ -13,6 +13,7 @@ set_target_properties(${TEST_TARGET_NAME}
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 set(TEST_TARGET_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/box_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cover_tree_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kd_tree_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/metric_test.cpp
