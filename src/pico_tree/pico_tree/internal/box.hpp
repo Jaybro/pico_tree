@@ -73,7 +73,7 @@ class BoxBase {
 
   //! \brief Updates the min and/or max vectors of this box so that it can fit
   //! input point \p x.
-  inline void Update(ScalarType const* x) {
+  inline void Fit(ScalarType const* x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
       if (x[i] < min(i)) {
         min(i) = x[i];
@@ -87,7 +87,7 @@ class BoxBase {
   //! \brief Updates the min and/or max vectors of this box so that it can fit
   //! input box \p x.
   template <typename OtherDerived>
-  inline void Update(BoxBase<OtherDerived> const& x) {
+  inline void Fit(BoxBase<OtherDerived> const& x) {
     for (std::size_t i = 0; i < derived().size(); ++i) {
       if (x.min(i) < min(i)) {
         min(i) = x.min(i);

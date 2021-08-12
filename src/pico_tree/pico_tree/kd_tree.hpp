@@ -199,7 +199,7 @@ class KdTreeBuilder {
 
       // Merges both child boxes. We can expect any of the min max values to
       // change except for the ones of split_dim.
-      box->Update(right);
+      box->Fit(right);
     }
 
     return node;
@@ -209,7 +209,7 @@ class KdTreeBuilder {
       Index const begin_idx, Index const end_idx, BoxType* box) const {
     box->FillInverseMax();
     for (Index j = begin_idx; j < end_idx; ++j) {
-      box->Update(Traits::PointCoords(Traits::PointAt(space_, indices_[j])));
+      box->Fit(Traits::PointCoords(Traits::PointAt(space_, indices_[j])));
     }
   }
 
@@ -1021,7 +1021,7 @@ class KdTree {
   inline void ComputeBoundingBox(Box* box) const {
     box->FillInverseMax();
     for (Index i = 0; i < Traits::SpaceNpts(points_); ++i) {
-      box->Update(Traits::PointCoords(Traits::PointAt(points_, i)));
+      box->Fit(Traits::PointCoords(Traits::PointAt(points_, i)));
     }
   }
 
