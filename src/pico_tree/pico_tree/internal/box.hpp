@@ -123,6 +123,8 @@ class BoxBase {
  protected:
   //! \private
   BoxBase() = default;
+  //! \private
+  ~BoxBase() = default;
 };
 
 //! \brief An axis aligned box represented by a min and max coordinate.
