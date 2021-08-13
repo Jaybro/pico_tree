@@ -5,116 +5,80 @@
 #include <pico_tree/std_traits.hpp>
 
 #include "core.hpp"
+#include "map_straits.hpp"
 
 namespace py = pybind11;
 
 namespace pyco_tree {
 
-template <typename Map_>
-class Block {
- public:
-  using ScalarType = typename Map_::ScalarType;
-  static int constexpr Dim = Map_::Dim;
-
-  inline Block(ScalarType const* const data, Map_ const& space)
-      : data_(data), space_(space) {}
-
-  inline ScalarType const& operator()(int const i) const { return data_[i]; }
-
-  inline ScalarType const* data() const { return data_; }
-
-  inline int sdim() const { return space_.sdim(); }
-
- private:
-  ScalarType const* const data_;
-  Map_ const& space_;
-};
-
-// TODO Probably remove the Index argument in the future.
-template <typename Scalar, int Dim_, typename Index>
+template <typename Scalar_, int Dim_>
 class Map {
  public:
-  using ScalarType = Scalar;
+  using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
-  using IndexType = Index;
+  // Fixed to be an int.
+  using IndexType = int;
 
-  explicit Map(py::array_t<Scalar, 0> const pts) {
-    ArrayLayout<Scalar> layout(pts);
+  inline Map(
+      ScalarType* data, std::size_t npts, std::size_t sdim, bool row_major)
+      : space_(data, npts, sdim), row_major_(row_major) {}
 
-    if (layout.info.ndim != 2) {
-      throw std::runtime_error("Array: ndim not 2.");
-    }
-
-    // We always want the memory layout to look like x,y,z,x,y,z,...,x,y,z.
-    // This means that the shape of the inner dimension should equal the spatial
-    // dimension of the KdTree.
-    if (!IsDimCompatible<Dim>(
-            static_cast<int>(layout.info.shape[layout.index_inner]))) {
-      throw std::runtime_error(
-          "Array: Incompatible KdTree sdim and Array inner stride.");
-    }
-
-    ThrowIfNotContiguous(layout);
-
-    data_ = static_cast<Scalar*>(layout.info.ptr);
-    sdim_ = static_cast<int>(layout.info.shape[layout.index_inner]);
-    npts_ = static_cast<Index>(layout.info.shape[layout.index_outer]);
-    row_major_ = layout.row_major;
+  inline pico_tree::PointMap<ScalarType const, Dim> operator()(
+      std::size_t i) const {
+    return space_(i);
   }
 
-  inline Block<Map> operator()(Index const idx) const {
-    return Block<Map>(data_ + idx * sdim_, *this);
-  }
-
-  inline Scalar const* data() const { return data_; }
-
-  inline int sdim() const { return sdim_; }
-
-  inline Index npts() const { return npts_; }
-
+  inline ScalarType const* data() const { return space_.data(); }
+  inline ScalarType* data() { return space_.data(); }
+  inline std::size_t npts() const { return space_.npts(); }
+  inline std::size_t sdim() const { return space_.sdim(); }
   inline bool row_major() const { return row_major_; }
 
  private:
-  Scalar const* data_;
-  int sdim_;
-  Index npts_;
+  pico_tree::SpaceMap<ScalarType, Dim> space_;
   bool row_major_;
 };
 
-}  // namespace pyco_tree
+template <typename Scalar_, int Dim_>
+Map<Scalar_, Dim_> MakeMap(py::array_t<Scalar_, 0> const pts) {
+  ArrayLayout<Scalar_> layout(pts);
 
-namespace pico_tree {
-
-template <typename Map_>
-struct StdPointTraits<typename pyco_tree::Block<Map_>> {
-  using ScalarType = typename Map_::ScalarType;
-  static constexpr int Dim = Map_::Dim;
-
-  inline static ScalarType const* Coords(pyco_tree::Block<Map_> const& point) {
-    return point.data();
+  if (layout.info.ndim != 2) {
+    throw std::runtime_error("Array: ndim not 2.");
   }
 
-  inline static int Sdim(pyco_tree::Block<Map_> const& point) {
-    return point.sdim();
+  // We always want the memory layout to look like x,y,z,x,y,z,...,x,y,z.
+  // This means that the shape of the inner dimension should equal the spatial
+  // dimension of the KdTree.
+  if (!IsDimCompatible<Dim_>(
+          static_cast<int>(layout.info.shape[layout.index_inner]))) {
+    throw std::runtime_error(
+        "Array: Incompatible KdTree sdim and Array inner stride.");
   }
-};
 
-}  // namespace pico_tree
+  ThrowIfNotContiguous(layout);
 
-namespace pyco_tree {
+  return Map<Scalar_, Dim_>(
+      static_cast<Scalar_*>(layout.info.ptr),
+      static_cast<std::size_t>(layout.info.shape[layout.index_outer]),
+      static_cast<std::size_t>(layout.info.shape[layout.index_inner]),
+      layout.row_major);
+}
 
 template <typename Scalar_, int Dim_, typename Index_>
 struct MapTraits {
-  using SpaceType = Map<Scalar_, Dim_, Index_>;
-  using PointType = Block<SpaceType>;
+  using SpaceType = Map<Scalar_, Dim_>;
+  using PointType = pico_tree::PointMap<Scalar_ const, Dim_>;
   using ScalarType = Scalar_;
   static constexpr int Dim = Dim_;
   using IndexType = Index_;
 
-  inline static int SpaceSdim(SpaceType const& space) { return space.sdim(); }
+  inline static int SpaceSdim(SpaceType const& space) {
+    return static_cast<IndexType>(space.sdim());
+  }
 
   inline static IndexType SpaceNpts(SpaceType const& space) {
-    return space.npts();
+    return static_cast<IndexType>(space.npts());
   }
 
   inline static PointType PointAt(SpaceType const& space, IndexType const idx) {

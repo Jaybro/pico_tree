@@ -37,18 +37,18 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
 
  public:
   inline KdTree(py::array_t<Scalar, 0> pts, Index max_leaf_size)
-      : Base(Space(pts), max_leaf_size) {}
+      : Base(MakeMap<Scalar, Dim>(pts), max_leaf_size) {}
 
   void SearchKnn(
       py::array_t<Scalar, 0> const pts,
       Index const k,
       py::array_t<NeighborType, 0> nns) const {
-    Map<Scalar, Dim, Index> query(pts);
+    auto query = MakeMap<Scalar, Dim>(pts);
     EnsureSize(query, k, nns);
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
-    for (Index i = 0; i < query.npts(); ++i) {
+    for (std::size_t i = 0; i < query.npts(); ++i) {
       Base::SearchKnn(query(i), output + i * k, output + (i + 1) * k);
     }
   }
@@ -65,12 +65,12 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       Index const k,
       Scalar const e,
       py::array_t<NeighborType, 0> nns) const {
-    Map<Scalar, Dim, Index> query(pts);
+    auto query = MakeMap<Scalar, Dim>(pts);
     EnsureSize(query, k, nns);
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
-    for (Index i = 0; i < query.npts(); ++i) {
+    for (std::size_t i = 0; i < query.npts(); ++i) {
       Base::SearchAknn(query(i), e, output + i * k, output + (i + 1) * k);
     }
   }
@@ -87,14 +87,14 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       Scalar const radius,
       DArray* nns,
       bool const sort) const {
-    Map<Scalar, Dim, Index> query(pts);
+    auto query = MakeMap<Scalar, Dim>(pts);
 
     auto& nns_data = nns->data<NeighborType>();
     nns_data.resize(query.npts());
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
-    for (Index i = 0; i < query.npts(); ++i) {
+    for (std::size_t i = 0; i < query.npts(); ++i) {
       Base::SearchRadius(query(i), radius, &nns_data[i], sort);
     }
   }
@@ -112,8 +112,8 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       py::array_t<Scalar, 0> const min,
       py::array_t<Scalar, 0> const max,
       DArray* box) const {
-    Map<Scalar, Dim, Index> query_min(min);
-    Map<Scalar, Dim, Index> query_max(max);
+    auto query_min = MakeMap<Scalar, Dim>(min);
+    auto query_max = MakeMap<Scalar, Dim>(max);
 
     if (query_min.npts() != query_max.npts()) {
       throw std::invalid_argument("Query min and max don't have equal size.");
@@ -124,7 +124,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
-    for (Index i = 0; i < query_min.npts(); ++i) {
+    for (std::size_t i = 0; i < query_min.npts(); ++i) {
       Base::SearchBox(query_min(i), query_max(i), &box_data[i]);
     }
   }
@@ -155,12 +155,13 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
     // This respects the ndim == 1 for k == 1
     if (nns.size() != static_cast<py::ssize_t>(query.npts() * k)) {
       // Resize regardless of the reference count.
+      py::ssize_t npts = static_cast<py::ssize_t>(query.npts());
       if (k == 1) {
-        nns.resize(std::vector<py::ssize_t>{query.npts()}, false);
+        nns.resize(std::vector<py::ssize_t>{npts}, false);
       } else {
         nns.resize(
-            query.row_major() ? std::vector<py::ssize_t>{query.npts(), k}
-                              : std::vector<py::ssize_t>{k, query.npts()},
+            query.row_major() ? std::vector<py::ssize_t>{npts, k}
+                              : std::vector<py::ssize_t>{k, npts},
             false);
       }
     }
