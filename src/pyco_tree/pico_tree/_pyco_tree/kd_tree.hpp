@@ -48,7 +48,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
-    for (std::size_t i = 0; i < query.npts(); ++i) {
+    for (Index i = 0; i < static_cast<Index>(query.npts()); ++i) {
       Base::SearchKnn(query(i), output + i * k, output + (i + 1) * k);
     }
   }
@@ -70,7 +70,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
-    for (std::size_t i = 0; i < query.npts(); ++i) {
+    for (Index i = 0; i < static_cast<Index>(query.npts()); ++i) {
       Base::SearchAknn(query(i), e, output + i * k, output + (i + 1) * k);
     }
   }
@@ -94,7 +94,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
-    for (std::size_t i = 0; i < query.npts(); ++i) {
+    for (Index i = 0; i < static_cast<Index>(query.npts()); ++i) {
       Base::SearchRadius(query(i), radius, &nns_data[i], sort);
     }
   }
@@ -124,7 +124,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
-    for (std::size_t i = 0; i < query_min.npts(); ++i) {
+    for (Index i = 0; i < static_cast<Index>(query_min.npts()); ++i) {
       Base::SearchBox(query_min(i), query_max(i), &box_data[i]);
     }
   }
@@ -137,11 +137,11 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
     return box;
   }
 
-  inline Scalar const* const data() const { return points().data(); }
+  inline Scalar const* data() const { return points().data(); }
 
-  inline int sdim() const { return points().sdim(); }
+  inline int sdim() const { return static_cast<int>(points().sdim()); }
 
-  inline Index npts() const { return points().npts(); }
+  inline Index npts() const { return static_cast<Index>(points().npts()); }
 
   inline bool row_major() const { return points().row_major(); }
 
