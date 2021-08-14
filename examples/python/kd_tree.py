@@ -4,7 +4,7 @@ import pico_tree as pt
 import numpy as np
 from pathlib import Path
 from time import perf_counter
-from scipy.spatial import KDTree as spKDTree, cKDTree as spcKDTree
+from scipy.spatial import KDTree as spKDTree
 from sklearn.neighbors import KDTree as skKDTree
 
 
@@ -124,7 +124,6 @@ def performance_test_pico_tree():
     # Tree creation is only slightly slower in Python vs C++ using the bindings.
     t = pt.KdTree(p0, pt.Metric.L2Squared, 10)
     #t = spKDTree(p0, leafsize=10)
-    #t = spcKDTree(p0, leafsize=10)
     #t = skKDTree(p0, leaf_size=10)
     cnt_build_time_after = perf_counter()
     print(f"{t} was built in {(cnt_build_time_after - cnt_build_time_before) * 1000.0}ms")

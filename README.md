@@ -9,18 +9,16 @@ See the table below to get an impression of the performance provided by the [KdT
 |                                     | Build C++ | Build Python  | Knn C++    | Knn Python  |
 | ----------------------------------- | --------- | ------------- | ---------- | ----------- |
 | [nanoflann][nano] v1.3.2            | 1.5s      | ...           | 3.2s       | ...         |
-| [SciPy KDTree][sppk] v1.5.0         | ...       | 75.1s         | ...        | +inf        |
-| [SciPy cKDTree][spck] v1.5.0        | ...       | 5.0s          | ...        | 547.2s      |
-| [Scikit-learn KDTree][skck] 0.22.2  | ...       | 12.2s         | ...        | 44.5s       |
+| [SciPy KDTree][spkd] v1.6.3         | ...       | 5.0s          | ...        | 547.2s      |
+| [Scikit-learn KDTree][skkd] 0.22.2  | ...       | 12.2s         | ...        | 44.5s       |
 | [OpenCV FLANN][cvfn] 4.5.2          | 1.9s      | ...           | 4.7s       | ...         |
 | PicoTree KdTree v0.7.3              | 0.9s      | 1.1s          | 2.8s       | 3.3s        |
 
 It compares the performance of the build and query algorithms using two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863. The first is used to compare build times and both are used to compare query times. All benchmarks were generated with the following parameters: `max_leaf_size=10`, `knn=1` and `OMP_NUM_THREADS=1`. Note that a different C++ back-end was used for each of the `Knn C++` and `Knn Python` benchmarks. This means that they shouldn't be compared directly. See the [Python comparison](./examples/python/kd_tree.py) for more details. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
 [nano]: https://github.com/jlblancoc/nanoflann
-[sppk]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.html
-[spck]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.html
-[skck]: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KDTree.html
+[spkd]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.html
+[skkd]: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KDTree.html
 [cvfn]: https://github.com/opencv/opencv
 
 Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
