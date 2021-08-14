@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
 
 inline void FloatEq(double val1, double val2) { EXPECT_DOUBLE_EQ(val1, val2); }
