@@ -56,8 +56,10 @@ class SpaceMapBase {
 
 }  // namespace internal
 
+//! \brief The PointMap class provides an interface for accessing a raw pointer
+//! as a Point, allowing easy access to its coordinates.
 template <typename Scalar_, int Dim_>
-class PointMap final : public internal::PointMapBase<Scalar_, Dim_> {
+class PointMap : public internal::PointMapBase<Scalar_, Dim_> {
  public:
   using typename internal::PointMapBase<Scalar_, Dim_>::ScalarType;
   using internal::PointMapBase<Scalar_, Dim_>::Dim;
@@ -73,8 +75,10 @@ class PointMap final : public internal::PointMapBase<Scalar_, Dim_> {
   }
 };
 
+//! \brief The PointMap class provides an interface for accessing a raw pointer
+//! as a Point, allowing easy access to its coordinates.
 template <typename Scalar_>
-class PointMap<Scalar_, kDynamicDim> final
+class PointMap<Scalar_, kDynamicDim>
     : public internal::PointMapBase<Scalar_, kDynamicDim> {
  public:
   using typename internal::PointMapBase<Scalar_, kDynamicDim>::ScalarType;
@@ -89,8 +93,10 @@ class PointMap<Scalar_, kDynamicDim> final
   std::size_t sdim_;
 };
 
+//! \brief The SpaceMap class provides an interface for accessing a raw pointer
+//! as a Space, allowing easy access to its points via a PointMap interface.
 template <typename Scalar_, int Dim_>
-class SpaceMap final : public internal::SpaceMapBase<Scalar_, Dim_> {
+class SpaceMap : public internal::SpaceMapBase<Scalar_, Dim_> {
  public:
   using typename internal::SpaceMapBase<Scalar_, Dim_>::ScalarType;
   using internal::SpaceMapBase<Scalar_, Dim_>::Dim;
@@ -114,8 +120,10 @@ class SpaceMap final : public internal::SpaceMapBase<Scalar_, Dim_> {
   }
 };
 
+//! \brief The SpaceMap class provides an interface for accessing a raw pointer
+//! as a Space, allowing easy access to its points via a PointMap interface.
 template <typename Scalar_>
-class SpaceMap<Scalar_, kDynamicDim> final
+class SpaceMap<Scalar_, kDynamicDim>
     : public internal::SpaceMapBase<Scalar_, kDynamicDim> {
  public:
   using typename internal::SpaceMapBase<Scalar_, kDynamicDim>::ScalarType;
@@ -149,6 +157,40 @@ struct StdPointTraits<PointMap<Scalar_, Dim_>> {
 
   inline static int Sdim(PointMap<Scalar_, Dim_> const& point) {
     return static_cast<int>(point.sdim());
+  }
+};
+
+//! \brief MapTraits provides an interface for SpaceMap and points supported by
+//! StdPointTraits.
+//! \tparam Index_ Type used for indexing. Defaults to int.
+template <typename Scalar_, int Dim_, typename Index_ = int>
+struct MapTraits {
+  using SpaceType = SpaceMap<Scalar_, Dim_>;
+  using PointType = PointMap<Scalar_ const, Dim_>;
+  using ScalarType = Scalar_;
+  static constexpr int Dim = Dim_;
+  using IndexType = Index_;
+
+  inline static int SpaceSdim(SpaceType const& space) {
+    return static_cast<IndexType>(space.sdim());
+  }
+
+  inline static IndexType SpaceNpts(SpaceType const& space) {
+    return static_cast<IndexType>(space.npts());
+  }
+
+  inline static PointType PointAt(SpaceType const& space, IndexType const idx) {
+    return space(idx);
+  }
+
+  template <typename OtherPoint>
+  inline static int PointSdim(OtherPoint const& point) {
+    return StdPointTraits<OtherPoint>::Sdim(point);
+  }
+
+  template <typename OtherPoint>
+  inline static ScalarType const* PointCoords(OtherPoint const& point) {
+    return StdPointTraits<OtherPoint>::Coords(point);
   }
 };
 

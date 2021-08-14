@@ -11,31 +11,24 @@ namespace py = pybind11;
 
 namespace pyco_tree {
 
+//! \brief The Map class adds the row_major property to the pico_tree::SpaceMap
+//! class.
 template <typename Scalar_, int Dim_>
-class Map {
+class Map : public pico_tree::SpaceMap<Scalar_, Dim_> {
  public:
-  using ScalarType = Scalar_;
-  static int constexpr Dim = Dim_;
+  using typename pico_tree::SpaceMap<Scalar_, Dim_>::ScalarType;
+  using pico_tree::SpaceMap<Scalar_, Dim_>::Dim;
   // Fixed to be an int.
   using IndexType = int;
 
   inline Map(
       ScalarType* data, std::size_t npts, std::size_t sdim, bool row_major)
-      : space_(data, npts, sdim), row_major_(row_major) {}
+      : pico_tree::SpaceMap<Scalar_, Dim_>(data, npts, sdim),
+        row_major_(row_major) {}
 
-  inline pico_tree::PointMap<ScalarType const, Dim> operator()(
-      std::size_t i) const {
-    return space_(i);
-  }
-
-  inline ScalarType const* data() const { return space_.data(); }
-  inline ScalarType* data() { return space_.data(); }
-  inline std::size_t npts() const { return space_.npts(); }
-  inline std::size_t sdim() const { return space_.sdim(); }
   inline bool row_major() const { return row_major_; }
 
  private:
-  pico_tree::SpaceMap<ScalarType, Dim> space_;
   bool row_major_;
 };
 
@@ -66,34 +59,8 @@ Map<Scalar_, Dim_> MakeMap(py::array_t<Scalar_, 0> const pts) {
 }
 
 template <typename Scalar_, int Dim_, typename Index_>
-struct MapTraits {
+struct MapTraits : public pico_tree::MapTraits<Scalar_, Dim_, Index_> {
   using SpaceType = Map<Scalar_, Dim_>;
-  using PointType = pico_tree::PointMap<Scalar_ const, Dim_>;
-  using ScalarType = Scalar_;
-  static constexpr int Dim = Dim_;
-  using IndexType = Index_;
-
-  inline static int SpaceSdim(SpaceType const& space) {
-    return static_cast<IndexType>(space.sdim());
-  }
-
-  inline static IndexType SpaceNpts(SpaceType const& space) {
-    return static_cast<IndexType>(space.npts());
-  }
-
-  inline static PointType PointAt(SpaceType const& space, IndexType const idx) {
-    return space(idx);
-  }
-
-  template <typename OtherPoint>
-  inline static int PointSdim(OtherPoint const& point) {
-    return pico_tree::StdPointTraits<OtherPoint>::Sdim(point);
-  }
-
-  template <typename OtherPoint>
-  inline static ScalarType const* PointCoords(OtherPoint const& point) {
-    return pico_tree::StdPointTraits<OtherPoint>::Coords(point);
-  }
 };
 
 }  // namespace pyco_tree
