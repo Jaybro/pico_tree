@@ -131,7 +131,7 @@ class BoxBase {
 //! \details This specialization supports a compile time known spatial
 //! dimension.
 template <typename Scalar_, int Dim_>
-class Box final : public BoxBase<Box<Scalar_, Dim_>> {
+class Box : public BoxBase<Box<Scalar_, Dim_>> {
  public:
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
@@ -161,8 +161,7 @@ class Box final : public BoxBase<Box<Scalar_, Dim_>> {
 //! \brief An axis aligned box represented by a min and max coordinate.
 //! \details This specialization supports a run time known spatial dimension.
 template <typename Scalar_>
-class Box<Scalar_, kDynamicDim> final
-    : public BoxBase<Box<Scalar_, kDynamicDim>> {
+class Box<Scalar_, kDynamicDim> : public BoxBase<Box<Scalar_, kDynamicDim>> {
  public:
   using ScalarType = Scalar_;
   static int constexpr Dim = kDynamicDim;
@@ -190,7 +189,7 @@ class Box<Scalar_, kDynamicDim> final
 //! \details This specialization supports a compile time known spatial
 //! dimension.
 template <typename Scalar_, int Dim_>
-class BoxMap final : public BoxBase<BoxMap<Scalar_, Dim_>> {
+class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
  public:
   using ScalarType = Scalar_;
   static int constexpr Dim = Dim_;
@@ -219,7 +218,7 @@ class BoxMap final : public BoxBase<BoxMap<Scalar_, Dim_>> {
 //! raw pointers.
 //! \details This specialization supports a run time known spatial dimension.
 template <typename Scalar_>
-class BoxMap<Scalar_, kDynamicDim> final
+class BoxMap<Scalar_, kDynamicDim>
     : public BoxBase<BoxMap<Scalar_, kDynamicDim>> {
  public:
   using ScalarType = Scalar_;
