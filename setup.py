@@ -34,7 +34,7 @@ def compile_cmake_args():
 
 setup(name='pico_tree',
       # The same as the CMake project version.
-      version='0.7.3',
+      version='0.7.4',
       description='PicoTree Python Bindings',
       author='Jonathan Broere',
       url='https://github.com/Jaybro/pico_tree',
