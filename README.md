@@ -37,9 +37,9 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * `pico_tree::EigenTraits<>` supports interfacing with Eigen matrices.
   * `pico_tree::CvTraits<>` supports interfacing with OpenCV matrices.
 
-The examples show how PicoTree can be used:
+# Examples
 
-* Creating [custom](./examples/pico_toolshed/pico_toolshed/point.hpp) `pico_tree::StdPointTraits<>`.
+* [Minimal working example](./examples/kd_tree/kd_tree_point_traits.cpp) for building and querying a KdTree using a custom point type by implementing a `pico_tree::StdPointTraits<>`.
 * `pico_tree::StdTraits<>` can be used as an example to create a [custom](./src/pico_tree/pico_tree/std_traits.hpp) traits class.
 * Using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
