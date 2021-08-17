@@ -6,6 +6,7 @@
 //! \brief Contains various common utilities.
 
 #include <cmath>
+#include <functional>
 #include <vector>
 
 namespace pico_tree {
