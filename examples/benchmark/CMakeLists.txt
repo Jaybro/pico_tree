@@ -1,17 +1,10 @@
-function(add_benchmark BM_TARGET_NAME)
-    add_executable(${BM_TARGET_NAME})
-    target_sources(${BM_TARGET_NAME}
-        PRIVATE
-            ${CMAKE_CURRENT_LIST_DIR}/${BM_TARGET_NAME}.cpp
-    )
-    target_link_libraries(${BM_TARGET_NAME}
+function(add_benchmark TARGET_NAME)
+    add_executable(${TARGET_NAME} ${TARGET_NAME}.cpp)
+    set_default_target_properties(${TARGET_NAME})
+    target_link_libraries(${TARGET_NAME}
         PRIVATE
             pico_toolshed
             benchmark::benchmark
-    )
-    set_target_properties(${BM_TARGET_NAME}
-        PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
     )
 endfunction()
 
@@ -48,35 +41,21 @@ endif()
 # uosr_to_bin
 ################################################################################
 
-add_executable(uosr_to_bin)
-target_sources(uosr_to_bin
-    PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/uosr_to_bin.cpp
-)
+add_executable(uosr_to_bin uosr_to_bin.cpp)
+set_default_target_properties(uosr_to_bin)
 target_link_libraries(uosr_to_bin PRIVATE pico_toolshed)
 # This executable requires <filesystem>
 target_compile_features(uosr_to_bin PRIVATE cxx_std_17)
-set_target_properties(uosr_to_bin
-    PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
 
 ################################################################################
 # bin_to_ascii
 ################################################################################
 
-add_executable(bin_to_ascii)
-target_sources(bin_to_ascii
-    PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/bin_to_ascii.cpp
-)
+add_executable(bin_to_ascii bin_to_ascii.cpp)
+set_default_target_properties(bin_to_ascii)
 target_link_libraries(bin_to_ascii PRIVATE pico_toolshed)
 # This executable requires <filesystem>
 target_compile_features(bin_to_ascii PRIVATE cxx_std_17)
-set_target_properties(bin_to_ascii
-    PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
 
 ################################################################################
 # plot_benchmarks

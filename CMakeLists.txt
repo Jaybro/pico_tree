@@ -4,6 +4,8 @@
 # CMake version 3.9 provides OpenMP per language.
 cmake_minimum_required(VERSION 3.12)
 
+include (${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils.cmake)
+
 project(pico_tree
     LANGUAGES CXX
     VERSION 0.7.4
