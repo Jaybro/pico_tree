@@ -39,8 +39,8 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 # Examples
 
-* [Minimal working example](./examples/kd_tree/kd_tree_point_traits.cpp) for building and querying a KdTree using a custom point type by implementing a `pico_tree::StdPointTraits<>`.
-* `pico_tree::StdTraits<>` can be used as an example to create a [custom](./src/pico_tree/pico_tree/std_traits.hpp) traits class.
+* [Minimal working example](./examples/kd_tree/kd_tree_point_traits.cpp) for building and querying a KdTree using a custom point type.
+* Creating a [traits](./examples/kd_tree/kd_tree_traits.cpp) class for a custom type of point set.
 * Using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).
