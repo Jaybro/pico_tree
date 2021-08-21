@@ -19,7 +19,7 @@ struct Traits {
   static constexpr int Dim = static_cast<int>(Dim_);
 
   // Returns the amount of coordinates of each point.
-  inline static int SpaceSdim(SpaceType const& space) { return Dim; }
+  inline static int SpaceSdim(SpaceType const&) { return Dim; }
 
   // Returns number of points contained by the space.
   inline static IndexType SpaceNpts(SpaceType const& space) {
