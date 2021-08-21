@@ -41,7 +41,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 * [Minimal working example](./examples/kd_tree/kd_tree_point_traits.cpp) for building and querying a KdTree using a custom point type.
 * Creating a [traits](./examples/kd_tree/kd_tree_traits.cpp) class for a custom type of point set.
-* Using the [KdTree](./examples/kd_tree/kd_tree.cpp) and creating a custom search visitor.
+* Using the KdTree's [search](./examples/kd_tree/kd_tree_search.cpp) options and creating a custom search visitor.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).
 

@@ -2,47 +2,6 @@
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/kd_tree.hpp>
 
-// PicoTree provides default support for std::vector<PointType> as long as a
-// traits class for PointType is implemented. See include
-// <pico_toolshed/point.hpp> for an example of such traits.
-//
-// The KdTree can either fully own the vector or it can be taken by reference.
-void BasicVector() {
-  using PointX = Point2f;
-  using Index = int;
-  using Scalar = typename PointX::ScalarType;
-
-  Index max_leaf_size = 12;
-  Index point_count = 1024 * 1024;
-  Scalar area_size = 1000;
-
-  {
-    ScopedTimer t("build kd_tree val");
-
-    // This version of pico_tree::StdTraits can be used to either move or copy a
-    // vector of points into the tree. In this example it's moved.
-    pico_tree::KdTree<pico_tree::StdTraits<std::vector<PointX>>> tree(
-        GenerateRandomN<PointX>(point_count, area_size), max_leaf_size);
-
-    pico_tree::Neighbor<Index, Scalar> nn;
-    tree.SearchNn(tree.points()[0], &nn);
-  }
-
-  {
-    ScopedTimer t("build kd_tree ref");
-    auto random = GenerateRandomN<PointX>(point_count, area_size);
-
-    // To prevent a copy, use the pico_tree::StdTraits with an
-    // std::reference_wrapper.
-    pico_tree::KdTree<
-        pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>>
-        tree(random, max_leaf_size);
-
-    pico_tree::Neighbor<Index, Scalar> nn;
-    tree.SearchNn(random[0], &nn);
-  }
-}
-
 //! \brief Search visitor that counts how many points were considered as a
 //! nearest neighbor.
 template <typename Neighbor>
@@ -177,7 +136,6 @@ void SearchS1() {
 }
 
 int main() {
-  BasicVector();
   Search3d();
   SearchS1();
   return 0;

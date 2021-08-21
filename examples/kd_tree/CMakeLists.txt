@@ -2,6 +2,10 @@ add_executable(kd_tree_point_traits kd_tree_point_traits.cpp)
 set_default_target_properties(kd_tree_point_traits)
 target_link_libraries(kd_tree_point_traits PUBLIC PicoTree::PicoTree)
 
-add_executable(kd_tree kd_tree.cpp)
-set_default_target_properties(kd_tree)
-target_link_libraries(kd_tree PUBLIC pico_toolshed)
+add_executable(kd_tree_traits kd_tree_traits.cpp)
+set_default_target_properties(kd_tree_traits)
+target_link_libraries(kd_tree_traits PUBLIC PicoTree::PicoTree)
+
+add_executable(kd_tree_search kd_tree_search.cpp)
+set_default_target_properties(kd_tree_search)
+target_link_libraries(kd_tree_search PUBLIC pico_toolshed)
