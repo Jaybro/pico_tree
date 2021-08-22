@@ -6,6 +6,7 @@ from pathlib import Path
 from time import perf_counter
 from scipy.spatial import KDTree as spKDTree
 from sklearn.neighbors import KDTree as skKDTree
+from pykdtree.kdtree import KDTree as pyKDTree
 
 
 def tree_creation_and_query_types():
@@ -125,6 +126,7 @@ def performance_test_pico_tree():
     t = pt.KdTree(p0, pt.Metric.L2Squared, 10)
     #t = spKDTree(p0, leafsize=10)
     #t = skKDTree(p0, leaf_size=10)
+    #t = pyKDTree(p0, leafsize=10)
     cnt_build_time_after = perf_counter()
     print(f"{t} was built in {(cnt_build_time_after - cnt_build_time_before) * 1000.0}ms")
     # Use the OMP_NUM_THREADS environment variable to influence the number of

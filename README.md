@@ -11,6 +11,7 @@ See the table below to get an impression of the performance provided by the [KdT
 | [nanoflann][nano] v1.3.2            | 1.5s      | ...           | 3.2s       | ...         |
 | [SciPy KDTree][spkd] v1.6.3         | ...       | 5.0s          | ...        | 547.2s      |
 | [Scikit-learn KDTree][skkd] 0.22.2  | ...       | 12.2s         | ...        | 44.5s       |
+| [pykdtree][pykd] 1.3.4              | ...       | 1.0s          | ...        | 6.6s        |
 | [OpenCV FLANN][cvfn] 4.5.2          | 1.9s      | ...           | 4.7s       | ...         |
 | PicoTree KdTree v0.7.4              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
 
@@ -19,6 +20,7 @@ It compares the performance of the build and query algorithms using two [LiDAR](
 [nano]: https://github.com/jlblancoc/nanoflann
 [spkd]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.html
 [skkd]: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KDTree.html
+[pykd]: https://github.com/storpipfugl/pykdtree
 [cvfn]: https://github.com/opencv/opencv
 
 Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
