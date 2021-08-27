@@ -21,6 +21,7 @@ template <typename Derived>
 class BoxBase {
  public:
   using ScalarType = typename BoxTraits<Derived>::ScalarType;
+  using SizeType = std::size_t;
   static constexpr int Dim = BoxTraits<Derived>::Dim;
 
   //! \brief Returns true if \p x is contained. A point on the edge considered
@@ -28,7 +29,7 @@ class BoxBase {
   inline bool Contains(ScalarType const* x) const {
     // We use derived().size() which includes the constexpr part. Otherwise a
     // small trait needs to be written.
-    for (std::size_t i = 0; i < derived().size(); ++i) {
+    for (SizeType i = 0; i < derived().size(); ++i) {
       if (min(i) > x[i] || max(i) < x[i]) {
         return false;
       }
@@ -49,7 +50,7 @@ class BoxBase {
   //! and minimum possible values for integers or floating points. This is
   //! useful for growing a bounding box in combination with the Update function.
   inline void FillInverseMax() {
-    for (std::size_t i = 0; i < derived().size(); ++i) {
+    for (SizeType i = 0; i < derived().size(); ++i) {
       min(i) = std::numeric_limits<ScalarType>::max();
       max(i) = std::numeric_limits<ScalarType>::lowest();
     }
@@ -59,10 +60,10 @@ class BoxBase {
   //! \param p_max_index Output parameter for the index of the longest axis.
   //! \param p_max_value Output parameter for the range of the longest axis.
   inline void LongestAxis(
-      std::size_t* p_max_index, ScalarType* p_max_value) const {
+      SizeType* p_max_index, ScalarType* p_max_value) const {
     *p_max_value = std::numeric_limits<ScalarType>::lowest();
 
-    for (std::size_t i = 0; i < derived().size(); ++i) {
+    for (SizeType i = 0; i < derived().size(); ++i) {
       ScalarType const delta = max(i) - min(i);
       if (delta > *p_max_value) {
         *p_max_index = i;
@@ -74,7 +75,7 @@ class BoxBase {
   //! \brief Updates the min and/or max vectors of this box so that it can fit
   //! input point \p x.
   inline void Fit(ScalarType const* x) {
-    for (std::size_t i = 0; i < derived().size(); ++i) {
+    for (SizeType i = 0; i < derived().size(); ++i) {
       if (x[i] < min(i)) {
         min(i) = x[i];
       }
@@ -88,7 +89,7 @@ class BoxBase {
   //! input box \p x.
   template <typename OtherDerived>
   inline void Fit(BoxBase<OtherDerived> const& x) {
-    for (std::size_t i = 0; i < derived().size(); ++i) {
+    for (SizeType i = 0; i < derived().size(); ++i) {
       if (x.min(i) < min(i)) {
         min(i) = x.min(i);
       }
@@ -110,15 +111,15 @@ class BoxBase {
   inline ScalarType* min() noexcept { return derived().min(); }
   inline ScalarType const* max() const noexcept { return derived().max(); }
   inline ScalarType* max() noexcept { return derived().max(); }
-  inline ScalarType const& min(std::size_t i) const noexcept {
+  inline ScalarType const& min(SizeType i) const noexcept {
     return derived().min(i);
   }
-  inline ScalarType& min(std::size_t i) noexcept { return derived().min(i); }
-  inline ScalarType const& max(std::size_t i) const noexcept {
+  inline ScalarType& min(SizeType i) noexcept { return derived().min(i); }
+  inline ScalarType const& max(SizeType i) const noexcept {
     return derived().max(i);
   }
-  inline ScalarType& max(std::size_t i) noexcept { return derived().max(i); }
-  inline std::size_t size() const noexcept { return derived().size(); }
+  inline ScalarType& max(SizeType i) noexcept { return derived().max(i); }
+  inline SizeType size() const noexcept { return derived().size(); }
 
  protected:
   //! \private
@@ -134,19 +135,20 @@ template <typename Scalar_, int Dim_>
 class Box : public BoxBase<Box<Scalar_, Dim_>> {
  public:
   using ScalarType = Scalar_;
+  using typename BoxBase<Box<Scalar_, Dim_>>::SizeType;
   static int constexpr Dim = Dim_;
 
-  inline explicit Box(std::size_t) {}
+  inline explicit Box(SizeType) {}
 
   inline ScalarType const* min() const noexcept { return min_.data(); }
   inline ScalarType* min() noexcept { return min_.data(); }
   inline ScalarType const* max() const noexcept { return max_.data(); }
   inline ScalarType* max() noexcept { return max_.data(); }
-  inline ScalarType const& min(std::size_t i) const { return min_[i]; }
-  inline ScalarType& min(std::size_t i) { return min_[i]; }
-  inline ScalarType const& max(std::size_t i) const { return max_[i]; }
-  inline ScalarType& max(std::size_t i) { return max_[i]; }
-  inline std::size_t constexpr size() const noexcept { return min_.size(); }
+  inline ScalarType const& min(SizeType i) const { return min_[i]; }
+  inline ScalarType& min(SizeType i) { return min_[i]; }
+  inline ScalarType const& max(SizeType i) const { return max_[i]; }
+  inline ScalarType& max(SizeType i) { return max_[i]; }
+  inline SizeType constexpr size() const noexcept { return min_.size(); }
 
  private:
   //! \brief Minimum box coordinate.
@@ -164,24 +166,25 @@ template <typename Scalar_>
 class Box<Scalar_, kDynamicDim> : public BoxBase<Box<Scalar_, kDynamicDim>> {
  public:
   using ScalarType = Scalar_;
+  using typename BoxBase<Box<Scalar_, kDynamicDim>>::SizeType;
   static int constexpr Dim = kDynamicDim;
 
-  inline explicit Box(std::size_t size) : min_(size * 2), size_(size) {}
+  inline explicit Box(SizeType size) : min_(size * 2), size_(size) {}
 
   inline ScalarType const* min() const noexcept { return min_.data(); }
   inline ScalarType* min() noexcept { return min_.data(); }
   inline ScalarType const* max() const noexcept { return min_.data() + size_; }
   inline ScalarType* max() noexcept { return min_.data() + size_; }
-  inline ScalarType const& min(std::size_t i) const { return min_[i]; }
-  inline ScalarType& min(std::size_t i) { return min_[i]; }
-  inline ScalarType const& max(std::size_t i) const { return min_[i + size_]; }
-  inline ScalarType& max(std::size_t i) { return min_[i + size_]; }
-  inline std::size_t size() const noexcept { return size_; }
+  inline ScalarType const& min(SizeType i) const { return min_[i]; }
+  inline ScalarType& min(SizeType i) { return min_[i]; }
+  inline ScalarType const& max(SizeType i) const { return min_[i + size_]; }
+  inline ScalarType& max(SizeType i) { return min_[i + size_]; }
+  inline SizeType size() const noexcept { return size_; }
 
  private:
   //! \brief Minimum and maximum box coordinates aligned in memory.
   std::vector<ScalarType> min_;
-  std::size_t size_;
+  SizeType size_;
 };
 
 //! \brief An axis aligned box represented by a min and max coordinate. It maps
@@ -192,21 +195,22 @@ template <typename Scalar_, int Dim_>
 class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
  public:
   using ScalarType = Scalar_;
+  using typename BoxBase<BoxMap<Scalar_, Dim_>>::SizeType;
   static int constexpr Dim = Dim_;
 
-  inline BoxMap(ScalarType* min, ScalarType* max, std::size_t)
+  inline BoxMap(ScalarType* min, ScalarType* max, SizeType)
       : min_(min), max_(max) {}
 
   inline ScalarType const* min() const noexcept { return min_; }
   inline ScalarType* min() noexcept { return min_; }
   inline ScalarType const* max() const noexcept { return max_; }
   inline ScalarType* max() noexcept { return max_; }
-  inline ScalarType const& min(std::size_t i) const { return min_[i]; }
-  inline ScalarType& min(std::size_t i) { return min_[i]; }
-  inline ScalarType const& max(std::size_t i) const { return max_[i]; }
-  inline ScalarType& max(std::size_t i) { return max_[i]; }
-  inline std::size_t constexpr size() const noexcept {
-    return static_cast<std::size_t>(Dim_);
+  inline ScalarType const& min(SizeType i) const { return min_[i]; }
+  inline ScalarType& min(SizeType i) { return min_[i]; }
+  inline ScalarType const& max(SizeType i) const { return max_[i]; }
+  inline ScalarType& max(SizeType i) { return max_[i]; }
+  inline SizeType constexpr size() const noexcept {
+    return static_cast<SizeType>(Dim_);
   }
 
  private:
@@ -222,25 +226,26 @@ class BoxMap<Scalar_, kDynamicDim>
     : public BoxBase<BoxMap<Scalar_, kDynamicDim>> {
  public:
   using ScalarType = Scalar_;
+  using typename BoxBase<BoxMap<Scalar_, kDynamicDim>>::SizeType;
   static int constexpr Dim = kDynamicDim;
 
-  inline BoxMap(ScalarType* min, ScalarType* max, std::size_t size)
+  inline BoxMap(ScalarType* min, ScalarType* max, SizeType size)
       : min_(min), max_(max), size_(size) {}
 
   inline ScalarType const* min() const noexcept { return min_; }
   inline ScalarType* min() noexcept { return min_; }
   inline ScalarType const* max() const noexcept { return max_; }
   inline ScalarType* max() noexcept { return max_; }
-  inline ScalarType const& min(std::size_t i) const { return min_[i]; }
-  inline ScalarType& min(std::size_t i) { return min_[i]; }
-  inline ScalarType const& max(std::size_t i) const { return max_[i]; }
-  inline ScalarType& max(std::size_t i) { return max_[i]; }
-  inline std::size_t size() const noexcept { return size_; }
+  inline ScalarType const& min(SizeType i) const { return min_[i]; }
+  inline ScalarType& min(SizeType i) { return min_[i]; }
+  inline ScalarType const& max(SizeType i) const { return max_[i]; }
+  inline ScalarType& max(SizeType i) { return max_[i]; }
+  inline SizeType size() const noexcept { return size_; }
 
  private:
   ScalarType* min_;
   ScalarType* max_;
-  std::size_t size_;
+  SizeType size_;
 };
 
 template <typename Scalar_, int Dim_>

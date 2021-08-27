@@ -13,35 +13,34 @@ namespace internal {
 //! \details The non-specialized Sequence class knows its dimension at
 //! compile-time and uses an std::array for storing its data. Faster than using
 //! the std::vector in practice.
-template <typename Scalar, int Dim_>
+template <typename Scalar_, int Dim_>
 class Sequence {
  private:
   static_assert(Dim_ >= 0, "SEQUENCE_DIM_MUST_BE_DYNAMIC_OR_>=_0");
 
  public:
-  inline explicit Sequence(std::size_t const) {}
+  using ScalarType = Scalar_;
+  using SizeType = std::size_t;
+
+  inline explicit Sequence(SizeType) {}
 
   //! \brief Access data contained in the Sequence.
-  inline Scalar& operator[](std::size_t const i) noexcept {
-    return sequence_[i];
-  }
+  inline ScalarType& operator[](SizeType i) noexcept { return sequence_[i]; }
 
   //! \brief Access data contained in the Sequence.
-  inline Scalar const& operator[](std::size_t const i) const noexcept {
+  inline ScalarType const& operator[](SizeType i) const noexcept {
     return sequence_[i];
   }
 
   //! \brief Fills the sequence with value \p v.
-  inline void Fill(Scalar const v) { sequence_.fill(v); }
+  inline void Fill(ScalarType v) { sequence_.fill(v); }
 
   //! \brief Returns the size of the sequence.
-  inline constexpr std::size_t size() const noexcept {
-    return sequence_.size();
-  }
+  inline constexpr SizeType size() const noexcept { return sequence_.size(); }
 
  private:
   //! \brief Storage.
-  std::array<Scalar, Dim_> sequence_;
+  std::array<ScalarType, Dim_> sequence_;
 };
 
 //! \brief A sequence stores a contiguous array of elements similar to
@@ -49,32 +48,31 @@ class Sequence {
 //! \details The specialized Sequence class doesn't knows its dimension at
 //! compile-time and uses an std::vector for storing its data so it can be
 //! resized.
-template <typename Scalar>
-class Sequence<Scalar, kDynamicDim> {
+template <typename Scalar_>
+class Sequence<Scalar_, kDynamicDim> {
  public:
-  inline explicit Sequence(std::size_t const size) : sequence_(size) {}
+  using ScalarType = Scalar_;
+  using SizeType = std::size_t;
+
+  inline explicit Sequence(SizeType size) : sequence_(size) {}
 
   //! \brief Access data contained in the Sequence.
-  inline Scalar& operator[](std::size_t const i) noexcept {
-    return sequence_[i];
-  }
+  inline ScalarType& operator[](SizeType i) noexcept { return sequence_[i]; }
 
   //! \brief Access data contained in the Sequence.
-  inline Scalar const& operator[](std::size_t const i) const noexcept {
+  inline ScalarType const& operator[](SizeType i) const noexcept {
     return sequence_[i];
   }
 
   //! \brief Fills the sequence with value \p v.
-  inline void Fill(Scalar const v) { sequence_.assign(sequence_.size(), v); }
+  inline void Fill(ScalarType v) { sequence_.assign(sequence_.size(), v); }
 
   //! \brief Returns the size of the sequence.
-  inline constexpr std::size_t size() const noexcept {
-    return sequence_.size();
-  }
+  inline constexpr SizeType size() const noexcept { return sequence_.size(); }
 
  private:
   //! \brief Storage.
-  std::vector<Scalar> sequence_;
+  std::vector<ScalarType> sequence_;
 };
 
 }  // namespace internal
