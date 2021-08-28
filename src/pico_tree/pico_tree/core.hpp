@@ -19,17 +19,18 @@ static constexpr int kDynamicDim = -1;
 
 //! \brief A Neighbor is a point reference with a corresponding distance to
 //! another point.
-template <typename Index, typename Scalar>
+template <typename Index_, typename Scalar_>
 struct Neighbor {
-  static_assert(std::is_integral<Index>::value, "INDEX_NOT_AN_INTEGRAL_TYPE");
+  static_assert(std::is_integral<Index_>::value, "INDEX_NOT_AN_INTEGRAL_TYPE");
   static_assert(
-      std::is_integral<Scalar>::value || std::is_floating_point<Scalar>::value,
+      std::is_integral<Scalar_>::value ||
+          std::is_floating_point<Scalar_>::value,
       "SCALAR_NOT_AN_INTEGRAL_OR_FLOATING_POINT_TYPE");
 
   //! \brief Index type.
-  using IndexType = Index;
+  using IndexType = Index_;
   //! \brief Distance type.
-  using ScalarType = Scalar;
+  using ScalarType = Scalar_;
 
   //! \brief Default constructor.
   //! \details Declaring a custom constructor removes the default one. With
@@ -37,20 +38,20 @@ struct Neighbor {
   //! type.
   inline constexpr Neighbor() = default;
   //! \brief Constructs a Neighbor given an index and distance.
-  inline constexpr Neighbor(Index idx, Scalar dst) noexcept
+  inline constexpr Neighbor(IndexType idx, ScalarType dst) noexcept
       : index(idx), distance(dst) {}
 
   //! \brief Point index of the Neighbor.
-  Index index;
+  IndexType index;
   //! \brief Distance of the Neighbor with respect to another point.
-  Scalar distance;
+  ScalarType distance;
 };
 
 //! \brief Compares neighbors by distance.
-template <typename Index, typename Scalar>
+template <typename Index_, typename Scalar_>
 inline constexpr bool operator<(
-    Neighbor<Index, Scalar> const& lhs,
-    Neighbor<Index, Scalar> const& rhs) noexcept {
+    Neighbor<Index_, Scalar_> const& lhs,
+    Neighbor<Index_, Scalar_> const& rhs) noexcept {
   return lhs.distance < rhs.distance;
 }
 
@@ -67,14 +68,14 @@ namespace internal {
 //! This algorithm is used as the inner loop of insertion sort:
 //! * https://en.wikipedia.org/wiki/Insertion_sort
 template <
-    typename RandomAccessIterator,
-    typename Compare = std::less<
-        typename std::iterator_traits<RandomAccessIterator>::value_type>>
+    typename RandomAccessIterator_,
+    typename Compare_ = std::less<
+        typename std::iterator_traits<RandomAccessIterator_>::value_type>>
 inline void InsertSorted(
-    RandomAccessIterator begin,
-    RandomAccessIterator end,
-    typename std::iterator_traits<RandomAccessIterator>::value_type item,
-    Compare comp = Compare()) {
+    RandomAccessIterator_ begin,
+    RandomAccessIterator_ end,
+    typename std::iterator_traits<RandomAccessIterator_>::value_type item,
+    Compare_ comp = Compare_()) {
   std::advance(end, -1);
   for (; end > begin && comp(item, *std::prev(end)); --end) {
     *end = std::move(*std::prev(end));
@@ -87,10 +88,10 @@ inline void InsertSorted(
 }
 
 //! \brief Compile time dimension count handling.
-template <typename Traits, int Dim_ = Traits::Dim>
+template <typename Traits_, int Dim_ = Traits_::Dim>
 struct Dimension {
   //! \brief Returns the compile time dimension of a space.
-  inline static constexpr int Dim(typename Traits::SpaceType const&) {
+  inline static constexpr int Dim(typename Traits_::SpaceType const&) {
     return Dim_;
   }
 
@@ -102,17 +103,17 @@ struct Dimension {
 };
 
 //! \brief Run time dimension count handling.
-template <typename Traits>
-struct Dimension<Traits, pico_tree::kDynamicDim> {
+template <typename Traits_>
+struct Dimension<Traits_, pico_tree::kDynamicDim> {
   //! \brief Returns the run time dimension of a space.
-  inline static int Dim(typename Traits::SpaceType const& space) {
-    return Traits::SpaceSdim(space);
+  inline static int Dim(typename Traits_::SpaceType const& space) {
+    return Traits_::SpaceSdim(space);
   }
 
   //! \brief Returns the run time dimension of a point.
   template <typename P>
   inline static int Dim(P const& point) {
-    return Traits::PointSdim(point);
+    return Traits_::PointSdim(point);
   }
 };
 

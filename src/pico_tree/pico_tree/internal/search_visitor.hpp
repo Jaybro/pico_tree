@@ -9,28 +9,28 @@ namespace pico_tree {
 namespace internal {
 
 //! \brief KdTree search visitor for finding a single nearest neighbor.
-template <typename Neighbor>
+template <typename Neighbor_>
 class SearchNn {
- private:
-  using Index = typename Neighbor::IndexType;
-  using Scalar = typename Neighbor::ScalarType;
-
  public:
+  using NeighborType = Neighbor_;
+  using IndexType = typename Neighbor_::IndexType;
+  using ScalarType = typename Neighbor_::ScalarType;
+
   //! \private
-  inline SearchNn(Neighbor* nn) : nn_{*nn} {
-    nn_.distance = std::numeric_limits<Scalar>::max();
+  inline SearchNn(NeighborType* nn) : nn_{*nn} {
+    nn_.distance = std::numeric_limits<ScalarType>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const dst) const {
+  inline void operator()(IndexType const idx, ScalarType const dst) const {
     nn_ = {idx, dst};
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar max() const { return nn_.distance; }
+  inline ScalarType max() const { return nn_.distance; }
 
  private:
-  Neighbor& nn_;
+  NeighborType& nn_;
 };
 
 //! \brief KdTree search visitor for finding k nearest neighbors using an
@@ -48,64 +48,64 @@ class SearchNn {
 //!  sorted sequence. Unsorted it does come close to the insertion sort.
 //!  * Binary heap plus a heap sort seemed a lot faster than the Leonardo heap
 //!  with smooth sort.
-template <typename RandomAccessIterator>
+template <typename RandomAccessIterator_>
 class SearchKnn {
- private:
+ public:
   static_assert(
       std::is_same<
           typename std::iterator_traits<
-              RandomAccessIterator>::iterator_category,
+              RandomAccessIterator_>::iterator_category,
           std::random_access_iterator_tag>::value,
       "SEARCH_KNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
-  using Neighbor =
-      typename std::iterator_traits<RandomAccessIterator>::value_type;
-  using Index = typename Neighbor::IndexType;
-  using Scalar = typename Neighbor::ScalarType;
+  using NeighborType =
+      typename std::iterator_traits<RandomAccessIterator_>::value_type;
+  using IndexType = typename NeighborType::IndexType;
+  using ScalarType = typename NeighborType::ScalarType;
 
- public:
   //! \private
-  inline SearchKnn(RandomAccessIterator begin, RandomAccessIterator end)
+  inline SearchKnn(RandomAccessIterator_ begin, RandomAccessIterator_ end)
       : begin_{begin}, end_{end}, active_end_{begin} {
     // Initial search distance that gets updated once k neighbors have been
     // found.
-    std::prev(end_)->distance = std::numeric_limits<Scalar>::max();
+    std::prev(end_)->distance = std::numeric_limits<ScalarType>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const dst) {
+  inline void operator()(IndexType const idx, ScalarType const dst) {
     if (active_end_ < end_) {
       ++active_end_;
     }
 
-    InsertSorted(begin_, active_end_, Neighbor{idx, dst});
+    InsertSorted(begin_, active_end_, NeighborType{idx, dst});
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar max() const { return std::prev(end_)->distance; }
+  inline ScalarType max() const { return std::prev(end_)->distance; }
 
  private:
-  RandomAccessIterator begin_;
-  RandomAccessIterator end_;
-  RandomAccessIterator active_end_;
+  RandomAccessIterator_ begin_;
+  RandomAccessIterator_ end_;
+  RandomAccessIterator_ active_end_;
 };
 
 //! \brief KdTree search visitor for finding all neighbors within a radius.
-template <typename Neighbor>
+template <typename Neighbor_>
 class SearchRadius {
  private:
-  using Index = typename Neighbor::IndexType;
-  using Scalar = typename Neighbor::ScalarType;
+  using NeighborType = Neighbor_;
+  using IndexType = typename Neighbor_::IndexType;
+  using ScalarType = typename Neighbor_::ScalarType;
 
  public:
   //! \private
-  inline SearchRadius(Scalar const radius, std::vector<Neighbor>* n)
+  inline SearchRadius(ScalarType const radius, std::vector<NeighborType>* n)
       : radius_{radius}, n_{*n} {
     n_.clear();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const dst) const {
+  inline void operator()(IndexType const idx, ScalarType const dst) const {
     n_.push_back({idx, dst});
   }
 
@@ -114,11 +114,11 @@ class SearchRadius {
   inline void Sort() const { std::sort(n_.begin(), n_.end()); }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar max() const { return radius_; }
+  inline ScalarType max() const { return radius_; }
 
  private:
-  Scalar const radius_;
-  std::vector<Neighbor>& n_;
+  ScalarType const radius_;
+  std::vector<NeighborType>& n_;
 };
 
 //! \brief Search visitor for finding approximate nearest neighbors.
@@ -134,50 +134,51 @@ class SearchRadius {
 //! inside a leaf, not all of them are visited. This saves on scaling and heap
 //! updates.
 //! \see SearchKnn
-template <typename RandomAccessIterator>
+template <typename RandomAccessIterator_>
 class SearchAknn {
- private:
+ public:
   static_assert(
       std::is_same<
           typename std::iterator_traits<
-              RandomAccessIterator>::iterator_category,
+              RandomAccessIterator_>::iterator_category,
           std::random_access_iterator_tag>::value,
       "SEARCH_AKNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
-  using Neighbor =
-      typename std::iterator_traits<RandomAccessIterator>::value_type;
-  using Index = typename Neighbor::IndexType;
-  using Scalar = typename Neighbor::ScalarType;
+  using NeighborType =
+      typename std::iterator_traits<RandomAccessIterator_>::value_type;
+  using IndexType = typename NeighborType::IndexType;
+  using ScalarType = typename NeighborType::ScalarType;
 
- public:
   //! \private
   inline SearchAknn(
-      Scalar const e, RandomAccessIterator begin, RandomAccessIterator end)
-      : re_{Scalar(1.0) / e}, begin_{begin}, end_{end}, active_end_{begin} {
+      ScalarType const e,
+      RandomAccessIterator_ begin,
+      RandomAccessIterator_ end)
+      : re_{ScalarType(1.0) / e}, begin_{begin}, end_{end}, active_end_{begin} {
     // Initial search distance that gets updated once k neighbors have been
     // found.
-    std::prev(end_)->distance = std::numeric_limits<Scalar>::max();
+    std::prev(end_)->distance = std::numeric_limits<ScalarType>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(Index const idx, Scalar const dst) {
+  inline void operator()(IndexType const idx, ScalarType const dst) {
     if (active_end_ < end_) {
       ++active_end_;
     }
 
     // Replace the current maximum for which the distance is scaled to be:
     // d = d / e.
-    InsertSorted(begin_, active_end_, Neighbor{idx, dst * re_});
+    InsertSorted(begin_, active_end_, NeighborType{idx, dst * re_});
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline Scalar max() const { return std::prev(end_)->distance; }
+  inline ScalarType max() const { return std::prev(end_)->distance; }
 
  private:
-  Scalar re_;
-  RandomAccessIterator begin_;
-  RandomAccessIterator end_;
-  RandomAccessIterator active_end_;
+  ScalarType re_;
+  RandomAccessIterator_ begin_;
+  RandomAccessIterator_ end_;
+  RandomAccessIterator_ active_end_;
 };
 
 }  // namespace internal

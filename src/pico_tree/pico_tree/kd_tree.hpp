@@ -30,41 +30,41 @@ struct KdTreeNodeBase {
 };
 
 //! \brief Tree leaf.
-template <typename Index>
+template <typename Index_>
 struct KdTreeLeaf {
   //! \private
-  Index begin_idx;
+  Index_ begin_idx;
   //! \private
-  Index end_idx;
+  Index_ end_idx;
 };
 
 //! \brief Tree branch.
-template <typename Scalar>
+template <typename Scalar_>
 struct KdTreeBranchSplit {
   //! \brief Split coordinate / index of the KdTree spatial dimension.
   int split_dim;
   //! \brief Maximum coordinate value of the left node box for split_dim.
-  Scalar left_max;
+  Scalar_ left_max;
   //! \brief Minimum coordinate value of the right node box for split_dim.
-  Scalar right_min;
+  Scalar_ right_min;
 };
 
 //! \brief Tree branch.
 //! \details This branch version allows identifications (wrapping around) by
 //! storing the boundaries of the box that corresponds to the current node. The
 //! split value allows arbitrary splitting techniques.
-template <typename Scalar>
+template <typename Scalar_>
 struct KdTreeBranchRange {
   //! \brief Split coordinate / index of the KdTree spatial dimension.
   int split_dim;
   //! \brief Minimum coordinate value of the left node box for split_dim.
-  Scalar left_min;
+  Scalar_ left_min;
   //! \brief Maximum coordinate value of the left node box for split_dim.
-  Scalar left_max;
+  Scalar_ left_max;
   //! \brief Minimum coordinate value of the right node box for split_dim.
-  Scalar right_min;
+  Scalar_ right_min;
   //! \brief Maximum coordinate value of the right node box for split_dim.
-  Scalar right_max;
+  Scalar_ right_max;
 };
 
 //! \brief NodeData is used to either store branch or leaf information. Which
@@ -78,64 +78,64 @@ union KdTreeNodeData {
 };
 
 //! \brief KdTree node for a Euclidean space.
-template <typename Index, typename Scalar>
+template <typename Index_, typename Scalar_>
 struct KdTreeNodeEuclidean
-    : public KdTreeNodeBase<KdTreeNodeEuclidean<Index, Scalar>> {
+    : public KdTreeNodeBase<KdTreeNodeEuclidean<Index_, Scalar_>> {
   //! \brief Node data as a union of a leaf and branch.
-  KdTreeNodeData<KdTreeLeaf<Index>, KdTreeBranchSplit<Scalar>> data;
+  KdTreeNodeData<KdTreeLeaf<Index_>, KdTreeBranchSplit<Scalar_>> data;
 };
 
 //! \brief KdTree node for a topological space.
-template <typename Index, typename Scalar>
+template <typename Index_, typename Scalar_>
 struct KdTreeNodeTopological
-    : public KdTreeNodeBase<KdTreeNodeTopological<Index, Scalar>> {
+    : public KdTreeNodeBase<KdTreeNodeTopological<Index_, Scalar_>> {
   //! \brief Node data as a union of a leaf and branch.
-  KdTreeNodeData<KdTreeLeaf<Index>, KdTreeBranchRange<Scalar>> data;
+  KdTreeNodeData<KdTreeLeaf<Index_>, KdTreeBranchRange<Scalar_>> data;
 };
 
-//! \brief KdTree meta information depending on the SpaceTag template argument.
-template <typename SpaceTag>
+//! \brief KdTree meta information depending on the SpaceTag_ template argument.
+template <typename SpaceTag_>
 struct KdTreeSpaceTagTraits;
 
 //! \brief KdTree meta information for the EuclideanSpaceTag.
 template <>
 struct KdTreeSpaceTagTraits<EuclideanSpaceTag> {
   //! \brief Supported node type.
-  template <typename Index, typename Scalar>
-  using Node = KdTreeNodeEuclidean<Index, Scalar>;
+  template <typename Index_, typename Scalar_>
+  using NodeType = KdTreeNodeEuclidean<Index_, Scalar_>;
 };
 
 //! \brief KdTree meta information for the TopologicalSpaceTag.
 template <>
 struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
   //! \brief Supported node type.
-  template <typename Index, typename Scalar>
-  using Node = KdTreeNodeTopological<Index, Scalar>;
+  template <typename Index_, typename Scalar_>
+  using NodeType = KdTreeNodeTopological<Index_, Scalar_>;
 };
 
 //! \brief This class provides the build algorithm of the KdTree. How the KdTree
 //! is build depends on the Splitter template argument.
-template <typename Traits, typename SpaceTag, typename Splitter, int Dim_>
+template <typename Traits_, typename SpaceTag_, typename Splitter_, int Dim_>
 class KdTreeBuilder {
-  using Index = typename Traits::IndexType;
-  using Scalar = typename Traits::ScalarType;
-  using Space = typename Traits::SpaceType;
-  using BoxType = Box<Scalar, Dim_>;
-
  public:
-  //! \brief Node type supported by KdTreeBuilder based on SpaceTag.
-  using Node =
-      typename KdTreeSpaceTagTraits<SpaceTag>::template Node<Index, Scalar>;
-  //! \brief Memory buffer type supported by KdTreeBuilder based on SpaceTag.
-  using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
+  using IndexType = typename Traits_::IndexType;
+  using ScalarType = typename Traits_::ScalarType;
+  using SpaceType = typename Traits_::SpaceType;
+  using BoxType = Box<ScalarType, Dim_>;
+  //! \brief Node type supported by KdTreeBuilder based on SpaceTag_.
+  using NodeType = typename KdTreeSpaceTagTraits<
+      SpaceTag_>::template NodeType<IndexType, ScalarType>;
+  using SplitterType = Splitter_;
+  //! \brief Memory buffer type supported by KdTreeBuilder based on SpaceTag_.
+  using BufferType = typename Splitter_::template BufferType<NodeType>;
 
   //! \brief Constructs a KdTreeBuilder.
   inline KdTreeBuilder(
-      Space const& space,
-      std::vector<Index> const& indices,
-      Index const max_leaf_size,
-      Splitter const& splitter,
-      MemoryBuffer* nodes)
+      SpaceType const& space,
+      std::vector<IndexType> const& indices,
+      IndexType const max_leaf_size,
+      SplitterType const& splitter,
+      BufferType* nodes)
       : space_(space),
         indices_(indices),
         max_leaf_size_{max_leaf_size},
@@ -143,9 +143,9 @@ class KdTreeBuilder {
         nodes_{*nodes} {}
 
   //! \brief Creates the full set of nodes for a KdTree.
-  inline Node* operator()(BoxType const& root_box) const {
+  inline NodeType* operator()(BoxType const& root_box) const {
     BoxType box(root_box);
-    return SplitIndices(0, 0, Traits::SpaceNpts(space_), &box);
+    return SplitIndices(0, 0, Traits_::SpaceNpts(space_), &box);
   }
 
  private:
@@ -159,12 +159,12 @@ class KdTreeBuilder {
   //! merging leaf nodes. Since the updated split informaton based on the leaf
   //! nodes can have smaller bounding boxes than the original ones, we can
   //! improve query times.
-  inline Node* SplitIndices(
-      Index const depth,
-      Index const offset,
-      Index const size,
+  inline NodeType* SplitIndices(
+      IndexType const depth,
+      IndexType const offset,
+      IndexType const size,
       BoxType* box) const {
-    Node* node = nodes_.Allocate();
+    NodeType* node = nodes_.Allocate();
     //
     if (size <= max_leaf_size_) {
       node->data.leaf.begin_idx = offset;
@@ -178,13 +178,13 @@ class KdTreeBuilder {
       }
     } else {
       std::size_t split_dim;
-      Index split_idx;
-      Scalar split_val;
+      IndexType split_idx;
+      ScalarType split_val;
       splitter_(depth, offset, size, *box, &split_dim, &split_idx, &split_val);
 
       // The split_idx is used as the first index of the right branch.
-      Index const left_size = split_idx - offset;
-      Index const right_size = size - left_size;
+      IndexType const left_size = split_idx - offset;
+      IndexType const right_size = size - left_size;
 
       BoxType right = *box;
       // Argument box will function as the left bounding box until we merge left
@@ -206,10 +206,10 @@ class KdTreeBuilder {
   }
 
   inline void ComputeBoundingBox(
-      Index const begin_idx, Index const end_idx, BoxType* box) const {
+      IndexType const begin_idx, IndexType const end_idx, BoxType* box) const {
     box->FillInverseMax();
-    for (Index j = begin_idx; j < end_idx; ++j) {
-      box->Fit(Traits::PointCoords(Traits::PointAt(space_, indices_[j])));
+    for (IndexType j = begin_idx; j < end_idx; ++j) {
+      box->Fit(Traits_::PointCoords(Traits_::PointAt(space_, indices_[j])));
     }
   }
 
@@ -217,7 +217,7 @@ class KdTreeBuilder {
       BoxType const& left,
       BoxType const& right,
       std::size_t const split_dim,
-      KdTreeNodeEuclidean<Index, Scalar>* node) const {
+      KdTreeNodeEuclidean<IndexType, ScalarType>* node) const {
     node->data.branch.split_dim = static_cast<int>(split_dim);
     node->data.branch.left_max = left.max(split_dim);
     node->data.branch.right_min = right.min(split_dim);
@@ -227,7 +227,7 @@ class KdTreeBuilder {
       BoxType const& left,
       BoxType const& right,
       std::size_t const split_dim,
-      KdTreeNodeTopological<Index, Scalar>* node) const {
+      KdTreeNodeTopological<IndexType, ScalarType>* node) const {
     node->data.branch.split_dim = static_cast<int>(split_dim);
     node->data.branch.left_min = left.min(split_dim);
     node->data.branch.left_max = left.max(split_dim);
@@ -235,57 +235,57 @@ class KdTreeBuilder {
     node->data.branch.right_max = right.max(split_dim);
   }
 
-  Space const& space_;
-  std::vector<Index> const& indices_;
-  Index const max_leaf_size_;
-  Splitter const& splitter_;
-  MemoryBuffer& nodes_;
+  SpaceType const& space_;
+  std::vector<IndexType> const& indices_;
+  IndexType const max_leaf_size_;
+  SplitterType const& splitter_;
+  BufferType& nodes_;
 };
 
 //! \brief This class provides a search nearest function for Euclidean spaces.
 template <
-    typename Traits,
-    typename Metric,
+    typename Traits_,
+    typename Metric_,
     int Dim_,
-    typename Point,
-    typename Visitor>
+    typename Point_,
+    typename Visitor_>
 class SearchNearestEuclidean {
- private:
-  using Index = typename Traits::IndexType;
-  using Scalar = typename Traits::ScalarType;
-  using Space = typename Traits::SpaceType;
-
  public:
+  using IndexType = typename Traits_::IndexType;
+  using ScalarType = typename Traits_::ScalarType;
+  using SpaceType = typename Traits_::SpaceType;
   //! \brief Node type supported by this SearchNearestEuclidean.
-  using Node = KdTreeNodeEuclidean<Index, Scalar>;
+  using NodeType = KdTreeNodeEuclidean<IndexType, ScalarType>;
 
   //! \private
   inline SearchNearestEuclidean(
-      Space const& points,
-      Metric const& metric,
-      std::vector<Index> const& indices,
-      Point const& point,
-      Visitor* visitor)
+      SpaceType const& points,
+      Metric_ const& metric,
+      std::vector<IndexType> const& indices,
+      Point_ const& point,
+      Visitor_* visitor)
       : points_(points),
         metric_(metric),
         indices_(indices),
         point_(point),
-        node_box_offset_(Traits::SpaceSdim(points)),
+        node_box_offset_(Traits_::SpaceSdim(points)),
         visitor_(*visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
-  inline void operator()(Node const* const node) {
-    node_box_offset_.Fill(Scalar(0.0));
-    SearchNearest(node, Scalar(0.0));
+  inline void operator()(NodeType const* const node) {
+    node_box_offset_.Fill(ScalarType(0.0));
+    SearchNearest(node, ScalarType(0.0));
   }
 
  private:
   //! \private
-  inline void SearchNearest(Node const* const node, Scalar node_box_distance) {
+  inline void SearchNearest(
+      NodeType const* const node, ScalarType node_box_distance) {
     if (node->IsLeaf()) {
-      for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+      for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        Scalar const d = metric_(point_, Traits::PointAt(points_, indices_[i]));
+        ScalarType const d =
+            metric_(point_, Traits_::PointAt(points_, indices_[i]));
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -293,10 +293,11 @@ class SearchNearestEuclidean {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      Scalar const v = Traits::PointCoords(point_)[node->data.branch.split_dim];
-      Scalar new_offset;
-      Node const* node_1st;
-      Node const* node_2nd;
+      ScalarType const v =
+          Traits_::PointCoords(point_)[node->data.branch.split_dim];
+      ScalarType new_offset;
+      NodeType const* node_1st;
+      NodeType const* node_2nd;
 
       // On equals we would possibly need to go left as well. However, this is
       // handled by the if statement below this one: the check that max search
@@ -328,7 +329,8 @@ class SearchNearestEuclidean {
       // Calculate the distance to node_2nd.
       // NOTE: This method only works with Lp norms to which the exponent is not
       // applied.
-      Scalar const old_offset = node_box_offset_[node->data.branch.split_dim];
+      ScalarType const old_offset =
+          node_box_offset_[node->data.branch.split_dim];
       node_box_distance = node_box_distance - old_offset + new_offset;
 
       // The value visitor->max() contains the current nearest neighbor distance
@@ -342,57 +344,57 @@ class SearchNearestEuclidean {
     }
   }
 
-  Space const& points_;
-  Metric const& metric_;
-  std::vector<Index> const& indices_;
-  Point const& point_;
-  Sequence<Scalar, Dim_> node_box_offset_;
-  Visitor& visitor_;
+  SpaceType const& points_;
+  Metric_ const& metric_;
+  std::vector<IndexType> const& indices_;
+  Point_ const& point_;
+  Sequence<ScalarType, Dim_> node_box_offset_;
+  Visitor_& visitor_;
 };
 
 //! \brief This class provides a search nearest function for topological spaces.
 template <
-    typename Traits,
-    typename Metric,
+    typename Traits_,
+    typename Metric_,
     int Dim_,
-    typename Point,
-    typename Visitor>
+    typename Point_,
+    typename Visitor_>
 class SearchNearestTopological {
- private:
-  using Index = typename Traits::IndexType;
-  using Scalar = typename Traits::ScalarType;
-  using Space = typename Traits::SpaceType;
-
  public:
+  using IndexType = typename Traits_::IndexType;
+  using ScalarType = typename Traits_::ScalarType;
+  using SpaceType = typename Traits_::SpaceType;
   //! \brief Node type supported by this SearchNearestTopological.
-  using Node = KdTreeNodeTopological<Index, Scalar>;
+  using NodeType = KdTreeNodeTopological<IndexType, ScalarType>;
 
   //! \private
   inline SearchNearestTopological(
-      Space const& points,
-      Metric const& metric,
-      std::vector<Index> const& indices,
-      Point const& point,
-      Visitor* visitor)
+      SpaceType const& points,
+      Metric_ const& metric,
+      std::vector<IndexType> const& indices,
+      Point_ const& point,
+      Visitor_* visitor)
       : points_(points),
         metric_(metric),
         indices_(indices),
         point_(point),
-        node_box_offset_(Traits::SpaceSdim(points)),
+        node_box_offset_(Traits_::SpaceSdim(points)),
         visitor_(*visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
-  inline void operator()(Node const* const node) {
-    node_box_offset_.Fill(Scalar(0.0));
-    SearchNearest(node, Scalar(0.0));
+  inline void operator()(NodeType const* const node) {
+    node_box_offset_.Fill(ScalarType(0.0));
+    SearchNearest(node, ScalarType(0.0));
   }
 
  private:
-  inline void SearchNearest(Node const* const node, Scalar node_box_distance) {
+  inline void SearchNearest(
+      NodeType const* const node, ScalarType node_box_distance) {
     if (node->IsLeaf()) {
-      for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+      for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        Scalar const d = metric_(point_, Traits::PointAt(points_, indices_[i]));
+        ScalarType const d =
+            metric_(point_, Traits_::PointAt(points_, indices_[i]));
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -400,21 +402,22 @@ class SearchNearestTopological {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      Scalar const v = Traits::PointCoords(point_)[node->data.branch.split_dim];
+      ScalarType const v =
+          Traits_::PointCoords(point_)[node->data.branch.split_dim];
       // Determine the distance to the boxes of the children of this node.
-      Scalar const d1 = metric_(
+      ScalarType const d1 = metric_(
           v,
           node->data.branch.left_min,
           node->data.branch.left_max,
           node->data.branch.split_dim);
-      Scalar const d2 = metric_(
+      ScalarType const d2 = metric_(
           v,
           node->data.branch.right_min,
           node->data.branch.right_max,
           node->data.branch.split_dim);
-      Node const* node_1st;
-      Node const* node_2nd;
-      Scalar new_offset;
+      NodeType const* node_1st;
+      NodeType const* node_2nd;
+      ScalarType new_offset;
 
       // Visit the closest child/box first.
       if (d1 < d2) {
@@ -429,7 +432,8 @@ class SearchNearestTopological {
 
       SearchNearest(node_1st, node_box_distance);
 
-      Scalar const old_offset = node_box_offset_[node->data.branch.split_dim];
+      ScalarType const old_offset =
+          node_box_offset_[node->data.branch.split_dim];
       node_box_distance = node_box_distance - old_offset + new_offset;
 
       // The value visitor->max() contains the current nearest neighbor distance
@@ -443,28 +447,27 @@ class SearchNearestTopological {
     }
   }
 
-  Space const& points_;
-  Metric const& metric_;
-  std::vector<Index> const& indices_;
-  Point const& point_;
-  Sequence<Scalar, Dim_> node_box_offset_;
-  Visitor& visitor_;
+  SpaceType const& points_;
+  Metric_ const& metric_;
+  std::vector<IndexType> const& indices_;
+  Point_ const& point_;
+  Sequence<ScalarType, Dim_> node_box_offset_;
+  Visitor_& visitor_;
 };
 
 //! \brief This class provides the search box function.
-template <typename Traits, typename Metric, int Dim_>
+template <typename Traits_, typename Metric_, int Dim_>
 class SearchBoxEuclidean {
- private:
+ public:
   // TODO Perhaps we can support it for both topological and Euclidean spaces.
   static_assert(
-      std::is_same<typename Metric::SpaceTag, EuclideanSpaceTag>::value,
+      std::is_same<typename Metric_::SpaceTag, EuclideanSpaceTag>::value,
       "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
 
-  using Index = typename Traits::IndexType;
-  using Scalar = typename Traits::ScalarType;
-  using Space = typename Traits::SpaceType;
+  using IndexType = typename Traits_::IndexType;
+  using ScalarType = typename Traits_::ScalarType;
+  using SpaceType = typename Traits_::SpaceType;
 
- public:
   //! \brief Returns all points within the box defined by \p rng_min and \p
   //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dim)+k).
   //! \details Many tree nodes are excluded by checking if they intersect with
@@ -472,12 +475,12 @@ class SearchBoxEuclidean {
   //! calculate them at run time. This slows down SearchBox in favor of having
   //! faster nearest neighbor searches.
   inline SearchBoxEuclidean(
-      Space const& points,
-      Metric const& metric,
-      std::vector<Index> const& indices,
-      Box<Scalar, Dim_> const& root_box,
-      BoxMap<Scalar const, Dim_> const& query,
-      std::vector<Index>* idxs)
+      SpaceType const& points,
+      Metric_ const& metric,
+      std::vector<IndexType> const& indices,
+      Box<ScalarType, Dim_> const& root_box,
+      BoxMap<ScalarType const, Dim_> const& query,
+      std::vector<IndexType>* idxs)
       : points_(points),
         metric_(metric),
         indices_(indices),
@@ -488,15 +491,15 @@ class SearchBoxEuclidean {
   template <typename Node>
   inline void operator()(Node const* const node) {
     if (node->IsLeaf()) {
-      for (Index i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+      for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         if (query_.Contains(
-                Traits::PointCoords(Traits::PointAt(points_, indices_[i])))) {
+                Traits_::PointCoords(Traits_::PointAt(points_, indices_[i])))) {
           idxs_.push_back(indices_[i]);
         }
       }
     } else {
-      Scalar old_value = box_.max(node->data.branch.split_dim);
+      ScalarType old_value = box_.max(node->data.branch.split_dim);
       box_.max(node->data.branch.split_dim) = node->data.branch.left_max;
 
       // Check if the left node is fully contained. If true, report all its
@@ -542,13 +545,13 @@ class SearchBoxEuclidean {
     }
   }
 
-  Space const& points_;
-  Metric const& metric_;
-  std::vector<Index> const& indices_;
+  SpaceType const& points_;
+  Metric_ const& metric_;
+  std::vector<IndexType> const& indices_;
   // This variable is used for maintaining a running bounding box.
-  Box<Scalar, Dim_> box_;
-  BoxMap<Scalar const, Dim_> const& query_;
-  std::vector<Index>& idxs_;
+  Box<ScalarType, Dim_> box_;
+  BoxMap<ScalarType const, Dim_> const& query_;
+  std::vector<IndexType>& idxs_;
 };
 
 }  // namespace internal
@@ -558,35 +561,34 @@ class SearchBoxEuclidean {
 //! \details This splitting build a tree in O(n log n) time on average. It's
 //! generally slower compared to SplitterSlidingMidpoint but results in a
 //! balanced KdTree.
-template <typename Traits>
+template <typename Traits_>
 class SplitterLongestMedian {
- private:
-  using Index = typename Traits::IndexType;
-  using Scalar = typename Traits::ScalarType;
-  using Space = typename Traits::SpaceType;
-  template <int Dim_>
-  using Box = typename internal::Box<Scalar, Dim_>;
-
  public:
+  using IndexType = typename Traits_::IndexType;
+  using ScalarType = typename Traits_::ScalarType;
+  using SpaceType = typename Traits_::SpaceType;
+  template <int Dim_>
+  using BoxType = typename internal::Box<ScalarType, Dim_>;
   //! \brief Buffer type used with this splitter.
   template <typename T>
-  using MemoryBuffer = internal::StaticBuffer<T>;
+  using BufferType = internal::StaticBuffer<T>;
 
   //! \private
-  SplitterLongestMedian(Space const& points, std::vector<Index>* p_indices)
+  SplitterLongestMedian(
+      SpaceType const& points, std::vector<IndexType>* p_indices)
       : points_{points}, indices_{*p_indices} {}
 
   //! \brief This function splits a node.
   template <int Dim_>
   inline void operator()(
-      Index const,  // depth
-      Index const offset,
-      Index const size,
-      Box<Dim_> const& box,
+      IndexType const,  // depth
+      IndexType const offset,
+      IndexType const size,
+      BoxType<Dim_> const& box,
       std::size_t* split_dim,
-      Index* split_idx,
-      Scalar* split_val) const {
-    Scalar max_delta;
+      IndexType* split_idx,
+      ScalarType* split_val) const {
+    ScalarType max_delta;
     box.LongestAxis(split_dim, &max_delta);
 
     *split_idx = size / 2 + offset;
@@ -595,7 +597,7 @@ class SplitterLongestMedian {
         indices_.begin() + offset,
         indices_.begin() + *split_idx,
         indices_.begin() + offset + size,
-        [this, &split_dim](Index const a, Index const b) -> bool {
+        [this, &split_dim](IndexType const a, IndexType const b) -> bool {
           return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
         });
 
@@ -603,13 +605,14 @@ class SplitterLongestMedian {
   }
 
  private:
-  inline Scalar const& PointCoord(
-      Index point_idx, std::size_t coord_idx) const {
-    return Traits::PointCoords(Traits::PointAt(points_, point_idx))[coord_idx];
+  inline ScalarType const& PointCoord(
+      IndexType point_idx, std::size_t coord_idx) const {
+    return Traits_::PointCoords(
+        Traits_::PointAt(points_, point_idx))[coord_idx];
   }
 
-  Space const& points_;
-  std::vector<Index>& indices_;
+  SpaceType const& points_;
+  std::vector<IndexType>& indices_;
 };
 
 //! \brief Bounding boxes of tree nodes are split in the middle along the
@@ -626,44 +629,44 @@ class SplitterLongestMedian {
 //!
 //! The tree is build in O(n log n) time and results in a tree that is both
 //! faster to build and query as compared to SplitterLongestMedian.
-template <typename Traits>
+template <typename Traits_>
 class SplitterSlidingMidpoint {
- private:
-  using Index = typename Traits::IndexType;
-  using Scalar = typename Traits::ScalarType;
-  using Space = typename Traits::SpaceType;
-  template <int Dim_>
-  using Box = typename internal::Box<Scalar, Dim_>;
-
  public:
+  using IndexType = typename Traits_::IndexType;
+  using ScalarType = typename Traits_::ScalarType;
+  using SpaceType = typename Traits_::SpaceType;
+  template <int Dim_>
+  using BoxType = typename internal::Box<ScalarType, Dim_>;
   //! \brief Buffer type used with this splitter.
   template <typename T>
-  using MemoryBuffer = internal::DynamicBuffer<T>;
+  using BufferType = internal::DynamicBuffer<T>;
 
   //! \private
-  SplitterSlidingMidpoint(Space const& points, std::vector<Index>* p_indices)
+  SplitterSlidingMidpoint(
+      SpaceType const& points, std::vector<IndexType>* p_indices)
       : points_{points}, indices_{*p_indices} {}
 
   //! \brief This function splits a node.
   template <int Dim_>
   inline void operator()(
-      Index const,  // depth
-      Index const offset,
-      Index const size,
-      Box<Dim_> const& box,
+      IndexType const,  // depth
+      IndexType const offset,
+      IndexType const size,
+      BoxType<Dim_> const& box,
       std::size_t* split_dim,
-      Index* split_idx,
-      Scalar* split_val) const {
-    Scalar max_delta;
+      IndexType* split_idx,
+      ScalarType* split_val) const {
+    ScalarType max_delta;
     box.LongestAxis(split_dim, &max_delta);
-    *split_val = max_delta / Scalar(2.0) + box.min(*split_dim);
+    *split_val = max_delta / ScalarType(2.0) + box.min(*split_dim);
 
     // Everything smaller than split_val goes left, the rest right.
-    auto const comp = [this, &split_dim, &split_val](Index const a) -> bool {
+    auto const comp =
+        [this, &split_dim, &split_val](IndexType const a) -> bool {
       return PointCoord(a, *split_dim) < *split_val;
     };
 
-    *split_idx = static_cast<Index>(
+    *split_idx = static_cast<IndexType>(
         std::partition(
             indices_.begin() + offset, indices_.begin() + offset + size, comp) -
         indices_.cbegin());
@@ -680,7 +683,7 @@ class SplitterSlidingMidpoint {
           indices_.begin() + offset,
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
-          [this, &split_dim](Index const a, Index const b) -> bool {
+          [this, &split_dim](IndexType const a, IndexType const b) -> bool {
             return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
           });
       (*split_val) = PointCoord(indices_[*split_idx], *split_dim);
@@ -690,7 +693,7 @@ class SplitterSlidingMidpoint {
           indices_.begin() + offset,
           indices_.begin() + (*split_idx),
           indices_.begin() + offset + size,
-          [this, &split_dim](Index const a, Index const b) -> bool {
+          [this, &split_dim](IndexType const a, IndexType const b) -> bool {
             return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
           });
       (*split_val) = PointCoord(indices_[*split_idx], *split_dim);
@@ -698,57 +701,57 @@ class SplitterSlidingMidpoint {
   }
 
  private:
-  inline Scalar const& PointCoord(
-      Index point_idx, std::size_t coord_idx) const {
-    return Traits::PointCoords(Traits::PointAt(points_, point_idx))[coord_idx];
+  inline ScalarType const& PointCoord(
+      IndexType point_idx, std::size_t coord_idx) const {
+    return Traits_::PointCoords(
+        Traits_::PointAt(points_, point_idx))[coord_idx];
   }
 
-  Space const& points_;
-  std::vector<Index>& indices_;
+  SpaceType const& points_;
+  std::vector<IndexType>& indices_;
 };
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
-//! \tparam Dim_ The spatial dimension of the tree. Dim_ defaults to Traits::Dim
-//! but can be set to a different value should a rare occasion require it.
+//! \tparam Dim_ The spatial dimension of the tree. Dim_ defaults to
+//! Traits_::Dim but can be set to a different value should a rare occasion
+//! require it.
 template <
-    typename Traits,
-    typename Metric = L2Squared<Traits>,
-    typename Splitter = SplitterSlidingMidpoint<Traits>,
-    int Dim_ = Traits::Dim>
+    typename Traits_,
+    typename Metric_ = L2Squared<Traits_>,
+    typename Splitter_ = SplitterSlidingMidpoint<Traits_>,
+    int Dim_ = Traits_::Dim>
 class KdTree {
  private:
   static_assert(
-      Dim_ <= Traits::Dim,
+      Dim_ <= Traits_::Dim,
       "SPATIAL_DIMENSION_TREE_MUST_BE_SMALLER_OR_EQUAL_TO_TRAITS_DIMENSION");
 
-  using Index = typename Traits::IndexType;
-  using Scalar = typename Traits::ScalarType;
-  using Space = typename Traits::SpaceType;
-  using Builder = internal::
-      KdTreeBuilder<Traits, typename Metric::SpaceTag, Splitter, Dim_>;
-  using Node = typename Builder::Node;
+  using BuilderType = internal::
+      KdTreeBuilder<Traits_, typename Metric_::SpaceTag, Splitter_, Dim_>;
+  using NodeType = typename BuilderType::NodeType;
   //! Either an array or vector (compile time vs. run time).
-  using Sequence = typename internal::Sequence<Scalar, Dim_>;
-  using Box = typename internal::Box<Scalar, Dim_>;
-  using MemoryBuffer = typename Splitter::template MemoryBuffer<Node>;
+  using SequenceType =
+      typename internal::Sequence<typename Traits_::ScalarType, Dim_>;
+  using BoxType = typename internal::Box<typename Traits_::ScalarType, Dim_>;
+  using BufferType = typename BuilderType::BufferType;
 
  public:
   //! \brief Index type.
-  using IndexType = Index;
+  using IndexType = typename Traits_::IndexType;
   //! \brief Scalar type.
-  using ScalarType = Scalar;
+  using ScalarType = typename Traits_::ScalarType;
   //! \brief KdTree dimension. It equals pico_tree::kDynamicDim in case Dim is
   //! only known at run-time.
   static constexpr int Dim = Dim_;
-  //! \brief Traits with information about the input Spaces and Points.
-  using TraitsType = Traits;
+  //! \brief Traits_ with information about the input Spaces and Points.
+  using TraitsType = Traits_;
   //! \brief Point set or adaptor type.
-  using SpaceType = Space;
+  using SpaceType = typename Traits_::SpaceType;
   //! \brief The metric used for various searches.
-  using MetricType = Metric;
+  using MetricType = Metric_;
   //! \brief Neighbor type of various search resuls.
-  using NeighborType = Neighbor<Index, Scalar>;
+  using NeighborType = Neighbor<IndexType, ScalarType>;
 
  public:
   //! \brief The KdTree cannot be copied.
@@ -782,12 +785,12 @@ class KdTree {
   //!
   //! \param points The input point set (interface).
   //! \param max_leaf_size The maximum amount of points allowed in a leaf node.
-  KdTree(Space points, Index max_leaf_size)
+  KdTree(SpaceType points, IndexType max_leaf_size)
       : points_(std::move(points)),
         metric_(),
-        nodes_(internal::MaxNodesFromPoints(Traits::SpaceNpts(points_))),
-        indices_(Traits::SpaceNpts(points_)),
-        root_box_(Traits::SpaceSdim(points_)),
+        nodes_(internal::MaxNodesFromPoints(Traits_::SpaceNpts(points_))),
+        indices_(Traits_::SpaceNpts(points_)),
+        root_box_(Traits_::SpaceSdim(points_)),
         root_(Build(max_leaf_size)) {}
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
@@ -798,7 +801,7 @@ class KdTree {
   //! \see internal::SearchAknn
   template <typename P, typename V>
   inline void SearchNearest(P const& x, V* visitor) const {
-    SearchNearest(root_, x, visitor, typename Metric::SpaceTag());
+    SearchNearest(root_, x, visitor, typename Metric_::SpaceTag());
   }
 
   //! \brief Searches for the nearest neighbor of point \p x.
@@ -812,7 +815,7 @@ class KdTree {
 
   //! \brief Searches for the k nearest neighbors of point \p x, where k equals
   //! std::distance(begin, end). It is expected that the value type of the
-  //! iterator equals Neighbor<Index, Scalar>.
+  //! iterator equals Neighbor<IndexType, ScalarType>.
   //! \details Interpretation of the output distances depend on the Metric. The
   //! default L2Squared results in squared distances.
   //! \tparam P Point type.
@@ -837,10 +840,10 @@ class KdTree {
   //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
-      P const& x, Index const k, std::vector<NeighborType>* knn) const {
+      P const& x, IndexType const k, std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn->resize(std::min(k, Traits::SpaceNpts(points_)));
+    knn->resize(std::min(k, Traits_::SpaceNpts(points_)));
     SearchKnn(x, knn->begin(), knn->end());
   }
 
@@ -852,10 +855,10 @@ class KdTree {
   //! \param x Input point.
   //! \param radius Search radius.
   //! \code{.cpp}
-  //! Scalar distance = -2.0;
+  //! ScalarType distance = -2.0;
   //! // E.g., L1: 2.0, L2Squared: 4.0
-  //! Scalar metric_distance = kdtree.metric()(distance);
-  //! std::vector<Neighbor<Index, Scalar>> n;
+  //! ScalarType metric_distance = kdtree.metric()(distance);
+  //! std::vector<Neighbor<IndexType, ScalarType>> n;
   //! tree.SearchRadius(p, metric_distance, &n);
   //! \endcode
   //! \param n Output points.
@@ -864,7 +867,7 @@ class KdTree {
   template <typename P>
   inline void SearchRadius(
       P const& x,
-      Scalar const radius,
+      ScalarType const radius,
       std::vector<NeighborType>* n,
       bool const sort = false) const {
     internal::SearchRadius<NeighborType> v(radius, n);
@@ -877,7 +880,7 @@ class KdTree {
 
   //! \brief Searches for the k approximate nearest neighbors of point \p x,
   //! where k equals std::distance(begin, end). It is expected that the value
-  //! type of the iterator equals Neighbor<Index, Scalar>.
+  //! type of the iterator equals Neighbor<IndexType, ScalarType>.
   //! \details This function can result in faster search queries compared to
   //! KdTree::SearchKnn by skipping points and tree nodes. This is achieved by
   //! scaling down the search distance, possibly not visiting the true nearest
@@ -901,9 +904,9 @@ class KdTree {
   //! Example:
   //! \code{.cpp}
   //! // A max error of 15%. I.e. max 15% farther away from the true nn.
-  //! Scalar max_error = Scalar(0.15);
-  //! Scalar e = tree.metric()(Scalar(1.0) + max_error);
-  //! std::vector<Neighbor<Index, Scalar>> knn(k);
+  //! ScalarType max_error = ScalarType(0.15);
+  //! ScalarType e = tree.metric()(ScalarType(1.0) + max_error);
+  //! std::vector<Neighbor<IndexType, ScalarType>> knn(k);
   //! tree.SearchAknn(p, e, knn.begin(), knn.end());
   //! // Optionally scale back to the actual metric distance.
   //! for (auto& nn : knn) { nn.second *= e; }
@@ -911,7 +914,7 @@ class KdTree {
   template <typename P, typename RandomAccessIterator>
   inline void SearchAknn(
       P const& x,
-      Scalar const e,
+      ScalarType const e,
       RandomAccessIterator begin,
       RandomAccessIterator end) const {
     static_assert(
@@ -932,12 +935,12 @@ class KdTree {
   template <typename P>
   inline void SearchAknn(
       P const& x,
-      Index const k,
-      Scalar const e,
+      IndexType const k,
+      ScalarType const e,
       std::vector<NeighborType>* knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn->resize(std::min(k, Traits::SpaceNpts(points_)));
+    knn->resize(std::min(k, Traits_::SpaceNpts(points_)));
     SearchAknn(x, e, knn->begin(), knn->end());
   }
 
@@ -946,32 +949,32 @@ class KdTree {
   //! \tparam P Point type.
   template <typename P>
   inline void SearchBox(
-      P const& min, P const& max, std::vector<Index>* idxs) const {
+      P const& min, P const& max, std::vector<IndexType>* idxs) const {
     idxs->clear();
     // Note that it's never checked if the bounding box intersects at all. For
     // now it is assumed that this check is not worth it: If there was overlap
     // then the search is slower. So unless many queries don't intersect there
     // is no point in adding it.
-    internal::SearchBoxEuclidean<Traits, Metric, Dim>(
+    internal::SearchBoxEuclidean<Traits_, Metric_, Dim>(
         points_,
         metric_,
         indices_,
         root_box_,
-        internal::BoxMap<Scalar const, Dim>(
-            Traits::PointCoords(min),
-            Traits::PointCoords(max),
-            Traits::SpaceSdim(points_)),
+        internal::BoxMap<ScalarType const, Dim>(
+            Traits_::PointCoords(min),
+            Traits_::PointCoords(max),
+            Traits_::SpaceSdim(points_)),
         idxs)(root_);
   }
 
   //! \brief Point set used by the tree.
-  inline Space const& points() const { return points_; }
+  inline SpaceType const& points() const { return points_; }
 
   //! \brief Metric used for search queries.
-  inline Metric const& metric() const { return metric_; }
+  inline MetricType const& metric() const { return metric_; }
 
   //! \brief Loads the tree in binary from file.
-  static KdTree Load(Space points, std::string const& filename) {
+  static KdTree Load(SpaceType points, std::string const& filename) {
     std::fstream stream =
         internal::OpenStream(filename, std::ios::in | std::ios::binary);
     return Load(std::move(points), &stream);
@@ -985,7 +988,7 @@ class KdTree {
   //! point set.
   //! \li Does not check if the stored tree structure is valid for the given
   //! template arguments.
-  static KdTree Load(Space points, std::iostream* stream) {
+  static KdTree Load(SpaceType points, std::iostream* stream) {
     internal::Stream s(stream);
     return KdTree(std::move(points), &s);
   }
@@ -1010,33 +1013,33 @@ class KdTree {
  private:
   //! \brief Constructs a KdTree by reading its indexing and leaf information
   //! from a Stream.
-  KdTree(Space points, internal::Stream* stream)
+  KdTree(SpaceType points, internal::Stream* stream)
       : points_(std::move(points)),
         metric_(),
-        nodes_(internal::MaxNodesFromPoints(Traits::SpaceNpts(points_))),
-        indices_(Traits::SpaceNpts(points_)),
-        root_box_(Traits::SpaceSdim(points_)),
+        nodes_(internal::MaxNodesFromPoints(Traits_::SpaceNpts(points_))),
+        indices_(Traits_::SpaceNpts(points_)),
+        root_box_(Traits_::SpaceSdim(points_)),
         root_(Load(stream)) {}
 
-  inline void ComputeBoundingBox(Box* box) const {
+  inline void ComputeBoundingBox(BoxType* box) const {
     box->FillInverseMax();
-    for (Index i = 0; i < Traits::SpaceNpts(points_); ++i) {
-      box->Fit(Traits::PointCoords(Traits::PointAt(points_, i)));
+    for (IndexType i = 0; i < Traits_::SpaceNpts(points_); ++i) {
+      box->Fit(Traits_::PointCoords(Traits_::PointAt(points_, i)));
     }
   }
 
   //! \brief Builds a tree given a \p max_leaf_size and a Splitter.
   //! \details Run time may vary depending on the split strategy.
-  inline Node* Build(Index const max_leaf_size) {
-    assert(Traits::SpaceNpts(points_) > 0);
+  inline NodeType* Build(IndexType const max_leaf_size) {
+    assert(Traits_::SpaceNpts(points_) > 0);
     assert(max_leaf_size > 0);
 
     std::iota(indices_.begin(), indices_.end(), 0);
 
     ComputeBoundingBox(&root_box_);
 
-    Splitter splitter(points_, &indices_);
-    return Builder{
+    Splitter_ splitter(points_, &indices_);
+    return BuilderType{
         points_, indices_, max_leaf_size, splitter, &nodes_}(root_box_);
   }
 
@@ -1044,8 +1047,11 @@ class KdTree {
   //! on their selection by visitor \p visitor for node \p node.
   template <typename P, typename V>
   inline void SearchNearest(
-      Node const* const node, P const& x, V* visitor, EuclideanSpaceTag) const {
-    internal::SearchNearestEuclidean<Traits, Metric, Dim, P, V>(
+      NodeType const* const node,
+      P const& x,
+      V* visitor,
+      EuclideanSpaceTag) const {
+    internal::SearchNearestEuclidean<Traits_, Metric_, Dim, P, V>(
         points_, metric_, indices_, x, visitor)(node);
   }
 
@@ -1053,17 +1059,17 @@ class KdTree {
   //! on their selection by visitor \p visitor for node \p node.
   template <typename P, typename V>
   inline void SearchNearest(
-      Node const* const node,
+      NodeType const* const node,
       P const& x,
       V* visitor,
       TopologicalSpaceTag) const {
-    internal::SearchNearestTopological<Traits, Metric, Dim, P, V>(
+    internal::SearchNearestTopological<Traits_, Metric_, Dim, P, V>(
         points_, metric_, indices_, x, visitor)(node);
   }
 
   //! \brief Recursively reads the Node and its descendants.
-  inline Node* ReadNode(internal::Stream* stream) {
-    Node* node = nodes_.Allocate();
+  inline NodeType* ReadNode(internal::Stream* stream) {
+    NodeType* node = nodes_.Allocate();
     bool is_leaf;
     stream->Read(&is_leaf);
 
@@ -1082,7 +1088,7 @@ class KdTree {
 
   //! \brief Recursively writes the Node and its descendants.
   inline void WriteNode(
-      Node const* const node, internal::Stream* stream) const {
+      NodeType const* const node, internal::Stream* stream) const {
     if (node->IsLeaf()) {
       stream->Write(true);
       stream->Write(node->data.leaf);
@@ -1095,7 +1101,7 @@ class KdTree {
   }
 
   //! \private
-  inline Node* Load(internal::Stream* stream) {
+  inline NodeType* Load(internal::Stream* stream) {
     stream->Read(&indices_);
     // The root box gets the correct size from the KdTree constructor.
     stream->Read(root_box_.min(), root_box_.size());
@@ -1112,17 +1118,17 @@ class KdTree {
   }
 
   //! \brief Point set adapter used for querying point data.
-  Space points_;
+  SpaceType points_;
   //! \brief Metric used for comparing distances.
-  Metric metric_;
+  MetricType metric_;
   //! \brief Memory buffer for tree nodes.
-  MemoryBuffer nodes_;
+  BufferType nodes_;
   //! \brief Sorted indices that refer to points inside points_.
-  std::vector<Index> indices_;
+  std::vector<IndexType> indices_;
   //! \brief Bounding box of the root node.
-  Box root_box_;
+  BoxType root_box_;
   //! \brief Root of the KdTree.
-  Node* root_;
+  NodeType* root_;
 };
 
 }  // namespace pico_tree
