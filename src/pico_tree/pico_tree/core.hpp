@@ -15,7 +15,7 @@ namespace pico_tree {
 //! the spatial dimension of the search problem when it can only be known at
 //! run-time. In this case the dimension of the problem is provided by the point
 //! adaptor.
-static constexpr int kDynamicDim = -1;
+static int constexpr kDynamicDim = -1;
 
 //! \brief A Neighbor is a point reference with a corresponding distance to
 //! another point.

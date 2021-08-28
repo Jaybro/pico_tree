@@ -8,8 +8,8 @@ namespace internal {
 
 //! Mathematical constant pi. It is defined as the ratio of a circle's
 //! circumference to its diameter. Only available from C++20.
-inline static constexpr long double kPi = 3.14159265358979323846l;
-inline static constexpr long double kTwoPi = kPi * 2.0l;
+static long double constexpr kPi = 3.14159265358979323846l;
+static long double constexpr kTwoPi = kPi * 2.0l;
 
 //! \brief Calculates the absolute difference between two point coordinates.
 struct AbsDiff {
