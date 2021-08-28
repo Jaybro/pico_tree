@@ -6,7 +6,7 @@ include(GNUInstallDirs)
 
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_PACKAGE_NAME}::${PROJECT_PACKAGE_NAME} ALIAS ${PROJECT_NAME})
-target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE
+target_include_directories(${PROJECT_NAME} INTERFACE
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 # Language standard above 11 should also be fine.
