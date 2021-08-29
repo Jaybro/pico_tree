@@ -157,9 +157,6 @@ class Box : public BoxBase<Box<Scalar_, Dim_>> {
   std::array<ScalarType, Dim> max_;
 };
 
-// TODO Not using a vector, but having custom memory management would allow us
-// to store max and avoid applying offsets.
-
 //! \brief An axis aligned box represented by a min and max coordinate.
 //! \details This specialization supports a run time known spatial dimension.
 template <typename Scalar_>
@@ -182,7 +179,7 @@ class Box<Scalar_, kDynamicDim> : public BoxBase<Box<Scalar_, kDynamicDim>> {
   inline SizeType size() const noexcept { return size_; }
 
  private:
-  //! \brief Minimum and maximum box coordinates aligned in memory.
+  //! \brief Minimum and maximum box coordinates contiguous in memory.
   std::vector<ScalarType> min_;
   SizeType size_;
 };
