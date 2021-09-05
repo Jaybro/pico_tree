@@ -1,6 +1,6 @@
 # Benchmark
 
-One of the PicoTree examples is a small [benchmark](../examples/benchmark/) that compares the KdTree of this library with that of [nanoflann](https://github.com/jlblancoc/nanoflann). This page describes the benchmark output and how to reproduce the exact same input that was used for benchmarking.
+One of the PicoTree examples contains [benchmarks](../examples/benchmark/) of different KdTree implementations. This page compares the one of PicoTree with respect to [nanoflann](https://github.com/jlblancoc/nanoflann) and describes how to reproduce the input that was used for benchmarking.
 
 Results were generated on: 29-08-2021 using MinGW GCC 10.3 using PicoTree 0.7.4.
 
