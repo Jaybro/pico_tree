@@ -10,8 +10,9 @@
 *.h text
 *.cpp text
 *.hpp text
-
+*.py text
 *.md text
 *.txt text
+*.yml text
 *.cmake text
 *.cmake.in text
