@@ -71,23 +71,14 @@ Python bindings:
 
 # Build
 
-Build using [CMake](https://cmake.org/):
+Build with [CMake](https://cmake.org/):
 
 ```console
 $ mkdir build && cd build
 $ cmake ../
-$ make
-$ make install
-$ make pico_tree_doc
-```
-
-Similarly with [MSYS2](https://github.com/msys2/) and [MinGW64](http://mingw-w64.org/):
-
-```console
-$ ...
-$ cmake.exe ../ -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64/local
-$ mingw32-make.exe
-$ ...
+$ cmake --build .
+$ cmake --build . --target pico_tree_doc
+$ cmake --install .
 ```
 
 ```cmake
@@ -97,16 +88,10 @@ add_executable(myexe main.cpp)
 target_link_libraries(myexe PUBLIC PicoTree::PicoTree)
 ```
 
-Install with pip:
+Install with [pip](https://pypi.org/project/pip/):
 
 ```console
 $ pip install ./pico_tree
-```
-
-Set a generator for use with MinGW:
-
-```console
-$ pip install ./pico_tree --install-option="-GMinGW Makefiles"
 ```
 
 # References

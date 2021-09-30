@@ -25,8 +25,7 @@ target_compile_options(${PROJECT_NAME} INTERFACE
 # target_sources(${PROJECT_NAME}
 #     INTERFACE
 #         ${CMAKE_CURRENT_LIST_DIR}/pico_tree/core.hpp
-#         ${CMAKE_CURRENT_LIST_DIR}/pico_tree/eigen.hpp
-#         ${CMAKE_CURRENT_LIST_DIR}/pico_tree/kd_tree.hpp
+#         ...
 # )
 
 ################################################################################
@@ -35,6 +34,8 @@ target_compile_options(${PROJECT_NAME} INTERFACE
 ################################################################################
 
 if(NOT SKBUILD)
+    # Note that PROJECT_PACKAGE_TARGETS_NAME also functions as the
+    # install(TARGETS ... EXPORT ...) name.
     set(PROJECT_PACKAGE_TARGETS_NAME ${PROJECT_PACKAGE_NAME}Targets)
     set(PROJECT_PACKAGE_CONFIG_VERSION_NAME ${PROJECT_PACKAGE_NAME}ConfigVersion)
     set(PROJECT_PACKAGE_CONFIG_NAME ${PROJECT_PACKAGE_NAME}Config)
