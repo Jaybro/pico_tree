@@ -11,12 +11,14 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Clones to ${{ runner.workspace }}/pico_tree
-      - uses: actions/checkout@v2
+      # Clones to ${{ github.workspace }}.
+      - name: Clone PicoTree
+        uses: actions/checkout@v2
 
-      - uses: actions/setup-python@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
         with:
-          python-version: "3.5"
+          python-version: "3.6"
 
       # The GCC and MSVC compilers integrate OpenMP. Newer versions of CLang
       # integrate it as well, but it's not found via CMake on macos-latest.
@@ -32,19 +34,8 @@ jobs:
           pip install scikit-build
           pip install pybind11-global
 
-      # Running the unit tests will fail without setting up the environment. 
-      # The installed package or built module will not be found.
-      # See example: https://github.com/pybind/scikit_build_example/blob/master/.github/workflows/pip.yml
-      - name: Setting up compiler environment for Windows
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
-
       - name: Install with pip
-        working-directory: ${{runner.workspace}}
-        run: pip install ./pico_tree -v
+        run: pip install ./ -v
 
       - name: Test Python bindings
-        working-directory: ${{runner.workspace}}
-        run: python -m unittest discover -s ./pico_tree/test/pyco_tree -p '*_test.py' -v
+        run: python -m unittest discover -s ./test/pyco_tree -p '*_test.py' -v
