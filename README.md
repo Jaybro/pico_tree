@@ -63,7 +63,7 @@ Optional:
 * [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run any of the benchmarks. The [nanoflann](https://github.com/jlblancoc/nanoflann) and [OpenCV](https://opencv.org/) benchmarks also require their respective libraries to be installed.
 
 Python bindings:
-* [Python](https://www.python.org/). Version 3.5 or higher.
+* [Python](https://www.python.org/). Version 3.6 or higher.
 * [pybind11](https://github.com/pybind/pybind11). Used to ease the creation of Python bindings. Available under the [BSD](https://github.com/pybind/pybind11/blob/master/LICENSE) license and copyright.
 * [OpenMP](https://www.openmp.org/). For parallelization of queries.
 * [numpy](https://numpy.org/). Points and search results are represented by ndarrays.
