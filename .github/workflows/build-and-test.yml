@@ -2,9 +2,6 @@ name: build-and-test
 
 on: [push]
 
-env:
-  BUILD_TYPE: Release
-
 jobs:
   build:
     strategy:
