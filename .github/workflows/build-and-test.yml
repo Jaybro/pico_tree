@@ -67,6 +67,7 @@ jobs:
         uses: Jaybro/action-cmake@v1
         with:
           cmake-source-dir: opencv
+          cmake-build-dir: opencv/build
           # The output directories for binaries and libraries may vary in Windows depending on architecture and VS version. OpenCV
           # allows setting the OPENCV_BIN_INSTALL_PATH and OPENCV_LIB_INSTALL_PATH cmake variables to change these (for Windows
           # only). The directories are relative to the CMAKE_INSTALL_PREFIX variable.
