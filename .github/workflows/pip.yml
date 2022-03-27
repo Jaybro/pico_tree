@@ -18,7 +18,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.5"
+          python-version: "3.6"
 
       # The GCC and MSVC compilers integrate OpenMP. Newer versions of CLang
       # integrate it as well, but it's not found via CMake on macos-latest.
@@ -44,9 +44,7 @@ jobs:
           arch: x64
 
       - name: Install with pip
-        working-directory: ${{runner.workspace}}
-        run: pip install ./pico_tree -v
+        run: pip install ./ -v
 
       - name: Test Python bindings
-        working-directory: ${{runner.workspace}}
-        run: python -m unittest discover -s ./pico_tree/test/pyco_tree -p '*_test.py' -v
+        run: python -m unittest discover -s ./test/pyco_tree -p '*_test.py' -v
