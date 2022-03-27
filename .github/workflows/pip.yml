@@ -34,15 +34,6 @@ jobs:
           pip install scikit-build
           pip install pybind11-global
 
-      # Running the unit tests will fail without setting up the environment. 
-      # The installed package or built module will not be found.
-      # See example: https://github.com/pybind/scikit_build_example/blob/master/.github/workflows/pip.yml
-      - name: Setting up compiler environment for Windows
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
-
       - name: Install with pip
         run: pip install ./ -v
 
