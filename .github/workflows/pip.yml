@@ -11,10 +11,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Clones to ${{ runner.workspace }}/pico_tree
-      - uses: actions/checkout@v2
+      # Clones to ${{ runner.workspace }}/pico_tree (same as $GITHUB_WORKSPACE).
+      - name: Clone PicoTree
+        uses: actions/checkout@v2
 
-      - uses: actions/setup-python@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
         with:
           python-version: "3.5"
 
