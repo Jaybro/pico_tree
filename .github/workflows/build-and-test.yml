@@ -14,68 +14,66 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Clones to ${{ runner.workspace }}/pico_tree
-      - uses: actions/checkout@v2
-
-      - uses: actions/checkout@v2
-        with:
-          repository: google/googletest
-          ref: release-1.10.0
-          # For some reason in windows-latest we can only create directories within pico_tree/pico_tree.
-          path: ${{ runner.workspace }}/pico_tree/googletest
-
-      - name: Clone Eigen
-        working-directory: ${{runner.workspace}}/pico_tree
-        shell: bash
-        run: |
-          git clone https://gitlab.com/libeigen/eigen.git --branch 3.3.9 --depth 1 && cd eigen
-          git switch -c 3.3.9
-
-      - uses: actions/checkout@v2
-        with:
-          repository: opencv/opencv
-          ref: 4.5.2
-          path: ${{ runner.workspace }}/pico_tree/opencv
-
-      - name: Create Build Environment
+      - name: Add ./install to $PATH
         shell: bash
         # Within the Windows environment the GITHUB_WORKSPACE variable uses a \ as a separator. MinGW cmake cannot handle this.
         # ${GITHUB_WORKSPACE//'\'/'/'} replaces \ with / using the bash shell.
         run: |
-          cmake -E make_directory ${GITHUB_WORKSPACE//'\'/'/'}/install
           echo "${GITHUB_WORKSPACE//'\'/'/'}/install" >> $GITHUB_PATH
           echo "${GITHUB_WORKSPACE//'\'/'/'}/install/bin" >> $GITHUB_PATH
 
-      - name: CMake Google Test
-        uses: ./.github/actions/cmake
+      # Clones to ${{ runner.workspace }}/pico_tree (same as $GITHUB_WORKSPACE).
+      - name: Clone PicoTree
+        uses: actions/checkout@v2
+
+      - name: Clone Google Test
+        uses: actions/checkout@v2
         with:
-          path-cmake-lists: ${{ runner.workspace }}/pico_tree/googletest
-          # 1) GTest is build statically but the CMake + Visual Studio combination wants to link against it as being dynamic.
-          #    https://github.com/google/googletest/tree/release-1.8.1/googletest#visual-studio-dynamic-vs-static-runtimes
-          # 2) The installation directory is customized so PicoTree knows where to find it later.
-          cmake-configure-flags: -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE//'\'/'/'}/install -Dgtest_force_shared_crt=ON
+          repository: google/googletest
+          ref: release-1.10.0
+          path: googletest
+
+      - name: Clone Eigen
+        shell: bash
+        run: |
+          git clone https://gitlab.com/libeigen/eigen.git --branch 3.3.9 --depth 1 || exit 1
+          cd eigen && git switch -c 3.3.9
+
+      - name: Clone OpenCV
+        uses: actions/checkout@v2
+        with:
+          repository: opencv/opencv
+          ref: 4.5.2
+          path: opencv
+
+      - name: CMake Google Test
+        uses: Jaybro/action-cmake@v1
+        with:
+          cmake-source-dir: googletest
+          cmake-build-dir: googletest/build
+          # GTest is build statically but the CMake + Visual Studio combination wants to link against it as being dynamic.
+          # https://github.com/google/googletest/tree/release-1.8.1/googletest#visual-studio-dynamic-vs-static-runtimes
+          cmake-configure-flags: -Dgtest_force_shared_crt=ON
           cmake-install: true
 
       - name: CMake Eigen
-        uses: ./.github/actions/cmake
+        uses: Jaybro/action-cmake@v1
         with:
-          path-cmake-lists: ${{ runner.workspace }}/pico_tree/eigen
-          cmake-configure-flags: -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE//'\'/'/'}/install
+          cmake-source-dir: eigen
+          cmake-build-dir: eigen/build
           cmake-install: true
 
       - name: CMake OpenCV
-        uses: ./.github/actions/cmake
+        uses: Jaybro/action-cmake@v1
         with:
-          path-cmake-lists: ${{ runner.workspace }}/pico_tree/opencv
-          # The output directories for binaries and libraries may vary in Windows depending on architecture and VS version. OpenCV 
-          # allows setting the OPENCV_BIN_INSTALL_PATH and OPENCV_LIB_INSTALL_PATH cmake variables to change these (for Windows 
+          cmake-source-dir: opencv
+          # The output directories for binaries and libraries may vary in Windows depending on architecture and VS version. OpenCV
+          # allows setting the OPENCV_BIN_INSTALL_PATH and OPENCV_LIB_INSTALL_PATH cmake variables to change these (for Windows
           # only). The directories are relative to the CMAKE_INSTALL_PREFIX variable.
-          cmake-configure-flags: -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE//'\'/'/'}/install -DBUILD_LIST=core -DOPENCV_BIN_INSTALL_PATH="bin" -DOPENCV_LIB_INSTALL_PATH="lib" -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_JPEG=OFF -DBUILD_ZLIB=OFF -DBUILD_OPENJPEG=OFF -DVIDEOIO_ENABLE_PLUGINS=OFF -DWITH_OPENJPEG=OFF -DWITH_LAPACK=OFF -DWITH_CUDA=OFF -DWITH_OPENMP=OFF -DWITH_DIRECTX=OFF -DWITH_OPENGL=OFF -DCV_DISABLE_OPTIMIZATION=ON -DCV_ENABLE_INTRINSICS=OFF -DCV_TRACE=OFF -DCPU_BASELINE="" -DOPENCV_DNN_CUDA=OFF -DWITH_OPENCL=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCL_D3D11_NV=OFF -DWITH_OPENCL_SVM=OFF
+          cmake-configure-flags: -DBUILD_LIST=core -DOPENCV_BIN_INSTALL_PATH="bin" -DOPENCV_LIB_INSTALL_PATH="lib" -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DBUILD_JPEG=OFF -DBUILD_ZLIB=OFF -DBUILD_OPENJPEG=OFF -DVIDEOIO_ENABLE_PLUGINS=OFF -DWITH_OPENJPEG=OFF -DWITH_LAPACK=OFF -DWITH_CUDA=OFF -DWITH_OPENMP=OFF -DWITH_DIRECTX=OFF -DWITH_OPENGL=OFF -DCV_DISABLE_OPTIMIZATION=ON -DCV_ENABLE_INTRINSICS=OFF -DCV_TRACE=OFF -DCPU_BASELINE="" -DOPENCV_DNN_CUDA=OFF -DWITH_OPENCL=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCL_D3D11_NV=OFF -DWITH_OPENCL_SVM=OFF
           cmake-install: true
 
       - name: CMake PicoTree
-        uses: ./.github/actions/cmake
+        uses: Jaybro/action-cmake@v1
         with:
-          path-cmake-lists: ${{ runner.workspace }}/pico_tree
-          cmake-configure-flags: -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE//'\'/'/'}/install
           cmake-ctest: true
