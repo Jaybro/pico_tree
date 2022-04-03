@@ -119,15 +119,15 @@ class StaticBuffer {
 //! \brief Dynamic MemoryBuffer using a ListPool.
 //! \details The buffer owns all memory returned by Allocate() and all memory is
 //! released when the buffer is destroyed.
-template <typename T>
-class DynamicBuffer : public ListPool<T, 256> {
+template <typename T, std::size_t ChunkSize = 256>
+class DynamicBuffer : public ListPool<T, ChunkSize> {
  public:
   //! \brief Type allocated and stored by the buffer.
-  using ValueType = typename ListPool<T, 256>::ValueType;
+  using ValueType = typename ListPool<T, ChunkSize>::ValueType;
 
-  //! Creates a DynamicBuffer.
+  //! \brief Creates a DynamicBuffer.
   inline DynamicBuffer() = default;
-  //! Creates a DynamicBuffer. Ignores the argument in favor of a common
+  //! \brief Creates a DynamicBuffer. Ignores the argument in favor of a common
   //! interface with the StaticBuffer.
   inline explicit DynamicBuffer(std::size_t const) {}
 };
