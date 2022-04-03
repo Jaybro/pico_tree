@@ -132,14 +132,13 @@ class KdTreeBuilder {
   //! \brief Constructs a KdTreeBuilder.
   inline KdTreeBuilder(
       SpaceType const& space,
-      std::vector<IndexType> const& indices,
       IndexType const max_leaf_size,
-      SplitterType const& splitter,
+      std::vector<IndexType>* indices,
       BufferType* nodes)
       : space_(space),
-        indices_(indices),
         max_leaf_size_{max_leaf_size},
-        splitter_{splitter},
+        splitter_(space, indices),
+        indices_(*indices),
         nodes_{*nodes} {}
 
   //! \brief Creates the full set of nodes for a KdTree.
@@ -236,9 +235,9 @@ class KdTreeBuilder {
   }
 
   SpaceType const& space_;
-  std::vector<IndexType> const& indices_;
   IndexType const max_leaf_size_;
-  SplitterType const& splitter_;
+  SplitterType splitter_;
+  std::vector<IndexType> const& indices_;
   BufferType& nodes_;
 };
 
@@ -1038,9 +1037,7 @@ class KdTree {
 
     ComputeBoundingBox(&root_box_);
 
-    Splitter_ splitter(points_, &indices_);
-    return BuilderType{
-        points_, indices_, max_leaf_size, splitter, &nodes_}(root_box_);
+    return BuilderType{points_, max_leaf_size, &indices_, &nodes_}(root_box_);
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
