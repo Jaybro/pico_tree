@@ -41,10 +41,10 @@ class ListPool {
   //! \brief Creates a ListPool using the default constructor.
   ListPool() : end_(nullptr), index_(ChunkSize) {}
 
-  //! \brief The ListPool class cannot be copied.
-  //! \details The ListPool uses pointers to objects and copying pointers is not
-  //! the same as creating a deep copy. For now we are not interested in
-  //! providing a deep copy.
+  //! \brief A ListPool instance cannot be copied.
+  //! \details The default copy constructor would just copy the pointer owned by
+  //! the ListPool. Also, a ListPool provides pointers to objects. Creating new
+  //! objects would invalidate those pointers.
   ListPool(ListPool const&) = delete;
 
   //! \brief ListPool move constructor.
@@ -54,6 +54,11 @@ class ListPool {
     // So we don't accidentally delete things twice.
     other.end_ = nullptr;
   }
+
+  //! \private
+  ListPool& operator=(ListPool const& other) = delete;
+  //! \private
+  ListPool& operator=(ListPool&& other) = delete;
 
   //! \brief Destroys up the ListPool using the destructor.
   ~ListPool() {
