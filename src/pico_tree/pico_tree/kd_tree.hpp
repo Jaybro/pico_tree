@@ -129,7 +129,7 @@ struct KdTreeData {
  private:
   //! \brief Recursively reads the Node and its descendants.
   inline NodeType* ReadNode(internal::Stream* stream) {
-    NodeType* node = nodes_.Allocate();
+    NodeType* node = nodes.Allocate();
     bool is_leaf;
     stream->Read(&is_leaf);
 
@@ -161,67 +161,70 @@ struct KdTreeData {
   }
 
   //! \private
-  inline void Load(internal::Stream* stream) {
-    stream->Read(&indices_);
+  inline void Read(internal::Stream* stream) {
+    stream->Read(&indices);
     // The root box gets the correct size from the KdTree constructor.
-    stream->Read(root_box_.min(), root_box_.size());
-    stream->Read(root_box_.max(), root_box_.size());
-    root_node_ = ReadNode(stream);
+    stream->Read(root_box.min(), root_box.size());
+    stream->Read(root_box.max(), root_box.size());
+    root_node = ReadNode(stream);
   }
 
   //! \private
-  inline void Save(internal::Stream* stream) const {
-    stream->Write(indices_);
-    stream->Write(root_box_.min(), root_box_.size());
-    stream->Write(root_box_.max(), root_box_.size());
-    WriteNode(root_node_, stream);
+  inline void Write(internal::Stream* stream) const {
+    stream->Write(indices);
+    stream->Write(root_box.min(), root_box.size());
+    stream->Write(root_box.max(), root_box.size());
+    WriteNode(root_node, stream);
   }
 
  public:
-  inline static KdTreeData Load(
-      IndexType npts, int sdim, internal::Stream* stream) {
+  static KdTreeData Load(internal::Stream* stream) {
+    typename BoxType::SizeType sdim;
+    typename std::vector<IndexType>::size_type npts;
+    stream->Read(&sdim);
+    stream->Read(&npts);
+
     KdTreeData kd_tree_data{
-        std::vector<IndexType>(npts),
+        {},
         BoxType(sdim),
         BufferType(internal::MaxNodesFromPoints(npts)),
         nullptr};
-
-    kd_tree_data.Load(stream);
+    kd_tree_data.Read(stream);
 
     return kd_tree_data;
   }
 
   static void Save(KdTreeData const& data, internal::Stream* stream) {
-    data.Save(stream);
+    // Write sdim.
+    stream->Write(data.root_box.size());
+    // Write npts.
+    stream->Write(data.indices.size());
+    data.Write(stream);
   }
 
   //! \brief Sorted indices that refer to points inside points_.
-  std::vector<IndexType> indices_;
+  std::vector<IndexType> indices;
   //! \brief Bounding box of the root node.
-  BoxType root_box_;
+  BoxType root_box;
   //! \brief Memory buffer for tree nodes.
-  BufferType nodes_;
+  BufferType nodes;
   //! \brief Root of the KdTree.
-  NodeType* root_node_;
+  NodeType* root_node;
 };
 
 //! \brief This class provides the build algorithm of the KdTree. How the KdTree
 //! is build depends on the Splitter template argument.
-template <typename Traits_, typename SpaceTag_, typename Splitter_, int Dim_>
+template <typename Traits_, typename Splitter_, int Dim_, typename KdTreeData_>
 class KdTreeBuilder {
  public:
   using IndexType = typename Traits_::IndexType;
   using ScalarType = typename Traits_::ScalarType;
   using SpaceType = typename Traits_::SpaceType;
   using BoxType = Box<ScalarType, Dim_>;
-  //! \brief Node type supported by KdTreeBuilder based on SpaceTag_.
-  using NodeType = typename KdTreeSpaceTagTraits<
-      SpaceTag_>::template NodeType<IndexType, ScalarType>;
   using SplitterType = Splitter_;
-  //! \brief Memory buffer type supported by KdTreeBuilder based on SpaceTag_.
-  using BufferType = typename Splitter_::template BufferType<NodeType>;
-
-  using KdTreeDataType = KdTreeData<IndexType, ScalarType, Dim_, BufferType>;
+  using KdTreeDataType = KdTreeData_;
+  using NodeType = typename KdTreeDataType::NodeType;
+  using BufferType = typename KdTreeDataType::BufferType;
 
   //! \brief Constructs a KdTreeBuilder.
   inline KdTreeBuilder(
@@ -845,15 +848,6 @@ class KdTree {
       Dim_ <= Traits_::Dim,
       "SPATIAL_DIMENSION_TREE_MUST_BE_SMALLER_OR_EQUAL_TO_TRAITS_DIMENSION");
 
-  using BuilderType = internal::
-      KdTreeBuilder<Traits_, typename Metric_::SpaceTag, Splitter_, Dim_>;
-  using NodeType = typename BuilderType::NodeType;
-  //! Either an array or vector (compile time vs. run time).
-  using SequenceType =
-      typename internal::Sequence<typename Traits_::ScalarType, Dim_>;
-  using BoxType = typename internal::Box<typename Traits_::ScalarType, Dim_>;
-  using BufferType = typename BuilderType::BufferType;
-
  public:
   //! \brief Index type.
   using IndexType = typename Traits_::IndexType;
@@ -871,21 +865,23 @@ class KdTree {
   //! \brief Neighbor type of various search resuls.
   using NeighborType = Neighbor<IndexType, ScalarType>;
 
-  // TODO Make private.
-  using KdTreeDataType = internal::
-      KdTreeData<IndexType, ScalarType, Dim_, typename BuilderType::BufferType>;
+ private:
+  //! \brief Node type based on Metric_::SpaceTag.
+  using NodeType = typename internal::KdTreeSpaceTagTraits<
+      typename Metric_::SpaceTag>::template NodeType<IndexType, ScalarType>;
+  //! \brief Memory buffer based on Metric_::SpaceTag.
+  using BufferType = typename Splitter_::template BufferType<NodeType>;
+  using KdTreeDataType =
+      internal::KdTreeData<IndexType, ScalarType, Dim_, BufferType>;
 
  public:
   //! \brief The KdTree cannot be copied.
   //! \details The KdTree uses pointers to nodes and copying pointers is not
-  //! the same as creating a deep copy. For now we are not interested in
-  //! providing a deep copy.
+  //! the same as creating a deep copy.
   //! \private
   KdTree(KdTree const&) = delete;
 
   //! \brief Move constructor of the KdTree.
-  //! \details The move constructor is not implicitly created because of the
-  //! deleted copy constructor.
   //! \private
   KdTree(KdTree&&) = default;
 
@@ -910,7 +906,15 @@ class KdTree {
   KdTree(SpaceType points, IndexType max_leaf_size)
       : points_(std::move(points)),
         metric_(),
-        data_(BuilderType::Build(points_, max_leaf_size)) {}
+        data_(
+            internal::KdTreeBuilder<Traits_, Splitter_, Dim_, KdTreeDataType>::
+                Build(points_, max_leaf_size)) {}
+
+  //! \private
+  KdTree& operator=(KdTree const& other) = delete;
+
+  //! \private
+  KdTree& operator=(KdTree&& other) = default;
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor .
@@ -920,7 +924,7 @@ class KdTree {
   //! \see internal::SearchAknn
   template <typename P, typename V>
   inline void SearchNearest(P const& x, V* visitor) const {
-    SearchNearest(data_.root_node_, x, visitor, typename Metric_::SpaceTag());
+    SearchNearest(data_.root_node, x, visitor, typename Metric_::SpaceTag());
   }
 
   //! \brief Searches for the nearest neighbor of point \p x.
@@ -1077,13 +1081,13 @@ class KdTree {
     internal::SearchBoxEuclidean<Traits_, Metric_, Dim>(
         points_,
         metric_,
-        data_.indices_,
-        data_.root_box_,
+        data_.indices,
+        data_.root_box,
         internal::BoxMap<ScalarType const, Dim>(
             Traits_::PointCoords(min),
             Traits_::PointCoords(max),
             Traits_::SpaceSdim(points_)),
-        idxs)(data_.root_node_);
+        idxs)(data_.root_node);
   }
 
   //! \brief Point set used by the tree.
@@ -1135,9 +1139,7 @@ class KdTree {
   KdTree(SpaceType points, internal::Stream* stream)
       : points_(std::move(points)),
         metric_(),
-        data_(KdTreeDataType::Load(
-            Traits_::SpaceNpts(points_), Traits_::SpaceSdim(points_), stream)) {
-  }
+        data_(KdTreeDataType::Load(stream)) {}
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node.
@@ -1148,7 +1150,7 @@ class KdTree {
       V* visitor,
       EuclideanSpaceTag) const {
     internal::SearchNearestEuclidean<Traits_, Metric_, Dim, P, V>(
-        points_, metric_, data_.indices_, x, visitor)(node);
+        points_, metric_, data_.indices, x, visitor)(node);
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
@@ -1160,7 +1162,7 @@ class KdTree {
       V* visitor,
       TopologicalSpaceTag) const {
     internal::SearchNearestTopological<Traits_, Metric_, Dim, P, V>(
-        points_, metric_, data_.indices_, x, visitor)(node);
+        points_, metric_, data_.indices, x, visitor)(node);
   }
 
   //! \brief Point set adapter used for querying point data.
