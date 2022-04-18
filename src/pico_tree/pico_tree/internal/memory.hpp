@@ -55,10 +55,15 @@ class ListPool {
     other.end_ = nullptr;
   }
 
-  //! \private
+  //! \brief A ListPool instance cannot be copied.
   ListPool& operator=(ListPool const& other) = delete;
-  //! \private
-  ListPool& operator=(ListPool&& other) = delete;
+
+  //! \brief ListPool move assignment.
+  ListPool& operator=(ListPool&& other) {
+    end_ = other.end_;
+    index_ = other.index_;
+    other.end_ = nullptr;
+  }
 
   //! \brief Destroys up the ListPool using the destructor.
   ~ListPool() {
