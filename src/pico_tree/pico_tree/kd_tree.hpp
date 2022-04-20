@@ -226,6 +226,23 @@ class KdTreeBuilder {
   using NodeType = typename KdTreeDataType::NodeType;
   using BufferType = typename KdTreeDataType::BufferType;
 
+  inline static KdTreeDataType Build(
+      SpaceType const& points, IndexType const max_leaf_size) {
+    assert(Traits_::SpaceNpts(points) > 0);
+    assert(max_leaf_size > 0);
+
+    std::vector<IndexType> indices(Traits_::SpaceNpts(points));
+    std::iota(indices.begin(), indices.end(), 0);
+    BoxType root_box = ComputeBoundingBox(points);
+    BufferType nodes(internal::MaxNodesFromPoints(Traits_::SpaceNpts(points)));
+    NodeType* root_node =
+        KdTreeBuilder{points, max_leaf_size, &indices, &nodes}(root_box);
+
+    return KdTreeDataType{
+        std::move(indices), root_box, std::move(nodes), root_node};
+  }
+
+ private:
   //! \brief Constructs a KdTreeBuilder.
   inline KdTreeBuilder(
       SpaceType const& space,
@@ -244,23 +261,6 @@ class KdTreeBuilder {
     return SplitIndices(0, 0, Traits_::SpaceNpts(space_), &box);
   }
 
-  inline static KdTreeDataType Build(
-      SpaceType const& points, IndexType const max_leaf_size) {
-    assert(Traits_::SpaceNpts(points) > 0);
-    assert(max_leaf_size > 0);
-
-    std::vector<IndexType> indices(Traits_::SpaceNpts(points));
-    std::iota(indices.begin(), indices.end(), 0);
-    BoxType root_box = ComputeBoundingBox(points);
-    BufferType nodes(internal::MaxNodesFromPoints(Traits_::SpaceNpts(points)));
-    NodeType* root_node =
-        KdTreeBuilder{points, max_leaf_size, &indices, &nodes}(root_box);
-
-    return KdTreeDataType{
-        std::move(indices), root_box, std::move(nodes), root_node};
-  }
-
- private:
   inline static BoxType ComputeBoundingBox(SpaceType const& points) {
     BoxType box(Traits_::SpaceSdim(points));
     box.FillInverseMax();
