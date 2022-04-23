@@ -1169,7 +1169,7 @@ class KdTree {
   SpaceType points_;
   //! \brief Metric used for comparing distances.
   MetricType metric_;
-
+  //! \brief Data structure of the KdTree.
   KdTreeDataType data_;
 };
 
