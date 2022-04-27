@@ -164,8 +164,8 @@ struct KdTreeData {
   inline void Read(internal::Stream* stream) {
     stream->Read(&indices);
     // The root box gets the correct size from the KdTree constructor.
-    stream->Read(root_box.min(), root_box.size());
-    stream->Read(root_box.max(), root_box.size());
+    stream->Read(root_box.size(), root_box.min());
+    stream->Read(root_box.size(), root_box.max());
     root_node = ReadNode(stream);
   }
 

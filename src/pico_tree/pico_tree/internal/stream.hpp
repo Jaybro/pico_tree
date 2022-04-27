@@ -49,7 +49,7 @@ class Stream {
   //! \brief Reads an array of values from the stream.
   //! \tparam T Type of a value.
   template <typename T>
-  inline void Read(T* values, std::size_t size) {
+  inline void Read(std::size_t size, T* values) {
     stream_.read(reinterpret_cast<char*>(values), sizeof(T) * size);
   }
 
