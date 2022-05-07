@@ -118,6 +118,15 @@ class CoverTree {
         base_{base},
         root_(Build()) {}
 
+  //! \brief Searches for the nearest neighbor of point \p x.
+  //! \details Interpretation of the output distance depends on the Metric. The
+  //! default distance metric equals L2.
+  template <typename P>
+  inline void SearchNn(P const& x, NeighborType* nn) const {
+    internal::SearchNn<NeighborType> v(nn);
+    SearchNearest(root_, x, &v);
+  }
+
   //! \brief Searches for the k nearest neighbors of point \p x, where k equals
   //! std::distance(begin, end). It is expected that the value type of the
   //! iterator equals Neighbor<Index, Scalar>.
