@@ -63,6 +63,7 @@ class ListPool {
     end_ = other.end_;
     index_ = other.index_;
     other.end_ = nullptr;
+    return *this;
   }
 
   //! \brief Destroys up the ListPool using the destructor.
