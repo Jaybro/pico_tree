@@ -28,6 +28,9 @@ template <typename T, std::size_t ChunkSize>
 class ListPool {
  private:
   static_assert(std::is_trivial<T>::value, "TYPE_T_IS_NOT_TRIVIAL");
+  static_assert(
+      std::is_trivially_destructible<T>::value,
+      "TYPE_T_IS_NOT_TRIVIALLY_DESTRUCTIBLE");
   //! \brief List item.
   struct Chunk {
     Chunk* prev;
