@@ -113,7 +113,7 @@ struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
   using NodeType = KdTreeNodeTopological<Index_, Scalar_>;
 };
 
-template <typename Index_, typename Scalar_, int Dim_, typename Buffer_>
+template <typename Index_, typename Scalar_, int Dim_, typename Node_>
 struct KdTreeData {
   //! \brief Index type.
   using IndexType = Index_;
@@ -122,14 +122,14 @@ struct KdTreeData {
   //! \brief Box type.
   using BoxType = typename internal::Box<ScalarType, Dim_>;
 
-  using BufferType = Buffer_;
+  using NodeType = Node_;
 
-  using NodeType = typename BufferType::ValueType;
+  using NodeAllocatorType = ListPool<NodeType, 256>;
 
  private:
   //! \brief Recursively reads the Node and its descendants.
   inline NodeType* ReadNode(internal::Stream* stream) {
-    NodeType* node = nodes.Allocate();
+    NodeType* node = allocator.Allocate();
     bool is_leaf;
     stream->Read(&is_leaf);
 
@@ -180,15 +180,9 @@ struct KdTreeData {
  public:
   static KdTreeData Load(internal::Stream* stream) {
     typename BoxType::SizeType sdim;
-    typename std::vector<IndexType>::size_type npts;
     stream->Read(&sdim);
-    stream->Read(&npts);
 
-    KdTreeData kd_tree_data{
-        {},
-        BoxType(sdim),
-        BufferType(internal::MaxNodesFromPoints(npts)),
-        nullptr};
+    KdTreeData kd_tree_data{{}, BoxType(sdim), NodeAllocatorType(), nullptr};
     kd_tree_data.Read(stream);
 
     return kd_tree_data;
@@ -197,8 +191,6 @@ struct KdTreeData {
   static void Save(KdTreeData const& data, internal::Stream* stream) {
     // Write sdim.
     stream->Write(data.root_box.size());
-    // Write npts.
-    stream->Write(data.indices.size());
     data.Write(stream);
   }
 
@@ -206,8 +198,8 @@ struct KdTreeData {
   std::vector<IndexType> indices;
   //! \brief Bounding box of the root node.
   BoxType root_box;
-  //! \brief Memory buffer for tree nodes.
-  BufferType nodes;
+  //! \brief Memory allocator for tree nodes.
+  NodeAllocatorType allocator;
   //! \brief Root of the KdTree.
   NodeType* root_node;
 };
@@ -224,7 +216,7 @@ class KdTreeBuilder {
   using SplitterType = Splitter_;
   using KdTreeDataType = KdTreeData_;
   using NodeType = typename KdTreeDataType::NodeType;
-  using BufferType = typename KdTreeDataType::BufferType;
+  using NodeAllocatorType = typename KdTreeDataType::NodeAllocatorType;
 
   inline static KdTreeDataType Build(
       SpaceType const& points, IndexType const max_leaf_size) {
@@ -234,12 +226,12 @@ class KdTreeBuilder {
     std::vector<IndexType> indices(Traits_::SpaceNpts(points));
     std::iota(indices.begin(), indices.end(), 0);
     BoxType root_box = ComputeBoundingBox(points);
-    BufferType nodes(internal::MaxNodesFromPoints(Traits_::SpaceNpts(points)));
+    NodeAllocatorType allocator;
     NodeType* root_node =
-        KdTreeBuilder{points, max_leaf_size, &indices, &nodes}(root_box);
+        KdTreeBuilder{points, max_leaf_size, &indices, &allocator}(root_box);
 
     return KdTreeDataType{
-        std::move(indices), root_box, std::move(nodes), root_node};
+        std::move(indices), root_box, std::move(allocator), root_node};
   }
 
  private:
@@ -248,12 +240,12 @@ class KdTreeBuilder {
       SpaceType const& space,
       IndexType const max_leaf_size,
       std::vector<IndexType>* indices,
-      BufferType* nodes)
+      NodeAllocatorType* allocator)
       : space_(space),
         max_leaf_size_{max_leaf_size},
         splitter_(space, indices),
         indices_(*indices),
-        nodes_{*nodes} {}
+        allocator_{*allocator} {}
 
   //! \brief Creates the full set of nodes for a KdTree.
   inline NodeType* operator()(BoxType const& root_box) const {
@@ -285,7 +277,7 @@ class KdTreeBuilder {
       IndexType const offset,
       IndexType const size,
       BoxType* box) const {
-    NodeType* node = nodes_.Allocate();
+    NodeType* node = allocator_.Allocate();
     //
     if (size <= max_leaf_size_) {
       node->data.leaf.begin_idx = offset;
@@ -360,7 +352,7 @@ class KdTreeBuilder {
   IndexType const max_leaf_size_;
   SplitterType splitter_;
   std::vector<IndexType> const& indices_;
-  BufferType& nodes_;
+  NodeAllocatorType& allocator_;
 };
 
 //! \brief This class provides a search nearest function for Euclidean spaces.
@@ -690,9 +682,6 @@ class SplitterLongestMedian {
   using SpaceType = typename Traits_::SpaceType;
   template <int Dim_>
   using BoxType = typename internal::Box<ScalarType, Dim_>;
-  //! \brief Buffer type used with this splitter.
-  template <typename T>
-  using BufferType = internal::StaticBuffer<T>;
 
   //! \private
   SplitterLongestMedian(
@@ -758,9 +747,6 @@ class SplitterSlidingMidpoint {
   using SpaceType = typename Traits_::SpaceType;
   template <int Dim_>
   using BoxType = typename internal::Box<ScalarType, Dim_>;
-  //! \brief Buffer type used with this splitter.
-  template <typename T>
-  using BufferType = internal::DynamicBuffer<T>;
 
   //! \private
   SplitterSlidingMidpoint(
@@ -869,10 +855,8 @@ class KdTree {
   //! \brief Node type based on Metric_::SpaceTag.
   using NodeType = typename internal::KdTreeSpaceTagTraits<
       typename Metric_::SpaceTag>::template NodeType<IndexType, ScalarType>;
-  //! \brief Memory buffer based on Metric_::SpaceTag.
-  using BufferType = typename Splitter_::template BufferType<NodeType>;
   using KdTreeDataType =
-      internal::KdTreeData<IndexType, ScalarType, Dim_, BufferType>;
+      internal::KdTreeData<IndexType, ScalarType, Dim_, NodeType>;
 
  public:
   //! \brief The KdTree cannot be copied.
