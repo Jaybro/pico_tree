@@ -124,7 +124,7 @@ struct KdTreeData {
 
   using NodeType = Node_;
 
-  using NodeAllocatorType = ListPool<NodeType, 256>;
+  using NodeAllocatorType = ChunkAllocator<NodeType, 256>;
 
  private:
   //! \brief Recursively reads the Node and its descendants.
