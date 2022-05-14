@@ -21,21 +21,20 @@ namespace internal {
 template <typename T, std::size_t ChunkSize>
 class ListPoolResource {
  private:
+  struct Node;
+
+ public:
   static_assert(std::is_trivial<T>::value, "TYPE_T_IS_NOT_TRIVIAL");
   static_assert(
       std::is_trivially_destructible<T>::value,
       "TYPE_T_IS_NOT_TRIVIALLY_DESTRUCTIBLE");
 
-  //! \brief Chunk of memory.
-  struct Chunk {
-    Chunk* prev;
-    std::array<T, ChunkSize> data;
-  };
+  //! \brief Value type allocated by the ListPoolResource.
+  using ValueType = T;
+  //! \brief Chunk type allocated by the ListPoolResource.
+  using Chunk = typename Node::Chunk;
 
  public:
-  //! \brief Type allocated by the ListPoolResource.
-  using ValueType = T;
-
   //! \brief ListPoolResource constructor.
   ListPoolResource() : head_(nullptr) {}
 
@@ -63,37 +62,51 @@ class ListPoolResource {
   virtual ~ListPoolResource() { Release(); }
 
   //! \brief Allocates a chunk of memory and returns a pointer to it.
-  inline std::array<T, ChunkSize>* Allocate() {
-    Chunk* chunk = new Chunk;
-    chunk->prev = head_;
-    head_ = chunk;
+  inline Chunk* Allocate() {
+    Node* node = new Node;
+    node->prev = head_;
+    head_ = node;
     return &head_->data;
   }
 
   //! \brief Release all memory allocated by this ListPoolResource.
   void Release() {
-    // Suppose Chunk was contained by an std::unique_ptr, then it may happen
-    // that we hit a recursion limit depending on how many chunks are
-    // destructed.
+    // Suppose Node was contained by an std::unique_ptr, then it may happen that
+    // we hit a recursion limit depending on how many nodes are destructed.
     while (head_ != nullptr) {
-      Chunk* chunk = head_->prev;
+      Node* node = head_->prev;
       delete head_;
-      head_ = chunk;
+      head_ = node;
     }
   }
 
  private:
-  Chunk* head_;
+  Node* head_;
+};
+
+//! \brief Node containing a chunk of memory.
+template <typename T, std::size_t ChunkSize>
+struct ListPoolResource<T, ChunkSize>::Node {
+  //! \brief Chunk type allocated by the ListPoolResource.
+  using Chunk = std::array<T, ChunkSize>;
+
+  Node* prev;
+  Chunk data;
 };
 
 //! \brief An instance of ChunkAllocator constructs objects. It does so in
 //! chunks of size ChunkSize to reduce memory fragmentation.
 template <typename T, std::size_t ChunkSize>
 class ChunkAllocator final {
+ private:
+  using Resource = ListPoolResource<T, ChunkSize>;
+  using Chunk = typename Resource::Chunk;
+
  public:
-  //! \brief Type allocated by the ChunkAllocator.
+  //! \brief Value type allocated by the ListPoolResource.
   using ValueType = T;
 
+  //! \brief ChunkAllocator constructor.
   ChunkAllocator() : object_index_(ChunkSize) {}
 
   //! \brief Create an object of type T and return a pointer to it.
@@ -110,9 +123,9 @@ class ChunkAllocator final {
   }
 
  private:
-  ListPoolResource<T, ChunkSize> resource_;
+  Resource resource_;
   std::size_t object_index_;
-  std::array<T, ChunkSize>* chunk_;
+  Chunk* chunk_;
 };
 
 }  // namespace internal
