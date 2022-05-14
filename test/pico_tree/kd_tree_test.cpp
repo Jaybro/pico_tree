@@ -23,7 +23,7 @@ class DynamicSpace {
   DynamicSpace(std::vector<Point> const& space, int sdim)
       : space_(space), sdim_(sdim) {}
 
-  inline operator std::vector<Point> const &() const { return space_; }
+  inline operator std::vector<Point> const&() const { return space_; }
 
   int sdim() const { return sdim_; }
 
@@ -195,12 +195,14 @@ void QueryKnn(
     typename PointX::ScalarType const area_size,
     int const k) {
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  KdTree<PointX> tree(random, 8);
+  KdTree<PointX> tree1(random, 8);
 
-  // This line compile time "tests" the move capability of the tree.
-  auto tree2 = std::move(tree);
+  // "Test" move constructor.
+  auto tree2 = std::move(tree1);
+  // "Test" move assignment.
+  tree1 = std::move(tree2);
 
-  TestKnn(tree2, static_cast<typename KdTree<PointX>::IndexType>(k));
+  TestKnn(tree1, static_cast<typename KdTree<PointX>::IndexType>(k));
 }
 
 }  // namespace
