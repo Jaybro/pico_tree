@@ -32,9 +32,9 @@ struct KdTreeNodeBase {
 //! \brief Tree leaf.
 template <typename Index_>
 struct KdTreeLeaf {
-  //! \private
+  //! \brief Begin of an index range.
   Index_ begin_idx;
-  //! \private
+  //! \brief End of an index range.
   Index_ end_idx;
 };
 
@@ -113,17 +113,13 @@ struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
   using NodeType = KdTreeNodeTopological<Index_, Scalar_>;
 };
 
+//! \brief The data structure that represents a KdTree.
 template <typename Index_, typename Scalar_, int Dim_, typename Node_>
 struct KdTreeData {
-  //! \brief Index type.
   using IndexType = Index_;
-  //! \brief Scalar type.
   using ScalarType = Scalar_;
-  //! \brief Box type.
   using BoxType = typename internal::Box<ScalarType, Dim_>;
-
   using NodeType = Node_;
-
   using NodeAllocatorType = ChunkAllocator<NodeType, 256>;
 
  private:
@@ -160,7 +156,6 @@ struct KdTreeData {
     }
   }
 
-  //! \private
   inline void Read(internal::Stream* stream) {
     stream->Read(&indices);
     // The root box gets the correct size from the KdTree constructor.
@@ -169,7 +164,6 @@ struct KdTreeData {
     root_node = ReadNode(stream);
   }
 
-  //! \private
   inline void Write(internal::Stream* stream) const {
     stream->Write(indices);
     stream->Write(root_box.min(), root_box.size());
@@ -205,7 +199,7 @@ struct KdTreeData {
 };
 
 //! \brief This class provides the build algorithm of the KdTree. How the KdTree
-//! is build depends on the Splitter template argument.
+//! will be build depends on the Splitter template argument.
 template <typename Traits_, typename Splitter_, int Dim_, typename KdTreeData_>
 class KdTreeBuilder {
  public:
@@ -218,6 +212,8 @@ class KdTreeBuilder {
   using NodeType = typename KdTreeDataType::NodeType;
   using NodeAllocatorType = typename KdTreeDataType::NodeAllocatorType;
 
+  //! \brief Construct a KdTree given \p points , \p max_leaf_size and
+  //! SplitterType.
   inline static KdTreeDataType Build(
       SpaceType const& points, IndexType const max_leaf_size) {
     assert(Traits_::SpaceNpts(points) > 0);
@@ -235,7 +231,6 @@ class KdTreeBuilder {
   }
 
  private:
-  //! \brief Constructs a KdTreeBuilder.
   inline KdTreeBuilder(
       SpaceType const& space,
       IndexType const max_leaf_size,
@@ -370,7 +365,6 @@ class SearchNearestEuclidean {
   //! \brief Node type supported by this SearchNearestEuclidean.
   using NodeType = KdTreeNodeEuclidean<IndexType, ScalarType>;
 
-  //! \private
   inline SearchNearestEuclidean(
       SpaceType const& points,
       Metric_ const& metric,
@@ -391,7 +385,6 @@ class SearchNearestEuclidean {
   }
 
  private:
-  //! \private
   inline void SearchNearest(
       NodeType const* const node, ScalarType node_box_distance) {
     if (node->IsLeaf()) {
@@ -480,7 +473,6 @@ class SearchNearestTopological {
   //! \brief Node type supported by this SearchNearestTopological.
   using NodeType = KdTreeNodeTopological<IndexType, ScalarType>;
 
-  //! \private
   inline SearchNearestTopological(
       SpaceType const& points,
       Metric_ const& metric,
@@ -568,7 +560,12 @@ class SearchNearestTopological {
   Visitor_& visitor_;
 };
 
-//! \brief This class provides the search box function.
+//! \brief A functor that provides range searches for Euclidean spaces. Query
+//! time is bounded by O(n^(1-1/Dim)+k).
+//! \details Many tree nodes are excluded by checking if they intersect with the
+//! box of the query. We don't store the bounding box of each node but calculate
+//! them at run time. This slows down SearchBox in favor of having faster
+//! nearest neighbor searches.
 template <typename Traits_, typename Metric_, int Dim_>
 class SearchBoxEuclidean {
  public:
@@ -581,12 +578,6 @@ class SearchBoxEuclidean {
   using ScalarType = typename Traits_::ScalarType;
   using SpaceType = typename Traits_::SpaceType;
 
-  //! \brief Returns all points within the box defined by \p rng_min and \p
-  //! rng_max for \p node. Query time is bounded by O(n^(1-1/Dim)+k).
-  //! \details Many tree nodes are excluded by checking if they intersect with
-  //! the box of the query. We don't store the bounding box of each node but
-  //! calculate them at run time. This slows down SearchBox in favor of having
-  //! faster nearest neighbor searches.
   inline SearchBoxEuclidean(
       SpaceType const& points,
       Metric_ const& metric,
@@ -601,6 +592,7 @@ class SearchBoxEuclidean {
         query_(query),
         idxs_(*idxs) {}
 
+  //! \brief Range search starting from \p node.
   template <typename Node>
   inline void operator()(Node const* const node) {
     if (node->IsLeaf()) {
@@ -644,7 +636,7 @@ class SearchBoxEuclidean {
   }
 
  private:
-  //! Reports all indices contained by \p node.
+  //! \brief Reports all indices contained by \p node.
   template <typename Node>
   inline void ReportNode(Node const* const node) const {
     if (node->IsLeaf()) {
@@ -683,7 +675,6 @@ class SplitterLongestMedian {
   template <int Dim_>
   using BoxType = typename internal::Box<ScalarType, Dim_>;
 
-  //! \private
   SplitterLongestMedian(
       SpaceType const& points, std::vector<IndexType>* p_indices)
       : points_{points}, indices_{*p_indices} {}
@@ -748,7 +739,6 @@ class SplitterSlidingMidpoint {
   template <int Dim_>
   using BoxType = typename internal::Box<ScalarType, Dim_>;
 
-  //! \private
   SplitterSlidingMidpoint(
       SpaceType const& points, std::vector<IndexType>* p_indices)
       : points_{points}, indices_{*p_indices} {}
@@ -859,16 +849,6 @@ class KdTree {
       internal::KdTreeData<IndexType, ScalarType, Dim_, NodeType>;
 
  public:
-  //! \brief The KdTree cannot be copied.
-  //! \details The KdTree uses pointers to nodes and copying pointers is not
-  //! the same as creating a deep copy.
-  //! \private
-  KdTree(KdTree const&) = delete;
-
-  //! \brief Move constructor of the KdTree.
-  //! \private
-  KdTree(KdTree&&) = default;
-
   //! \brief Creates a KdTree given \p points and \p max_leaf_size.
   //!
   //! \details
@@ -894,10 +874,18 @@ class KdTree {
             internal::KdTreeBuilder<Traits_, Splitter_, Dim_, KdTreeDataType>::
                 Build(points_, max_leaf_size)) {}
 
-  //! \private
+  //! \brief The KdTree cannot be copied.
+  //! \details The KdTree uses pointers to nodes and copying pointers is not
+  //! the same as creating a deep copy.
+  KdTree(KdTree const&) = delete;
+
+  //! \brief Move constructor of the KdTree.
+  KdTree(KdTree&&) = default;
+
+  //! \brief KdTree copy assignment.
   KdTree& operator=(KdTree const& other) = delete;
 
-  //! \private
+  //! \brief KdTree move assignment.
   KdTree& operator=(KdTree&& other) = default;
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
@@ -1059,9 +1047,9 @@ class KdTree {
       P const& min, P const& max, std::vector<IndexType>* idxs) const {
     idxs->clear();
     // Note that it's never checked if the bounding box intersects at all. For
-    // now it is assumed that this check is not worth it: If there was overlap
-    // then the search is slower. So unless many queries don't intersect there
-    // is no point in adding it.
+    // now it is assumed that this check is not worth it: If there is any
+    // overlap then the search is slower. So unless many queries don't intersect
+    // there is no point in adding it.
     internal::SearchBoxEuclidean<Traits_, Metric_, Dim>(
         points_,
         metric_,

@@ -103,7 +103,7 @@ class ChunkAllocator final {
   using Chunk = typename Resource::Chunk;
 
  public:
-  //! \brief Value type allocated by the ListPoolResource.
+  //! \brief Value type allocated by the ChunkAllocator.
   using ValueType = T;
 
   //! \brief ChunkAllocator constructor.
