@@ -14,5 +14,6 @@
 *.md text
 *.txt text
 *.yml text
+*.cff text
 *.cmake text
 *.cmake.in text
