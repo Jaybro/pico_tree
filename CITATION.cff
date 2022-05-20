@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+title: PicoTree
+message: Please cite this software using these metadata.
+type: software
+authors:
+  - given-names: Jonathan
+    family-names: Broere
+repository: 'https://github.com/Jaybro/pico_tree'
+abstract: >-
+  PicoTree is a C++ header only library with Python
+  bindings for nearest neighbor searches and range
+  searches.
+license: MIT
