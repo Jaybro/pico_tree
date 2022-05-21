@@ -238,14 +238,14 @@ class KdTreeBuilder {
       NodeAllocatorType* allocator)
       : space_(space),
         max_leaf_size_{max_leaf_size},
-        splitter_(space, indices),
+        splitter_(space),
         indices_(*indices),
         allocator_{*allocator} {}
 
   //! \brief Creates the full set of nodes for a KdTree.
-  inline NodeType* operator()(BoxType const& root_box) const {
+  inline NodeType* operator()(BoxType const& root_box) {
     BoxType box(root_box);
-    return SplitIndices(0, 0, Traits_::SpaceNpts(space_), &box);
+    return SplitIndices(0, indices_.begin(), indices_.end(), &box);
   }
 
   inline static BoxType ComputeBoundingBox(SpaceType const& points) {
@@ -259,7 +259,7 @@ class KdTreeBuilder {
 
   //! \brief Creates a tree node for a range of indices, splits the range in two
   //! and recursively does the same for each sub set of indices until the index
-  //! range \p size is less than or equal to max_leaf_size_.
+  //! range size is less than or equal to max_leaf_size_.
   //! \details While descending the tree we split nodes based on the root box
   //! until leaf nodes are reached. Inside the leaf nodes the boxes are updated
   //! to be the bounding boxes of the points they contain. While unwinding the
@@ -267,32 +267,31 @@ class KdTreeBuilder {
   //! merging leaf nodes. Since the updated split informaton based on the leaf
   //! nodes can have smaller bounding boxes than the original ones, we can
   //! improve query times.
+  template <typename RandomAccessIterator_>
   inline NodeType* SplitIndices(
       IndexType const depth,
-      IndexType const offset,
-      IndexType const size,
+      RandomAccessIterator_ rbegin,
+      RandomAccessIterator_ rend,
       BoxType* box) const {
     NodeType* node = allocator_.Allocate();
     //
-    if (size <= max_leaf_size_) {
-      node->data.leaf.begin_idx = offset;
-      node->data.leaf.end_idx = offset + size;
+    if ((rend - rbegin) <= max_leaf_size_) {
+      node->data.leaf.begin_idx =
+          static_cast<IndexType>(rbegin - indices_.cbegin());
+      node->data.leaf.end_idx =
+          static_cast<IndexType>(rend - indices_.cbegin());
       node->left = nullptr;
       node->right = nullptr;
       // Keep the original box in case it was empty.
-      if (size > 0) {
-        ComputeBoundingBox(
-            node->data.leaf.begin_idx, node->data.leaf.end_idx, box);
+      if (rend > rbegin) {
+        ComputeBoundingBox(rbegin, rend, box);
       }
     } else {
+      // rsplit equals rend for the left branch and rbegin for the right branch.
+      typename std::vector<IndexType>::iterator rsplit;
       std::size_t split_dim;
-      IndexType split_idx;
       ScalarType split_val;
-      splitter_(depth, offset, size, *box, &split_dim, &split_idx, &split_val);
-
-      // The split_idx is used as the first index of the right branch.
-      IndexType const left_size = split_idx - offset;
-      IndexType const right_size = size - left_size;
+      splitter_(depth, rbegin, rend, *box, &rsplit, &split_dim, &split_val);
 
       BoxType right = *box;
       // Argument box will function as the left bounding box until we merge left
@@ -300,8 +299,8 @@ class KdTreeBuilder {
       box->max(split_dim) = split_val;
       right.min(split_dim) = split_val;
 
-      node->left = SplitIndices(depth + 1, offset, left_size, box);
-      node->right = SplitIndices(depth + 1, split_idx, right_size, &right);
+      node->left = SplitIndices(depth + 1, rbegin, rsplit, box);
+      node->right = SplitIndices(depth + 1, rsplit, rend, &right);
 
       SetBranch(*box, right, split_dim, node);
 
@@ -313,11 +312,14 @@ class KdTreeBuilder {
     return node;
   }
 
+  template <typename RandomAccessIterator_>
   inline void ComputeBoundingBox(
-      IndexType const begin_idx, IndexType const end_idx, BoxType* box) const {
+      RandomAccessIterator_ rbegin,
+      RandomAccessIterator_ rend,
+      BoxType* box) const {
     box->FillInverseMax();
-    for (IndexType j = begin_idx; j < end_idx; ++j) {
-      box->Fit(Traits_::PointCoords(Traits_::PointAt(space_, indices_[j])));
+    for (; rbegin < rend; ++rbegin) {
+      box->Fit(Traits_::PointCoords(Traits_::PointAt(space_, *rbegin)));
     }
   }
 
@@ -346,7 +348,7 @@ class KdTreeBuilder {
   SpaceType const& space_;
   IndexType const max_leaf_size_;
   SplitterType splitter_;
-  std::vector<IndexType> const& indices_;
+  std::vector<IndexType>& indices_;
   NodeAllocatorType& allocator_;
 };
 
@@ -675,34 +677,32 @@ class SplitterLongestMedian {
   template <int Dim_>
   using BoxType = typename internal::Box<ScalarType, Dim_>;
 
-  SplitterLongestMedian(
-      SpaceType const& points, std::vector<IndexType>* p_indices)
-      : points_{points}, indices_{*p_indices} {}
+  SplitterLongestMedian(SpaceType const& points) : points_{points} {}
 
   //! \brief This function splits a node.
-  template <int Dim_>
+  template <typename RandomAccessIterator_, int Dim_>
   inline void operator()(
       IndexType const,  // depth
-      IndexType const offset,
-      IndexType const size,
+      RandomAccessIterator_ rbegin,
+      RandomAccessIterator_ rend,
       BoxType<Dim_> const& box,
+      RandomAccessIterator_* rsplit,
       std::size_t* split_dim,
-      IndexType* split_idx,
       ScalarType* split_val) const {
     ScalarType max_delta;
     box.LongestAxis(split_dim, &max_delta);
 
-    *split_idx = size / 2 + offset;
+    *rsplit = rbegin + (rend - rbegin) / 2;
 
     std::nth_element(
-        indices_.begin() + offset,
-        indices_.begin() + *split_idx,
-        indices_.begin() + offset + size,
+        rbegin,
+        *rsplit,
+        rend,
         [this, &split_dim](IndexType const a, IndexType const b) -> bool {
           return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
         });
 
-    *split_val = PointCoord(indices_[*split_idx], *split_dim);
+    *split_val = PointCoord(**rsplit, *split_dim);
   }
 
  private:
@@ -713,7 +713,6 @@ class SplitterLongestMedian {
   }
 
   SpaceType const& points_;
-  std::vector<IndexType>& indices_;
 };
 
 //! \brief Bounding boxes of tree nodes are split in the middle along the
@@ -739,19 +738,17 @@ class SplitterSlidingMidpoint {
   template <int Dim_>
   using BoxType = typename internal::Box<ScalarType, Dim_>;
 
-  SplitterSlidingMidpoint(
-      SpaceType const& points, std::vector<IndexType>* p_indices)
-      : points_{points}, indices_{*p_indices} {}
+  SplitterSlidingMidpoint(SpaceType const& points) : points_{points} {}
 
   //! \brief This function splits a node.
-  template <int Dim_>
+  template <typename RandomAccessIterator_, int Dim_>
   inline void operator()(
       IndexType const,  // depth
-      IndexType const offset,
-      IndexType const size,
+      RandomAccessIterator_ rbegin,
+      RandomAccessIterator_ rend,
       BoxType<Dim_> const& box,
+      RandomAccessIterator_* rsplit,
       std::size_t* split_dim,
-      IndexType* split_idx,
       ScalarType* split_val) const {
     ScalarType max_delta;
     box.LongestAxis(split_dim, &max_delta);
@@ -763,10 +760,7 @@ class SplitterSlidingMidpoint {
       return PointCoord(a, *split_dim) < *split_val;
     };
 
-    *split_idx = static_cast<IndexType>(
-        std::partition(
-            indices_.begin() + offset, indices_.begin() + offset + size, comp) -
-        indices_.cbegin());
+    *rsplit = std::partition(rbegin, rend, comp);
 
     // If it happens that either all points are on the left side or right side,
     // one point slides to the other side and we split on the first right value
@@ -774,26 +768,26 @@ class SplitterSlidingMidpoint {
     // In these two cases the split value is unknown and a partial sort is
     // required to obtain it, but also to rearrange all other indices such that
     // they are on their corresponding left or right side.
-    if ((*split_idx - offset) == size) {
-      (*split_idx)--;
+    if ((*rsplit) == rend) {
+      (*rsplit)--;
       std::nth_element(
-          indices_.begin() + offset,
-          indices_.begin() + (*split_idx),
-          indices_.begin() + offset + size,
+          rbegin,
+          *rsplit,
+          rend,
           [this, &split_dim](IndexType const a, IndexType const b) -> bool {
             return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
           });
-      (*split_val) = PointCoord(indices_[*split_idx], *split_dim);
-    } else if ((*split_idx - offset) == 0) {
-      (*split_idx)++;
+      (*split_val) = PointCoord(**rsplit, *split_dim);
+    } else if ((*rsplit) == rbegin) {
+      (*rsplit)++;
       std::nth_element(
-          indices_.begin() + offset,
-          indices_.begin() + (*split_idx),
-          indices_.begin() + offset + size,
+          rbegin,
+          *rsplit,
+          rend,
           [this, &split_dim](IndexType const a, IndexType const b) -> bool {
             return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
           });
-      (*split_val) = PointCoord(indices_[*split_idx], *split_dim);
+      (*split_val) = PointCoord(**rsplit, *split_dim);
     }
   }
 
@@ -805,7 +799,6 @@ class SplitterSlidingMidpoint {
   }
 
   SpaceType const& points_;
-  std::vector<IndexType>& indices_;
 };
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
