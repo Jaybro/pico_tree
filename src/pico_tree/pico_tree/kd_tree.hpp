@@ -270,28 +270,27 @@ class KdTreeBuilder {
   template <typename RandomAccessIterator_>
   inline NodeType* SplitIndices(
       IndexType const depth,
-      RandomAccessIterator_ rbegin,
-      RandomAccessIterator_ rend,
+      RandomAccessIterator_ begin,
+      RandomAccessIterator_ end,
       BoxType* box) const {
     NodeType* node = allocator_.Allocate();
     //
-    if ((rend - rbegin) <= max_leaf_size_) {
+    if ((end - begin) <= max_leaf_size_) {
       node->data.leaf.begin_idx =
-          static_cast<IndexType>(rbegin - indices_.cbegin());
-      node->data.leaf.end_idx =
-          static_cast<IndexType>(rend - indices_.cbegin());
+          static_cast<IndexType>(begin - indices_.begin());
+      node->data.leaf.end_idx = static_cast<IndexType>(end - indices_.begin());
       node->left = nullptr;
       node->right = nullptr;
       // Keep the original box in case it was empty.
-      if (rend > rbegin) {
-        ComputeBoundingBox(rbegin, rend, box);
+      if (end > begin) {
+        ComputeBoundingBox(begin, end, box);
       }
     } else {
-      // rsplit equals rend for the left branch and rbegin for the right branch.
-      typename std::vector<IndexType>::iterator rsplit;
+      // split equals end for the left branch and begin for the right branch.
+      typename std::vector<IndexType>::iterator split;
       std::size_t split_dim;
       ScalarType split_val;
-      splitter_(depth, rbegin, rend, *box, &rsplit, &split_dim, &split_val);
+      splitter_(depth, begin, end, *box, &split, &split_dim, &split_val);
 
       BoxType right = *box;
       // Argument box will function as the left bounding box until we merge left
@@ -299,8 +298,8 @@ class KdTreeBuilder {
       box->max(split_dim) = split_val;
       right.min(split_dim) = split_val;
 
-      node->left = SplitIndices(depth + 1, rbegin, rsplit, box);
-      node->right = SplitIndices(depth + 1, rsplit, rend, &right);
+      node->left = SplitIndices(depth + 1, begin, split, box);
+      node->right = SplitIndices(depth + 1, split, end, &right);
 
       SetBranch(*box, right, split_dim, node);
 
@@ -314,12 +313,12 @@ class KdTreeBuilder {
 
   template <typename RandomAccessIterator_>
   inline void ComputeBoundingBox(
-      RandomAccessIterator_ rbegin,
-      RandomAccessIterator_ rend,
+      RandomAccessIterator_ begin,
+      RandomAccessIterator_ end,
       BoxType* box) const {
     box->FillInverseMax();
-    for (; rbegin < rend; ++rbegin) {
-      box->Fit(Traits_::PointCoords(Traits_::PointAt(space_, *rbegin)));
+    for (; begin < end; ++begin) {
+      box->Fit(Traits_::PointCoords(Traits_::PointAt(space_, *begin)));
     }
   }
 
@@ -683,26 +682,26 @@ class SplitterLongestMedian {
   template <typename RandomAccessIterator_, int Dim_>
   inline void operator()(
       IndexType const,  // depth
-      RandomAccessIterator_ rbegin,
-      RandomAccessIterator_ rend,
+      RandomAccessIterator_ begin,
+      RandomAccessIterator_ end,
       BoxType<Dim_> const& box,
-      RandomAccessIterator_* rsplit,
+      RandomAccessIterator_* split,
       std::size_t* split_dim,
       ScalarType* split_val) const {
     ScalarType max_delta;
     box.LongestAxis(split_dim, &max_delta);
 
-    *rsplit = rbegin + (rend - rbegin) / 2;
+    *split = begin + (end - begin) / 2;
 
     std::nth_element(
-        rbegin,
-        *rsplit,
-        rend,
+        begin,
+        *split,
+        end,
         [this, &split_dim](IndexType const a, IndexType const b) -> bool {
           return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
         });
 
-    *split_val = PointCoord(**rsplit, *split_dim);
+    *split_val = PointCoord(**split, *split_dim);
   }
 
  private:
@@ -744,10 +743,10 @@ class SplitterSlidingMidpoint {
   template <typename RandomAccessIterator_, int Dim_>
   inline void operator()(
       IndexType const,  // depth
-      RandomAccessIterator_ rbegin,
-      RandomAccessIterator_ rend,
+      RandomAccessIterator_ begin,
+      RandomAccessIterator_ end,
       BoxType<Dim_> const& box,
-      RandomAccessIterator_* rsplit,
+      RandomAccessIterator_* split,
       std::size_t* split_dim,
       ScalarType* split_val) const {
     ScalarType max_delta;
@@ -760,7 +759,7 @@ class SplitterSlidingMidpoint {
       return PointCoord(a, *split_dim) < *split_val;
     };
 
-    *rsplit = std::partition(rbegin, rend, comp);
+    *split = std::partition(begin, end, comp);
 
     // If it happens that either all points are on the left side or right side,
     // one point slides to the other side and we split on the first right value
@@ -768,26 +767,26 @@ class SplitterSlidingMidpoint {
     // In these two cases the split value is unknown and a partial sort is
     // required to obtain it, but also to rearrange all other indices such that
     // they are on their corresponding left or right side.
-    if ((*rsplit) == rend) {
-      (*rsplit)--;
+    if ((*split) == end) {
+      (*split)--;
       std::nth_element(
-          rbegin,
-          *rsplit,
-          rend,
+          begin,
+          *split,
+          end,
           [this, &split_dim](IndexType const a, IndexType const b) -> bool {
             return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
           });
-      (*split_val) = PointCoord(**rsplit, *split_dim);
-    } else if ((*rsplit) == rbegin) {
-      (*rsplit)++;
+      (*split_val) = PointCoord(**split, *split_dim);
+    } else if ((*split) == begin) {
+      (*split)++;
       std::nth_element(
-          rbegin,
-          *rsplit,
-          rend,
+          begin,
+          *split,
+          end,
           [this, &split_dim](IndexType const a, IndexType const b) -> bool {
             return PointCoord(a, *split_dim) < PointCoord(b, *split_dim);
           });
-      (*split_val) = PointCoord(**rsplit, *split_dim);
+      (*split_val) = PointCoord(**split, *split_dim);
     }
   }
 
