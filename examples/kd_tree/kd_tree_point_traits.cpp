@@ -2,14 +2,14 @@
 #include <pico_tree/kd_tree.hpp>
 #include <pico_tree/std_traits.hpp>
 
-// This example shows how to write a small traits class for a custom point type
-// when the points are stored in an std::vector. Support for using an
-// std::vector is already provided by PicoTree via pico_tree::StdTraits.
+// This example shows how to write a traits class for a custom point type that
+// is stored in an std::vector.
 
+// PointXYZ is based on the Point Cloud Library (PCL). Within PCL, PointXYZ is
+// actually a union between a float data[4] and a struct { float x, y, z; }, but
+// the traits we define here would still work.
 struct PointXYZ {
-  float x;
-  float y;
-  float z;
+  float data[3];
 };
 
 // A specialization of StdPointTraits must be defined within the pico_tree
@@ -18,13 +18,12 @@ namespace pico_tree {
 
 template <>
 struct StdPointTraits<PointXYZ> {
-  static_assert(sizeof(PointXYZ) == sizeof(float) * 3, "");
   using ScalarType = float;
   static constexpr int Dim = 3;
 
   // Returns a pointer to the coordinates of the input point.
   inline static ScalarType const* Coords(PointXYZ const& point) {
-    return &point.x;
+    return point.data;
   }
 
   // Returns the spatial dimension of the input point. Note that the input
@@ -39,8 +38,8 @@ int main() {
   std::vector<PointXYZ> points{{0.0f, 1.0f, 2.0f}, {3.0f, 4.0f, 5.0f}};
 
   // Using an std::reference_wrapper prevents the KdTree from making a copy of
-  // the input. Not using it allows the point set to be owned by the tree, in
-  // which case a copy can be prevented by moving the points into the tree.
+  // the input. The KdTree can take ownership of the pointset if we omit the
+  // std::reference_wrapper and move the pointset inside the tree.
   pico_tree::KdTree<
       pico_tree::StdTraits<std::reference_wrapper<std::vector<PointXYZ>>>>
       tree(points, max_leaf_size);
