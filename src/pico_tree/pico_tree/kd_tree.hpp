@@ -287,7 +287,7 @@ class KdTreeBuilder {
       }
     } else {
       // split equals end for the left branch and begin for the right branch.
-      typename std::vector<IndexType>::iterator split;
+      RandomAccessIterator_ split;
       std::size_t split_dim;
       ScalarType split_val;
       splitter_(depth, begin, end, *box, &split, &split_dim, &split_val);
