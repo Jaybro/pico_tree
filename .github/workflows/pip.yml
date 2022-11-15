@@ -20,11 +20,9 @@ jobs:
         with:
           python-version: "3.6"
 
-      # The GCC and MSVC compilers integrate OpenMP. Newer versions of CLang
-      # integrate it as well, but it's not found via CMake on macos-latest.
       - name: Install OpenMP for macOS
         if: runner.os == 'macOS'
-        run: brew install libomp
+        run: brew link --force libomp
 
       # The global version of pybind11 allows us to find it via CMake.
       - name: Update setup related tools
