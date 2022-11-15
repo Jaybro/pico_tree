@@ -20,7 +20,10 @@ jobs:
         with:
           python-version: "3.6"
 
-      - name: Install OpenMP for macOS
+      # On macos-latest, OpenMP is already installed but not visible to CMake.
+      # Library libomp 15.0+ has been made keg-only.
+      # https://github.com/Homebrew/homebrew-core/issues/112107#issuecomment-1278042927
+      - name: Setup OpenMP for macOS
         if: runner.os == 'macOS'
         run: brew link --force libomp
 
