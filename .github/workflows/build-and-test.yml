@@ -21,10 +21,10 @@ jobs:
 
       # Clones to ${{ github.workspace }}.
       - name: Clone PicoTree
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Clone Google Test
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: google/googletest
           ref: release-1.12.1
@@ -37,7 +37,7 @@ jobs:
           cd eigen && git switch -c 3.3.9
 
       - name: Clone OpenCV
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: opencv/opencv
           ref: 4.5.2
