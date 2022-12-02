@@ -6,7 +6,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        # windows-latest comes with a buggy cmake 3.25.
+        os: [macos-latest, ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
 
