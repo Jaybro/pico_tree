@@ -32,13 +32,23 @@ struct StringTraits<pico_tree::L2Squared<Traits>> {
 };
 
 template <typename T>
-bool IsRowMajor(py::array_t<T, 0> const array) {
+bool IsRowMajor(py::array_t<T, 0> const& array) {
   return (array.flags() & py::array::c_style) > 0;
 }
 
 template <typename T>
+bool IsColMajor(py::array_t<T, 0> const& array) {
+  return (array.flags() & py::array::f_style) > 0;
+}
+
+template <typename T>
+bool IsContiguous(py::array_t<T, 0> const& array) {
+  return IsRowMajor(array) || IsColMajor(array);
+}
+
+template <typename T>
 struct ArrayLayout {
-  ArrayLayout(py::array_t<T, 0> const array)
+  ArrayLayout(py::array_t<T, 0> const& array)
       : info(array.request()),
         row_major(IsRowMajor(array)),
         index_inner(row_major ? 1 : 0),
@@ -49,22 +59,6 @@ struct ArrayLayout {
   py::ssize_t index_inner;
   py::ssize_t index_outer;
 };
-
-template <typename T>
-void ThrowIfNotContiguous(ArrayLayout<T> const& layout) {
-  if (layout.info.strides[layout.index_inner] != layout.info.itemsize) {
-    throw std::runtime_error("Array: Inner stride not contiguous.");
-  }
-
-  if (layout.info.ndim == 2 &&
-      layout.info.strides[layout.index_outer] !=
-          layout.info.itemsize * layout.info.shape[layout.index_inner]) {
-    throw std::runtime_error("Array: Outer stride not contiguous.");
-  }
-
-  // For ndim 3+ it would be the same for both layouts again. However, we
-  // should not have to deal with this.
-}
 
 template <int Dim>
 inline bool IsDimCompatible(int dim) {
