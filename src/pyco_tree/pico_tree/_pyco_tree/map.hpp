@@ -40,6 +40,10 @@ Map<Scalar_, Dim_> MakeMap(py::array_t<Scalar_, 0> const pts) {
     throw std::runtime_error("Array: ndim not 2.");
   }
 
+  if (!IsContiguous(pts)) {
+    throw std::runtime_error("Array: Array not contiguous.");
+  }
+
   // We always want the memory layout to look like x,y,z,x,y,z,...,x,y,z.
   // This means that the shape of the inner dimension should equal the spatial
   // dimension of the KdTree.
@@ -48,8 +52,6 @@ Map<Scalar_, Dim_> MakeMap(py::array_t<Scalar_, 0> const pts) {
     throw std::runtime_error(
         "Array: Incompatible KdTree sdim and Array inner stride.");
   }
-
-  ThrowIfNotContiguous(layout);
 
   return Map<Scalar_, Dim_>(
       static_cast<Scalar_*>(layout.info.ptr),

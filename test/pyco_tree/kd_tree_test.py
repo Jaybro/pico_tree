@@ -15,6 +15,11 @@ class KdTreeTest(unittest.TestCase):
         # The scalar dtype of the tree should be the same as the input.
         self.assertEqual(a.dtype, t.dtype_scalar)
 
+        # Non-contiguous arrays are not supported.
+        a = a[::2]
+        with self.assertRaises(RuntimeError):
+            t = pt.KdTree(a, pt.Metric.L2Squared, 10)
+
         # Col major input check.
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32, order='F')
         t = pt.KdTree(a, pt.Metric.L2Squared, 10)
