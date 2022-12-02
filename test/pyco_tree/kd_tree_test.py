@@ -34,6 +34,11 @@ class KdTreeTest(unittest.TestCase):
         a[0][0] = 42
         self.assertEqual(a[0][0], memoryview(t)[0, 0])
 
+        # The tree must have a dimension of two.
+        with self.assertRaises(TypeError):
+            a = np.array([[[2, 1]], [[4, 3]], [[8, 7]]], dtype=np.float32)
+            t = pt.KdTree(a, pt.Metric.L2Squared, 10)
+
     def test_metric(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
         # L2
