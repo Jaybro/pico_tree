@@ -4,13 +4,16 @@ import pico_tree as pt
 import numpy as np
 from pathlib import Path
 from time import perf_counter
-from scipy.spatial import KDTree as spKDTree
-from sklearn.neighbors import KDTree as skKDTree
-from pykdtree.kdtree import KDTree as pyKDTree
+# from scipy.spatial import KDTree as spKDTree
+# from sklearn.neighbors import KDTree as skKDTree
+# from pykdtree.kdtree import KDTree as pyKDTree
 
 
 def tree_creation_and_query_types():
     print("*** KdTree Creation And Basic Information ***")
+    # An input array must have a dimension of two and it must be contiguous. A
+    # C contiguous array contains points in its rows and an F contiguous array
+    # contains points in its columns.
     p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
     # Both the in and output distances are squared when using Metric.L2Squared.
     t = pt.KdTree(p, pt.Metric.L2Squared, 1)
