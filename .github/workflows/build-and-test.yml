@@ -6,8 +6,7 @@ jobs:
   build:
     strategy:
       matrix:
-        # windows-latest comes with a buggy cmake 3.25.
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -62,6 +61,9 @@ jobs:
           cmake-install: true
 
       - name: CMake OpenCV
+        # Windows latest comes with CMake 3.25 that has problems with try_compile.
+        # https://github.com/opencv/opencv/issues/22784
+        if: runner.os != 'Windows'
         uses: Jaybro/action-cmake@v1
         with:
           cmake-source-dir: opencv
