@@ -61,9 +61,6 @@ jobs:
           cmake-install: true
 
       - name: CMake OpenCV
-        # Windows latest comes with CMake 3.25 that has problems with try_compile.
-        # https://github.com/opencv/opencv/issues/22784
-        if: runner.os != 'Windows'
         uses: Jaybro/action-cmake@v1
         with:
           cmake-source-dir: opencv
