@@ -18,7 +18,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.6"
+          python-version: "3.7"
 
       # On macos-latest, OpenMP is already installed but not visible to CMake.
       # Library libomp 15.0+ has been made keg-only.

@@ -11,7 +11,7 @@ See the table below to get an impression of the performance provided by the [KdT
 | [nanoflann][nano] v1.3.2            | 1.5s      | ...           | 3.2s       | ...         |
 | [SciPy KDTree][spkd] v1.6.3         | ...       | 5.0s          | ...        | 547.2s      |
 | [Scikit-learn KDTree][skkd] 0.22.2  | ...       | 12.2s         | ...        | 44.5s       |
-| [pykdtree][pykd] 1.3.4              | ...       | 1.0s          | ...        | 6.6s        |
+| [pykdtree][pykd] 1.3.6              | ...       | 1.0s          | ...        | 6.6s        |
 | [OpenCV FLANN][cvfn] 4.5.2          | 1.9s      | ...           | 4.7s       | ...         |
 | PicoTree KdTree v0.7.4              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
 
@@ -63,7 +63,7 @@ Optional:
 * [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run any of the benchmarks. The [nanoflann](https://github.com/jlblancoc/nanoflann) and [OpenCV](https://opencv.org/) benchmarks also require their respective libraries to be installed.
 
 Python bindings:
-* [Python](https://www.python.org/). Version 3.6 or higher.
+* [Python](https://www.python.org/). Version 3.7 or higher.
 * [pybind11](https://github.com/pybind/pybind11). Used to ease the creation of Python bindings. Available under the [BSD](https://github.com/pybind/pybind11/blob/master/LICENSE) license and copyright.
 * [OpenMP](https://www.openmp.org/). For parallelization of queries.
 * [numpy](https://numpy.org/). Points and search results are represented by ndarrays.
