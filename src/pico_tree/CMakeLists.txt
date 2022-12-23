@@ -44,12 +44,14 @@ if(NOT SKBUILD)
     # See target_include_directories
     install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_PACKAGE_TARGETS_NAME})
 
+    # Allows the target to be exported from the build tree.
     export(EXPORT ${PROJECT_PACKAGE_TARGETS_NAME}
         FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_TARGETS_NAME}.cmake"
         NAMESPACE ${PROJECT_PACKAGE_NAME}::)
 
+    # The config mode search procedure uses this path for both Unix and Windows.
     set(PACKAGE_INSTALL_DESTINATION
-        ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_PACKAGE_NAME}/cmake)
+        ${PROJECT_PACKAGE_NAME}/share/cmake/${PROJECT_PACKAGE_NAME})
 
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(

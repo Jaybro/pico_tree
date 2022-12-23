@@ -12,8 +12,8 @@ See the table below to get an impression of the performance provided by the [KdT
 | [SciPy KDTree][spkd] v1.6.3         | ...       | 5.0s          | ...        | 547.2s      |
 | [Scikit-learn KDTree][skkd] 0.22.2  | ...       | 12.2s         | ...        | 44.5s       |
 | [pykdtree][pykd] 1.3.6              | ...       | 1.0s          | ...        | 6.6s        |
-| [OpenCV FLANN][cvfn] 4.5.2          | 1.9s      | ...           | 4.7s       | ...         |
-| PicoTree KdTree v0.7.4              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
+| [OpenCV FLANN][cvfn] 4.6.0          | 1.9s      | ...           | 4.7s       | ...         |
+| PicoTree KdTree v0.7.5              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
 
 It compares the performance of the build and query algorithms using two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863. The first point cloud is used to compare build times and both are used to compare query times. All benchmarks were generated with the following parameters: `max_leaf_size=10`, `knn=1` and `OMP_NUM_THREADS=1`. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 

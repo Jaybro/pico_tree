@@ -1,6 +1,4 @@
 # CMake version 3.12 provides FindPython.
-# CMake version 3.11 generalizes in which directories find_package() searches
-# for XxxConfig.cmake or FindXxx.cmake under Lin, Win, etc.
 # CMake version 3.9 provides OpenMP per language.
 cmake_minimum_required(VERSION 3.12)
 
@@ -8,7 +6,7 @@ include (${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils.cmake)
 
 project(pico_tree
     LANGUAGES CXX
-    VERSION 0.7.4
+    VERSION 0.7.5
     DESCRIPTION "PicoTree is a C++ header only library with Python bindings for nearest neighbor searches and range searches using a KdTree."
     HOMEPAGE_URL "https://github.com/Jaybro/pico_tree")
 
