@@ -1,6 +1,4 @@
 # CMake version 3.12 provides FindPython.
-# CMake version 3.11 generalizes in which directories find_package() searches
-# for XxxConfig.cmake or FindXxx.cmake under Lin, Win, etc.
 # CMake version 3.9 provides OpenMP per language.
 cmake_minimum_required(VERSION 3.12)
 
