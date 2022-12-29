@@ -19,7 +19,7 @@ namespace pico_tree {
 template <>
 struct StdPointTraits<PointXYZ> {
   using ScalarType = float;
-  static constexpr int Dim = 3;
+  static std::size_t constexpr Dim = 3;
 
   // Returns a pointer to the coordinates of the input point.
   inline static ScalarType const* Coords(PointXYZ const& point) {
@@ -28,7 +28,7 @@ struct StdPointTraits<PointXYZ> {
 
   // Returns the spatial dimension of the input point. Note that the input
   // argument is ignored because the spatial dimension is known at compile time.
-  inline static int Sdim(PointXYZ const&) { return Dim; }
+  inline static std::size_t Sdim(PointXYZ const&) { return Dim; }
 };
 
 }  // namespace pico_tree

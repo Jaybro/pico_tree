@@ -60,13 +60,13 @@ struct ArrayLayout {
   py::ssize_t index_outer;
 };
 
-template <int Dim>
-inline bool IsDimCompatible(int dim) {
+template <pico_tree::Size Dim>
+inline bool IsDimCompatible(pico_tree::Size dim) {
   return Dim == dim;
 }
 
 template <>
-inline bool IsDimCompatible<pico_tree::kDynamicDim>(int) {
+inline bool IsDimCompatible<pico_tree::kDynamicDim>(pico_tree::Size) {
   return true;
 }
 

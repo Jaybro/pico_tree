@@ -21,8 +21,9 @@ template <typename Derived>
 class BoxBase {
  public:
   using ScalarType = typename BoxTraits<Derived>::ScalarType;
-  using SizeType = std::size_t;
-  static constexpr int Dim = BoxTraits<Derived>::Dim;
+  using SizeType = Size;
+  static constexpr SizeType Dim = BoxTraits<Derived>::Dim;
+  static_assert(Dim == kDynamicDim || Dim > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
   //! \brief Returns true if \p x is contained. A point on the edge considered
   //! inside the box.
@@ -131,12 +132,12 @@ class BoxBase {
 //! \brief An axis aligned box represented by a min and max coordinate.
 //! \details This specialization supports a compile time known spatial
 //! dimension.
-template <typename Scalar_, int Dim_>
+template <typename Scalar_, Size Dim_>
 class Box : public BoxBase<Box<Scalar_, Dim_>> {
  public:
   using ScalarType = Scalar_;
   using typename BoxBase<Box<Scalar_, Dim_>>::SizeType;
-  static int constexpr Dim = Dim_;
+  static SizeType constexpr Dim = Dim_;
 
   inline explicit Box(SizeType) {}
 
@@ -164,7 +165,7 @@ class Box<Scalar_, kDynamicDim> : public BoxBase<Box<Scalar_, kDynamicDim>> {
  public:
   using ScalarType = Scalar_;
   using typename BoxBase<Box<Scalar_, kDynamicDim>>::SizeType;
-  static int constexpr Dim = kDynamicDim;
+  static SizeType constexpr Dim = kDynamicDim;
 
   inline explicit Box(SizeType size) : min_(size * 2), size_(size) {}
 
@@ -188,12 +189,12 @@ class Box<Scalar_, kDynamicDim> : public BoxBase<Box<Scalar_, kDynamicDim>> {
 //! raw pointers.
 //! \details This specialization supports a compile time known spatial
 //! dimension.
-template <typename Scalar_, int Dim_>
+template <typename Scalar_, Size Dim_>
 class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
  public:
   using ScalarType = Scalar_;
   using typename BoxBase<BoxMap<Scalar_, Dim_>>::SizeType;
-  static int constexpr Dim = Dim_;
+  static SizeType constexpr Dim = Dim_;
 
   inline BoxMap(ScalarType* min, ScalarType* max, SizeType)
       : min_(min), max_(max) {}
@@ -224,7 +225,7 @@ class BoxMap<Scalar_, kDynamicDim>
  public:
   using ScalarType = Scalar_;
   using typename BoxBase<BoxMap<Scalar_, kDynamicDim>>::SizeType;
-  static int constexpr Dim = kDynamicDim;
+  static SizeType constexpr Dim = kDynamicDim;
 
   inline BoxMap(ScalarType* min, ScalarType* max, SizeType size)
       : min_(min), max_(max), size_(size) {}
@@ -245,16 +246,16 @@ class BoxMap<Scalar_, kDynamicDim>
   SizeType size_;
 };
 
-template <typename Scalar_, int Dim_>
+template <typename Scalar_, Size Dim_>
 struct BoxTraits<Box<Scalar_, Dim_>> {
   using ScalarType = typename std::remove_const<Scalar_>::type;
-  static int constexpr Dim = Dim_;
+  static Size constexpr Dim = Dim_;
 };
 
-template <typename Scalar_, int Dim_>
+template <typename Scalar_, Size Dim_>
 struct BoxTraits<BoxMap<Scalar_, Dim_>> {
   using ScalarType = typename std::remove_const<Scalar_>::type;
-  static int constexpr Dim = Dim_;
+  static Size constexpr Dim = Dim_;
 };
 
 }  // namespace internal

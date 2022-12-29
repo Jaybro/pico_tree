@@ -6,7 +6,7 @@
 #include <thread>
 
 #include "darray.hpp"
-#include "map.hpp"
+#include "py_array_map.hpp"
 
 namespace py = pybind11;
 

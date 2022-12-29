@@ -16,14 +16,14 @@ struct Traits {
   using IndexType = int;
   // Spatial dimension. Set to pico_tree::kDynamicDim when the dimension is only
   // known at run-time.
-  static constexpr int Dim = static_cast<int>(Dim_);
+  static std::size_t constexpr Dim = Dim_;
 
   // Returns the amount of coordinates of each point.
-  inline static int SpaceSdim(SpaceType const&) { return Dim; }
+  inline static std::size_t SpaceSdim(SpaceType const&) { return Dim; }
 
   // Returns number of points contained by the space.
   inline static IndexType SpaceNpts(SpaceType const& space) {
-    return static_cast<int>(space.size());
+    return static_cast<IndexType>(space.size());
   }
 
   // Returns the idx'th point from the input space.
@@ -33,8 +33,8 @@ struct Traits {
 
   // Returns the spatial dimension of the input point. Allowing the input type
   // to be different from PointType could give greater interfacing flexibility.
-  inline static int PointSdim(PointType const& point) {
-    return static_cast<int>(point.size());
+  inline static std::size_t PointSdim(PointType const& point) {
+    return point.size();
   }
 
   // Returns a pointer to the coordinates of the input point. Allowing the input

@@ -53,26 +53,38 @@ void CheckEigenAdaptorInterface() {
   using RefRowTraits = pico_tree::
       EigenTraits<std::reference_wrapper<RowMatrix const>, std::size_t>;
 
-  CheckTraits<ValColTraits, ColMatrix::RowsAtCompileTime, int>(
+  CheckTraits<
+      ValColTraits,
+      static_cast<pico_tree::Size>(ColMatrix::RowsAtCompileTime),
+      int>(
       col_matrix,
       col_matrix.rows(),
       col_matrix.cols(),
       static_cast<Eigen::Index>(0),
       col_matrix.col(0).data());
-  CheckTraits<ValRowTraits, RowMatrix::ColsAtCompileTime, int>(
+  CheckTraits<
+      ValRowTraits,
+      static_cast<pico_tree::Size>(RowMatrix::ColsAtCompileTime),
+      int>(
       row_matrix,
       row_matrix.cols(),
       row_matrix.rows(),
       static_cast<Eigen::Index>(0),
       row_matrix.row(0).data());
 
-  CheckTraits<RefColTraits, ColMatrix::RowsAtCompileTime, std::size_t>(
+  CheckTraits<
+      RefColTraits,
+      static_cast<pico_tree::Size>(ColMatrix::RowsAtCompileTime),
+      std::size_t>(
       std::ref(col_matrix),
       col_matrix.rows(),
       col_matrix.cols(),
       col_matrix.cols() - 1,
       col_matrix.col(col_matrix.cols() - 1).data());
-  CheckTraits<RefRowTraits, RowMatrix::ColsAtCompileTime, std::size_t>(
+  CheckTraits<
+      RefRowTraits,
+      static_cast<pico_tree::Size>(RowMatrix::ColsAtCompileTime),
+      std::size_t>(
       std::cref(row_matrix),
       row_matrix.cols(),
       row_matrix.rows(),

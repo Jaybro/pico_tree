@@ -20,25 +20,28 @@ using KdTree = pico_tree::KdTree<Traits<Space<PointX>>>;
 template <typename Point>
 class DynamicSpace {
  public:
-  DynamicSpace(std::vector<Point> const& space, int sdim)
+  using SizeType = pico_tree::Size;
+
+  DynamicSpace(std::vector<Point> const& space, SizeType sdim)
       : space_(space), sdim_(sdim) {}
 
   inline operator std::vector<Point> const&() const { return space_; }
 
-  int sdim() const { return sdim_; }
+  SizeType sdim() const { return sdim_; }
 
  private:
   std::vector<Point> const& space_;
-  int sdim_;
+  SizeType sdim_;
 };
 
 // Supports a dynamic spatial dimension for vectors.
 template <typename Point>
 struct DynamicSpaceTraits : public pico_tree::StdTraits<std::vector<Point>> {
   using SpaceType = DynamicSpace<Point>;
-  static constexpr int Dim = pico_tree::kDynamicDim;
+  using SizeType = pico_tree::Size;
+  static SizeType constexpr Dim = pico_tree::kDynamicDim;
 
-  inline static int SpaceSdim(DynamicSpace<Point> const& space) {
+  inline static SizeType SpaceSdim(DynamicSpace<Point> const& space) {
     return space.sdim();
   }
 };
@@ -63,7 +66,7 @@ TEST(KdTreeTest, SplitterMedian) {
   box.max(0) = 1.0f;
   box.max(1) = 0.0f;
   std::vector<Index>::iterator split;
-  std::size_t split_dim;
+  pico_tree::Size split_dim;
   Scalar split_val;
 
   SplitterX splitter4(spcx4);
@@ -115,7 +118,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   pico_tree::internal::Box<Scalar, 2> box(2);
   std::vector<Index>::iterator split;
-  std::size_t split_dim;
+  pico_tree::Size split_dim;
   Scalar split_val;
 
   // Everything is forced to the right leaf. This means we want a single point

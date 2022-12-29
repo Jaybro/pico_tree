@@ -5,16 +5,16 @@
 using namespace pico_tree;
 using namespace pico_tree::internal;
 
-int constexpr kDynamicBoxDim = 4;
+Size constexpr kDynamicBoxDim = 4;
 
-inline constexpr int Dim(int dim) {
+inline Size constexpr Dim(Size dim) {
   return dim != kDynamicDim ? dim : kDynamicBoxDim;
 }
 
 template <typename T>
 class BoxTest : public testing::Test {};
 
-template <typename Scalar_, int Dim_>
+template <typename Scalar_, Size Dim_>
 class BoxTest<Box<Scalar_, Dim_>> : public testing::Test {
  public:
   BoxTest() : box_(Dim(Dim_)) {}
@@ -23,7 +23,7 @@ class BoxTest<Box<Scalar_, Dim_>> : public testing::Test {
   Box<Scalar_, Dim_> box_;
 };
 
-template <typename Scalar_, int Dim_>
+template <typename Scalar_, Size Dim_>
 class BoxTest<BoxMap<Scalar_, Dim_>> : public testing::Test {
  public:
   BoxTest()
@@ -48,7 +48,7 @@ using BoxTestTypes = testing::Types<
 TYPED_TEST_SUITE(BoxTest, BoxTestTypes);
 
 TYPED_TEST(BoxTest, size) {
-  int dim = TypeParam::Dim;
+  Size dim = TypeParam::Dim;
   if (dim != kDynamicDim) {
     EXPECT_EQ(this->box_.size(), dim);
   } else {
@@ -58,7 +58,7 @@ TYPED_TEST(BoxTest, size) {
 
 TYPED_TEST(BoxTest, Accessors) {
   this->box_.FillInverseMax();
-  for (std::size_t i = 0; i < this->box_.size(); ++i) {
+  for (Size i = 0; i < this->box_.size(); ++i) {
     EXPECT_EQ(this->box_.min(i), this->box_.min()[i]);
     EXPECT_EQ(this->box_.max(i), this->box_.max()[i]);
   }
@@ -68,7 +68,7 @@ TYPED_TEST(BoxTest, FillInverseMax) {
   using Scalar = typename TypeParam::ScalarType;
 
   this->box_.FillInverseMax();
-  for (std::size_t i = 0; i < this->box_.size(); ++i) {
+  for (Size i = 0; i < this->box_.size(); ++i) {
     EXPECT_EQ(this->box_.min(i), std::numeric_limits<Scalar>::max());
     EXPECT_EQ(this->box_.max(i), std::numeric_limits<Scalar>::lowest());
   }
@@ -78,21 +78,21 @@ TYPED_TEST(BoxTest, Fit) {
   using Scalar = typename TypeParam::ScalarType;
 
   this->box_.FillInverseMax();
-  int dim = Dim(TypeParam::Dim);
+  Size dim = Dim(TypeParam::Dim);
 
   // Fit a point.
-  std::vector<Scalar> p(static_cast<std::size_t>(dim), Scalar(0));
+  std::vector<Scalar> p(dim, Scalar(0));
   this->box_.Fit(p.data());
-  for (std::size_t i = 0; i < this->box_.size(); ++i) {
+  for (Size i = 0; i < this->box_.size(); ++i) {
     EXPECT_EQ(this->box_.min(i), Scalar(0));
     EXPECT_EQ(this->box_.max(i), Scalar(0));
   }
 
   // Fit a box.
-  std::vector<Scalar> min(static_cast<std::size_t>(dim), Scalar(-1));
-  std::vector<Scalar> max(static_cast<std::size_t>(dim), Scalar(+1));
+  std::vector<Scalar> min(dim, Scalar(-1));
+  std::vector<Scalar> max(dim, Scalar(+1));
   this->box_.Fit(BoxMap<Scalar, kDynamicDim>(min.data(), max.data(), dim));
-  for (std::size_t i = 0; i < this->box_.size(); ++i) {
+  for (Size i = 0; i < this->box_.size(); ++i) {
     EXPECT_EQ(this->box_.min(i), min[i]);
     EXPECT_EQ(this->box_.max(i), max[i]);
   }

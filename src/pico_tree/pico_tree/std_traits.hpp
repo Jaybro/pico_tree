@@ -35,14 +35,16 @@ struct StdTraits<std::vector<Point_, Allocator_>, Index_> {
   using PointType = Point_;
   //! \brief The scalar type of point coordinates.
   using ScalarType = typename StdPointTraits<Point_>::ScalarType;
+  //! \brief The size and index type of point coordinates.
+  using SizeType = Size;
   //! \brief The index type of point coordinates.
   using IndexType = Index_;
   //! \brief Compile time spatial dimension.
-  static constexpr int Dim = StdPointTraits<Point_>::Dim;
+  static SizeType constexpr Dim = StdPointTraits<Point_>::Dim;
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline static int constexpr SpaceSdim(
+  inline static SizeType constexpr SpaceSdim(
       std::vector<Point_, Allocator_> const&) {
     static_assert(
         Dim != kDynamicDim, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
@@ -65,7 +67,7 @@ struct StdTraits<std::vector<Point_, Allocator_>, Index_> {
   //! \details Allowing the input type to be different from PointType gives us
   //! greater interfacing flexibility.
   template <typename OtherPoint>
-  inline static int PointSdim(OtherPoint const& point) {
+  inline static SizeType PointSdim(OtherPoint const& point) {
     return StdPointTraits<OtherPoint>::Sdim(point);
   }
 

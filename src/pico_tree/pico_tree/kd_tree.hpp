@@ -114,7 +114,7 @@ struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
 };
 
 //! \brief The data structure that represents a KdTree.
-template <typename Index_, typename Scalar_, int Dim_, typename Node_>
+template <typename Index_, typename Scalar_, Size Dim_, typename Node_>
 struct KdTreeData {
   using IndexType = Index_;
   using ScalarType = Scalar_;
@@ -200,11 +200,12 @@ struct KdTreeData {
 
 //! \brief This class provides the build algorithm of the KdTree. How the KdTree
 //! will be build depends on the Splitter template argument.
-template <typename Traits_, typename Splitter_, int Dim_, typename KdTreeData_>
+template <typename Traits_, typename Splitter_, Size Dim_, typename KdTreeData_>
 class KdTreeBuilder {
  public:
   using IndexType = typename Traits_::IndexType;
   using ScalarType = typename Traits_::ScalarType;
+  using SizeType = Size;
   using SpaceType = typename Traits_::SpaceType;
   using BoxType = Box<ScalarType, Dim_>;
   using SplitterType = Splitter_;
@@ -288,7 +289,7 @@ class KdTreeBuilder {
     } else {
       // split equals end for the left branch and begin for the right branch.
       RandomAccessIterator_ split;
-      std::size_t split_dim;
+      SizeType split_dim;
       ScalarType split_val;
       splitter_(depth, begin, end, *box, &split, &split_dim, &split_val);
 
@@ -325,7 +326,7 @@ class KdTreeBuilder {
   inline void SetBranch(
       BoxType const& left,
       BoxType const& right,
-      std::size_t const split_dim,
+      SizeType const split_dim,
       KdTreeNodeEuclidean<IndexType, ScalarType>* node) const {
     node->data.branch.split_dim = static_cast<int>(split_dim);
     node->data.branch.left_max = left.max(split_dim);
@@ -335,7 +336,7 @@ class KdTreeBuilder {
   inline void SetBranch(
       BoxType const& left,
       BoxType const& right,
-      std::size_t const split_dim,
+      SizeType const split_dim,
       KdTreeNodeTopological<IndexType, ScalarType>* node) const {
     node->data.branch.split_dim = static_cast<int>(split_dim);
     node->data.branch.left_min = left.min(split_dim);
@@ -345,7 +346,7 @@ class KdTreeBuilder {
   }
 
   SpaceType const& space_;
-  IndexType const max_leaf_size_;
+  typename std::vector<IndexType>::difference_type const max_leaf_size_;
   SplitterType splitter_;
   std::vector<IndexType>& indices_;
   NodeAllocatorType& allocator_;
@@ -672,21 +673,22 @@ class SplitterLongestMedian {
  public:
   using IndexType = typename Traits_::IndexType;
   using ScalarType = typename Traits_::ScalarType;
+  using SizeType = Size;
   using SpaceType = typename Traits_::SpaceType;
-  template <int Dim_>
+  template <SizeType Dim_>
   using BoxType = typename internal::Box<ScalarType, Dim_>;
 
   SplitterLongestMedian(SpaceType const& points) : points_{points} {}
 
   //! \brief This function splits a node.
-  template <typename RandomAccessIterator_, int Dim_>
+  template <typename RandomAccessIterator_, SizeType Dim_>
   inline void operator()(
       IndexType const,  // depth
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end,
       BoxType<Dim_> const& box,
       RandomAccessIterator_* split,
-      std::size_t* split_dim,
+      SizeType* split_dim,
       ScalarType* split_val) const {
     ScalarType max_delta;
     box.LongestAxis(split_dim, &max_delta);
@@ -706,7 +708,7 @@ class SplitterLongestMedian {
 
  private:
   inline ScalarType const& PointCoord(
-      IndexType point_idx, std::size_t coord_idx) const {
+      IndexType point_idx, SizeType coord_idx) const {
     return Traits_::PointCoords(
         Traits_::PointAt(points_, point_idx))[coord_idx];
   }
@@ -733,21 +735,22 @@ class SplitterSlidingMidpoint {
  public:
   using IndexType = typename Traits_::IndexType;
   using ScalarType = typename Traits_::ScalarType;
+  using SizeType = Size;
   using SpaceType = typename Traits_::SpaceType;
-  template <int Dim_>
+  template <SizeType Dim_>
   using BoxType = typename internal::Box<ScalarType, Dim_>;
 
   SplitterSlidingMidpoint(SpaceType const& points) : points_{points} {}
 
   //! \brief This function splits a node.
-  template <typename RandomAccessIterator_, int Dim_>
+  template <typename RandomAccessIterator_, SizeType Dim_>
   inline void operator()(
       IndexType const,  // depth
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end,
       BoxType<Dim_> const& box,
       RandomAccessIterator_* split,
-      std::size_t* split_dim,
+      SizeType* split_dim,
       ScalarType* split_val) const {
     ScalarType max_delta;
     box.LongestAxis(split_dim, &max_delta);
@@ -792,7 +795,7 @@ class SplitterSlidingMidpoint {
 
  private:
   inline ScalarType const& PointCoord(
-      IndexType point_idx, std::size_t coord_idx) const {
+      IndexType point_idx, SizeType coord_idx) const {
     return Traits_::PointCoords(
         Traits_::PointAt(points_, point_idx))[coord_idx];
   }
@@ -809,11 +812,18 @@ template <
     typename Traits_,
     typename Metric_ = L2Squared<Traits_>,
     typename Splitter_ = SplitterSlidingMidpoint<Traits_>,
-    int Dim_ = Traits_::Dim>
+    Size Dim_ = Traits_::Dim>
 class KdTree {
  private:
+  // 1) Dim_ <= Traits_::Dim_. The spatial dimension represented by the tree can
+  // be smaller than that of the input data.
+  // 2) Dim_ == kDynamicDim. The spatial dimension will be determined run-time
+  // from the traits.
+  // 3) Dim_ != kDynamicDim && Traits_::Dim_ == kDynamicDim. As handled by 1),
+  // but here it's made explicit that while the traits represent a dynamic
+  // dimension, the tree can take on a static dimension.
   static_assert(
-      Dim_ <= Traits_::Dim,
+      (Dim_ <= Traits_::Dim || Dim_ == kDynamicDim) && Dim_ > 0,
       "SPATIAL_DIMENSION_TREE_MUST_BE_SMALLER_OR_EQUAL_TO_TRAITS_DIMENSION");
 
  public:
@@ -823,7 +833,7 @@ class KdTree {
   using ScalarType = typename Traits_::ScalarType;
   //! \brief KdTree dimension. It equals pico_tree::kDynamicDim in case Dim is
   //! only known at run-time.
-  static constexpr int Dim = Dim_;
+  static Size constexpr Dim = Dim_;
   //! \brief Traits_ with information about the input Spaces and Points.
   using TraitsType = Traits_;
   //! \brief Point set or adaptor type.

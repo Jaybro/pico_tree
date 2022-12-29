@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <pico_tree/core.hpp>
 
 inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
 
@@ -16,15 +17,14 @@ inline void FloatLe(double val1, double val2) {
 
 template <
     typename Traits,
-    int Dim,
+    pico_tree::Size Dim,
     typename IndexType,
     typename SpaceType,
-    typename SdimType,
     typename NptsType,
     typename ScalarType>
 void CheckTraits(
     SpaceType const& space,
-    SdimType sdim,
+    pico_tree::Size sdim,
     NptsType npts,
     NptsType point_index,
     ScalarType const* point_data_ref) {
@@ -42,13 +42,13 @@ void CheckTraits(
       std::is_same<typename Traits::ScalarType, ScalarType>::value,
       "TRAITS_SCALAR_TYPE_INCORRECT");
 
-  EXPECT_EQ(static_cast<int>(sdim), Traits::SpaceSdim(space));
+  EXPECT_EQ(sdim, Traits::SpaceSdim(space));
   EXPECT_EQ(static_cast<IndexType>(npts), Traits::SpaceNpts(space));
 
   ScalarType const* point_data_tst = Traits::PointCoords(
       Traits::PointAt(space, static_cast<IndexType>(point_index)));
 
-  for (int i = 0; i < sdim; ++i) {
+  for (pico_tree::Size i = 0; i < sdim; ++i) {
     FloatEq(point_data_ref[i], point_data_tst[i]);
   }
 }
@@ -93,7 +93,7 @@ void TestBox(
   tree.SearchBox(min, max, &idxs);
 
   for (auto j : idxs) {
-    for (int d = 0; d < PointX::Dim; ++d) {
+    for (pico_tree::Size d = 0; d < PointX::Dim; ++d) {
       auto v = TraitsX::PointCoords(TraitsX::PointAt(points, j))[d];
       EXPECT_GE(v, min_v);
       EXPECT_LE(v, max_v);
@@ -105,7 +105,7 @@ void TestBox(
   for (Index j = 0; j < TraitsX::SpaceNpts(points); ++j) {
     bool contained = true;
 
-    for (int d = 0; d < PointX::Dim; ++d) {
+    for (pico_tree::Size d = 0; d < PointX::Dim; ++d) {
       auto v = TraitsX::PointCoords(TraitsX::PointAt(points, j))[d];
       if ((v < min_v) || (v > max_v)) {
         contained = false;

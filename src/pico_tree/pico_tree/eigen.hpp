@@ -27,22 +27,18 @@ struct EigenVectorDim;
 template <typename Derived>
 struct EigenVectorDim<Derived, false> {
   static_assert(
-      is_matrix_base<Derived>::value, "DERIVED_TYPE_IS_NOT_AN_EIGEN_MATRIX");
-  static_assert(
       Derived::ColsAtCompileTime == 1, "DERIVED_TYPE_IS_NOT_A_VECTOR");
   //! \brief Compile time dimension of Derived.
-  static int constexpr Dim = Derived::RowsAtCompileTime;
+  static Eigen::Index constexpr Dim = Derived::RowsAtCompileTime;
 };
 
 //! \brief Provides compile time dimension for RowMajor Eigen types.
 template <typename Derived>
 struct EigenVectorDim<Derived, true> {
   static_assert(
-      is_matrix_base<Derived>::value, "DERIVED_TYPE_IS_NOT_AN_EIGEN_MATRIX");
-  static_assert(
       Derived::RowsAtCompileTime == 1, "DERIVED_TYPE_IS_NOT_A_VECTOR");
   //! \brief Compile time dimension of Derived.
-  static int constexpr Dim = Derived::ColsAtCompileTime;
+  static Eigen::Index constexpr Dim = Derived::ColsAtCompileTime;
 };
 
 //! \brief EigenPointTraits provides an interface for the different point types
@@ -50,9 +46,16 @@ struct EigenVectorDim<Derived, true> {
 //! \details Unlike the specialization of StdPointTraits for Eigen types, the
 //! internal implementation supports matrix expressions.
 template <typename Derived>
-struct EigenPointTraits : public EigenVectorDim<Derived, Derived::IsRowMajor> {
+struct EigenPointTraits {
+  static_assert(
+      is_matrix_base<Derived>::value, "DERIVED_TYPE_IS_NOT_AN_EIGEN_MATRIX");
   //! \brief The scalar type of point coordinates.
   using ScalarType = typename std::decay<typename Derived::Scalar>::type;
+  //! \brief The size and index type of point coordinates.
+  using SizeType = Size;
+  //! \brief Compile time spatial dimension.
+  static SizeType constexpr Dim =
+      static_cast<SizeType>(EigenVectorDim<Derived, Derived::IsRowMajor>::Dim);
 
   //! \brief Returns a pointer to the coordinates of \p point.
   inline static ScalarType const* Coords(
@@ -61,39 +64,8 @@ struct EigenPointTraits : public EigenVectorDim<Derived, Derived::IsRowMajor> {
   }
 
   //! \brief Returns the spatial dimension of \p point.
-  inline static int Sdim(Eigen::MatrixBase<Derived> const& point) {
-    return static_cast<int>(point.size());
-  }
-};
-
-//! \brief Provides the Point interface for the different implementations of
-//! EigenTraitsImpl.
-template <typename Derived>
-struct EigenPointBase {
-  //! \brief The scalar type of point coordinates.
-  using ScalarType = typename std::decay<typename Derived::Scalar>::type;
-
-  //! \brief Returns the spatial dimension of \p point.
-  template <typename OtherDerived>
-  inline static int PointSdim(Eigen::MatrixBase<OtherDerived> const& point) {
-    static_assert(
-        std::is_same<
-            ScalarType,
-            typename std::decay<typename OtherDerived::Scalar>::type>::value,
-        "INCOMPATIBLE_SCALAR_TYPES");
-    return EigenPointTraits<OtherDerived>::Sdim(point);
-  }
-
-  //! \brief Returns a pointer to the coordinates of \p point.
-  template <typename OtherDerived>
-  inline static ScalarType const* PointCoords(
-      Eigen::MatrixBase<OtherDerived> const& point) {
-    static_assert(
-        std::is_same<
-            ScalarType,
-            typename std::decay<typename OtherDerived::Scalar>::type>::value,
-        "INCOMPATIBLE_SCALAR_TYPES");
-    return EigenPointTraits<OtherDerived>::Coords(point);
+  inline static SizeType Sdim(Eigen::MatrixBase<Derived> const& point) {
+    return static_cast<SizeType>(point.size());
   }
 };
 
@@ -103,10 +75,12 @@ struct EigenTraitsImpl;
 
 //! \brief Space and Point traits for ColMajor Eigen types.
 template <typename Derived, typename Index_>
-struct EigenTraitsImpl<Derived, Index_, false>
-    : public EigenPointBase<Derived> {
+struct EigenTraitsImpl<Derived, Index_, false> {
+  //! \brief The size and index type of point coordinates.
+  using SizeType = Size;
   //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
-  static constexpr int Dim = Derived::RowsAtCompileTime;
+  static constexpr SizeType Dim =
+      static_cast<SizeType>(Derived::RowsAtCompileTime);
   //! \brief The point type used by Derived.
   using PointType = Eigen::Block<Derived const, Dim, 1, true>;
   //! \brief The index type of point coordinates.
@@ -114,8 +88,8 @@ struct EigenTraitsImpl<Derived, Index_, false>
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline static int SpaceSdim(Eigen::MatrixBase<Derived> const& matrix) {
-    return static_cast<int>(matrix.rows());
+  inline static SizeType SpaceSdim(Eigen::MatrixBase<Derived> const& matrix) {
+    return static_cast<SizeType>(matrix.rows());
   }
 
   //! \brief Returns the number of points.
@@ -132,9 +106,12 @@ struct EigenTraitsImpl<Derived, Index_, false>
 
 //! \brief Space and Point traits for RowMajor Eigen types.
 template <typename Derived, typename Index_>
-struct EigenTraitsImpl<Derived, Index_, true> : public EigenPointBase<Derived> {
+struct EigenTraitsImpl<Derived, Index_, true> {
+  //! \brief The size and index type of point coordinates.
+  using SizeType = Size;
   //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
-  static constexpr int Dim = Derived::ColsAtCompileTime;
+  static constexpr SizeType Dim =
+      static_cast<SizeType>(Derived::ColsAtCompileTime);
   //! \brief The point type used by Derived.
   using PointType = Eigen::Block<Derived const, 1, Dim, true>;
   //! \brief The index type of point coordinates.
@@ -142,8 +119,8 @@ struct EigenTraitsImpl<Derived, Index_, true> : public EigenPointBase<Derived> {
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline static int SpaceSdim(Eigen::MatrixBase<Derived> const& matrix) {
-    return static_cast<int>(matrix.cols());
+  inline static SizeType SpaceSdim(Eigen::MatrixBase<Derived> const& matrix) {
+    return static_cast<SizeType>(matrix.cols());
   }
 
   //! \brief Returns the number of points.
@@ -169,6 +146,34 @@ struct EigenTraitsBase
 
   //! \brief The SpaceType of these traits.
   using SpaceType = Derived;
+  //! \brief The scalar type of point coordinates.
+  using ScalarType = typename std::decay<typename Derived::Scalar>::type;
+  //! \brief The size and index type of point coordinates.
+  using SizeType = Size;
+
+  //! \brief Returns the spatial dimension of \p point.
+  template <typename OtherDerived>
+  inline static SizeType PointSdim(
+      Eigen::MatrixBase<OtherDerived> const& point) {
+    static_assert(
+        std::is_same<
+            ScalarType,
+            typename std::decay<typename OtherDerived::Scalar>::type>::value,
+        "INCOMPATIBLE_SCALAR_TYPES");
+    return EigenPointTraits<OtherDerived>::Sdim(point);
+  }
+
+  //! \brief Returns a pointer to the coordinates of \p point.
+  template <typename OtherDerived>
+  inline static ScalarType const* PointCoords(
+      Eigen::MatrixBase<OtherDerived> const& point) {
+    static_assert(
+        std::is_same<
+            ScalarType,
+            typename std::decay<typename OtherDerived::Scalar>::type>::value,
+        "INCOMPATIBLE_SCALAR_TYPES");
+    return EigenPointTraits<OtherDerived>::Coords(point);
+  }
 };
 
 }  // namespace internal

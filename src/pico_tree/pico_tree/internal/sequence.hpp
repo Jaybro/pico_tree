@@ -13,14 +13,13 @@ namespace internal {
 //! \details The non-specialized Sequence class knows its dimension at
 //! compile-time and uses an std::array for storing its data. Faster than using
 //! the std::vector in practice.
-template <typename Scalar_, int Dim_>
+template <typename Scalar_, Size Dim_>
 class Sequence {
- private:
-  static_assert(Dim_ >= 0, "SEQUENCE_DIM_MUST_BE_DYNAMIC_OR_>=_0");
-
  public:
+  static_assert(Dim_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
+
   using ScalarType = Scalar_;
-  using SizeType = std::size_t;
+  using SizeType = Size;
 
   inline explicit Sequence(SizeType) {}
 
@@ -52,7 +51,7 @@ template <typename Scalar_>
 class Sequence<Scalar_, kDynamicDim> {
  public:
   using ScalarType = Scalar_;
-  using SizeType = std::size_t;
+  using SizeType = Size;
 
   inline explicit Sequence(SizeType size) : sequence_(size) {}
 

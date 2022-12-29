@@ -56,7 +56,7 @@ struct L2_3D {
 
 }  // namespace cvflann
 
-template <typename Scalar, int Dim>
+template <typename Scalar, std::size_t Dim>
 Scalar* RawCopy(std::vector<Point<Scalar, Dim>> const& points) {
   Scalar* copy = new Scalar[points.size() * Dim];
   std::copy(

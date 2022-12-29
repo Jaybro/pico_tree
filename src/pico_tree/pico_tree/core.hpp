@@ -11,11 +11,14 @@
 
 namespace pico_tree {
 
+//! \brief Size type used by PicoTree.
+using Size = std::size_t;
+
 //! \brief This value can be used in any template argument that wants to know
 //! the spatial dimension of the search problem when it can only be known at
 //! run-time. In this case the dimension of the problem is provided by the point
 //! adaptor.
-static int constexpr kDynamicDim = -1;
+static Size constexpr kDynamicDim = -1;
 
 //! \brief A Neighbor is a point reference with a corresponding distance to
 //! another point.
@@ -88,16 +91,16 @@ inline void InsertSorted(
 }
 
 //! \brief Compile time dimension count handling.
-template <typename Traits_, int Dim_ = Traits_::Dim>
+template <typename Traits_, Size Dim_ = Traits_::Dim>
 struct Dimension {
   //! \brief Returns the compile time dimension of a space.
-  inline static constexpr int Dim(typename Traits_::SpaceType const&) {
+  inline static Size constexpr Dim(typename Traits_::SpaceType const&) {
     return Dim_;
   }
 
   //! \brief Returns the compile time dimension of a point.
   template <typename P>
-  inline static constexpr int Dim(P const&) {
+  inline static Size constexpr Dim(P const&) {
     return Dim_;
   }
 };
@@ -106,13 +109,13 @@ struct Dimension {
 template <typename Traits_>
 struct Dimension<Traits_, pico_tree::kDynamicDim> {
   //! \brief Returns the run time dimension of a space.
-  inline static int Dim(typename Traits_::SpaceType const& space) {
+  inline static Size Dim(typename Traits_::SpaceType const& space) {
     return Traits_::SpaceSdim(space);
   }
 
   //! \brief Returns the run time dimension of a point.
   template <typename P>
-  inline static int Dim(P const& point) {
+  inline static Size Dim(P const& point) {
     return Traits_::PointSdim(point);
   }
 };
