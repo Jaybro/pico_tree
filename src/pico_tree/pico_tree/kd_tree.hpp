@@ -356,7 +356,7 @@ class KdTreeBuilder {
 template <
     typename Traits_,
     typename Metric_,
-    int Dim_,
+    Size Dim_,
     typename Point_,
     typename Visitor_>
 class SearchNearestEuclidean {
@@ -464,7 +464,7 @@ class SearchNearestEuclidean {
 template <
     typename Traits_,
     typename Metric_,
-    int Dim_,
+    Size Dim_,
     typename Point_,
     typename Visitor_>
 class SearchNearestTopological {
@@ -568,7 +568,7 @@ class SearchNearestTopological {
 //! box of the query. We don't store the bounding box of each node but calculate
 //! them at run time. This slows down SearchBox in favor of having faster
 //! nearest neighbor searches.
-template <typename Traits_, typename Metric_, int Dim_>
+template <typename Traits_, typename Metric_, Size Dim_>
 class SearchBoxEuclidean {
  public:
   // TODO Perhaps we can support it for both topological and Euclidean spaces.

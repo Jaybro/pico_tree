@@ -34,11 +34,10 @@ target_compile_options(${PROJECT_NAME} INTERFACE
 ################################################################################
 
 if(NOT SKBUILD)
-    # Note that PROJECT_PACKAGE_TARGETS_NAME also functions as the
-    # install(TARGETS ... EXPORT ...) name.
     set(PROJECT_PACKAGE_TARGETS_NAME ${PROJECT_PACKAGE_NAME}Targets)
-    set(PROJECT_PACKAGE_CONFIG_VERSION_NAME ${PROJECT_PACKAGE_NAME}ConfigVersion)
-    set(PROJECT_PACKAGE_CONFIG_NAME ${PROJECT_PACKAGE_NAME}Config)
+    set(PROJECT_PACKAGE_TARGETS_FILE_NAME ${PROJECT_PACKAGE_TARGETS_NAME}.cmake)
+    set(PROJECT_PACKAGE_VERSION_FILE_NAME ${PROJECT_PACKAGE_NAME}ConfigVersion.cmake)
+    set(PROJECT_PACKAGE_CONFIG_FILE_NAME ${PROJECT_PACKAGE_NAME}Config.cmake)
 
     # Not adding INCLUDE DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     # See target_include_directories
@@ -46,7 +45,7 @@ if(NOT SKBUILD)
 
     # Allows the target to be exported from the build tree.
     export(EXPORT ${PROJECT_PACKAGE_TARGETS_NAME}
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_TARGETS_NAME}.cmake"
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_TARGETS_FILE_NAME}"
         NAMESPACE ${PROJECT_PACKAGE_NAME}::)
 
     # The config mode search procedure uses this path for both Unix and Windows.
@@ -55,24 +54,24 @@ if(NOT SKBUILD)
 
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_VERSION_NAME}.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_VERSION_FILE_NAME}"
         VERSION ${PROJECT_VERSION}
         # Beta library will use the minor version for compatibility.
         COMPATIBILITY SameMinorVersion)
 
     configure_package_config_file(
         "${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_NAME}.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_FILE_NAME}"
         INSTALL_DESTINATION ${PACKAGE_INSTALL_DESTINATION})
 
     install(EXPORT ${PROJECT_PACKAGE_TARGETS_NAME}
-        FILE "${PROJECT_PACKAGE_TARGETS_NAME}.cmake"
+        FILE "${PROJECT_PACKAGE_TARGETS_FILE_NAME}"
         NAMESPACE ${PROJECT_PACKAGE_NAME}::
         DESTINATION ${PACKAGE_INSTALL_DESTINATION})
 
     install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_VERSION_NAME}.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_NAME}.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_VERSION_FILE_NAME}"
+        "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_CONFIG_FILE_NAME}"
         DESTINATION ${PACKAGE_INSTALL_DESTINATION})
 
     install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}"

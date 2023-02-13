@@ -26,9 +26,7 @@ template <typename Index_, typename Scalar_>
 struct Neighbor {
   static_assert(std::is_integral<Index_>::value, "INDEX_NOT_AN_INTEGRAL_TYPE");
   static_assert(
-      std::is_integral<Scalar_>::value ||
-          std::is_floating_point<Scalar_>::value,
-      "SCALAR_NOT_AN_INTEGRAL_OR_FLOATING_POINT_TYPE");
+      std::is_arithmetic<Scalar_>::value, "SCALAR_NOT_AN_ARITHMETIC_TYPE");
 
   //! \brief Index type.
   using IndexType = Index_;

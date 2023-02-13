@@ -129,9 +129,36 @@ class BoxBase {
   ~BoxBase() = default;
 };
 
-//! \brief An axis aligned box represented by a min and max coordinate.
+template <typename Scalar_, Size Dim_>
+struct BoxStorage {
+  constexpr explicit BoxStorage(Size) {}
+
+  inline Scalar_ const* min() const noexcept { return coords_min.data(); }
+  inline Scalar_* min() noexcept { return coords_min.data(); }
+  inline Scalar_ const* max() const noexcept { return coords_max.data(); }
+  inline Scalar_* max() noexcept { return coords_max.data(); }
+
+  std::array<Scalar_, Dim_> coords_min;
+  std::array<Scalar_, Dim_> coords_max;
+  static Size constexpr size = Dim_;
+};
+
 //! \details This specialization supports a compile time known spatial
 //! dimension.
+template <typename Scalar_>
+struct BoxStorage<Scalar_, kDynamicDim> {
+  constexpr explicit BoxStorage(Size size) : coords(size * 2), size(size) {}
+
+  inline Scalar_ const* min() const noexcept { return coords.data(); }
+  inline Scalar_* min() noexcept { return coords.data(); }
+  inline Scalar_ const* max() const noexcept { return coords.data() + size; }
+  inline Scalar_* max() noexcept { return coords.data() + size; }
+
+  std::vector<Scalar_> coords;
+  Size size;
+};
+
+//! \brief An axis aligned box represented by a min and max coordinate.
 template <typename Scalar_, Size Dim_>
 class Box : public BoxBase<Box<Scalar_, Dim_>> {
  public:
@@ -139,50 +166,43 @@ class Box : public BoxBase<Box<Scalar_, Dim_>> {
   using typename BoxBase<Box<Scalar_, Dim_>>::SizeType;
   static SizeType constexpr Dim = Dim_;
 
-  inline explicit Box(SizeType) {}
+  constexpr Box() : storage_(Dim) {}
 
-  inline ScalarType const* min() const noexcept { return min_.data(); }
-  inline ScalarType* min() noexcept { return min_.data(); }
-  inline ScalarType const* max() const noexcept { return max_.data(); }
-  inline ScalarType* max() noexcept { return max_.data(); }
-  inline ScalarType const& min(SizeType i) const { return min_[i]; }
-  inline ScalarType& min(SizeType i) { return min_[i]; }
-  inline ScalarType const& max(SizeType i) const { return max_[i]; }
-  inline ScalarType& max(SizeType i) { return max_[i]; }
-  inline SizeType constexpr size() const noexcept { return min_.size(); }
+  constexpr explicit Box(SizeType size) : storage_(size) {}
+
+  inline ScalarType const* min() const noexcept { return storage_.min(); }
+  inline ScalarType* min() noexcept { return storage_.min(); }
+  inline ScalarType const* max() const noexcept { return storage_.max(); }
+  inline ScalarType* max() noexcept { return storage_.max(); }
+  inline ScalarType const& min(SizeType i) const { return storage_.min()[i]; }
+  inline ScalarType& min(SizeType i) { return storage_.min()[i]; }
+  inline ScalarType const& max(SizeType i) const { return storage_.max()[i]; }
+  inline ScalarType& max(SizeType i) { return storage_.max()[i]; }
+  constexpr SizeType size() const noexcept { return storage_.size; }
 
  private:
-  //! \brief Minimum box coordinate.
-  std::array<ScalarType, Dim> min_;
-  //! \brief Maximum box coordinate.
-  std::array<ScalarType, Dim> max_;
+  BoxStorage<Scalar_, Dim_> storage_;
 };
 
-//! \brief An axis aligned box represented by a min and max coordinate.
+template <typename Scalar_, Size Dim_>
+struct BoxMapStorage {
+  constexpr BoxMapStorage(Scalar_* min, Scalar_* max, Size)
+      : min(min), max(max) {}
+
+  Scalar_* min;
+  Scalar_* max;
+  static Size constexpr size = Dim_;
+};
+
 //! \details This specialization supports a run time known spatial dimension.
 template <typename Scalar_>
-class Box<Scalar_, kDynamicDim> : public BoxBase<Box<Scalar_, kDynamicDim>> {
- public:
-  using ScalarType = Scalar_;
-  using typename BoxBase<Box<Scalar_, kDynamicDim>>::SizeType;
-  static SizeType constexpr Dim = kDynamicDim;
+struct BoxMapStorage<Scalar_, kDynamicDim> {
+  constexpr BoxMapStorage(Scalar_* min, Scalar_* max, Size size)
+      : min(min), max(max), size(size) {}
 
-  inline explicit Box(SizeType size) : min_(size * 2), size_(size) {}
-
-  inline ScalarType const* min() const noexcept { return min_.data(); }
-  inline ScalarType* min() noexcept { return min_.data(); }
-  inline ScalarType const* max() const noexcept { return min_.data() + size_; }
-  inline ScalarType* max() noexcept { return min_.data() + size_; }
-  inline ScalarType const& min(SizeType i) const { return min_[i]; }
-  inline ScalarType& min(SizeType i) { return min_[i]; }
-  inline ScalarType const& max(SizeType i) const { return min_[i + size_]; }
-  inline ScalarType& max(SizeType i) { return min_[i + size_]; }
-  inline SizeType size() const noexcept { return size_; }
-
- private:
-  //! \brief Minimum and maximum box coordinates contiguous in memory.
-  std::vector<ScalarType> min_;
-  SizeType size_;
+  Scalar_* min;
+  Scalar_* max;
+  Size size;
 };
 
 //! \brief An axis aligned box represented by a min and max coordinate. It maps
@@ -192,69 +212,36 @@ class Box<Scalar_, kDynamicDim> : public BoxBase<Box<Scalar_, kDynamicDim>> {
 template <typename Scalar_, Size Dim_>
 class BoxMap : public BoxBase<BoxMap<Scalar_, Dim_>> {
  public:
-  using ScalarType = Scalar_;
+  using ScalarType = typename std::remove_cv<Scalar_>::type;
+  using CvScalarType = Scalar_;
   using typename BoxBase<BoxMap<Scalar_, Dim_>>::SizeType;
   static SizeType constexpr Dim = Dim_;
 
-  inline BoxMap(ScalarType* min, ScalarType* max, SizeType)
-      : min_(min), max_(max) {}
+  constexpr BoxMap(CvScalarType* min, CvScalarType* max)
+      : storage_(min, max, Dim) {}
 
-  inline ScalarType const* min() const noexcept { return min_; }
-  inline ScalarType* min() noexcept { return min_; }
-  inline ScalarType const* max() const noexcept { return max_; }
-  inline ScalarType* max() noexcept { return max_; }
-  inline ScalarType const& min(SizeType i) const { return min_[i]; }
-  inline ScalarType& min(SizeType i) { return min_[i]; }
-  inline ScalarType const& max(SizeType i) const { return max_[i]; }
-  inline ScalarType& max(SizeType i) { return max_[i]; }
-  inline SizeType constexpr size() const noexcept {
-    return static_cast<SizeType>(Dim_);
-  }
+  constexpr BoxMap(CvScalarType* min, CvScalarType* max, SizeType size)
+      : storage_(min, max, size) {}
+
+  inline CvScalarType* min() const noexcept { return storage_.min; }
+  inline CvScalarType* max() const noexcept { return storage_.max; }
+  inline CvScalarType& min(SizeType i) const { return storage_.min[i]; }
+  inline CvScalarType& max(SizeType i) const { return storage_.max[i]; }
+  constexpr SizeType size() const noexcept { return storage_.size; }
 
  private:
-  ScalarType* min_;
-  ScalarType* max_;
-};
-
-//! \brief An axis aligned box represented by a min and max coordinate. It maps
-//! raw pointers.
-//! \details This specialization supports a run time known spatial dimension.
-template <typename Scalar_>
-class BoxMap<Scalar_, kDynamicDim>
-    : public BoxBase<BoxMap<Scalar_, kDynamicDim>> {
- public:
-  using ScalarType = Scalar_;
-  using typename BoxBase<BoxMap<Scalar_, kDynamicDim>>::SizeType;
-  static SizeType constexpr Dim = kDynamicDim;
-
-  inline BoxMap(ScalarType* min, ScalarType* max, SizeType size)
-      : min_(min), max_(max), size_(size) {}
-
-  inline ScalarType const* min() const noexcept { return min_; }
-  inline ScalarType* min() noexcept { return min_; }
-  inline ScalarType const* max() const noexcept { return max_; }
-  inline ScalarType* max() noexcept { return max_; }
-  inline ScalarType const& min(SizeType i) const { return min_[i]; }
-  inline ScalarType& min(SizeType i) { return min_[i]; }
-  inline ScalarType const& max(SizeType i) const { return max_[i]; }
-  inline ScalarType& max(SizeType i) { return max_[i]; }
-  inline SizeType size() const noexcept { return size_; }
-
- private:
-  ScalarType* min_;
-  ScalarType* max_;
-  SizeType size_;
+  BoxMapStorage<Scalar_, Dim_> storage_;
 };
 
 template <typename Scalar_, Size Dim_>
 struct BoxTraits<Box<Scalar_, Dim_>> {
-  using ScalarType = typename std::remove_const<Scalar_>::type;
+  using ScalarType = typename std::remove_cv<Scalar_>::type;
   static Size constexpr Dim = Dim_;
 };
 
 template <typename Scalar_, Size Dim_>
 struct BoxTraits<BoxMap<Scalar_, Dim_>> {
-  using ScalarType = typename std::remove_const<Scalar_>::type;
+  using ScalarType = typename std::remove_cv<Scalar_>::type;
   static Size constexpr Dim = Dim_;
 };
 

@@ -14,17 +14,18 @@ namespace pyco_tree {
 //! \brief The Map class adds the row_major property to the pico_tree::SpaceMap
 //! class.
 template <typename Scalar_, pico_tree::Size Dim_>
-class PyArrayMap : public pico_tree::SpaceMap<Scalar_, Dim_> {
+class PyArrayMap
+    : public pico_tree::SpaceMap<pico_tree::PointMap<Scalar_, Dim_>> {
  public:
-  using typename pico_tree::SpaceMap<Scalar_, Dim_>::ScalarType;
-  using typename pico_tree::SpaceMap<Scalar_, Dim_>::SizeType;
-  using pico_tree::SpaceMap<Scalar_, Dim_>::Dim;
+  using PointType = pico_tree::PointMap<Scalar_, Dim_>;
+  using typename pico_tree::SpaceMap<PointType>::ScalarType;
+  using typename pico_tree::SpaceMap<PointType>::SizeType;
+  using pico_tree::SpaceMap<PointType>::Dim;
   // Fixed to be an int.
   using IndexType = int;
 
-  inline PyArrayMap(
-      ScalarType* data, SizeType npts, SizeType sdim, bool row_major)
-      : pico_tree::SpaceMap<Scalar_, Dim_>(data, npts, sdim),
+  inline PyArrayMap(Scalar_* data, SizeType npts, SizeType sdim, bool row_major)
+      : pico_tree::SpaceMap<PointType>(data, npts, sdim),
         row_major_(row_major) {}
 
   inline bool row_major() const { return row_major_; }
@@ -33,7 +34,7 @@ class PyArrayMap : public pico_tree::SpaceMap<Scalar_, Dim_> {
   bool row_major_;
 };
 
-template <typename Scalar_, pico_tree::Size Dim_>
+template <pico_tree::Size Dim_, typename Scalar_>
 PyArrayMap<Scalar_, Dim_> MakeMap(py::array_t<Scalar_, 0> const pts) {
   ArrayLayout<Scalar_> layout(pts);
 
