@@ -6,8 +6,8 @@
 
 #include "pico_tree/internal/box.hpp"
 #include "pico_tree/internal/memory.hpp"
+#include "pico_tree/internal/point.hpp"
 #include "pico_tree/internal/search_visitor.hpp"
-#include "pico_tree/internal/sequence.hpp"
 #include "pico_tree/internal/stream.hpp"
 #include "pico_tree/metric.hpp"
 
@@ -371,12 +371,12 @@ class SearchNearestEuclidean {
       SpaceType const& points,
       Metric_ const& metric,
       std::vector<IndexType> const& indices,
-      Point_ const& point,
+      Point_ const& query,
       Visitor_* visitor)
       : points_(points),
         metric_(metric),
         indices_(indices),
-        point_(point),
+        query_(query),
         node_box_offset_(Traits_::SpaceSdim(points)),
         visitor_(*visitor) {}
 
@@ -393,7 +393,7 @@ class SearchNearestEuclidean {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         ScalarType const d =
-            metric_(point_, Traits_::PointAt(points_, indices_[i]));
+            metric_(query_, Traits_::PointAt(points_, indices_[i]));
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -402,7 +402,7 @@ class SearchNearestEuclidean {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
       ScalarType const v =
-          Traits_::PointCoords(point_)[node->data.branch.split_dim];
+          Traits_::PointCoords(query_)[node->data.branch.split_dim];
       ScalarType new_offset;
       NodeType const* node_1st;
       NodeType const* node_2nd;
@@ -411,7 +411,7 @@ class SearchNearestEuclidean {
       // handled by the if statement below this one: the check that max search
       // radius still hits the split value after having traversed the first
       // branch.
-      // If left_max - v > 0, this means that the point is inside the left node,
+      // If left_max - v > 0, this means that the query is inside the left node,
       // if right_min - v < 0 it's inside the right one. For the area in between
       // we just pick the closest one by summing them.
       if ((node->data.branch.left_max + node->data.branch.right_min - v - v) >
@@ -455,8 +455,8 @@ class SearchNearestEuclidean {
   SpaceType const& points_;
   Metric_ const& metric_;
   std::vector<IndexType> const& indices_;
-  Point_ const& point_;
-  Sequence<ScalarType, Dim_> node_box_offset_;
+  Point_ const& query_;
+  Point<ScalarType, Dim_> node_box_offset_;
   Visitor_& visitor_;
 };
 
@@ -479,12 +479,12 @@ class SearchNearestTopological {
       SpaceType const& points,
       Metric_ const& metric,
       std::vector<IndexType> const& indices,
-      Point_ const& point,
+      Point_ const& query,
       Visitor_* visitor)
       : points_(points),
         metric_(metric),
         indices_(indices),
-        point_(point),
+        query_(query),
         node_box_offset_(Traits_::SpaceSdim(points)),
         visitor_(*visitor) {}
 
@@ -501,7 +501,7 @@ class SearchNearestTopological {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         ScalarType const d =
-            metric_(point_, Traits_::PointAt(points_, indices_[i]));
+            metric_(query_, Traits_::PointAt(points_, indices_[i]));
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -510,7 +510,7 @@ class SearchNearestTopological {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
       ScalarType const v =
-          Traits_::PointCoords(point_)[node->data.branch.split_dim];
+          Traits_::PointCoords(query_)[node->data.branch.split_dim];
       // Determine the distance to the boxes of the children of this node.
       ScalarType const d1 = metric_(
           v,
@@ -557,8 +557,8 @@ class SearchNearestTopological {
   SpaceType const& points_;
   Metric_ const& metric_;
   std::vector<IndexType> const& indices_;
-  Point_ const& point_;
-  Sequence<ScalarType, Dim_> node_box_offset_;
+  Point_ const& query_;
+  Point<ScalarType, Dim_> node_box_offset_;
   Visitor_& visitor_;
 };
 

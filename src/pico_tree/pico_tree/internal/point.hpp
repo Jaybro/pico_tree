@@ -16,50 +16,56 @@ template <typename Scalar_, Size Dim_>
 struct PointStorage {
   constexpr explicit PointStorage(Size) {}
 
-  std::array<Scalar_, Dim_> point;
+  std::array<Scalar_, Dim_> container;
 };
 
 //! \details The specialized class doesn't knows its dimension at compile-time
 //! and uses an std::vector for storing its data so it can be resized.
 template <typename Scalar_>
 struct PointStorage<Scalar_, kDynamicDim> {
-  constexpr explicit PointStorage(Size size) : point(size) {}
+  constexpr explicit PointStorage(Size size) : container(size) {}
 
-  std::vector<Scalar_> point;
+  std::vector<Scalar_> container;
 };
 
 //! \brief A sequence stores a contiguous array of elements similar to an
 //! std::array or std::vector.
 template <typename Scalar_, Size Dim_>
-class Sequence {
+class Point {
  public:
-  static_assert(Dim_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
+  static_assert(Dim_ == kDynamicDim || Dim_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
   using ScalarType = Scalar_;
   using SizeType = Size;
   static SizeType constexpr Dim = Dim_;
 
-  constexpr Sequence() : storage_(Dim_) {}
+  constexpr Point() : storage_(Dim_) {}
 
-  constexpr explicit Sequence(SizeType size) : storage_(size) {}
+  constexpr explicit Point(SizeType size) : storage_(size) {}
 
   //! \brief Fills the storage with value \p v.
   inline void Fill(ScalarType v) {
-    std::fill(storage_.point.begin(), storage_.point.end(), v);
+    std::fill(storage_.container.begin(), storage_.container.end(), v);
   }
 
   //! \brief Access the container data.
   inline ScalarType& operator[](SizeType i) noexcept {
-    return storage_.point[i];
+    return storage_.container[i];
   }
 
   //! \brief Access the container data.
   inline ScalarType const& operator[](SizeType i) const noexcept {
-    return storage_.point[i];
+    return storage_.container[i];
   }
 
+  inline ScalarType const* data() const noexcept {
+    return storage_.container.data();
+  }
+
+  inline ScalarType* data() noexcept { return storage_.container.data(); }
+
   //! \brief Returns the size of the container.
-  constexpr SizeType size() const noexcept { return storage_.point.size(); }
+  constexpr SizeType size() const noexcept { return storage_.container.size(); }
 
  private:
   PointStorage<Scalar_, Dim_> storage_;

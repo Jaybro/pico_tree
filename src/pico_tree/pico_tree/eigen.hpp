@@ -41,6 +41,10 @@ struct EigenVectorDim<Derived, true> {
   static Eigen::Index constexpr Dim = Derived::ColsAtCompileTime;
 };
 
+constexpr Size EigenDimToPicoDim(Eigen::Index dim) {
+  return dim == Eigen::Dynamic ? kDynamicDim : static_cast<Size>(dim);
+}
+
 //! \brief EigenPointTraits provides an interface for the different point types
 //! that can be used with EigenTraits.
 //! \details Unlike the specialization of StdPointTraits for Eigen types, the
@@ -55,7 +59,7 @@ struct EigenPointTraits {
   using SizeType = Size;
   //! \brief Compile time spatial dimension.
   static SizeType constexpr Dim =
-      static_cast<SizeType>(EigenVectorDim<Derived, Derived::IsRowMajor>::Dim);
+      EigenDimToPicoDim(EigenVectorDim<Derived, Derived::IsRowMajor>::Dim);
 
   //! \brief Returns a pointer to the coordinates of \p point.
   inline static ScalarType const* Coords(
@@ -78,11 +82,11 @@ template <typename Derived, typename Index_>
 struct EigenTraitsImpl<Derived, Index_, false> {
   //! \brief The size and index type of point coordinates.
   using SizeType = Size;
-  //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
-  static constexpr SizeType Dim =
-      static_cast<SizeType>(Derived::RowsAtCompileTime);
+  //! \brief Spatial dimension.
+  static SizeType constexpr Dim = EigenDimToPicoDim(Derived::RowsAtCompileTime);
   //! \brief The point type used by Derived.
-  using PointType = Eigen::Block<Derived const, Dim, 1, true>;
+  using PointType =
+      Eigen::Block<Derived const, Derived::RowsAtCompileTime, 1, true>;
   //! \brief The index type of point coordinates.
   using IndexType = Index_;
 
@@ -109,11 +113,11 @@ template <typename Derived, typename Index_>
 struct EigenTraitsImpl<Derived, Index_, true> {
   //! \brief The size and index type of point coordinates.
   using SizeType = Size;
-  //! \brief Spatial dimension. Eigen::Dynamic equals pico_tree::kDynamicDim.
-  static constexpr SizeType Dim =
-      static_cast<SizeType>(Derived::ColsAtCompileTime);
+  //! \brief Spatial dimension.
+  static SizeType constexpr Dim = EigenDimToPicoDim(Derived::ColsAtCompileTime);
   //! \brief The point type used by Derived.
-  using PointType = Eigen::Block<Derived const, 1, Dim, true>;
+  using PointType =
+      Eigen::Block<Derived const, 1, Derived::ColsAtCompileTime, true>;
   //! \brief The index type of point coordinates.
   using IndexType = Index_;
 
