@@ -641,14 +641,42 @@ class SearchBoxEuclidean {
   //! \brief Reports all indices contained by \p node.
   template <typename Node>
   inline void ReportNode(Node const* const node) const {
+    IndexType begin;
+    IndexType end;
+
     if (node->IsLeaf()) {
-      std::copy(
-          indices_.cbegin() + node->data.leaf.begin_idx,
-          indices_.cbegin() + node->data.leaf.end_idx,
-          std::back_inserter(idxs_));
+      begin = node->data.leaf.begin_idx;
+      end = node->data.leaf.end_idx;
     } else {
-      ReportNode(node->left);
-      ReportNode(node->right);
+      // Nodes and index pointers (begin_idx and end_idx) are ordered left to
+      // right. This means that for any node, its left-most and right-most leaf
+      // node descendants will respectively store the begin index and end index
+      // of the entire range of points contained by that node.
+      begin = ReportLeft(node->left);
+      end = ReportRight(node->right);
+    }
+
+    std::copy(
+        indices_.cbegin() + begin,
+        indices_.cbegin() + end,
+        std::back_inserter(idxs_));
+  }
+
+  template <typename Node>
+  inline IndexType ReportLeft(Node const* const node) const {
+    if (node->IsLeaf()) {
+      return node->data.leaf.begin_idx;
+    } else {
+      return ReportLeft(node->left);
+    }
+  }
+
+  template <typename Node>
+  inline IndexType ReportRight(Node const* const node) const {
+    if (node->IsLeaf()) {
+      return node->data.leaf.end_idx;
+    } else {
+      return ReportRight(node->right);
     }
   }
 
