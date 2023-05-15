@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 #include "pico_tree/core.hpp"
 
@@ -61,14 +62,14 @@ class BoxBase {
   //! \param p_max_index Output parameter for the index of the longest axis.
   //! \param p_max_value Output parameter for the range of the longest axis.
   inline void LongestAxis(
-      SizeType* p_max_index, ScalarType* p_max_value) const {
-    *p_max_value = std::numeric_limits<ScalarType>::lowest();
+      SizeType& p_max_index, ScalarType& p_max_value) const {
+    p_max_value = std::numeric_limits<ScalarType>::lowest();
 
     for (SizeType i = 0; i < derived().size(); ++i) {
       ScalarType const delta = max(i) - min(i);
-      if (delta > *p_max_value) {
-        *p_max_index = i;
-        *p_max_value = delta;
+      if (delta > p_max_value) {
+        p_max_index = i;
+        p_max_value = delta;
       }
     }
   }

@@ -72,7 +72,7 @@ class TopologicalSpaceTag {};
 
 //! \brief Identifies a metric to support the Euclidean space with PicoTree's
 //! search structures.
-//! \details Supports the fastest queries doesn't support identificatons.
+//! \details Supports the fastest queries but doesn't support identificatons.
 //! \see TopologicalSpaceTag
 class EuclideanSpaceTag : public TopologicalSpaceTag {};
 

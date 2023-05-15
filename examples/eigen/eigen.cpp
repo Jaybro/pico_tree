@@ -1,7 +1,7 @@
 // This example compiles with C++11.
 // C++11 and higher don't need the StdVector include (as mentioned inside the
 // include itself).
-//#include <Eigen/StdVector>
+// #include <Eigen/StdVector>
 // If we use C++17 there is no need to take care of memory alignment:
 // https://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
 #include <pico_toolshed/scoped_timer.hpp>
@@ -167,8 +167,8 @@ void VectorMapRowMajor() {
 // Eigen::Vector3f doesn't benefit from vectorization. With Eigen::Vector4f we
 // can, but in this case we have one dimension too many!
 //
-// Luckily, it is possible use a different dimension for both the points and the
-// KdTree, but some care needs to be taken:
+// Luckily, it is possible override the default Dim constant with a different
+// value (see OverrideDimTraits), but some care needs to be taken:
 // * The default Metrics don't make explicit use of vectorization (perhaps
 // implicitly through optimization by the compiler) but the Eigen based Metrics
 // may do so.
@@ -178,6 +178,12 @@ void VectorMapRowMajor() {
 //
 // See also:
 // http://eigen.tuxfamily.org/index.php?title=UsingVector4fForVector3fOperations
+
+template <typename Traits_, pico_tree::Size Dim_>
+struct OverrideDimTraits : public Traits_ {
+  static pico_tree::Size constexpr Dim = Dim_;
+};
+
 void Metrics() {
   // Eigen::Vector4f requires aligned memory.
   using PointX = Eigen::Vector4f;
@@ -200,15 +206,13 @@ void Metrics() {
 
   {
     // Using an std::reference_wrapper prevents a copy.
-    using Traits = pico_tree::StdTraits<std::reference_wrapper<
-        std::vector<PointX, Eigen::aligned_allocator<PointX>>>>;
+    using Traits = OverrideDimTraits<
+        pico_tree::StdTraits<std::reference_wrapper<
+            std::vector<PointX, Eigen::aligned_allocator<PointX>>>>,
+        Dim>;
 
-    pico_tree::KdTree<
-        Traits,
-        pico_tree::EigenL2Squared<Scalar>,
-        pico_tree::SplitterSlidingMidpoint<Traits>,
-        Dim>
-        tree(points, kMaxLeafCount);
+    pico_tree::KdTree<Traits, pico_tree::EigenL2Squared<Scalar>> tree(
+        points, kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("pico_tree eigen l2", kRunCount);
@@ -219,14 +223,10 @@ void Metrics() {
 
   {
     // Using an Eigen::Map prevents a copy.
-    using Traits = pico_tree::EigenTraits<Map>;
+    using Traits = OverrideDimTraits<pico_tree::EigenTraits<Map>, Dim>;
 
-    pico_tree::KdTree<
-        Traits,
-        pico_tree::EigenL1<Scalar>,
-        pico_tree::SplitterSlidingMidpoint<Traits>,
-        Dim>
-        tree(map, kMaxLeafCount);
+    pico_tree::KdTree<Traits, pico_tree::EigenL1<Scalar>> tree(
+        map, kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("pico_tree eigen l1", kRunCount);

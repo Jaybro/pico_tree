@@ -9,18 +9,22 @@ class BmPicoKdTree : public pico_tree::Benchmark {
 
 // Index explicitly set to int.
 template <typename PointX>
-using PicoTraits =
+using PicoCtTraits =
     pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>, int>;
 
-template <typename PointX>
-using PicoKdTreeCtSldMid = pico_tree::KdTree<PicoTraits<PointX>>;
+template <typename Traits_>
+struct DynamicDimTraits : public Traits_ {
+  static pico_tree::Size constexpr Dim = pico_tree::kDynamicDim;
+};
 
 template <typename PointX>
-using PicoKdTreeRtSldMid = pico_tree::KdTree<
-    PicoTraits<PointX>,
-    pico_tree::L2Squared<PicoTraits<PointX>>,
-    pico_tree::SplitterSlidingMidpoint<PicoTraits<PointX>>,
-    pico_tree::kDynamicDim>;
+using PicoRtTraits = DynamicDimTraits<PicoCtTraits<PointX>>;
+
+template <typename PointX>
+using PicoKdTreeCtSldMid = pico_tree::KdTree<PicoCtTraits<PointX>>;
+
+template <typename PointX>
+using PicoKdTreeRtSldMid = pico_tree::KdTree<PicoRtTraits<PointX>>;
 
 // ****************************************************************************
 // Building the tree

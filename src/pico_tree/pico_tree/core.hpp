@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include <functional>
-#include <vector>
 
 namespace pico_tree {
 
@@ -18,7 +17,7 @@ using Size = std::size_t;
 //! the spatial dimension of the search problem when it can only be known at
 //! run-time. In this case the dimension of the problem is provided by the point
 //! adaptor.
-static Size constexpr kDynamicDim = -1;
+static Size constexpr kDynamicDim = static_cast<Size>(-1);
 
 //! \brief A Neighbor is a point reference with a corresponding distance to
 //! another point.
