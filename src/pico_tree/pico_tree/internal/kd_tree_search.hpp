@@ -226,7 +226,7 @@ class SearchBoxEuclidean {
  public:
   // TODO Perhaps we can support it for both topological and Euclidean spaces.
   static_assert(
-      std::is_same<typename Metric_::SpaceTag, EuclideanSpaceTag>::value,
+      std::is_same_v<typename Metric_::SpaceTag, EuclideanSpaceTag>,
       "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
 
   using IndexType = typename SpaceWrapper_::IndexType;

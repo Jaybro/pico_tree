@@ -14,7 +14,7 @@ struct Traits {
   using ScalarType = Scalar_;
   // The index type of point coordinates stored by the tree.
   using IndexType = int;
-  // Spatial dimension. Set to pico_tree::kDynamicDim when the dimension is only
+  // Spatial dimension. Set to pico_tree::kDynamicSize when the dimension is only
   // known at run-time.
   static std::size_t constexpr Dim = Dim_;
 

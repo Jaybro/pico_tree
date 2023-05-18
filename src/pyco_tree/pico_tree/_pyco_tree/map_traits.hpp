@@ -5,7 +5,7 @@
 namespace pico_tree {
 
 template <typename Scalar_, Size Dim_>
-struct StdPointTraits<PointMap<Scalar_, Dim_>> {
+struct PointTraits<PointMap<Scalar_, Dim_>> {
   using PointType = PointMap<Scalar_, Dim_>;
   using ScalarType = typename PointType::ScalarType;
   using SizeType = typename PointType::SizeType;
@@ -19,7 +19,7 @@ struct StdPointTraits<PointMap<Scalar_, Dim_>> {
 };
 
 //! \brief MapTraits provides an interface for SpaceMap and points supported by
-//! StdPointTraits.
+//! PointTraits.
 //! \tparam Index_ Type used for indexing. Defaults to int.
 template <typename Scalar_, Size Dim_, typename Index_ = int>
 struct MapTraits {
@@ -44,12 +44,12 @@ struct MapTraits {
 
   template <typename OtherPoint>
   inline static SizeType PointSdim(OtherPoint const& point) {
-    return StdPointTraits<OtherPoint>::Sdim(point);
+    return PointTraits<OtherPoint>::Sdim(point);
   }
 
   template <typename OtherPoint>
   inline static ScalarType const* PointCoords(OtherPoint const& point) {
-    return StdPointTraits<OtherPoint>::Coords(point);
+    return PointTraits<OtherPoint>::Coords(point);
   }
 };
 

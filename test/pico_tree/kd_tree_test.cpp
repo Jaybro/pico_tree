@@ -41,7 +41,7 @@ template <typename Point>
 struct DynamicSpaceTraits : public pico_tree::StdTraits<std::vector<Point>> {
   using SpaceType = DynamicSpace<Point>;
   using SizeType = pico_tree::Size;
-  static SizeType constexpr Dim = pico_tree::kDynamicDim;
+  static SizeType constexpr Dim = pico_tree::kDynamicSize;
 
   inline static SizeType SpaceSdim(DynamicSpace<Point> const& space) {
     return space.sdim();
@@ -109,7 +109,7 @@ TEST(KdTreeTest, QuerySo2Knn4) {
   using PointX = Point1f;
   using TraitsX = Traits<Space<PointX>>;
 
-  const auto pi = typename KdTree<PointX>::ScalarType(pico_tree::internal::kPi);
+  const auto pi = pico_tree::internal::kPi<typename KdTree<PointX>::ScalarType>;
   std::vector<PointX> random = GenerateRandomN<PointX>(256 * 256, -pi, pi);
   pico_tree::KdTree<TraitsX, pico_tree::SO2<TraitsX>> tree(random, 10);
   TestKnn(tree, static_cast<typename KdTree<PointX>::IndexType>(8), PointX{pi});

@@ -8,8 +8,10 @@ namespace internal {
 
 //! Mathematical constant pi. It is defined as the ratio of a circle's
 //! circumference to its diameter. Only available from C++20.
-static long double constexpr kPi = 3.14159265358979323846l;
-static long double constexpr kTwoPi = kPi * 2.0l;
+template <typename T>
+inline T constexpr kPi = T(3.14159265358979323846l);
+template <typename T>
+inline T constexpr kTwoPi = T(6.28318530717958647693l);
 
 //! \brief Calculates the absolute difference between two point coordinates.
 struct AbsDiff {
@@ -96,9 +98,9 @@ class L1 {
   template <typename P0, typename P1>
   // The enable_if is not required but it forces implicit casts which are
   // handled by operator()(ScalarType, ScalarType).
-  inline typename std::enable_if<
-      !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
-      ScalarType>::type
+  inline std::enable_if_t<
+      !std::is_fundamental_v<P0> && !std::is_fundamental_v<P1>,
+      ScalarType>
   operator()(P0 const& p0, P1 const& p1) const {
     return internal::Sum<Traits_, internal::AbsDiff>::Op(p0, p1);
   }
@@ -131,9 +133,9 @@ class L2Squared {
   template <typename P0, typename P1>
   // The enable_if is not required but it forces implicit casts which are
   // handled by operator()(ScalarType, ScalarType).
-  inline typename std::enable_if<
-      !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
-      ScalarType>::type
+  inline std::enable_if_t<
+      !std::is_fundamental_v<P0> && !std::is_fundamental_v<P1>,
+      ScalarType>
   operator()(P0 const& p0, P1 const& p1) const {
     return internal::Sum<Traits_, internal::SqrdDiff>::Op(p0, p1);
   }
@@ -171,9 +173,9 @@ class SO2 {
   template <typename P0, typename P1>
   // The enable_if is not required but it forces implicit casts which are
   // handled by operator()(ScalarType, ScalarType).
-  inline typename std::enable_if<
-      !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
-      ScalarType>::type
+  inline std::enable_if_t<
+      !std::is_fundamental_v<P0> && !std::is_fundamental_v<P1>,
+      ScalarType>
   operator()(P0 const& p0, P1 const& p1) const {
     assert(Traits_::PointSdim(p0) == Traits_::PointSdim(p1));
     assert(Traits_::PointSdim(p0) == 1);
@@ -203,13 +205,10 @@ class SO2 {
   }
 
  private:
-  static ScalarType constexpr kTwoPi =
-      static_cast<ScalarType>(internal::kTwoPi);
-
   //! \brief Calculates the distance between two coordinates.
   inline ScalarType operator()(ScalarType const x, ScalarType const y) const {
     ScalarType const d = std::abs(x - y);
-    return std::min(d, kTwoPi - d);
+    return std::min(d, internal::kTwoPi<ScalarType> - d);
   }
 };
 

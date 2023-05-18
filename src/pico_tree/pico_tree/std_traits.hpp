@@ -4,27 +4,22 @@
 #include <vector>
 
 #include "core.hpp"
+#include "point_traits.hpp"
 
 namespace pico_tree {
 
 //! \brief StdTraits provides an interface for spaces and points when working
 //! with indexable containers from the C++ standard.
 //! \details Because different point types can have different interfaces, they
-//! will be provided by StdPointTraits.
-//! \tparam Space_ Any of the point sets supported by StdPointTraits.
+//! will be provided by PointTraits.
+//! \tparam Space_ Any of the point sets supported by PointTraits.
 //! \tparam Index_ Type used for indexing. Defaults to int.
 template <typename Space_, typename Index_ = int>
 struct StdTraits;
 
-//! \brief StdPointTraits provides an interface for the different point types
-//! that can be used with StdTraits (or others).
-//! \tparam Point_ Any of the point types supported by StdPointTraits.
-template <typename Point_>
-struct StdPointTraits;
-
 //! \brief StdTraits provides an interface for std::vector<> and points
-//! supported by StdPointTraits.
-//! \tparam Point_ Any of the point types supported by StdPointTraits.
+//! supported by PointTraits.
+//! \tparam Point_ Any of the point types supported by PointTraits.
 //! \tparam Allocator_ Allocator type used by the std::vector.
 //! \tparam Index_ Type used for indexing. Defaults to int.
 template <typename Point_, typename Allocator_, typename Index_>
@@ -34,20 +29,20 @@ struct StdTraits<std::vector<Point_, Allocator_>, Index_> {
   //! \brief The point type used by SpaceType.
   using PointType = Point_;
   //! \brief The scalar type of point coordinates.
-  using ScalarType = typename StdPointTraits<Point_>::ScalarType;
+  using ScalarType = typename PointTraits<Point_>::ScalarType;
   //! \brief The size and index type of point coordinates.
   using SizeType = Size;
   //! \brief The index type of point coordinates.
   using IndexType = Index_;
   //! \brief Compile time spatial dimension.
-  static SizeType constexpr Dim = StdPointTraits<Point_>::Dim;
+  static SizeType constexpr Dim = PointTraits<Point_>::Dim;
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
   inline static SizeType constexpr SpaceSdim(
       std::vector<Point_, Allocator_> const&) {
     static_assert(
-        Dim != kDynamicDim, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
+        Dim != kDynamicSize, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
     return Dim;
   }
 
@@ -68,7 +63,7 @@ struct StdTraits<std::vector<Point_, Allocator_>, Index_> {
   //! greater interfacing flexibility.
   template <typename OtherPoint>
   inline static SizeType PointSdim(OtherPoint const& point) {
-    return StdPointTraits<OtherPoint>::Sdim(point);
+    return PointTraits<OtherPoint>::Sdim(point);
   }
 
   //! \brief Returns a pointer to the coordinates of \p point.
@@ -76,14 +71,14 @@ struct StdTraits<std::vector<Point_, Allocator_>, Index_> {
   //! greater interfacing flexibility.
   template <typename OtherPoint>
   inline static ScalarType const* PointCoords(OtherPoint const& point) {
-    return StdPointTraits<OtherPoint>::Coords(point);
+    return PointTraits<OtherPoint>::Coords(point);
   }
 };
 
 //! \brief StdTraits provides an interface for
 //! std::reference_wrapper<std::vector<>> and points supported by
-//! StdPointTraits.
-//! \tparam Point_ Any of the point types supported by StdPointTraits.
+//! PointTraits.
+//! \tparam Point_ Any of the point types supported by PointTraits.
 //! \tparam Allocator_ Allocator type used by the std::vector.
 //! \tparam Index_ Type used for indexing. Defaults to int.
 template <typename Point_, typename Allocator_, typename Index_>
@@ -100,8 +95,8 @@ struct StdTraits<
 
 //! \brief StdTraits provides an interface for
 //! std::reference_wrapper<std::vector<> const> and points supported by
-//! StdPointTraits.
-//! \tparam Point_ Any of the point types supported by StdPointTraits.
+//! PointTraits.
+//! \tparam Point_ Any of the point types supported by PointTraits.
 //! \tparam Allocator_ Allocator type used by the std::vector.
 //! \tparam Index_ Type used for indexing. Defaults to int.
 template <typename Point_, typename Allocator_, typename Index_>

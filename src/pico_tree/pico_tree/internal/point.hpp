@@ -22,7 +22,7 @@ struct PointStorage {
 //! \details The specialized class doesn't knows its dimension at compile-time
 //! and uses an std::vector for storing its data so it can be resized.
 template <typename Scalar_>
-struct PointStorage<Scalar_, kDynamicDim> {
+struct PointStorage<Scalar_, kDynamicSize> {
   constexpr explicit PointStorage(Size size) : container(size) {}
 
   std::vector<Scalar_> container;
@@ -33,7 +33,7 @@ struct PointStorage<Scalar_, kDynamicDim> {
 template <typename Scalar_, Size Dim_>
 class Point {
  public:
-  static_assert(Dim_ == kDynamicDim || Dim_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
+  static_assert(Dim_ == kDynamicSize || Dim_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
   using ScalarType = Scalar_;
   using SizeType = Size;
@@ -44,25 +44,25 @@ class Point {
   constexpr explicit Point(SizeType size) : storage_(size) {}
 
   //! \brief Fills the storage with value \p v.
-  inline void Fill(ScalarType v) {
+  constexpr void Fill(ScalarType v) {
     std::fill(storage_.container.begin(), storage_.container.end(), v);
   }
 
   //! \brief Access the container data.
-  inline ScalarType& operator[](SizeType i) noexcept {
+  constexpr ScalarType& operator[](SizeType i) noexcept {
     return storage_.container[i];
   }
 
   //! \brief Access the container data.
-  inline ScalarType const& operator[](SizeType i) const noexcept {
+  constexpr ScalarType const& operator[](SizeType i) const noexcept {
     return storage_.container[i];
   }
 
-  inline ScalarType const* data() const noexcept {
+  constexpr ScalarType const* data() const noexcept {
     return storage_.container.data();
   }
 
-  inline ScalarType* data() noexcept { return storage_.container.data(); }
+  constexpr ScalarType* data() noexcept { return storage_.container.data(); }
 
   //! \brief Returns the size of the container.
   constexpr SizeType size() const noexcept { return storage_.container.size(); }

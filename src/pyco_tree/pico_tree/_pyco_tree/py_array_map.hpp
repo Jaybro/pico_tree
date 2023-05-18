@@ -2,8 +2,6 @@
 
 #include <pybind11/numpy.h>
 
-#include <pico_tree/std_traits.hpp>
-
 #include "core.hpp"
 #include "map_traits.hpp"
 

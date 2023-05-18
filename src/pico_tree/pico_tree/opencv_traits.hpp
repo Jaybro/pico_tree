@@ -3,9 +3,9 @@
 #include <cassert>
 #include <opencv2/core.hpp>
 
-#include "std_traits.hpp"
+#include "point_traits.hpp"
 
-//! \file opencv.hpp
+//! \file opencv_traits.hpp
 //! \brief Contains traits and classes that provide OpenCV support for PicoTree.
 //! \details The following is supported:
 //! * std::vector<cv::Point_<>> via pico_tree::StdTraits<>
@@ -15,9 +15,9 @@
 
 namespace pico_tree {
 
-//! \brief StdPointTraits provides an interface for cv::Point_<>.
+//! \brief PointTraits provides an interface for cv::Point_<>.
 template <typename Scalar_>
-struct StdPointTraits<cv::Point_<Scalar_>> {
+struct PointTraits<cv::Point_<Scalar_>> {
   static_assert(sizeof(cv::Point_<Scalar_>) == (sizeof(Scalar_) * 2), "");
 
   //! \brief The scalar type of point coordinates.
@@ -38,9 +38,9 @@ struct StdPointTraits<cv::Point_<Scalar_>> {
   }
 };
 
-//! \brief StdPointTraits provides an interface for cv::Point3_<>.
+//! \brief PointTraits provides an interface for cv::Point3_<>.
 template <typename Scalar_>
-struct StdPointTraits<cv::Point3_<Scalar_>> {
+struct PointTraits<cv::Point3_<Scalar_>> {
   static_assert(sizeof(cv::Point3_<Scalar_>) == (sizeof(Scalar_) * 3), "");
 
   //! \brief The scalar type of point coordinates.
@@ -61,9 +61,9 @@ struct StdPointTraits<cv::Point3_<Scalar_>> {
   }
 };
 
-//! \brief StdPointTraits provides an interface for cv::Vec<>.
+//! \brief PointTraits provides an interface for cv::Vec<>.
 template <typename Scalar_, int Dim_>
-struct StdPointTraits<cv::Vec<Scalar_, Dim_>> {
+struct PointTraits<cv::Vec<Scalar_, Dim_>> {
   //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
   //! \brief The size and index type of point coordinates.
@@ -106,7 +106,7 @@ class CvMatRow {
 
   //! \brief Returns the spatial dimension of this point.
   inline SizeType sdim() const {
-    assert(Dim == kDynamicDim || Dim == space_.step1());
+    assert(Dim == kDynamicSize || Dim == space_.step1());
     // TODO This run time version is actually quite expensive when used. Perhaps
     // there is an alternative.
     return space_.step1();
@@ -117,9 +117,9 @@ class CvMatRow {
   cv::Mat const& space_;
 };
 
-//! \brief StdPointTraits provides an interface for CvMatRow<>.
+//! \brief PointTraits provides an interface for CvMatRow<>.
 template <typename Scalar_, Size Dim_>
-struct StdPointTraits<CvMatRow<Scalar_, Dim_>> {
+struct PointTraits<CvMatRow<Scalar_, Dim_>> {
   //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
   //! \brief The size and index type of point coordinates.
@@ -142,7 +142,7 @@ struct StdPointTraits<CvMatRow<Scalar_, Dim_>> {
 //! point.
 //! \tparam Scalar_ Point coordinate type.
 //! \tparam Dim_ The spatial dimension of each point. Set to
-//! pico_tree::kDynamicDim when the dimension is only known at run-time.
+//! pico_tree::kDynamicSize when the dimension is only known at run-time.
 template <typename Scalar_, int Dim_>
 struct CvTraits {
   //! \brief The SpaceType of these traits.
@@ -161,7 +161,7 @@ struct CvTraits {
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
   inline static SizeType SpaceSdim(cv::Mat const& space) {
-    assert(Dim == kDynamicDim || Dim == space.step1());
+    assert(Dim == kDynamicSize || Dim == space.step1());
     // TODO This run time version is actually quite expensive when used. Perhaps
     // there is an alternative.
     return space.step1();
@@ -180,7 +180,7 @@ struct CvTraits {
   //! greater interfacing flexibility.
   template <typename OtherPoint>
   inline static SizeType PointSdim(OtherPoint const& point) {
-    return StdPointTraits<OtherPoint>::Sdim(point);
+    return PointTraits<OtherPoint>::Sdim(point);
   }
 
   //! \brief Returns a pointer to the coordinates of \p point.
@@ -188,7 +188,7 @@ struct CvTraits {
   //! greater interfacing flexibility.
   template <typename OtherPoint>
   inline static ScalarType const* PointCoords(OtherPoint const& point) {
-    return StdPointTraits<OtherPoint>::Coords(point);
+    return PointTraits<OtherPoint>::Coords(point);
   }
 };
 

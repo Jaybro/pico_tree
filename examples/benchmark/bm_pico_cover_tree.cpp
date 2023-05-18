@@ -1,5 +1,6 @@
 #include <pico_toolshed/point.hpp>
 #include <pico_toolshed/scoped_timer.hpp>
+#include <pico_tree/std_traits.hpp>
 #include <pico_understory/cover_tree.hpp>
 
 #include "benchmark.hpp"

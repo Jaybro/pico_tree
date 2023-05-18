@@ -21,9 +21,9 @@ class L2 {
   template <typename P0, typename P1>
   // The enable_if is not required but it forces implicit casts which are
   // handled by operator()(Scalar, Scalar).
-  inline typename std::enable_if<
-      !std::is_fundamental<P0>::value && !std::is_fundamental<P1>::value,
-      Scalar>::type
+  inline std::enable_if_t<
+      !std::is_fundamental_v<P0> && !std::is_fundamental_v<P1>,
+      Scalar>
   operator()(P0 const& p0, P1 const& p1) const {
     return std::sqrt(internal::Sum<Traits, internal::SqrdDiff>::Op(p0, p1));
   }

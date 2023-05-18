@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <pico_tree/core.hpp>
+#include <pico_tree/std_traits.hpp>
 
 inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
 
@@ -29,17 +30,17 @@ void CheckTraits(
     NptsType point_index,
     ScalarType const* point_data_ref) {
   static_assert(
-      std::is_same<typename Traits::SpaceType, SpaceType>::value,
+      std::is_same_v<typename Traits::SpaceType, SpaceType>,
       "TRAITS_SPACE_TYPE_INCORRECT");
 
   static_assert(Traits::Dim == Dim, "TRAITS_DIM_NOT_EQUAL_TO_EXPECTED_DIM");
 
   static_assert(
-      std::is_same<typename Traits::IndexType, IndexType>::value,
+      std::is_same_v<typename Traits::IndexType, IndexType>,
       "TRAITS_INDEX_TYPE_INCORRECT");
 
   static_assert(
-      std::is_same<typename Traits::ScalarType, ScalarType>::value,
+      std::is_same_v<typename Traits::ScalarType, ScalarType>,
       "TRAITS_SCALAR_TYPE_INCORRECT");
 
   EXPECT_EQ(sdim, Traits::SpaceSdim(space));
@@ -80,6 +81,7 @@ void TestBox(
     typename Tree::ScalarType const max_v) {
   using TraitsX = typename Tree::TraitsType;
   using SpaceX = typename Tree::SpaceType;
+  // TODO Improve lookup of PointType.
   using PointX = typename pico_tree::StdTraits<SpaceX>::PointType;
   using Index = typename Tree::IndexType;
 

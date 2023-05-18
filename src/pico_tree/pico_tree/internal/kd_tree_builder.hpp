@@ -6,7 +6,9 @@
 #include <vector>
 
 #include "pico_tree/internal/box.hpp"
+#include "pico_tree/internal/kd_tree_data.hpp"
 #include "pico_tree/internal/kd_tree_node.hpp"
+#include "pico_tree/metric.hpp"
 
 namespace pico_tree {
 
@@ -169,7 +171,7 @@ template <
     typename SpaceWrapper_,
     SplittingRule SplittingRule_,
     typename KdTreeData_>
-class KdTreeBuilder {
+class BuildKdTreeImpl {
  public:
   using IndexType = typename SpaceWrapper_::IndexType;
   using ScalarType = typename SpaceWrapper_::ScalarType;
@@ -182,26 +184,7 @@ class KdTreeBuilder {
   using NodeType = typename KdTreeDataType::NodeType;
   using NodeAllocatorType = typename KdTreeDataType::NodeAllocatorType;
 
-  //! \brief Construct a KdTree given \p points , \p max_leaf_size and
-  //! SplitterType.
-  inline static KdTreeDataType Build(
-      SpaceWrapperType const& space, IndexType const max_leaf_size) {
-    assert(space.size() > 0);
-    assert(max_leaf_size > 0);
-
-    std::vector<IndexType> indices(space.size());
-    std::iota(indices.begin(), indices.end(), 0);
-    BoxType root_box = space.ComputeBoundingBox();
-    NodeAllocatorType allocator;
-    NodeType* root_node =
-        KdTreeBuilder{space, max_leaf_size, indices, allocator}(root_box);
-
-    return KdTreeDataType{
-        std::move(indices), root_box, std::move(allocator), root_node};
-  }
-
- private:
-  inline KdTreeBuilder(
+  BuildKdTreeImpl(
       SpaceWrapperType const& space,
       IndexType const max_leaf_size,
       std::vector<IndexType>& indices,
@@ -218,6 +201,7 @@ class KdTreeBuilder {
     return SplitIndices(0, indices_.begin(), indices_.end(), box);
   }
 
+ private:
   //! \brief Creates a tree node for a range of indices, splits the range in
   //! two and recursively does the same for each sub set of indices until the
   //! index range size is less than or equal to max_leaf_size_.
@@ -310,6 +294,64 @@ class KdTreeBuilder {
   SplitterType splitter_;
   std::vector<IndexType>& indices_;
   NodeAllocatorType& allocator_;
+};
+
+//! \brief KdTree meta information depending on the SpaceTag_ template argument.
+template <typename SpaceTag_>
+struct KdTreeSpaceTagTraits;
+
+//! \brief KdTree meta information for the EuclideanSpaceTag.
+template <>
+struct KdTreeSpaceTagTraits<EuclideanSpaceTag> {
+  //! \brief Supported node type.
+  template <typename Index_, typename Scalar_>
+  using NodeType = KdTreeNodeEuclidean<Index_, Scalar_>;
+};
+
+//! \brief KdTree meta information for the TopologicalSpaceTag.
+template <>
+struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
+  //! \brief Supported node type.
+  template <typename Index_, typename Scalar_>
+  using NodeType = KdTreeNodeTopological<Index_, Scalar_>;
+};
+
+template <
+    typename SpaceWrapper_,
+    typename Metric_,
+    SplittingRule SplittingRule_>
+class BuildKdTree {
+ public:
+  using IndexType = typename SpaceWrapper_::IndexType;
+  using ScalarType = typename SpaceWrapper_::ScalarType;
+  static Size constexpr Dim = SpaceWrapper_::Dim;
+  using SpaceWrapperType = SpaceWrapper_;
+  //! \brief Node type based on Metric_::SpaceTag.
+  using NodeType = typename KdTreeSpaceTagTraits<
+      typename Metric_::SpaceTag>::template NodeType<IndexType, ScalarType>;
+  using KdTreeDataType = KdTreeData<NodeType, Dim>;
+  using NodeAllocatorType = typename KdTreeDataType::NodeAllocatorType;
+  using BoxType = Box<ScalarType, Dim>;
+  using BuildKdTreeImplType =
+      BuildKdTreeImpl<SpaceWrapper_, SplittingRule_, KdTreeDataType>;
+
+  //! \brief Construct a KdTree given \p points , \p max_leaf_size and
+  //! SplitterType.
+  KdTreeDataType operator()(
+      SpaceWrapperType const& space, IndexType const max_leaf_size) {
+    assert(space.size() > 0);
+    assert(max_leaf_size > 0);
+
+    std::vector<IndexType> indices(space.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    BoxType root_box = space.ComputeBoundingBox();
+    NodeAllocatorType allocator;
+    NodeType* root_node =
+        BuildKdTreeImplType{space, max_leaf_size, indices, allocator}(root_box);
+
+    return KdTreeDataType{
+        std::move(indices), root_box, std::move(allocator), root_node};
+  }
 };
 
 }  // namespace internal

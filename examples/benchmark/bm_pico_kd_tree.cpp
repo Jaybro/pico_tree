@@ -1,5 +1,6 @@
 #include <pico_toolshed/point.hpp>
 #include <pico_tree/kd_tree.hpp>
+#include <pico_tree/std_traits.hpp>
 
 #include "benchmark.hpp"
 
@@ -14,7 +15,7 @@ using PicoCtTraits =
 
 template <typename Traits_>
 struct DynamicDimTraits : public Traits_ {
-  static pico_tree::Size constexpr Dim = pico_tree::kDynamicDim;
+  static pico_tree::Size constexpr Dim = pico_tree::kDynamicSize;
 };
 
 template <typename PointX>

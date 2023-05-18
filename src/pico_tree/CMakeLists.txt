@@ -9,8 +9,8 @@ add_library(${PROJECT_PACKAGE_NAME}::${PROJECT_PACKAGE_NAME} ALIAS ${PROJECT_NAM
 target_include_directories(${PROJECT_NAME} INTERFACE
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
-# Language standard above 11 should also be fine.
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
+# Language standard above 17 should also be fine.
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME ${PROJECT_PACKAGE_NAME})
 target_compile_options(${PROJECT_NAME} INTERFACE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:

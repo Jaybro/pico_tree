@@ -2,6 +2,7 @@
 
 #include <pico_toolshed/point.hpp>
 #include <pico_tree/metric.hpp>
+#include <pico_tree/std_traits.hpp>
 #include <pico_understory/metric.hpp>
 
 using PointX = Point2f;

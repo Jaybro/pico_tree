@@ -3,6 +3,7 @@
 #include <pico_toolshed/point.hpp>
 #include <pico_tree/internal/kd_tree_builder.hpp>
 #include <pico_tree/internal/space_wrapper.hpp>
+#include <pico_tree/std_traits.hpp>
 
 namespace {
 

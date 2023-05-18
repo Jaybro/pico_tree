@@ -66,7 +66,7 @@ inline bool IsDimCompatible(pico_tree::Size dim) {
 }
 
 template <>
-inline bool IsDimCompatible<pico_tree::kDynamicDim>(pico_tree::Size) {
+inline bool IsDimCompatible<pico_tree::kDynamicSize>(pico_tree::Size) {
   return true;
 }
 

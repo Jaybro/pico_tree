@@ -1,48 +1,40 @@
-// This example compiles with C++11.
-// C++11 and higher don't need the StdVector include (as mentioned inside the
-// include itself).
-// #include <Eigen/StdVector>
-// If we use C++17 there is no need to take care of memory alignment:
-// https://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
 #include <pico_toolshed/scoped_timer.hpp>
-#include <pico_tree/eigen.hpp>
+#include <pico_tree/eigen3_traits.hpp>
 #include <pico_tree/kd_tree.hpp>
+#include <pico_tree/std_traits.hpp>
 
-// Important! The Eigen example is not a performance benchmark. So don't take
-// the "elapsed time" numbers too seriously.
+// NOTES:
+
+// Because we use C++17 there is no need to take care of memory alignment:
+// https://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
+// https://eigen.tuxfamily.org/dox-devel/group__TopicStlContainers.html
+
+// The Eigen example is not a performance benchmark. So don't take the "elapsed
+// time" numbers too seriously.
 
 using Index = int;
 
 template <typename Point>
-using PointsMapCm = Eigen::Map<
-    Eigen::Matrix<
-        typename Point::Scalar,
-        Point::RowsAtCompileTime,
-        Eigen::Dynamic>,
-    Eigen::AlignedMax>;
-// The alignment used by Eigen equals Eigen::AlignedMax. Note that Eigen can
-// look at the data pointer to know if it is properly aligned.
+using PointsMapCm = Eigen::Map<Eigen::Matrix<
+    typename Point::Scalar,
+    Point::RowsAtCompileTime,
+    Eigen::Dynamic>>;
 
 template <typename Point>
-using PointsMapRm = Eigen::Map<
-    Eigen::Matrix<
-        typename Point::Scalar,
-        Eigen::Dynamic,
-        Point::ColsAtCompileTime,
-        Eigen::RowMajor>,
-    Eigen::AlignedMax>;
+using PointsMapRm = Eigen::Map<Eigen::Matrix<
+    typename Point::Scalar,
+    Eigen::Dynamic,
+    Point::ColsAtCompileTime,
+    Eigen::RowMajor>>;
 
 std::size_t const kRunCount = 1024 * 1024;
 int const kNumPoints = 1024 * 1024 * 2;
 float const kArea = 1000.0;
 Index const kMaxLeafCount = 16;
 
-// Certain fixed size matrices require us to use aligned memory.
-// https://eigen.tuxfamily.org/dox-devel/group__TopicFixedSizeVectorizable.html
 template <typename PointX>
-std::vector<PointX, Eigen::aligned_allocator<PointX>> GenerateRandomEigenN(
-    int n, typename PointX::Scalar size) {
-  std::vector<PointX, Eigen::aligned_allocator<PointX>> random(n);
+std::vector<PointX> GenerateRandomEigenN(int n, typename PointX::Scalar size) {
+  std::vector<PointX> random(n);
   for (auto& p : random) {
     p = PointX::Random() * size / typename PointX::Scalar(2.0);
   }
@@ -58,9 +50,8 @@ void BasicVector() {
 
   // Including <pico_tree/eigen.hpp> provides support for Eigen types with
   // std::vector.
-  pico_tree::KdTree<pico_tree::StdTraits<
-      std::vector<PointX, Eigen::aligned_allocator<PointX>>>>
-      tree(GenerateRandomEigenN<PointX>(kNumPoints, kArea), kMaxLeafCount);
+  pico_tree::KdTree<pico_tree::StdTraits<std::vector<PointX>>> tree(
+      GenerateRandomEigenN<PointX>(kNumPoints, kArea), kMaxLeafCount);
 
   PointX p = PointX::Random() * kArea / Scalar(2.0);
 
@@ -160,7 +151,7 @@ void VectorMapRowMajor() {
 }
 
 // The Metrics demo shows how it can be beneficial to use the metrics supplied
-// by the <pico_tree/eigen.hpp> header.
+// by the <pico_tree/eigen3_traits.hpp> header.
 //
 // Suppose we want to use a KdTree with a spatial dimension of 3 using floats as
 // a scalar. In this case we can use Eigen::Vector3f as the data type. However,
@@ -207,8 +198,7 @@ void Metrics() {
   {
     // Using an std::reference_wrapper prevents a copy.
     using Traits = OverrideDimTraits<
-        pico_tree::StdTraits<std::reference_wrapper<
-            std::vector<PointX, Eigen::aligned_allocator<PointX>>>>,
+        pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>,
         Dim>;
 
     pico_tree::KdTree<Traits, pico_tree::EigenL2Squared<Scalar>> tree(

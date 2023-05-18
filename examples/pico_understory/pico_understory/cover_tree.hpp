@@ -74,7 +74,7 @@ class CoverTree {
   using IndexType = Index;
   //! \brief Scalar type.
   using ScalarType = Scalar;
-  //! \brief CoverTree dimension. It equals pico_tree::kDynamicDim in case Dim
+  //! \brief CoverTree dimension. It equals pico_tree::kDynamicSize in case Dim
   //! is only known at run-time.
   static constexpr int Dim = Traits_::Dim;
   //! \brief Traits with information about the input Spaces and Points.
@@ -170,9 +170,9 @@ class CoverTree {
   inline void SearchKnn(
       P const& x, RandomAccessIterator begin, RandomAccessIterator end) const {
     static_assert(
-        std::is_same<
+        std::is_same_v<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            NeighborType>::value,
+            NeighborType>,
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
@@ -246,9 +246,9 @@ class CoverTree {
       RandomAccessIterator begin,
       RandomAccessIterator end) const {
     static_assert(
-        std::is_same<
+        std::is_same_v<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            NeighborType>::value,
+            NeighborType>,
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);

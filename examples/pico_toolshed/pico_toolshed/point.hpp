@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <pico_tree/std_traits.hpp>
+#include <pico_tree/point_traits.hpp>
 #include <random>
 #include <vector>
 
@@ -65,12 +65,12 @@ class Point {
   ScalarType data[Dim];
 };
 
-// A specialization of StdPointTraits must be defined within the pico_tree
+// A specialization of PointTraits must be defined within the pico_tree
 // namespace and provide all the details of this example.
 namespace pico_tree {
 
 template <typename Scalar_, std::size_t Dim_>
-struct StdPointTraits<Point<Scalar_, Dim_>> {
+struct PointTraits<Point<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static std::size_t constexpr Dim = Dim_;
 

@@ -7,6 +7,8 @@
 
 #include <cmath>
 #include <functional>
+#include <iterator>
+#include <type_traits>
 
 namespace pico_tree {
 
@@ -17,15 +19,14 @@ using Size = std::size_t;
 //! the spatial dimension of the search problem when it can only be known at
 //! run-time. In this case the dimension of the problem is provided by the point
 //! adaptor.
-static Size constexpr kDynamicDim = static_cast<Size>(-1);
+inline Size constexpr kDynamicSize = static_cast<Size>(-1);
 
 //! \brief A Neighbor is a point reference with a corresponding distance to
 //! another point.
 template <typename Index_, typename Scalar_>
 struct Neighbor {
-  static_assert(std::is_integral<Index_>::value, "INDEX_NOT_AN_INTEGRAL_TYPE");
-  static_assert(
-      std::is_arithmetic<Scalar_>::value, "SCALAR_NOT_AN_ARITHMETIC_TYPE");
+  static_assert(std::is_integral_v<Index_>, "INDEX_NOT_AN_INTEGRAL_TYPE");
+  static_assert(std::is_arithmetic_v<Scalar_>, "SCALAR_NOT_AN_ARITHMETIC_TYPE");
 
   //! \brief Index type.
   using IndexType = Index_;
@@ -36,9 +37,9 @@ struct Neighbor {
   //! \details Declaring a custom constructor removes the default one. With
   //! C++11 we can bring back the default constructor and keep this struct a POD
   //! type.
-  inline constexpr Neighbor() = default;
+  constexpr Neighbor() = default;
   //! \brief Constructs a Neighbor given an index and distance.
-  inline constexpr Neighbor(IndexType idx, ScalarType dst) noexcept
+  constexpr Neighbor(IndexType idx, ScalarType dst) noexcept
       : index(idx), distance(dst) {}
 
   //! \brief Point index of the Neighbor.
@@ -91,9 +92,7 @@ inline void InsertSorted(
 template <typename Traits_, Size Dim_ = Traits_::Dim>
 struct Dimension {
   //! \brief Returns the compile time dimension of a space.
-  inline static Size constexpr Dim(typename Traits_::SpaceType const&) {
-    return Dim_;
-  }
+  static constexpr Size Dim(typename Traits_::SpaceType const&) { return Dim_; }
 
   //! \brief Returns the compile time dimension of a point.
   template <typename P>
@@ -104,7 +103,7 @@ struct Dimension {
 
 //! \brief Run time dimension count handling.
 template <typename Traits_>
-struct Dimension<Traits_, pico_tree::kDynamicDim> {
+struct Dimension<Traits_, pico_tree::kDynamicSize> {
   //! \brief Returns the run time dimension of a space.
   inline static Size Dim(typename Traits_::SpaceType const& space) {
     return Traits_::SpaceSdim(space);

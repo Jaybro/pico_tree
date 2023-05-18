@@ -52,10 +52,10 @@ template <typename RandomAccessIterator_>
 class SearchKnn {
  public:
   static_assert(
-      std::is_same<
+      std::is_same_v<
           typename std::iterator_traits<
               RandomAccessIterator_>::iterator_category,
-          std::random_access_iterator_tag>::value,
+          std::random_access_iterator_tag>,
       "SEARCH_KNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
   using NeighborType =
@@ -138,10 +138,10 @@ template <typename RandomAccessIterator_>
 class SearchAknn {
  public:
   static_assert(
-      std::is_same<
+      std::is_same_v<
           typename std::iterator_traits<
               RandomAccessIterator_>::iterator_category,
-          std::random_access_iterator_tag>::value,
+          std::random_access_iterator_tag>,
       "SEARCH_AKNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
   using NeighborType =

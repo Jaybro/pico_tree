@@ -2,103 +2,11 @@
 
 #include "pico_tree/internal/box.hpp"
 #include "pico_tree/internal/kd_tree_builder.hpp"
-#include "pico_tree/internal/kd_tree_node.hpp"
 #include "pico_tree/internal/kd_tree_search.hpp"
-#include "pico_tree/internal/memory.hpp"
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/internal/space_wrapper.hpp"
-#include "pico_tree/internal/stream.hpp"
 
 namespace pico_tree {
-
-namespace internal {
-
-//! \brief The data structure that represents a KdTree.
-template <typename Index_, typename Scalar_, Size Dim_, typename Node_>
-struct KdTreeData {
-  using IndexType = Index_;
-  using ScalarType = Scalar_;
-  using BoxType = internal::Box<ScalarType, Dim_>;
-  using NodeType = Node_;
-  using NodeAllocatorType = ChunkAllocator<NodeType, 256>;
-
- private:
-  //! \brief Recursively reads the Node and its descendants.
-  inline NodeType* ReadNode(internal::Stream* stream) {
-    NodeType* node = allocator.Allocate();
-    bool is_leaf;
-    stream->Read(&is_leaf);
-
-    if (is_leaf) {
-      stream->Read(&node->data.leaf);
-      node->left = nullptr;
-      node->right = nullptr;
-    } else {
-      stream->Read(&node->data.branch);
-      node->left = ReadNode(stream);
-      node->right = ReadNode(stream);
-    }
-
-    return node;
-  }
-
-  //! \brief Recursively writes the Node and its descendants.
-  inline void WriteNode(
-      NodeType const* const node, internal::Stream* stream) const {
-    if (node->IsLeaf()) {
-      stream->Write(true);
-      stream->Write(node->data.leaf);
-    } else {
-      stream->Write(false);
-      stream->Write(node->data.branch);
-      WriteNode(node->left, stream);
-      WriteNode(node->right, stream);
-    }
-  }
-
-  inline void Read(internal::Stream* stream) {
-    stream->Read(&indices);
-    // The root box gets the correct size from the KdTree constructor.
-    stream->Read(root_box.size(), root_box.min());
-    stream->Read(root_box.size(), root_box.max());
-    root_node = ReadNode(stream);
-  }
-
-  inline void Write(internal::Stream* stream) const {
-    stream->Write(indices);
-    stream->Write(root_box.min(), root_box.size());
-    stream->Write(root_box.max(), root_box.size());
-    WriteNode(root_node, stream);
-  }
-
- public:
-  static KdTreeData Load(internal::Stream* stream) {
-    typename BoxType::SizeType sdim;
-    stream->Read(&sdim);
-
-    KdTreeData kd_tree_data{{}, BoxType(sdim), NodeAllocatorType(), nullptr};
-    kd_tree_data.Read(stream);
-
-    return kd_tree_data;
-  }
-
-  static void Save(KdTreeData const& data, internal::Stream* stream) {
-    // Write sdim.
-    stream->Write(data.root_box.size());
-    data.Write(stream);
-  }
-
-  //! \brief Sorted indices that refer to points inside points_.
-  std::vector<IndexType> indices;
-  //! \brief Bounding box of the root node.
-  BoxType root_box;
-  //! \brief Memory allocator for tree nodes.
-  NodeAllocatorType allocator;
-  //! \brief Root of the KdTree.
-  NodeType* root_node;
-};
-
-}  // namespace internal
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
@@ -107,12 +15,18 @@ template <
     typename Metric_ = L2Squared<Traits_>,
     SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint>
 class KdTree {
+  using SpaceWrapperType = internal::SpaceWrapper<Traits_>;
+  using BuildKdTreeType =
+      internal::BuildKdTree<SpaceWrapperType, Metric_, SplittingRule_>;
+  using NodeType = typename BuildKdTreeType::NodeType;
+  using KdTreeDataType = typename BuildKdTreeType::KdTreeDataType;
+
  public:
   //! \brief Index type.
   using IndexType = typename Traits_::IndexType;
   //! \brief Scalar type.
   using ScalarType = typename Traits_::ScalarType;
-  //! \brief KdTree dimension. It equals pico_tree::kDynamicDim in case Dim is
+  //! \brief KdTree dimension. It equals pico_tree::kDynamicSize in case Dim is
   //! only known at run-time.
   static Size constexpr Dim = Traits_::Dim;
   //! \brief Traits_ with information about the input Spaces and Points.
@@ -124,15 +38,6 @@ class KdTree {
   //! \brief Neighbor type of various search resuls.
   using NeighborType = Neighbor<IndexType, ScalarType>;
 
- private:
-  //! \brief Node type based on Metric_::SpaceTag.
-  using NodeType = typename internal::KdTreeSpaceTagTraits<
-      typename Metric_::SpaceTag>::template NodeType<IndexType, ScalarType>;
-  using KdTreeDataType =
-      internal::KdTreeData<IndexType, ScalarType, Dim, NodeType>;
-  using SpaceWrapperType = internal::SpaceWrapper<Traits_>;
-
- public:
   //! \brief Creates a KdTree given \p points and \p max_leaf_size.
   //!
   //! \details
@@ -154,10 +59,7 @@ class KdTree {
   KdTree(SpaceType space, IndexType max_leaf_size)
       : space_(std::move(space)),
         metric_(),
-        data_(internal::KdTreeBuilder<
-              SpaceWrapperType,
-              SplittingRule_,
-              KdTreeDataType>::Build(space_, max_leaf_size)) {}
+        data_(BuildKdTreeType()(space_, max_leaf_size)) {}
 
   //! \brief The KdTree cannot be copied.
   //! \details The KdTree uses pointers to nodes and copying pointers is not
@@ -204,9 +106,9 @@ class KdTree {
   inline void SearchKnn(
       P const& x, RandomAccessIterator begin, RandomAccessIterator end) const {
     static_assert(
-        std::is_same<
+        std::is_same_v<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            NeighborType>::value,
+            NeighborType>,
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
@@ -298,9 +200,9 @@ class KdTree {
       RandomAccessIterator begin,
       RandomAccessIterator end) const {
     static_assert(
-        std::is_same<
+        std::is_same_v<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            NeighborType>::value,
+            NeighborType>,
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
@@ -369,8 +271,8 @@ class KdTree {
   //! \li Does not check if the stored tree structure is valid for the given
   //! template arguments.
   static KdTree Load(SpaceType points, std::iostream* stream) {
-    internal::Stream s(stream);
-    return KdTree(std::move(points), &s);
+    internal::Stream s(*stream);
+    return KdTree(std::move(points), s);
   }
 
   //! \brief Saves the tree in binary to file.
@@ -386,14 +288,14 @@ class KdTree {
   //! \li Does not take memory endianness into account.
   //! \li Stores the tree structure but not the points.
   static void Save(KdTree const& tree, std::iostream* stream) {
-    internal::Stream s(stream);
-    KdTreeDataType::Save(tree.data_, &s);
+    internal::Stream s(*stream);
+    KdTreeDataType::Save(tree.data_, s);
   }
 
  private:
   //! \brief Constructs a KdTree by reading its indexing and leaf information
   //! from a Stream.
-  KdTree(SpaceType space, internal::Stream* stream)
+  KdTree(SpaceType space, internal::Stream& stream)
       : space_(std::move(space)),
         metric_(),
         data_(KdTreeDataType::Load(stream)) {}

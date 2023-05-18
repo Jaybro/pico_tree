@@ -10,8 +10,8 @@ using L1 = pico_tree::L1<Traits>;
 template <typename Traits>
 using L2Squared = pico_tree::L2Squared<Traits>;
 
-using PointsXf = PyArrayMap<float, pico_tree::kDynamicDim>;
-using PointsXd = PyArrayMap<double, pico_tree::kDynamicDim>;
+using PointsXf = PyArrayMap<float, pico_tree::kDynamicSize>;
+using PointsXd = PyArrayMap<double, pico_tree::kDynamicSize>;
 using Points2f = PyArrayMap<float, 2>;
 using Points2d = PyArrayMap<double, 2>;
 using Points3f = PyArrayMap<float, 3>;

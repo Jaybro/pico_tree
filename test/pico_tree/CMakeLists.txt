@@ -5,8 +5,9 @@ add_executable(${TEST_TARGET_NAME})
 set_default_target_properties(${TEST_TARGET_NAME})
 set_target_properties(${TEST_TARGET_NAME}
     PROPERTIES
-# The library should be compliant with the C++11 standard.
-    CXX_STANDARD 11
+# The library should be compliant with the version of the standard that is
+# minimally required by this library.
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
@@ -28,7 +29,7 @@ if(Eigen3_FOUND)
     message(STATUS "Eigen3 found. Building Eigen unit tests.")
     set(TEST_TARGET_SOURCES
         ${TEST_TARGET_SOURCES}
-        ${CMAKE_CURRENT_LIST_DIR}/eigen_test.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/eigen3_traits_test.cpp
     )
 else()
     message(STATUS "Eigen3 not found. Eigen unit tests skipped.")
@@ -39,7 +40,7 @@ if(OpenCV_FOUND)
     message(STATUS "OpenCV found. Building OpenCV unit tests.")
     set(TEST_TARGET_SOURCES
         ${TEST_TARGET_SOURCES}
-        ${CMAKE_CURRENT_LIST_DIR}/opencv_test.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/opencv_traits_test.cpp
     )
 else()
     message(STATUS "OpenCV not found. OpenCV unit tests skipped.")

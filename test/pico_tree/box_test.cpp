@@ -8,7 +8,7 @@ using namespace pico_tree::internal;
 Size constexpr kDynamicBoxDim = 4;
 
 inline Size constexpr Dim(Size dim) {
-  return dim != kDynamicDim ? dim : kDynamicBoxDim;
+  return dim != kDynamicSize ? dim : kDynamicBoxDim;
 }
 
 template <typename T>
@@ -40,16 +40,16 @@ class BoxTest<BoxMap<Scalar_, Dim_>> : public testing::Test {
 using BoxTestTypes = testing::Types<
     Box<float, 2>,
     Box<double, 3>,
-    Box<float, kDynamicDim>,
+    Box<float, kDynamicSize>,
     BoxMap<float, 2>,
     BoxMap<double, 3>,
-    BoxMap<float, kDynamicDim>>;
+    BoxMap<float, kDynamicSize>>;
 
 TYPED_TEST_SUITE(BoxTest, BoxTestTypes);
 
 TYPED_TEST(BoxTest, size) {
   Size dim = TypeParam::Dim;
-  if (dim != kDynamicDim) {
+  if (dim != kDynamicSize) {
     EXPECT_EQ(this->box_.size(), dim);
   } else {
     EXPECT_EQ(this->box_.size(), kDynamicBoxDim);
@@ -91,7 +91,7 @@ TYPED_TEST(BoxTest, Fit) {
   // Fit a box.
   std::vector<Scalar> min(dim, Scalar(-1));
   std::vector<Scalar> max(dim, Scalar(+1));
-  this->box_.Fit(BoxMap<Scalar, kDynamicDim>(min.data(), max.data(), dim));
+  this->box_.Fit(BoxMap<Scalar, kDynamicSize>(min.data(), max.data(), dim));
   for (Size i = 0; i < this->box_.size(); ++i) {
     EXPECT_EQ(this->box_.min(i), min[i]);
     EXPECT_EQ(this->box_.max(i), max[i]);

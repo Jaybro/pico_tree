@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pico_tree/core.hpp>
+#include <pico_tree/point_traits.hpp>
 #include <type_traits>
 
 namespace pico_tree {
@@ -16,7 +17,7 @@ struct MapStorage {
 };
 
 template <typename Element_>
-struct MapStorage<Element_, kDynamicDim> {
+struct MapStorage<Element_, kDynamicSize> {
   constexpr MapStorage(Element_* data, Size size) noexcept
       : data(data), size(size) {}
 
@@ -27,14 +28,14 @@ struct MapStorage<Element_, kDynamicDim> {
 template <typename Element_, Size Size_>
 class Map {
  public:
-  static_assert(std::is_object<Element_>::value, "ELEMENT_NOT_AN_OBJECT_TYPE");
+  static_assert(std::is_object_v<Element_>, "ELEMENT_NOT_AN_OBJECT_TYPE");
   static_assert(
-      !std::is_abstract<Element_>::value, "ELEMENT_CANNOT_BE_AN_ABSTRACT_TYPE");
+      !std::is_abstract_v<Element_>, "ELEMENT_CANNOT_BE_AN_ABSTRACT_TYPE");
   static_assert(
-      Size_ == kDynamicDim || Size_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
+      Size_ == kDynamicSize || Size_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
   using ElementType = Element_;
-  using ValueType = typename std::remove_cv<Element_>::type;
+  using ValueType = std::remove_cv_t<Element_>;
   using SizeType = Size;
   static SizeType constexpr SizeValue = Size_;
 
@@ -71,7 +72,7 @@ struct SpaceMapMatrixStorage {
 };
 
 template <typename Scalar_>
-struct SpaceMapMatrixStorage<Scalar_, kDynamicDim> {
+struct SpaceMapMatrixStorage<Scalar_, kDynamicSize> {
   constexpr SpaceMapMatrixStorage(Scalar_* data, Size size, Size sdim)
       : data(data), size(size), sdim(sdim) {}
 
@@ -82,9 +83,6 @@ struct SpaceMapMatrixStorage<Scalar_, kDynamicDim> {
 
 }  // namespace internal
 
-template <typename Point_>
-struct StdPointTraits;
-
 //! \brief The PointMap class provides an interface for accessing a raw pointer
 //! as a Point, allowing easy access to its coordinates.
 template <typename Scalar_, Size Dim_>
@@ -93,8 +91,7 @@ class PointMap : protected internal::Map<Scalar_, Dim_> {
   using Base = internal::Map<Scalar_, Dim_>;
 
  public:
-  static_assert(
-      std::is_arithmetic<Scalar_>::value, "SCALAR_NOT_AN_ARITHMETIC_TYPE");
+  static_assert(std::is_arithmetic_v<Scalar_>, "SCALAR_NOT_AN_ARITHMETIC_TYPE");
 
   using ScalarType = typename Base::ValueType;
   using CvScalarType = typename Base::ElementType;
@@ -110,21 +107,21 @@ class PointMap : protected internal::Map<Scalar_, Dim_> {
 //! \brief The SpaceMap class provides an interface for accessing a raw pointer
 //! as a Space, allowing easy access to its points via a PointMap interface.
 template <typename Point_>
-class SpaceMap : protected internal::Map<Point_, kDynamicDim> {
+class SpaceMap : protected internal::Map<Point_, kDynamicSize> {
  private:
-  using Base = internal::Map<Point_, kDynamicDim>;
+  using Base = internal::Map<Point_, kDynamicSize>;
 
  public:
   using PointType = typename Base::ValueType;
   using CvPointType = typename Base::ElementType;
-  using ScalarType = typename StdPointTraits<PointType>::ScalarType;
+  using ScalarType = typename PointTraits<PointType>::ScalarType;
   using SizeType = Size;
-  static SizeType constexpr Dim = StdPointTraits<PointType>::Dim;
+  static SizeType constexpr Dim = PointTraits<PointType>::Dim;
 
-  using internal::Map<Point_, kDynamicDim>::Map;
-  using internal::Map<Point_, kDynamicDim>::operator[];
-  using internal::Map<Point_, kDynamicDim>::data;
-  using internal::Map<Point_, kDynamicDim>::size;
+  using internal::Map<Point_, kDynamicSize>::Map;
+  using internal::Map<Point_, kDynamicSize>::operator[];
+  using internal::Map<Point_, kDynamicSize>::data;
+  using internal::Map<Point_, kDynamicSize>::size;
 
   constexpr SizeType sdim() const { return Dim; }
 };

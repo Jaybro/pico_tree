@@ -1,7 +1,5 @@
 #pragma once
 
-#include "pico_tree/metric.hpp"
-
 namespace pico_tree {
 
 namespace internal {
@@ -72,6 +70,9 @@ union KdTreeNodeData {
 template <typename Index_, typename Scalar_>
 struct KdTreeNodeEuclidean
     : public KdTreeNodeBase<KdTreeNodeEuclidean<Index_, Scalar_>> {
+  using IndexType = Index_;
+  using ScalarType = Scalar_;
+
   //! \brief Node data as a union of a leaf and branch.
   KdTreeNodeData<KdTreeLeaf<Index_>, KdTreeBranchSplit<Scalar_>> data;
 };
@@ -80,28 +81,11 @@ struct KdTreeNodeEuclidean
 template <typename Index_, typename Scalar_>
 struct KdTreeNodeTopological
     : public KdTreeNodeBase<KdTreeNodeTopological<Index_, Scalar_>> {
+  using IndexType = Index_;
+  using ScalarType = Scalar_;
+
   //! \brief Node data as a union of a leaf and branch.
   KdTreeNodeData<KdTreeLeaf<Index_>, KdTreeBranchRange<Scalar_>> data;
-};
-
-//! \brief KdTree meta information depending on the SpaceTag_ template argument.
-template <typename SpaceTag_>
-struct KdTreeSpaceTagTraits;
-
-//! \brief KdTree meta information for the EuclideanSpaceTag.
-template <>
-struct KdTreeSpaceTagTraits<EuclideanSpaceTag> {
-  //! \brief Supported node type.
-  template <typename Index_, typename Scalar_>
-  using NodeType = KdTreeNodeEuclidean<Index_, Scalar_>;
-};
-
-//! \brief KdTree meta information for the TopologicalSpaceTag.
-template <>
-struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
-  //! \brief Supported node type.
-  template <typename Index_, typename Scalar_>
-  using NodeType = KdTreeNodeTopological<Index_, Scalar_>;
 };
 
 }  // namespace internal

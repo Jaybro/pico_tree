@@ -35,7 +35,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * Static tree builds.
   * Thread safe queries.
 * PicoTree can interface with different types of points or point sets through a traits class. This can be a custom implementation or one of the traits classes provided by this library:
-  * `pico_tree::StdTraits<>` supports interfacing with any `std::vector<PointType>`. It requires a specialization of `pico_tree::StdPointTraits<>` for each `PointType`. There are default `pico_tree::StdPointTraits<>` available for Eigen and OpenCV point types.
+  * `pico_tree::StdTraits<>` supports interfacing with any `std::vector<PointType>`. It requires a specialization of `pico_tree::PointTraits<>` for each `PointType`. There are default `pico_tree::PointTraits<>` available for Eigen and OpenCV point types.
   * `pico_tree::EigenTraits<>` supports interfacing with Eigen matrices.
   * `pico_tree::CvTraits<>` supports interfacing with OpenCV matrices.
 
@@ -51,7 +51,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 Minimum:
 
-* A compiler that is compliant with the C++11 standard or higher.
+* A compiler that is compliant with the C++17 standard or higher.
 * [CMake](https://cmake.org/). It is also possible to just copy and paste the [pico_tree](./src/pico_tree/) directory into an include directory.
 
 Optional:
@@ -60,7 +60,7 @@ Optional:
 * [Google Test](https://github.com/google/googletest). Used for running unit tests.
 * [Eigen](http://eigen.tuxfamily.org). To run the example that shows how Eigen data types can be used in combination with PicoTree.
 * [OpenCV](https://opencv.org/). To run the OpenCV example that shows how to work with OpenCV data types.
-* [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run any of the benchmarks. The [nanoflann](https://github.com/jlblancoc/nanoflann) and [OpenCV](https://opencv.org/) benchmarks also require their respective libraries to be installed.
+* [Google Benchmark](https://github.com/google/benchmark) is needed to run any of the benchmarks. The [nanoflann](https://github.com/jlblancoc/nanoflann) and [OpenCV](https://opencv.org/) benchmarks also require their respective libraries to be installed.
 
 Python bindings:
 * [Python](https://www.python.org/). Version 3.7 or higher.

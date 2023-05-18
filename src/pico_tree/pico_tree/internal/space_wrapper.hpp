@@ -25,8 +25,7 @@ class SpaceWrapper {
   inline constexpr SizeType sdim() const { return Traits_::SpaceSdim(space_); }
   inline IndexType size() const { return Traits_::SpaceNpts(space_); }
 
-  inline auto PointAt(IndexType const idx) const -> decltype(Traits_::PointAt(
-      std::declval<SpaceType>(), std::declval<IndexType>())) {
+  inline auto PointAt(IndexType const idx) const {
     return Traits_::PointAt(space_, idx);
   }
 

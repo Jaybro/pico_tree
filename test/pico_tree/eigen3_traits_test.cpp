@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <pico_tree/eigen.hpp>
+#include <pico_tree/eigen3_traits.hpp>
 #include <pico_tree/kd_tree.hpp>
 
 #include "common.hpp"

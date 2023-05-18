@@ -12,12 +12,12 @@ struct PointXYZ {
   float data[3];
 };
 
-// A specialization of StdPointTraits must be defined within the pico_tree
+// A specialization of PointTraits must be defined within the pico_tree
 // namespace and provide all the details of this example.
 namespace pico_tree {
 
 template <>
-struct StdPointTraits<PointXYZ> {
+struct PointTraits<PointXYZ> {
   using ScalarType = float;
   static std::size_t constexpr Dim = 3;
 

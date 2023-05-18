@@ -24,9 +24,9 @@ class ListPoolResource {
   struct Node;
 
  public:
-  static_assert(std::is_trivial<T>::value, "TYPE_T_IS_NOT_TRIVIAL");
+  static_assert(std::is_trivial_v<T>, "TYPE_T_IS_NOT_TRIVIAL");
   static_assert(
-      std::is_trivially_destructible<T>::value,
+      std::is_trivially_destructible_v<T>,
       "TYPE_T_IS_NOT_TRIVIALLY_DESTRUCTIBLE");
 
   //! \brief Value type allocated by the ListPoolResource.

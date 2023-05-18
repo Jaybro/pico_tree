@@ -1,6 +1,7 @@
 #include <pico_toolshed/point.hpp>
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/kd_tree.hpp>
+#include <pico_tree/std_traits.hpp>
 
 //! \brief Search visitor that counts how many points were considered as a
 //! nearest neighbor.

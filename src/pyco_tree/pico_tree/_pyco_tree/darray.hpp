@@ -31,7 +31,7 @@ template <typename T>
 class DArrayImpl : public DArrayImplBase {
  public:
   static_assert(
-      std::is_standard_layout<T>::value && std::is_trivial<T>::value,
+      std::is_standard_layout_v<T> && std::is_trivial_v<T>,
       "Type T doesn't have a standard layout or isn't trivial.");
 
   DArrayImpl(std::vector<std::vector<T>> array) : array_(std::move(array)) {}

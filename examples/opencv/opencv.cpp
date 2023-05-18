@@ -1,6 +1,7 @@
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <pico_tree/opencv.hpp>
+#include <pico_tree/opencv_traits.hpp>
+#include <pico_tree/std_traits.hpp>
 #include <random>
 
 using Index = int;
