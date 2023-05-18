@@ -2,8 +2,9 @@
 
 #include <pybind11/numpy.h>
 
+#include <pico_tree/map_traits.hpp>
+
 #include "core.hpp"
-#include "map_traits.hpp"
 
 namespace py = pybind11;
 
@@ -61,7 +62,8 @@ PyArrayMap<Scalar_, Dim_> MakeMap(py::array_t<Scalar_, 0> const pts) {
 }
 
 template <typename Scalar_, pico_tree::Size Dim_, typename Index_>
-struct MapTraits : public pico_tree::MapTraits<Scalar_, Dim_, Index_> {
+struct PyArrayMapTraits
+    : public pico_tree::MapTraits<pico_tree::PointMap<Scalar_, Dim_>, Index_> {
   using SpaceType = PyArrayMap<Scalar_, Dim_>;
 };
 

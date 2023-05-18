@@ -3,7 +3,7 @@
 #include <cassert>
 #include <opencv2/core.hpp>
 
-#include "point_traits.hpp"
+#include "map_traits.hpp"
 
 //! \file opencv_traits.hpp
 //! \brief Contains traits and classes that provide OpenCV support for PicoTree.
@@ -82,62 +82,6 @@ struct PointTraits<cv::Vec<Scalar_, Dim_>> {
   }
 };
 
-//! \brief A wrapper class for storing the row of a cv::Mat.
-//! \details This wrapper is used to support compile and run time dimensions.
-//! Storing a pointer and reference is a smaller footprint than the cv::Mat of a
-//! row.
-template <typename Scalar_, Size Dim_>
-class CvMatRow {
- public:
-  //! \brief The scalar type of point coordinates.
-  using ScalarType = Scalar_;
-  //! \brief The size and index type of point coordinates.
-  using SizeType = Size;
-  //! \brief Compile time spatial dimension.
-  static SizeType constexpr Dim = Dim_;
-
-  //! \brief Constructs a CvMatRow given the index \p idx of a row and a matrix
-  //! \p space.
-  inline CvMatRow(int idx, cv::Mat const& space)
-      : coords_(space.ptr<Scalar_>(idx)), space_(space) {}
-
-  //! \brief Returns a pointer to this point's coordinates.
-  inline Scalar_ const* coords() const { return coords_; }
-
-  //! \brief Returns the spatial dimension of this point.
-  inline SizeType sdim() const {
-    assert(Dim == kDynamicSize || Dim == space_.step1());
-    // TODO This run time version is actually quite expensive when used. Perhaps
-    // there is an alternative.
-    return space_.step1();
-  }
-
- private:
-  Scalar_ const* coords_;
-  cv::Mat const& space_;
-};
-
-//! \brief PointTraits provides an interface for CvMatRow<>.
-template <typename Scalar_, Size Dim_>
-struct PointTraits<CvMatRow<Scalar_, Dim_>> {
-  //! \brief The scalar type of point coordinates.
-  using ScalarType = Scalar_;
-  //! \brief The size and index type of point coordinates.
-  using SizeType = Size;
-  //! \brief Compile time spatial dimension.
-  static constexpr SizeType Dim = Dim_;
-
-  //! \brief Returns a pointer to the coordinates of \p point.
-  inline static Scalar_ const* Coords(CvMatRow<Scalar_, Dim_> const& point) {
-    return point.coords();
-  }
-
-  //! \brief Returns the spatial dimension of \p point.
-  inline static SizeType Sdim(CvMatRow<Scalar_, Dim_> const& point) {
-    return point.sdim();
-  }
-};
-
 //! \brief CvTraits provides an interface for cv::Mat. Each row is considered a
 //! point.
 //! \tparam Scalar_ Point coordinate type.
@@ -148,7 +92,7 @@ struct CvTraits {
   //! \brief The SpaceType of these traits.
   using SpaceType = cv::Mat;
   //! \brief The point type used by SpaceType.
-  using PointType = CvMatRow<Scalar_, Dim_>;
+  using PointType = PointMap<Scalar_ const, Dim_>;
   //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
   //! \brief The size and index type of point coordinates.
@@ -162,9 +106,14 @@ struct CvTraits {
   //! I.e., the amount of coordinates each point has.
   inline static SizeType SpaceSdim(cv::Mat const& space) {
     assert(Dim == kDynamicSize || Dim == space.step1());
-    // TODO This run time version is actually quite expensive when used. Perhaps
-    // there is an alternative.
-    return space.step1();
+
+    if constexpr (Dim != kDynamicSize) {
+      return Dim;
+    } else {
+      // TODO The use of step1() is actually quite expensive. Perhaps there is
+      // an alternative.
+      return space.step1();
+    }
   }
 
   //! \brief Returns number of points contained by \p space.
@@ -172,7 +121,13 @@ struct CvTraits {
 
   //! \brief Returns the point at \p idx from \p space.
   inline static PointType PointAt(cv::Mat const& space, IndexType const idx) {
-    return {idx, space};
+    if constexpr (Dim != kDynamicSize) {
+      return {space.ptr<Scalar_>(idx)};
+    } else {
+      // TODO The use of step1() is actually quite expensive. Perhaps there is
+      // an alternative.
+      return {space.ptr<Scalar_>(idx), space.step1()};
+    }
   }
 
   //! \brief Returns the spatial dimension of \p point.

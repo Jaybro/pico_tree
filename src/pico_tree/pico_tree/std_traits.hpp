@@ -37,12 +37,13 @@ struct StdTraits<std::vector<Point_, Allocator_>, Index_> {
   //! \brief Compile time spatial dimension.
   static SizeType constexpr Dim = PointTraits<Point_>::Dim;
 
+  static_assert(
+      Dim != kDynamicSize, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
+
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
   inline static SizeType constexpr SpaceSdim(
       std::vector<Point_, Allocator_> const&) {
-    static_assert(
-        Dim != kDynamicSize, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
     return Dim;
   }
 

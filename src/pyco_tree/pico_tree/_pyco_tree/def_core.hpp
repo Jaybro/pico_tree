@@ -18,7 +18,7 @@ using Points3f = PyArrayMap<float, 3>;
 using Points3d = PyArrayMap<double, 3>;
 
 template <typename PointsX>
-using TraitsX = MapTraits<
+using TraitsX = PyArrayMapTraits<
     typename PointsX::ScalarType,
     PointsX::Dim,
     typename PointsX::IndexType>;

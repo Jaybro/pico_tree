@@ -53,8 +53,7 @@ void BasicMatrix() {
     cv::randu(random, Scalar(0.0), kArea);
 
     pico_tree::KdTree<pico_tree::CvTraits<Scalar, 3>> tree(random, 10);
-
-    pico_tree::CvMatRow<Scalar, 3> p(tree.points().rows / 2, tree.points());
+    pico_tree::PointMap<Scalar, 3> p(random.ptr<Scalar>(random.rows / 2));
 
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree cv mat", kRunCount);

@@ -83,8 +83,8 @@ struct SpaceMapMatrixStorage<Scalar_, kDynamicSize> {
 
 }  // namespace internal
 
-//! \brief The PointMap class provides an interface for accessing a raw pointer
-//! as a Point, allowing easy access to its coordinates.
+//! \brief The PointMap class provides a point interface for an array of
+//! scalars.
 template <typename Scalar_, Size Dim_>
 class PointMap : protected internal::Map<Scalar_, Dim_> {
  private:
@@ -104,11 +104,9 @@ class PointMap : protected internal::Map<Scalar_, Dim_> {
   using internal::Map<Scalar_, Dim_>::size;
 };
 
-//! \brief The SpaceMap class provides an interface for accessing a raw pointer
-//! as a Space, allowing easy access to its points via a PointMap interface.
+//! \brief The SpaceMap class provides a space interface for an array of points.
 template <typename Point_>
 class SpaceMap : protected internal::Map<Point_, kDynamicSize> {
- private:
   using Base = internal::Map<Point_, kDynamicSize>;
 
  public:
@@ -118,6 +116,9 @@ class SpaceMap : protected internal::Map<Point_, kDynamicSize> {
   using SizeType = Size;
   static SizeType constexpr Dim = PointTraits<PointType>::Dim;
 
+  static_assert(
+      Dim != kDynamicSize, "SPACE_MAP_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
+
   using internal::Map<Point_, kDynamicSize>::Map;
   using internal::Map<Point_, kDynamicSize>::operator[];
   using internal::Map<Point_, kDynamicSize>::data;
@@ -126,8 +127,8 @@ class SpaceMap : protected internal::Map<Point_, kDynamicSize> {
   constexpr SizeType sdim() const { return Dim; }
 };
 
-//! \brief The SpaceMap class provides an interface for accessing a raw pointer
-//! as a Space, allowing easy access to its points via a PointMap interface.
+//! \brief The SpaceMap class provides a space interface for an array of
+//! scalars.
 template <typename Scalar_, Size Dim_>
 class SpaceMap<PointMap<Scalar_, Dim_>> {
  public:

@@ -18,13 +18,13 @@ struct PointTraits<PointMap<Scalar_, Dim_>> {
   inline static SizeType Sdim(PointType const& point) { return point.size(); }
 };
 
-//! \brief MapTraits provides an interface for SpaceMap and points supported by
-//! PointTraits.
+//! \brief MapTraits provides an interface for spaces and points when working
+//! with a SpaceMap.
 //! \tparam Index_ Type used for indexing. Defaults to int.
-template <typename Scalar_, Size Dim_, typename Index_ = int>
+template <typename Point_, typename Index_ = int>
 struct MapTraits {
-  using PointType = PointMap<Scalar_, Dim_>;
-  using SpaceType = SpaceMap<PointType>;
+  using SpaceType = SpaceMap<Point_>;
+  using PointType = typename SpaceType::PointType;
   using ScalarType = typename SpaceType::ScalarType;
   using SizeType = typename SpaceType::SizeType;
   static SizeType constexpr Dim = SpaceType::Dim;
