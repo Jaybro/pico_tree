@@ -4,6 +4,23 @@
 #include <pico_tree/core.hpp>
 #include <pico_tree/std_traits.hpp>
 
+template <typename Traits_, typename P>
+constexpr pico_tree::Size Dimension(P const& point) {
+  if constexpr (Traits_::Dim != pico_tree::kDynamicSize) {
+    return Traits_::Dim;
+  } else {
+    return Traits_::PointSdim(point);
+  }
+}
+
+template <typename Traits_, typename Metric_, typename P0, typename P1>
+inline auto Distance(Metric_ const& metric, P0 const& p0, P1 const& p1) ->
+    typename Traits_::ScalarType {
+  auto c0 = Traits_::PointCoords(p0);
+  auto c1 = Traits_::PointCoords(p1);
+  return metric(c0, c0 + Dimension<Traits_>(p0), c1);
+}
+
 inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
 
 inline void FloatEq(double val1, double val2) { EXPECT_DOUBLE_EQ(val1, val2); }
@@ -65,7 +82,7 @@ void SearchKnn(
   Index const npts = Traits::SpaceNpts(space);
   knn->resize(static_cast<std::size_t>(npts));
   for (Index i = 0; i < npts; ++i) {
-    (*knn)[i] = {i, metric(point, Traits::PointAt(space, i))};
+    (*knn)[i] = {i, Distance<Traits>(metric, point, Traits::PointAt(space, i))};
   }
 
   Index const max_k = std::min(k, npts);
@@ -138,14 +155,17 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
   tree.SearchRadius(p, lp_radius, &results);
 
   for (auto const& r : results) {
-    EXPECT_LE(metric(p, TraitsX::PointAt(points, r.index)), lp_radius);
-    EXPECT_EQ(metric(p, TraitsX::PointAt(points, r.index)), r.distance);
+    Scalar d = Distance<TraitsX>(metric, p, TraitsX::PointAt(points, r.index));
+
+    EXPECT_LE(d, lp_radius);
+    EXPECT_EQ(d, r.distance);
   }
 
   std::size_t count = 0;
 
   for (Index j = 0; j < TraitsX::SpaceNpts(points); ++j) {
-    if (metric(p, TraitsX::PointAt(points, j)) <= lp_radius) {
+    if (Distance<TraitsX>(metric, p, TraitsX::PointAt(points, j)) <=
+        lp_radius) {
       count++;
     }
   }

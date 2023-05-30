@@ -4,8 +4,10 @@
 #include <type_traits>
 #include <vector>
 
+#include "pico_tree/internal/box.hpp"
 #include "pico_tree/internal/kd_tree_node.hpp"
 #include "pico_tree/internal/point.hpp"
+#include "pico_tree/metric.hpp"
 
 namespace pico_tree {
 
@@ -15,7 +17,7 @@ namespace internal {
 template <
     typename SpaceWrapper_,
     typename Metric_,
-    typename Point_,
+    typename PointWrapper_,
     typename Visitor_>
 class SearchNearestEuclidean {
  public:
@@ -28,7 +30,7 @@ class SearchNearestEuclidean {
       SpaceWrapper_ const& space,
       Metric_ const& metric,
       std::vector<IndexType> const& indices,
-      Point_ const& query,
+      PointWrapper_ const& query,
       Visitor_& visitor)
       : space_(space),
         metric_(metric),
@@ -49,7 +51,10 @@ class SearchNearestEuclidean {
     if (node->IsLeaf()) {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        ScalarType const d = metric_(query_, space_.PointAt(indices_[i]));
+        ScalarType const d = metric_(
+            query_.data(),
+            query_.data() + query_.size(),
+            space_.PointCoordsAt(indices_[i]));
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -57,8 +62,7 @@ class SearchNearestEuclidean {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      ScalarType const v = SpaceWrapper_::TraitsType::PointCoords(
-          query_)[node->data.branch.split_dim];
+      ScalarType const v = query_[node->data.branch.split_dim];
       ScalarType new_offset;
       NodeType const* node_1st;
       NodeType const* node_2nd;
@@ -111,7 +115,7 @@ class SearchNearestEuclidean {
   SpaceWrapper_ const& space_;
   Metric_ const& metric_;
   std::vector<IndexType> const& indices_;
-  Point_ const& query_;
+  PointWrapper_ const& query_;
   Point<ScalarType, SpaceWrapper_::Dim> node_box_offset_;
   Visitor_& visitor_;
 };
@@ -120,7 +124,7 @@ class SearchNearestEuclidean {
 template <
     typename SpaceWrapper_,
     typename Metric_,
-    typename Point_,
+    typename PointWrapper_,
     typename Visitor_>
 class SearchNearestTopological {
  public:
@@ -133,7 +137,7 @@ class SearchNearestTopological {
       SpaceWrapper_ const& space,
       Metric_ const& metric,
       std::vector<IndexType> const& indices,
-      Point_ const& query,
+      PointWrapper_ const& query,
       Visitor_& visitor)
       : space_(space),
         metric_(metric),
@@ -154,7 +158,10 @@ class SearchNearestTopological {
     if (node->IsLeaf()) {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        ScalarType const d = metric_(query_, space_.PointAt(indices_[i]));
+        ScalarType const d = metric_(
+            query_.data(),
+            query_.data() + query_.size(),
+            space_.PointCoordsAt(indices_[i]));
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -162,8 +169,7 @@ class SearchNearestTopological {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      ScalarType const v = SpaceWrapper_::TraitsType::PointCoords(
-          query_)[node->data.branch.split_dim];
+      ScalarType const v = query_[node->data.branch.split_dim];
       // Determine the distance to the boxes of the children of this node.
       ScalarType const d1 = metric_(
           v,
@@ -210,7 +216,7 @@ class SearchNearestTopological {
   SpaceWrapper_ const& space_;
   Metric_ const& metric_;
   std::vector<IndexType> const& indices_;
-  Point_ const& query_;
+  PointWrapper_ const& query_;
   Point<ScalarType, SpaceWrapper_::Dim> node_box_offset_;
   Visitor_& visitor_;
 };

@@ -7,34 +7,30 @@ namespace pico_tree {
 //! \brief L2 metric for measuring Euclidean distances between points.
 //! \details https://en.wikipedia.org/wiki/Euclidean_distance
 //! \see L1
-template <typename Traits>
 class L2 {
- private:
-  using Scalar = typename Traits::ScalarType;
-
  public:
-  //! \brief Calculates the distance between points \p p0 and \p p1.
-  //! \tparam P0 Point type.
-  //! \tparam P1 Point type.
-  //! \param p0 Point.
-  //! \param p1 Point.
-  template <typename P0, typename P1>
-  // The enable_if is not required but it forces implicit casts which are
-  // handled by operator()(Scalar, Scalar).
-  inline std::enable_if_t<
-      !std::is_fundamental_v<P0> && !std::is_fundamental_v<P1>,
-      Scalar>
-  operator()(P0 const& p0, P1 const& p1) const {
-    return std::sqrt(internal::Sum<Traits, internal::SqrdDiff>::Op(p0, p1));
+  template <
+      typename InputIterator1,
+      typename InputSentinel1,
+      typename OutputIterator2>
+  constexpr auto operator()(
+      InputIterator1 begin1,
+      InputSentinel1 end1,
+      OutputIterator2 begin2) const {
+    return std::sqrt(internal::Sum(begin1, end1, begin2, internal::SqrdDiff()));
   }
 
   //! \brief Calculates the distance between two coordinates.
-  inline Scalar operator()(Scalar const x, Scalar const y) const {
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ const x, Scalar_ const y) const {
     return std::abs(x - y);
   }
 
   //! \brief Returns the absolute value of \p x.
-  inline Scalar operator()(Scalar const x) const { return std::abs(x); }
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ const x) const {
+    return std::abs(x);
+  }
 };
 
 }  // namespace pico_tree

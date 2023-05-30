@@ -3,6 +3,7 @@
 #include "pico_tree/internal/box.hpp"
 #include "pico_tree/internal/kd_tree_builder.hpp"
 #include "pico_tree/internal/kd_tree_search.hpp"
+#include "pico_tree/internal/point_wrapper.hpp"
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/internal/space_wrapper.hpp"
 
@@ -12,7 +13,7 @@ namespace pico_tree {
 //! \details https://en.wikipedia.org/wiki/K-d_tree
 template <
     typename Traits_,
-    typename Metric_ = L2Squared<Traits_>,
+    typename Metric_ = L2Squared,
     SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint>
 class KdTree {
   using SpaceWrapperType = internal::SpaceWrapper<Traits_>;
@@ -83,7 +84,8 @@ class KdTree {
   //! \see internal::SearchAknn
   template <typename P, typename V>
   inline void SearchNearest(P const& x, V* visitor) const {
-    SearchNearest(data_.root_node, x, *visitor, typename Metric_::SpaceTag());
+    internal::PointWrapper<Traits_, P> p(x);
+    SearchNearest(data_.root_node, p, *visitor, typename Metric_::SpaceTag());
   }
 
   //! \brief Searches for the nearest neighbor of point \p x.
@@ -302,26 +304,28 @@ class KdTree {
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node.
-  template <typename P, typename V>
+  template <typename PointWrapper_, typename V>
   inline void SearchNearest(
       NodeType const* const node,
-      P const& x,
+      PointWrapper_ const& point,
       V& visitor,
       EuclideanSpaceTag) const {
-    internal::SearchNearestEuclidean<SpaceWrapperType, Metric_, P, V>(
-        space_, metric_, data_.indices, x, visitor)(node);
+    internal::
+        SearchNearestEuclidean<SpaceWrapperType, Metric_, PointWrapper_, V>(
+            space_, metric_, data_.indices, point, visitor)(node);
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node.
-  template <typename P, typename V>
+  template <typename PointWrapper_, typename V>
   inline void SearchNearest(
       NodeType const* const node,
-      P const& x,
+      PointWrapper_ const& point,
       V& visitor,
       TopologicalSpaceTag) const {
-    internal::SearchNearestTopological<SpaceWrapperType, Metric_, P, V>(
-        space_, metric_, data_.indices, x, visitor)(node);
+    internal::
+        SearchNearestTopological<SpaceWrapperType, Metric_, PointWrapper_, V>(
+            space_, metric_, data_.indices, point, visitor)(node);
   }
 
   //! \brief Point set used for querying point data.

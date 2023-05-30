@@ -17,7 +17,7 @@ inline T constexpr kTwoPi = T(6.28318530717958647693l);
 struct AbsDiff {
   //! \private
   template <typename Scalar_>
-  inline static Scalar_ Op(Scalar_ x, Scalar_ y) {
+  constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
     return std::abs(x - y);
   }
 };
@@ -26,37 +26,42 @@ struct AbsDiff {
 struct SqrdDiff {
   //! \private
   template <typename Scalar_>
-  inline static Scalar_ Op(Scalar_ x, Scalar_ y) {
+  constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
     Scalar_ const d = x - y;
     return d * d;
   }
 };
 
-//! \brief Calculates the difference between all coordinats of two points given
-//! a binary operator.
-//! \tparam Traits_ Interface for intput points.
-//! \tparam BinOp_ Operator used to calculate coordinate differences.
-template <typename Traits_, typename BinOp_>
-struct Sum {
-  //! \private
-  using ScalarType = typename Traits_::ScalarType;
-
-  //! \private
-  template <typename P0, typename P1>
-  inline static ScalarType Op(P0 const& p0, P1 const& p1) {
-    assert(Traits_::PointSdim(p0) == Traits_::PointSdim(p1));
-
-    ScalarType const* c0 = Traits_::PointCoords(p0);
-    ScalarType const* c1 = Traits_::PointCoords(p1);
-    ScalarType d{};
-
-    for (Size i = 0; i < internal::Dimension<Traits_>::Dim(p0); ++i) {
-      d += BinOp_::Op(c0[i], c1[i]);
-    }
-
-    return d;
+//! \brief Calculates the distance between two angles.
+//! \details The circle S1 is represented by the range [-PI, PI] / -PI ~ PI.
+struct AngleAbsDiff {
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
+    Scalar_ const d = std::abs(x - y);
+    return std::min(d, internal::kTwoPi<Scalar_> - d);
   }
 };
+
+template <
+    typename InputIterator1,
+    typename InputSentinel1,
+    typename OutputIterator2,
+    typename BinaryOperator>
+constexpr auto Sum(
+    InputIterator1 begin1,
+    InputSentinel1 end1,
+    OutputIterator2 begin2,
+    BinaryOperator op) {
+  using ScalarType = typename std::iterator_traits<InputIterator1>::value_type;
+
+  ScalarType d{};
+
+  for (; begin1 != end1; ++begin1, ++begin2) {
+    d += op(*begin1, *begin2);
+  }
+
+  return d;
+}
 
 }  // namespace internal
 
@@ -83,71 +88,65 @@ class EuclideanSpaceTag : public TopologicalSpaceTag {};
 //! \details For more details:
 //! * https://en.wikipedia.org/wiki/Metric_space
 //! * https://en.wikipedia.org/wiki/Lp_space
-template <typename Traits_>
 class L1 {
  public:
   //! \brief This tag specifies the supported space by this metric.
   using SpaceTag = EuclideanSpaceTag;
-  using ScalarType = typename Traits_::ScalarType;
 
-  //! \brief Calculates the distance between points \p p0 and \p p1.
-  //! \tparam P0 Point type.
-  //! \tparam P1 Point type.
-  //! \param p0 Point.
-  //! \param p1 Point.
-  template <typename P0, typename P1>
-  // The enable_if is not required but it forces implicit casts which are
-  // handled by operator()(ScalarType, ScalarType).
-  inline std::enable_if_t<
-      !std::is_fundamental_v<P0> && !std::is_fundamental_v<P1>,
-      ScalarType>
-  operator()(P0 const& p0, P1 const& p1) const {
-    return internal::Sum<Traits_, internal::AbsDiff>::Op(p0, p1);
+  template <
+      typename InputIterator1,
+      typename InputSentinel1,
+      typename OutputIterator2>
+  constexpr auto operator()(
+      InputIterator1 begin1,
+      InputSentinel1 end1,
+      OutputIterator2 begin2) const {
+    return internal::Sum(begin1, end1, begin2, internal::AbsDiff());
   }
 
   //! \brief Calculates the distance between two coordinates.
-  inline ScalarType operator()(ScalarType const x, ScalarType const y) const {
-    return std::abs(x - y);
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ const x, Scalar_ const y) const {
+    return internal::AbsDiff()(x, y);
   }
 
   //! \brief Returns the absolute value of \p x.
-  inline ScalarType operator()(ScalarType const x) const { return std::abs(x); }
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ const x) const {
+    return std::abs(x);
+  }
 };
 
 //! \brief The L2Squared semimetric measures squared Euclidean distances between
 //! points. It does not satisfy the triangle inequality.
 //! \see L1
-//! \see L2
-template <typename Traits_>
 class L2Squared {
  public:
   //! \brief This tag specifies the supported space by this metric.
   using SpaceTag = EuclideanSpaceTag;
-  using ScalarType = typename Traits_::ScalarType;
 
-  //! \brief Calculates the distance between points \p p0 and \p p1.
-  //! \tparam P0 Point type.
-  //! \tparam P1 Point type.
-  //! \param p0 Point.
-  //! \param p1 Point.
-  template <typename P0, typename P1>
-  // The enable_if is not required but it forces implicit casts which are
-  // handled by operator()(ScalarType, ScalarType).
-  inline std::enable_if_t<
-      !std::is_fundamental_v<P0> && !std::is_fundamental_v<P1>,
-      ScalarType>
-  operator()(P0 const& p0, P1 const& p1) const {
-    return internal::Sum<Traits_, internal::SqrdDiff>::Op(p0, p1);
+  template <
+      typename InputIterator1,
+      typename InputSentinel1,
+      typename OutputIterator2>
+  constexpr auto operator()(
+      InputIterator1 begin1,
+      InputSentinel1 end1,
+      OutputIterator2 begin2) const {
+    return internal::Sum(begin1, end1, begin2, internal::SqrdDiff());
   }
 
   //! \brief Calculates the distance between two coordinates.
-  inline ScalarType operator()(ScalarType const x, ScalarType const y) const {
-    ScalarType const d = x - y;
-    return d * d;
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ const x, Scalar_ const y) const {
+    return internal::SqrdDiff()(x, y);
   }
 
   //! \brief Returns the squared value of \p x.
-  inline ScalarType operator()(ScalarType const x) const { return x * x; }
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ const x) const {
+    return x * x;
+  }
 };
 
 //! \brief The SO2 metric measures distances on the unit circle S1. It is the
@@ -158,57 +157,48 @@ class L2Squared {
 //! For more details:
 //! * https://en.wikipedia.org/wiki/Intrinsic_metric
 //! * https://en.wikipedia.org/wiki/Great-circle_distance
-template <typename Traits_>
 class SO2 {
  public:
   //! \brief This tag specifies the supported space by this metric.
   using SpaceTag = TopologicalSpaceTag;
-  using ScalarType = typename Traits_::ScalarType;
 
-  //! \brief Calculates the distance between points \p p0 and \p p1.
-  //! \tparam P0 Point type.
-  //! \tparam P1 Point type.
-  //! \param p0 Point.
-  //! \param p1 Point.
-  template <typename P0, typename P1>
-  // The enable_if is not required but it forces implicit casts which are
-  // handled by operator()(ScalarType, ScalarType).
-  inline std::enable_if_t<
-      !std::is_fundamental_v<P0> && !std::is_fundamental_v<P1>,
-      ScalarType>
-  operator()(P0 const& p0, P1 const& p1) const {
-    assert(Traits_::PointSdim(p0) == Traits_::PointSdim(p1));
-    assert(Traits_::PointSdim(p0) == 1);
-
-    return operator()(*Traits_::PointCoords(p0), *Traits_::PointCoords(p1));
+  template <
+      typename InputIterator1,
+      typename InputSentinel1,
+      typename OutputIterator2>
+  constexpr auto operator()(
+      InputIterator1 begin1,
+      InputSentinel1 end1,
+      OutputIterator2 begin2) const {
+    return operator()(*begin1, *begin2);
   }
-
-  //! \brief Returns the absolute value of \p x.
-  inline ScalarType operator()(ScalarType const x) const { return std::abs(x); }
 
   //! \brief Calculates the distance between \p x and the box defined by [ \p
   //! min, \p max ].
   //! \details The last argument is the dimension. It can be used to support
   //! Cartesian products of spaces but it is ignored here.
-  inline ScalarType operator()(
-      ScalarType const x,
-      ScalarType const min,
-      ScalarType const max,
-      int const) const {
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(
+      Scalar_ const x, Scalar_ const min, Scalar_ const max, int const) const {
     // Rectangles can't currently wrap around the identification of PI ~ -PI
     // where the minimum is larger than he maximum.
     if (x < min || x > max) {
       return std::min(operator()(x, min), operator()(x, max));
     }
 
-    return ScalarType(0.0);
+    return Scalar_(0.0);
+  }
+
+  //! \brief Returns the absolute value of \p x.
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ const x) const {
+    return std::abs(x);
   }
 
  private:
-  //! \brief Calculates the distance between two coordinates.
-  inline ScalarType operator()(ScalarType const x, ScalarType const y) const {
-    ScalarType const d = std::abs(x - y);
-    return std::min(d, internal::kTwoPi<ScalarType> - d);
+  template <typename Scalar_>
+  constexpr auto operator()(Scalar_ x, Scalar_ y) const {
+    return internal::AngleAbsDiff()(x, y);
   }
 };
 

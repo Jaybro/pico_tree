@@ -117,12 +117,11 @@ void Search3d() {
 void SearchS1() {
   using PointX = Point1f;
   using TraitsX = pico_tree::StdTraits<std::vector<PointX>>;
-  using NeighborX =
-      pico_tree::KdTree<TraitsX, pico_tree::SO2<TraitsX>>::NeighborType;
+  using NeighborX = pico_tree::KdTree<TraitsX, pico_tree::SO2>::NeighborType;
 
   const auto pi = typename PointX::ScalarType(3.1415926537);
 
-  pico_tree::KdTree<TraitsX, pico_tree::SO2<TraitsX>> tree(
+  pico_tree::KdTree<TraitsX, pico_tree::SO2> tree(
       GenerateRandomN<PointX>(512, -pi, pi), 10);
 
   std::array<NeighborX, 8> knn;

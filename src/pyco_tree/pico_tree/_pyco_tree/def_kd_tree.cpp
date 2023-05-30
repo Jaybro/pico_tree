@@ -9,9 +9,9 @@ namespace py = pybind11;
 namespace pyco_tree {
 
 template <typename PointX>
-using KdTreeL1 = KdTree<TraitsX<PointX>, L1<TraitsX<PointX>>>;
+using KdTreeL1 = KdTree<TraitsX<PointX>, pico_tree::L1>;
 template <typename PointX>
-using KdTreeL2 = KdTree<TraitsX<PointX>, L2Squared<TraitsX<PointX>>>;
+using KdTreeL2 = KdTree<TraitsX<PointX>, pico_tree::L2Squared>;
 
 // Dynamic size KdTree
 using KdTreeXfL1 = KdTreeL1<PointsXf>;

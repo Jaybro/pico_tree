@@ -150,87 +150,10 @@ void VectorMapRowMajor() {
   }
 }
 
-// The Metrics demo shows how it can be beneficial to use the metrics supplied
-// by the <pico_tree/eigen3_traits.hpp> header.
-//
-// Suppose we want to use a KdTree with a spatial dimension of 3 using floats as
-// a scalar. In this case we can use Eigen::Vector3f as the data type. However,
-// Eigen::Vector3f doesn't benefit from vectorization. With Eigen::Vector4f we
-// can, but in this case we have one dimension too many!
-//
-// Luckily, it is possible override the default Dim constant with a different
-// value (see OverrideDimTraits), but some care needs to be taken:
-// * The default Metrics don't make explicit use of vectorization (perhaps
-// implicitly through optimization by the compiler) but the Eigen based Metrics
-// may do so.
-// * The extra coordinate of Eigen::Vector4f must be set 0 so it doesn't
-// influence any of the distance calculations. E.g., the squared distance uses a
-// dot product.
-//
-// See also:
-// http://eigen.tuxfamily.org/index.php?title=UsingVector4fForVector3fOperations
-
-template <typename Traits_, pico_tree::Size Dim_>
-struct OverrideDimTraits : public Traits_ {
-  static pico_tree::Size constexpr Dim = Dim_;
-};
-
-void Metrics() {
-  // Eigen::Vector4f requires aligned memory.
-  using PointX = Eigen::Vector4f;
-  using Scalar = typename PointX::Scalar;
-  using Map = PointsMapCm<PointX>;
-  // Tell the KdTree to use a spatial dimension of 3 instead of 4.
-  constexpr int Dim = PointX::RowsAtCompileTime - 1;
-
-  auto points = GenerateRandomEigenN<PointX>(kNumPoints, kArea);
-  // The Eigen::Map uses the dimension of 4.
-  Map map(points.data()->data(), PointX::RowsAtCompileTime, points.size());
-  // Set the last row (4th coordinate) to 0.
-  map.bottomRows<1>().setZero();
-
-  PointX p = PointX::Random() * kArea / Scalar(2.0);
-  // Again, set the last row (4th coordinate) to 0.
-  p.w() = Scalar(0.0);
-
-  std::cout << "Eigen Metrics: " << std::endl;
-
-  {
-    // Using an std::reference_wrapper prevents a copy.
-    using Traits = OverrideDimTraits<
-        pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>,
-        Dim>;
-
-    pico_tree::KdTree<Traits, pico_tree::EigenL2Squared<Scalar>> tree(
-        points, kMaxLeafCount);
-
-    std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
-    ScopedTimer t("pico_tree eigen l2", kRunCount);
-    for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchKnn(p, 1, &knn);
-    }
-  }
-
-  {
-    // Using an Eigen::Map prevents a copy.
-    using Traits = OverrideDimTraits<pico_tree::EigenTraits<Map>, Dim>;
-
-    pico_tree::KdTree<Traits, pico_tree::EigenL1<Scalar>> tree(
-        map, kMaxLeafCount);
-
-    std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
-    ScopedTimer t("pico_tree eigen l1", kRunCount);
-    for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchKnn(p, 1, &knn);
-    }
-  }
-}
-
 int main() {
   BasicVector();
   BasicMatrix();
   VectorMapColMajor();
   VectorMapRowMajor();
-  Metrics();
   return 0;
 }

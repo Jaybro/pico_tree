@@ -14,34 +14,6 @@ using Traits = pico_tree::EigenTraits<SpaceX>;
 
 }  // namespace
 
-TEST(EigenTest, EigenL1) {
-  using PointX = Eigen::Vector2f;
-  using Scalar = typename PointX::Scalar;
-
-  PointX p0{10.0f, 1.0f};
-  PointX p1{2.0f, 4.0f};
-
-  pico_tree::EigenL1<Scalar> metric;
-
-  EXPECT_FLOAT_EQ(metric(p0, p1), 11.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 12.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
-}
-
-TEST(EigenTest, EigenL2Squared) {
-  using PointX = Eigen::Vector2f;
-  using Scalar = typename PointX::Scalar;
-
-  PointX p0{10.0f, 1.0f};
-  PointX p1{2.0f, 4.0f};
-
-  pico_tree::EigenL2Squared<Scalar> metric;
-
-  EXPECT_FLOAT_EQ(metric(p0, p1), 73.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);
-  EXPECT_FLOAT_EQ(metric(-3.1f), 9.61f);
-}
-
 template <typename ColMatrix, typename RowMatrix>
 void CheckEigenAdaptorInterface() {
   ColMatrix col_matrix = ColMatrix::Random(4, 8);

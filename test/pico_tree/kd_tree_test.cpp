@@ -111,7 +111,7 @@ TEST(KdTreeTest, QuerySo2Knn4) {
 
   const auto pi = pico_tree::internal::kPi<typename KdTree<PointX>::ScalarType>;
   std::vector<PointX> random = GenerateRandomN<PointX>(256 * 256, -pi, pi);
-  pico_tree::KdTree<TraitsX, pico_tree::SO2<TraitsX>> tree(random, 10);
+  pico_tree::KdTree<TraitsX, pico_tree::SO2> tree(random, 10);
   TestKnn(tree, static_cast<typename KdTree<PointX>::IndexType>(8), PointX{pi});
 }
 

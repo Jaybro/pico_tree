@@ -16,18 +16,8 @@ class SpaceWrapper {
   using SizeType = Size;
   using IndexType = typename Traits_::IndexType;
   static SizeType constexpr Dim = Traits_::Dim;
-  // TODO Temporary.
-  using TraitsType = Traits_;
 
   explicit SpaceWrapper(SpaceType space) : space_(std::move(space)) {}
-
-  inline SpaceType const& space() const { return space_; }
-  inline constexpr SizeType sdim() const { return Traits_::SpaceSdim(space_); }
-  inline IndexType size() const { return Traits_::SpaceNpts(space_); }
-
-  inline auto PointAt(IndexType const idx) const {
-    return Traits_::PointAt(space_, idx);
-  }
 
   inline ScalarType const* PointCoordsAt(IndexType const idx) const {
     return Traits_::PointCoords(Traits_::PointAt(space_, idx));
@@ -46,6 +36,16 @@ class SpaceWrapper {
     }
     return box;
   }
+
+  constexpr SizeType sdim() const {
+    if constexpr (Dim != kDynamicSize) {
+      return Dim;
+    } else {
+      return Traits_::SpaceSdim(space_);
+    }
+  }
+  inline IndexType size() const { return Traits_::SpaceNpts(space_); }
+  inline SpaceType const& space() const { return space_; }
 
  private:
   SpaceType space_;

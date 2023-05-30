@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <numeric>
+#include <pico_tree/internal/point_wrapper.hpp>
 #include <pico_tree/internal/search_visitor.hpp>
 #include <pico_tree/internal/space_wrapper.hpp>
 #include <random>
@@ -61,7 +62,7 @@ class StaticBuffer {
 
 }  // namespace internal
 
-template <typename Traits_, typename Metric_ = L2<Traits_>>
+template <typename Traits_, typename Metric_ = L2>
 class CoverTree {
  private:
   using Index = typename Traits_::IndexType;
@@ -333,16 +334,17 @@ class CoverTree {
   }
 
   void UpdateMaxDistance(Node* node) const {
-    node->max_distance = MaxDistance(node, space_.PointAt(node->index));
+    node->max_distance = MaxDistance(node, space_.PointCoordsAt(node->index));
 
     for (Node* m : node->children) {
       UpdateMaxDistance(m);
     }
   }
 
-  template <typename P>
-  Scalar MaxDistance(Node const* const node, P const& x) const {
-    Scalar max = metric_(space_.PointAt(node->index), x);
+  template <typename PointCoords>
+  Scalar MaxDistance(Node const* const node, PointCoords x) const {
+    Scalar max =
+        metric_(x, x + space_.sdim(), space_.PointCoordsAt(node->index));
 
     for (Node const* const m : node->children) {
       max = std::max(max, MaxDistance(m, x));
@@ -360,8 +362,9 @@ class CoverTree {
     if (space_.size() == 1) {
       node->level = 0;
     } else {
-      Scalar d =
-          metric_(space_.PointAt(indices[0]), space_.PointAt(indices[1]));
+      auto x0 = space_.PointCoordsAt(indices[0]);
+      auto x1 = space_.PointCoordsAt(indices[1]);
+      Scalar d = metric_(x0, x0 + space_.sdim(), x1);
       node->level = std::ceil(base_.Level(d));
       PushChild(node, CreateNode(indices[1]));
     }
@@ -371,8 +374,8 @@ class CoverTree {
 
   //! \brief Returns a new tree inserting \p node into \p tree.
   inline Node* Insert(Node* tree, Node* node) {
-    auto const& x = space_.PointAt(node->index);
-    Scalar d = metric_(space_.PointAt(tree->index), x);
+    auto x = space_.PointCoordsAt(node->index);
+    Scalar d = metric_(x, x + space_.sdim(), space_.PointCoordsAt(tree->index));
     Scalar c = base_.CoverDistance(*tree);
     if (d > c) {
 #ifdef SIMPLIFIED_NEAREST_ANCESTOR_COVER_TREE
@@ -386,7 +389,7 @@ class CoverTree {
       while (d > c) {
         tree = NodeToParent(RemoveLeaf(tree), tree);
         c = base_.ParentDistance(*tree);
-        d = metric_(space_.PointAt(tree->index), x);
+        d = metric_(x, x + space_.sdim(), space_.PointCoordsAt(tree->index));
       }
 #endif
 
@@ -402,9 +405,9 @@ class CoverTree {
   inline void InsertCovered(Node* tree, Node* node) {
     // The following line may replace the contents of this function to get a
     // simplified cover tree:
-    // PushChild(FindParent(tree, space_.PointAt(node->index), node);
+    // PushChild(FindParent(tree, space_.PointCoordsAt(node->index), node);
 
-    auto const& x = space_.PointAt(node->index);
+    auto x = space_.PointCoordsAt(node->index);
     Node* parent = FindParent(tree, x);
 
     if (parent->IsLeaf()) {
@@ -414,8 +417,8 @@ class CoverTree {
     }
   }
 
-  template <typename P>
-  inline Node* FindParent(Node* tree, P const& x) const {
+  template <typename PointCoords>
+  inline Node* FindParent(Node* tree, PointCoords x) const {
     if (tree->IsLeaf()) {
       return tree;
     } else {
@@ -424,11 +427,15 @@ class CoverTree {
       // ancestor cover tree, but this speeds up the queries of the simplified
       // cover tree as well. Faster by ~70%, but tree creation is a bit slower
       // for it (3-14%).
-      Scalar min_d = metric_(space_.PointAt(tree->children[0]->index), x);
+      Scalar min_d = metric_(
+          x, x + space_.sdim(), space_.PointCoordsAt(tree->children[0]->index));
       std::size_t min_i = 0;
 
       for (std::size_t i = 1; i < tree->children.size(); ++i) {
-        Scalar d = metric_(space_.PointAt(tree->children[i]->index), x);
+        Scalar d = metric_(
+            x,
+            x + space_.sdim(),
+            space_.PointCoordsAt(tree->children[i]->index));
 
         if (d < min_d) {
           min_d = d;
@@ -444,8 +451,8 @@ class CoverTree {
     }
   }
 
-  template <typename P>
-  void Rebalance(Node* parent, Node* node, P const& x) {
+  template <typename PointCoords>
+  void Rebalance(Node* parent, Node* node, PointCoords x) {
     std::vector<Node*> to_move;
     std::vector<Node*> to_stay;
 
@@ -463,9 +470,9 @@ class CoverTree {
     Scalar const d = base_.ChildDistance(*parent) * Scalar(2.0);
 
     for (auto child : parent->children) {
-      auto const& y = space_.PointAt(child->index);
+      auto y = space_.PointCoordsAt(child->index);
 
-      if (metric_(x, y) < d) {
+      if (metric_(x, x + space_.sdim(), y) < d) {
         Extract(x, y, child, &to_move, &to_stay);
 
         for (auto it = to_stay.rbegin(); it != to_stay.rend(); ++it) {
@@ -485,7 +492,7 @@ class CoverTree {
     PushChild(parent, node);
 #else
     for (auto& child : parent->children) {
-      Extract(x, space_.PointAt(child->index), child, &to_move, &to_stay);
+      Extract(x, space_.PointCoordsAt(child->index), child, &to_move, &to_stay);
 
       for (auto it = to_stay.rbegin(); it != to_stay.rend(); ++it) {
         child = Insert(child, *it);
@@ -507,10 +514,10 @@ class CoverTree {
   //! \brief Fill the \p to_move and \p to_stay buffers based on if any \p
   //! descendant (of \p x_stay) is either closer to \p x_move or \p x_stay.
   //! Move is the newly inserted node for which we are rebalancing.
-  template <typename P>
+  template <typename PointCoords>
   void Extract(
-      P const& x_move,
-      P const& x_stay,
+      PointCoords x_move,
+      PointCoords x_stay,
       Node* descendant,
       std::vector<Node*>* to_move,
       std::vector<Node*>* to_stay) {
@@ -522,8 +529,9 @@ class CoverTree {
         descendant->children.begin(),
         descendant->children.end(),
         [this, &x_move, &x_stay](Node* node) -> bool {
-          auto const& p = space_.PointAt(node->index);
-          return metric_(x_stay, p) < metric_(x_move, p);
+          auto p = space_.PointCoordsAt(node->index);
+          return metric_(x_stay, x_stay + space_.sdim(), p) <
+                 metric_(x_move, x_move + space_.sdim(), p);
         });
 
     auto erase_rend =
@@ -542,10 +550,10 @@ class CoverTree {
 
   //! \brief Strips all descendants of d in a depth-first fashion and puts
   //! them in either the move or stay set.
-  template <typename P>
+  template <typename PointCoords>
   void Strip(
-      P const& x_move,
-      P const& x_stay,
+      PointCoords x_move,
+      PointCoords x_stay,
       Node* descendant,
       std::vector<Node*>* to_move,
       std::vector<Node*>* to_stay) {
@@ -556,8 +564,9 @@ class CoverTree {
     for (auto const child : descendant->children) {
       Strip(x_move, x_stay, child, to_move, to_stay);
 
-      auto const& p = space_.PointAt(child->index);
-      if (metric_(x_stay, p) > metric_(x_move, p)) {
+      auto p = space_.PointCoordsAt(child->index);
+      if (metric_(x_stay, x_stay + space_.sdim(), p) >
+          metric_(x_move, x_move + space_.sdim(), p)) {
         to_move->push_back(child);
       } else {
         to_stay->push_back(child);
@@ -605,7 +614,19 @@ class CoverTree {
   template <typename P, typename V>
   inline void SearchNearest(
       Node const* const node, P const& x, V* visitor) const {
-    Scalar const d = metric_(x, space_.PointAt(node->index));
+    internal::PointWrapper<Traits_, P> p(x);
+    SearchNearest_(node, p, visitor);
+  }
+
+  //! \brief Returns the nearest neighbor (or neighbors) of \p point depending
+  //! on their selection by visitor \p visitor for node \p node .
+  template <typename PointWrapper_, typename V>
+  inline void SearchNearest_(
+      Node const* const node, PointWrapper_ const& point, V* visitor) const {
+    Scalar const d = metric_(
+        point.data(),
+        point.data() + point.size(),
+        space_.PointCoordsAt(node->index));
     if (visitor->max() > d) {
       (*visitor)(node->index, d);
     }
@@ -613,7 +634,12 @@ class CoverTree {
     std::vector<std::pair<Node const*, Scalar>> sorted;
     sorted.reserve(node->children.size());
     for (auto const child : node->children) {
-      sorted.push_back({child, metric_(x, space_.PointAt(child->index))});
+      sorted.push_back(
+          {child,
+           metric_(
+               point.data(),
+               point.data() + point.size(),
+               space_.PointCoordsAt(child->index))});
     }
 
     std::sort(
@@ -640,9 +666,12 @@ class CoverTree {
 
       // TODO The distance calculation can be cached. When SearchNeighbor is
       // called it's calculated again.
-      if (visitor->max() > (metric_(x, space_.PointAt(m.first->index)) -
+      if (visitor->max() > (metric_(
+                                point.data(),
+                                point.data() + point.size(),
+                                space_.PointCoordsAt(m.first->index)) -
                             m.first->max_distance)) {
-        SearchNearest(m.first, x, visitor);
+        SearchNearest_(m.first, point, visitor);
       }
     }
   }
