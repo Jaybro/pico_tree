@@ -27,7 +27,8 @@ struct Traits {
   }
 
   // Returns the idx'th point from the input space.
-  inline static PointType PointAt(SpaceType const& space, IndexType const idx) {
+  inline static PointType const& PointAt(
+      SpaceType const& space, IndexType const idx) {
     return space[idx];
   }
 
