@@ -71,6 +71,7 @@ namespace pico_tree {
 
 template <typename Scalar_, std::size_t Dim_>
 struct PointTraits<Point<Scalar_, Dim_>> {
+  using PointType = Point<Scalar_, Dim_>;
   using ScalarType = Scalar_;
   static std::size_t constexpr Dim = Dim_;
 

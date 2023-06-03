@@ -20,6 +20,8 @@ template <typename Scalar_>
 struct PointTraits<cv::Point_<Scalar_>> {
   static_assert(sizeof(cv::Point_<Scalar_>) == (sizeof(Scalar_) * 2), "");
 
+  //! \brief Supported point type.
+  using PointType = cv::Point_<Scalar_>;
   //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
   //! \brief The size and index type of point coordinates.
@@ -43,6 +45,8 @@ template <typename Scalar_>
 struct PointTraits<cv::Point3_<Scalar_>> {
   static_assert(sizeof(cv::Point3_<Scalar_>) == (sizeof(Scalar_) * 3), "");
 
+  //! \brief Supported point type.
+  using PointType = cv::Point3_<Scalar_>;
   //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
   //! \brief The size and index type of point coordinates.
@@ -64,6 +68,8 @@ struct PointTraits<cv::Point3_<Scalar_>> {
 //! \brief PointTraits provides an interface for cv::Vec<>.
 template <typename Scalar_, int Dim_>
 struct PointTraits<cv::Vec<Scalar_, Dim_>> {
+  //! \brief Supported point type.
+  using PointType = cv::Vec<Scalar_, Dim_>;
   //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
   //! \brief The size and index type of point coordinates.
@@ -102,11 +108,13 @@ struct CvTraits {
   //! \brief Compile time spatial dimension.
   static constexpr SizeType Dim = Dim_;
 
+  //! \brief Returns the traits for the given input point type.
+  template <typename OtherPoint_>
+  using PointTraitsFor = PointTraits<OtherPoint_>;
+
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline static SizeType SpaceSdim(cv::Mat const& space) {
-    assert(Dim == kDynamicSize || Dim == space.step1());
-
+  inline static SizeType Sdim(cv::Mat const& space) {
     if constexpr (Dim != kDynamicSize) {
       return Dim;
     } else {
@@ -117,7 +125,7 @@ struct CvTraits {
   }
 
   //! \brief Returns number of points contained by \p space.
-  inline static IndexType SpaceNpts(cv::Mat const& space) { return space.rows; }
+  inline static IndexType Npts(cv::Mat const& space) { return space.rows; }
 
   //! \brief Returns the point at \p idx from \p space.
   inline static PointType PointAt(cv::Mat const& space, IndexType const idx) {
@@ -128,22 +136,6 @@ struct CvTraits {
       // an alternative.
       return {space.ptr<Scalar_>(idx), space.step1()};
     }
-  }
-
-  //! \brief Returns the spatial dimension of \p point.
-  //! \details Allowing the input type to be different from PointType gives us
-  //! greater interfacing flexibility.
-  template <typename OtherPoint>
-  inline static SizeType PointSdim(OtherPoint const& point) {
-    return PointTraits<OtherPoint>::Sdim(point);
-  }
-
-  //! \brief Returns a pointer to the coordinates of \p point.
-  //! \details Allowing the input type to be different from PointType gives us
-  //! greater interfacing flexibility.
-  template <typename OtherPoint>
-  inline static ScalarType const* PointCoords(OtherPoint const& point) {
-    return PointTraits<OtherPoint>::Coords(point);
   }
 };
 

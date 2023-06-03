@@ -41,7 +41,7 @@ void BasicVector() {
   pico_tree::Neighbor<Index, Scalar> nn;
   ScopedTimer t("pico_tree cv vector", kRunCount);
   for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchNn(p, &nn);
+    tree.SearchNn(p, nn);
   }
 }
 
@@ -58,7 +58,7 @@ void BasicMatrix() {
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree cv mat", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchNn(p, &nn);
+      tree.SearchNn(p, nn);
     }
   }
 
@@ -74,7 +74,7 @@ void BasicMatrix() {
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree cv mat", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchNn(p, &nn);
+      tree.SearchNn(p, nn);
     }
   }
 }

@@ -160,7 +160,7 @@ void DefKdTree(std::string const& name, py::module* m) {
           static_cast<void (KdTree::*)(
               py::array_t<Scalar, 0> const,
               Scalar const,
-              Neighborhoods*,
+              Neighborhoods&,
               bool const) const>(&KdTree::SearchRadius),
           py::arg("pts").noconvert().none(false),
           py::arg("radius").none(false),
@@ -183,7 +183,7 @@ void DefKdTree(std::string const& name, py::module* m) {
           static_cast<void (KdTree::*)(
               py::array_t<Scalar, 0> const,
               py::array_t<Scalar, 0> const,
-              Neighborhoods*) const>(&KdTree::SearchBox),
+              Neighborhoods&) const>(&KdTree::SearchBox),
           py::arg("min").noconvert().none(false),
           py::arg("max").noconvert().none(false),
           py::arg("box").noconvert().none(false),

@@ -30,26 +30,18 @@ struct MapTraits {
   static SizeType constexpr Dim = SpaceType::Dim;
   using IndexType = Index_;
 
-  inline static SizeType SpaceSdim(SpaceType const& space) {
-    return space.sdim();
-  }
+  //! \brief Returns the traits for the given input point type.
+  template <typename OtherPoint_>
+  using PointTraitsFor = PointTraits<OtherPoint_>;
 
-  inline static IndexType SpaceNpts(SpaceType const& space) {
+  inline static SizeType Sdim(SpaceType const& space) { return space.sdim(); }
+
+  inline static IndexType Npts(SpaceType const& space) {
     return static_cast<IndexType>(space.size());
   }
 
   inline static PointType PointAt(SpaceType const& space, IndexType const idx) {
     return space[idx];
-  }
-
-  template <typename OtherPoint>
-  inline static SizeType PointSdim(OtherPoint const& point) {
-    return PointTraits<OtherPoint>::Sdim(point);
-  }
-
-  template <typename OtherPoint>
-  inline static ScalarType const* PointCoords(OtherPoint const& point) {
-    return PointTraits<OtherPoint>::Coords(point);
   }
 };
 

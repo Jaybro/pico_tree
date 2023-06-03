@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <pico_toolshed/point.hpp>
+#include <pico_tree/std_traits.hpp>
 
 #include "common.hpp"
 

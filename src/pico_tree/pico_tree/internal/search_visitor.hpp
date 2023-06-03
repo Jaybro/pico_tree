@@ -17,7 +17,7 @@ class SearchNn {
   using ScalarType = typename Neighbor_::ScalarType;
 
   //! \private
-  inline SearchNn(NeighborType* nn) : nn_{*nn} {
+  inline SearchNn(NeighborType& nn) : nn_{nn} {
     nn_.distance = std::numeric_limits<ScalarType>::max();
   }
 
@@ -99,8 +99,8 @@ class SearchRadius {
 
  public:
   //! \private
-  inline SearchRadius(ScalarType const radius, std::vector<NeighborType>* n)
-      : radius_{radius}, n_{*n} {
+  inline SearchRadius(ScalarType const radius, std::vector<NeighborType>& n)
+      : radius_{radius}, n_{n} {
     n_.clear();
   }
 
@@ -117,7 +117,7 @@ class SearchRadius {
   inline ScalarType max() const { return radius_; }
 
  private:
-  ScalarType const radius_;
+  ScalarType radius_;
   std::vector<NeighborType>& n_;
 };
 

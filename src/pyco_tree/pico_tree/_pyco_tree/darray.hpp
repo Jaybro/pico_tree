@@ -184,8 +184,7 @@ class DArray {
 
   template <typename T>
   explicit DArray(std::vector<std::vector<T>> darray)
-      : impl_(std::unique_ptr<internal::DArrayImplBase>(
-            new internal::DArrayImpl<T>(std::move(darray)))) {}
+      : impl_(std::make_unique<internal::DArrayImpl<T>>(std::move(darray))) {}
 
   DArray(pybind11::dtype const dtype) {
     if (dtype.equal(pybind11::dtype::of<Neighborf>())) {

@@ -37,19 +37,22 @@ struct StdTraits<std::vector<Point_, Allocator_>, Index_> {
   //! \brief Compile time spatial dimension.
   static SizeType constexpr Dim = PointTraits<Point_>::Dim;
 
+  //! \brief Returns the traits for the given input point type.
+  template <typename OtherPoint_>
+  using PointTraitsFor = PointTraits<OtherPoint_>;
+
   static_assert(
       Dim != kDynamicSize, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
-  inline static SizeType constexpr SpaceSdim(
+  inline static SizeType constexpr Sdim(
       std::vector<Point_, Allocator_> const&) {
     return Dim;
   }
 
   //! \brief Returns number of points contained by \p space.
-  inline static IndexType SpaceNpts(
-      std::vector<Point_, Allocator_> const& space) {
+  inline static IndexType Npts(std::vector<Point_, Allocator_> const& space) {
     return static_cast<IndexType>(space.size());
   }
 
@@ -57,22 +60,6 @@ struct StdTraits<std::vector<Point_, Allocator_>, Index_> {
   inline static Point_ const& PointAt(
       std::vector<Point_, Allocator_> const& space, IndexType const idx) {
     return space[idx];
-  }
-
-  //! \brief Returns the spatial dimension of \p point.
-  //! \details Allowing the input type to be different from PointType gives us
-  //! greater interfacing flexibility.
-  template <typename OtherPoint>
-  inline static SizeType PointSdim(OtherPoint const& point) {
-    return PointTraits<OtherPoint>::Sdim(point);
-  }
-
-  //! \brief Returns a pointer to the coordinates of \p point.
-  //! \details Allowing the input type to be different from PointType gives us
-  //! greater interfacing flexibility.
-  template <typename OtherPoint>
-  inline static ScalarType const* PointCoords(OtherPoint const& point) {
-    return PointTraits<OtherPoint>::Coords(point);
   }
 };
 

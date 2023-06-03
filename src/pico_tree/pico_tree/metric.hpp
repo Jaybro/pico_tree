@@ -167,9 +167,7 @@ class SO2 {
       typename InputSentinel1,
       typename OutputIterator2>
   constexpr auto operator()(
-      InputIterator1 begin1,
-      InputSentinel1 end1,
-      OutputIterator2 begin2) const {
+      InputIterator1 begin1, InputSentinel1, OutputIterator2 begin2) const {
     return operator()(*begin1, *begin2);
   }
 

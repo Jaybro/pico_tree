@@ -72,7 +72,7 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, KnnCtSldMid)(benchmark::State& state) {
     std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_test_) {
-      tree.SearchKnn(p, knn_count, &results);
+      tree.SearchKnn(p, knn_count, results);
       benchmark::DoNotOptimize(sum += results.size());
     }
   }
@@ -120,7 +120,7 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, RadiusCtSldMid)(benchmark::State& state) {
     std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_test_) {
-      tree.SearchRadius(p, squared, &results);
+      tree.SearchRadius(p, squared, results);
       benchmark::DoNotOptimize(sum += results.size());
     }
   }
@@ -159,7 +159,7 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, BoxCtSldMid)(benchmark::State& state) {
     for (auto const& p : points_test_) {
       auto min = p - radius;
       auto max = p + radius;
-      tree.SearchBox(min, max, &results);
+      tree.SearchBox(min, max, results);
       benchmark::DoNotOptimize(sum += results.size());
     }
   }
@@ -188,7 +188,7 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, BoxRtSldMid)(benchmark::State& state) {
     for (auto const& p : points_test_) {
       auto min = p - radius;
       auto max = p + radius;
-      tree.SearchBox(min, max, &results);
+      tree.SearchBox(min, max, results);
       benchmark::DoNotOptimize(sum += results.size());
     }
   }

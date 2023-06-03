@@ -18,6 +18,7 @@ namespace pico_tree {
 
 template <>
 struct PointTraits<PointXYZ> {
+  using PointType = PointXYZ;
   using ScalarType = float;
   static std::size_t constexpr Dim = 3;
 
@@ -46,7 +47,7 @@ int main() {
 
   PointXYZ query{4.0f, 4.0f, 4.0f};
   pico_tree::Neighbor<int, float> nn;
-  tree.SearchNn(query, &nn);
+  tree.SearchNn(query, nn);
 
   std::cout << "Index closest point: " << nn.index << std::endl;
 

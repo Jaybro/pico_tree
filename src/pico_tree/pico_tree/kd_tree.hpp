@@ -6,6 +6,7 @@
 #include "pico_tree/internal/point_wrapper.hpp"
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/internal/space_wrapper.hpp"
+#include "pico_tree/point_traits.hpp"
 
 namespace pico_tree {
 
@@ -83,18 +84,18 @@ class KdTree {
   //! \see internal::SearchRadius
   //! \see internal::SearchAknn
   template <typename P, typename V>
-  inline void SearchNearest(P const& x, V* visitor) const {
-    internal::PointWrapper<Traits_, P> p(x);
-    SearchNearest(data_.root_node, p, *visitor, typename Metric_::SpaceTag());
+  inline void SearchNearest(P const& x, V& visitor) const {
+    internal::PointWrapper<typename Traits_::template PointTraitsFor<P>> p(x);
+    SearchNearest(data_.root_node, p, visitor, typename Metric_::SpaceTag());
   }
 
   //! \brief Searches for the nearest neighbor of point \p x.
   //! \details Interpretation of the output distance depends on the Metric. The
   //! default L2Squared results in a squared distance.
   template <typename P>
-  inline void SearchNn(P const& x, NeighborType* nn) const {
+  inline void SearchNn(P const& x, NeighborType& nn) const {
     internal::SearchNn<NeighborType> v(nn);
-    SearchNearest(x, &v);
+    SearchNearest(x, v);
   }
 
   //! \brief Searches for the k nearest neighbors of point \p x, where k equals
@@ -114,7 +115,7 @@ class KdTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
-    SearchNearest(x, &v);
+    SearchNearest(x, v);
   }
 
   //! \brief Searches for the \p k nearest neighbors of point \p x and stores
@@ -124,11 +125,11 @@ class KdTree {
   //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
-      P const& x, IndexType const k, std::vector<NeighborType>* knn) const {
+      P const& x, IndexType const k, std::vector<NeighborType>& knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn->resize(std::min(k, space_.size()));
-    SearchKnn(x, knn->begin(), knn->end());
+    knn.resize(std::min(k, space_.size()));
+    SearchKnn(x, knn.begin(), knn.end());
   }
 
   //! \brief Searches for all the neighbors of point \p x that are within radius
@@ -143,7 +144,7 @@ class KdTree {
   //! // E.g., L1: 2.0, L2Squared: 4.0
   //! ScalarType metric_distance = kdtree.metric()(distance);
   //! std::vector<Neighbor<IndexType, ScalarType>> n;
-  //! tree.SearchRadius(p, metric_distance, &n);
+  //! tree.SearchRadius(p, metric_distance, n);
   //! \endcode
   //! \param n Output points.
   //! \param sort If true, the result set is sorted from closest to farthest
@@ -152,10 +153,10 @@ class KdTree {
   inline void SearchRadius(
       P const& x,
       ScalarType const radius,
-      std::vector<NeighborType>* n,
+      std::vector<NeighborType>& n,
       bool const sort = false) const {
     internal::SearchRadius<NeighborType> v(radius, n);
-    SearchNearest(x, &v);
+    SearchNearest(x, v);
 
     if (sort) {
       v.Sort();
@@ -208,7 +209,7 @@ class KdTree {
         "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
 
     internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
-    SearchNearest(x, &v);
+    SearchNearest(x, v);
   }
 
   //! \brief Searches for the \p k approximate nearest neighbors of point \p x
@@ -221,11 +222,11 @@ class KdTree {
       P const& x,
       IndexType const k,
       ScalarType const e,
-      std::vector<NeighborType>* knn) const {
+      std::vector<NeighborType>& knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn->resize(std::min(k, space_.size()));
-    SearchAknn(x, e, knn->begin(), knn->end());
+    knn.resize(std::min(k, space_.size()));
+    SearchAknn(x, e, knn.begin(), knn.end());
   }
 
   //! \brief Returns all points within the box defined by \p min and \p max.
@@ -233,8 +234,9 @@ class KdTree {
   //! \tparam P Point type.
   template <typename P>
   inline void SearchBox(
-      P const& min, P const& max, std::vector<IndexType>* idxs) const {
-    idxs->clear();
+      P const& min, P const& max, std::vector<IndexType>& idxs) const {
+    idxs.clear();
+    using PointTraitsType = typename Traits_::template PointTraitsFor<P>;
     // Note that it's never checked if the bounding box intersects at all. For
     // now it is assumed that this check is not worth it: If there is any
     // overlap then the search is slower. So unless many queries don't intersect
@@ -245,10 +247,10 @@ class KdTree {
         data_.indices,
         data_.root_box,
         internal::BoxMap<ScalarType const, Dim>(
-            Traits_::PointCoords(min),
-            Traits_::PointCoords(max),
+            PointTraitsType::Coords(min),
+            PointTraitsType::Coords(max),
             space_.sdim()),
-        *idxs)(data_.root_node);
+        idxs)(data_.root_node);
   }
 
   //! \brief Point set used by the tree.

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <pico_tree/core.hpp>
-#include <pico_tree/point_traits.hpp>
 #include <type_traits>
+
+#include "core.hpp"
+#include "point_traits.hpp"
 
 namespace pico_tree {
 

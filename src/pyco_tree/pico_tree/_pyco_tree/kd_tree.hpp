@@ -85,17 +85,17 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
   void SearchRadius(
       py::array_t<Scalar, 0> const pts,
       Scalar const radius,
-      DArray* nns,
+      DArray& nns,
       bool const sort) const {
     auto query = MakeMap<Dim>(pts);
 
-    auto& nns_data = nns->data<NeighborType>();
+    auto& nns_data = nns.data<NeighborType>();
     nns_data.resize(query.size());
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
     for (Index i = 0; i < static_cast<Index>(query.size()); ++i) {
-      Base::SearchRadius(query[i], radius, &nns_data[i], sort);
+      Base::SearchRadius(query[i], radius, nns_data[i], sort);
     }
   }
 
@@ -104,14 +104,14 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       Scalar const radius,
       bool const sort) const {
     DArray nns = DArray(std::vector<std::vector<NeighborType>>());
-    SearchRadius(pts, radius, &nns, sort);
+    SearchRadius(pts, radius, nns, sort);
     return nns;
   }
 
   void SearchBox(
       py::array_t<Scalar, 0> const min,
       py::array_t<Scalar, 0> const max,
-      DArray* box) const {
+      DArray& box) const {
     auto query_min = MakeMap<Dim>(min);
     auto query_max = MakeMap<Dim>(max);
 
@@ -119,13 +119,13 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       throw std::invalid_argument("Query min and max don't have equal size.");
     }
 
-    auto& box_data = box->data<Index>();
+    auto& box_data = box.data<Index>();
     box_data.resize(query_min.size());
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
     for (Index i = 0; i < static_cast<Index>(query_min.size()); ++i) {
-      Base::SearchBox(query_min[i], query_max[i], &box_data[i]);
+      Base::SearchBox(query_min[i], query_max[i], box_data[i]);
     }
   }
 
@@ -133,7 +133,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
       py::array_t<Scalar, 0> const min,
       py::array_t<Scalar, 0> const max) const {
     DArray box = DArray(std::vector<std::vector<Index>>());
-    SearchBox(min, max, &box);
+    SearchBox(min, max, box);
     return box;
   }
 

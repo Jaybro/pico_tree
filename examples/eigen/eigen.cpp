@@ -58,7 +58,7 @@ void BasicVector() {
   pico_tree::Neighbor<Index, Scalar> nn;
   ScopedTimer t("pico_tree eigen vector", kRunCount);
   for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchNn(p, &nn);
+    tree.SearchNn(p, nn);
   }
 }
 
@@ -81,7 +81,7 @@ void BasicMatrix() {
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree eigen val", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchNn(p, &nn);
+      tree.SearchNn(p, nn);
     }
   }
 
@@ -96,7 +96,7 @@ void BasicMatrix() {
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree eigen ref", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchNn(p, &nn);
+      tree.SearchNn(p, nn);
     }
   }
 }
@@ -120,7 +120,7 @@ void VectorMapColMajor() {
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("pico_tree deflt l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchKnn(p, 1, &knn);
+      tree.SearchKnn(p, 1, knn);
     }
   }
 }
@@ -145,7 +145,7 @@ void VectorMapRowMajor() {
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
     ScopedTimer t("pico_tree deflt l2", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchKnn(p, 1, &knn);
+      tree.SearchKnn(p, 1, knn);
     }
   }
 }

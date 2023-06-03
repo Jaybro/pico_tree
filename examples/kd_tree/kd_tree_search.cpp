@@ -82,10 +82,10 @@ void Search3d() {
   {
     ScopedTimer t("kd_tree nn, radius and box", run_count);
     for (Index i = 0; i < run_count; ++i) {
-      tree.SearchNn(q, &nn);
-      tree.SearchKnn(q, 1, &knn);
-      tree.SearchRadius(q, search_radius_metric, &knn, false);
-      tree.SearchBox(min, max, &idxs);
+      tree.SearchNn(q, nn);
+      tree.SearchKnn(q, 1, knn);
+      tree.SearchRadius(q, search_radius_metric, knn, false);
+      tree.SearchBox(min, max, idxs);
     }
   }
 
@@ -96,19 +96,19 @@ void Search3d() {
     for (Index i = 0; i < run_count; ++i) {
       // When the KdTree is created with the SlidingMidpointSplitter, ann
       // queries can be answered in O(1/e^d log n) time.
-      tree.SearchAknn(q, k, max_error_ratio_metric, &knn);
+      tree.SearchAknn(q, k, max_error_ratio_metric, knn);
     }
   }
 
   {
     ScopedTimer t("kd_tree knn", run_count);
     for (Index i = 0; i < run_count; ++i) {
-      tree.SearchKnn(q, k, &knn);
+      tree.SearchKnn(q, k, knn);
     }
   }
 
   SearchNnCounter<pico_tree::Neighbor<Index, Scalar>> v(&nn);
-  tree.SearchNearest(q, &v);
+  tree.SearchNearest(q, v);
 
   std::cout << "Custom visitor # nns considered: " << v.count() << std::endl;
 }

@@ -2,6 +2,7 @@
 
 #include <pico_toolshed/point.hpp>
 #include <pico_tree/kd_tree.hpp>
+#include <pico_tree/std_traits.hpp>
 
 #include "common.hpp"
 

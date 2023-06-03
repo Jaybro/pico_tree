@@ -70,11 +70,10 @@ class SplitterLongestMedian {
         split,
         end,
         [this, &split_dim](IndexType const a, IndexType const b) -> bool {
-          return space_.PointCoordAt(a, split_dim) <
-                 space_.PointCoordAt(b, split_dim);
+          return space_[a][split_dim] < space_[b][split_dim];
         });
 
-    split_val = space_.PointCoordAt(*split, split_dim);
+    split_val = space_[*split][split_dim];
   }
 
  private:
@@ -110,7 +109,7 @@ class SplitterSlidingMidpoint {
     // Everything smaller than split_val goes left, the rest right.
     auto const comp =
         [this, &split_dim, &split_val](IndexType const a) -> bool {
-      return space_.PointCoordAt(a, split_dim) < split_val;
+      return space_[a][split_dim] < split_val;
     };
 
     split = std::partition(begin, end, comp);
@@ -128,10 +127,9 @@ class SplitterSlidingMidpoint {
           split,
           end,
           [this, &split_dim](IndexType const a, IndexType const b) -> bool {
-            return space_.PointCoordAt(a, split_dim) <
-                   space_.PointCoordAt(b, split_dim);
+            return space_[a][split_dim] < space_[b][split_dim];
           });
-      split_val = space_.PointCoordAt(*split, split_dim);
+      split_val = space_[*split][split_dim];
     } else if (split == begin) {
       split++;
       std::nth_element(
@@ -139,10 +137,9 @@ class SplitterSlidingMidpoint {
           split,
           end,
           [this, &split_dim](IndexType const a, IndexType const b) -> bool {
-            return space_.PointCoordAt(a, split_dim) <
-                   space_.PointCoordAt(b, split_dim);
+            return space_[a][split_dim] < space_[b][split_dim];
           });
-      split_val = space_.PointCoordAt(*split, split_dim);
+      split_val = space_[*split][split_dim];
     }
   }
 
@@ -263,7 +260,7 @@ class BuildKdTreeImpl {
       BoxType& box) const {
     box.FillInverseMax();
     for (; begin < end; ++begin) {
-      box.Fit(space_.PointCoordsAt(*begin));
+      box.Fit(space_[*begin]);
     }
   }
 

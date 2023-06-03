@@ -52,9 +52,7 @@ class SearchNearestEuclidean {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         ScalarType const d = metric_(
-            query_.data(),
-            query_.data() + query_.size(),
-            space_.PointCoordsAt(indices_[i]));
+            query_.data(), query_.data() + query_.size(), space_[indices_[i]]);
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -159,9 +157,7 @@ class SearchNearestTopological {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
         ScalarType const d = metric_(
-            query_.data(),
-            query_.data() + query_.size(),
-            space_.PointCoordsAt(indices_[i]));
+            query_.data(), query_.data() + query_.size(), space_[indices_[i]]);
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -261,7 +257,7 @@ class SearchBoxEuclidean {
     if (node->IsLeaf()) {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        if (query_.Contains(space_.PointCoordsAt(indices_[i]))) {
+        if (query_.Contains(space_[indices_[i]])) {
           idxs_.push_back(indices_[i]);
         }
       }

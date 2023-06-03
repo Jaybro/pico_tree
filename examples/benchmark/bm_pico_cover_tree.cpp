@@ -55,7 +55,7 @@ BENCHMARK_DEFINE_F(BmPicoCoverTree, KnnCt)(benchmark::State& state) {
       ScopedTimer timer("query_group");
       for (; pi < group_end; ++pi) {
         auto const& p = points_test_[pi];
-        tree.SearchKnn(p, knn_count, &results);
+        tree.SearchKnn(p, knn_count, results);
         benchmark::DoNotOptimize(sum += results.size());
       }
     }
