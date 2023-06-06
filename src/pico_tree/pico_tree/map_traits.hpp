@@ -40,7 +40,7 @@ struct MapTraits {
     return static_cast<IndexType>(space.size());
   }
 
-  inline static PointType PointAt(SpaceType const& space, IndexType const idx) {
+  inline static auto PointAt(SpaceType const& space, IndexType const idx) {
     return space[idx];
   }
 };

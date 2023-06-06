@@ -17,7 +17,8 @@ class L2 {
       InputIterator1 begin1,
       InputSentinel1 end1,
       OutputIterator2 begin2) const {
-    return std::sqrt(internal::Sum(begin1, end1, begin2, internal::SqrdDiff()));
+    return std::sqrt(
+        internal::Sum(begin1, end1, begin2, internal::SquaredDistanceFn()));
   }
 
   //! \brief Calculates the distance between two coordinates.

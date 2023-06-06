@@ -94,9 +94,9 @@ void Search3d() {
   {
     ScopedTimer t("kd_tree aknn", run_count);
     for (Index i = 0; i < run_count; ++i) {
-      // When the KdTree is created with the SlidingMidpointSplitter, ann
-      // queries can be answered in O(1/e^d log n) time.
-      tree.SearchAknn(q, k, max_error_ratio_metric, knn);
+      // When the KdTree is created with the SlidingMidpointSplitter,
+      // approximate nn queries can be answered in O(1/e^d log n) time.
+      tree.SearchKnn(q, k, max_error_ratio_metric, knn);
     }
   }
 

@@ -29,8 +29,11 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 * KdTree
   * Nearest neighbors, approximate nearest neighbors, radius, and box searches.
-  * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
-  * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
+    * Customizable nearest neighbor searches.
+  * Multiple tree splitting techniques:
+  * [Metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)):
+    * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
+    * Available metrics: `L1`, `L2Squared`, `SO2`, and `SE2Squared`. Can be customized.
   * Compile time and run time known dimensions.
   * Static tree builds.
   * Thread safe queries.
@@ -38,7 +41,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * `pico_tree::StdTraits<>` supports interfacing with any `std::vector<PointType>`. It requires a specialization of `pico_tree::PointTraits<>` for each `PointType`. There are default `pico_tree::PointTraits<>` available for Eigen and OpenCV point types.
   * `pico_tree::EigenTraits<>` supports interfacing with Eigen matrices.
   * `pico_tree::CvTraits<>` supports interfacing with OpenCV matrices.
-  * `pico_tree::MapTraits<>` supports interfacing with arrays.
+  * `pico_tree::MapTraits<>` supports interfacing with raw pointers. It is assumed that points are laid out contiguously in memory.
 
 # Examples
 

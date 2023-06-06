@@ -60,7 +60,7 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
     return nns;
   }
 
-  void SearchAknn(
+  void SearchKnn(
       py::array_t<Scalar, 0> const pts,
       Index const k,
       Scalar const e,
@@ -71,14 +71,14 @@ class KdTree : public pico_tree::KdTree<Traits, Metric> {
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     for (Index i = 0; i < static_cast<Index>(query.size()); ++i) {
-      Base::SearchAknn(query[i], e, output + i * k, output + (i + 1) * k);
+      Base::SearchKnn(query[i], e, output + i * k, output + (i + 1) * k);
     }
   }
 
-  py::array_t<NeighborType, 0> SearchAknn(
+  py::array_t<NeighborType, 0> SearchKnn(
       py::array_t<Scalar, 0> const pts, Index const k, Scalar const e) const {
     py::array_t<NeighborType, 0> nns;
-    SearchAknn(pts, k, e, nns);
+    SearchKnn(pts, k, e, nns);
     return nns;
   }
 

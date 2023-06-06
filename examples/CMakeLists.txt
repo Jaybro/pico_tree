@@ -24,13 +24,12 @@ else()
     message(STATUS "OpenCV not found. OpenCV example skipped.")
 endif()
 
-has_cxx_compile_feature(HAS_CPP17_FEATURE cxx_std_17)
 find_package(benchmark QUIET)
-if(benchmark_FOUND AND ${HAS_CPP17_FEATURE})
-    message(STATUS "benchmark and C++17 found. Building PicoTree benchmarks.")
+if(benchmark_FOUND)
+    message(STATUS "benchmark found. Building PicoTree benchmarks.")
     add_subdirectory(benchmark)
 else()
-    message(STATUS "benchmark or C++17 not found. PicoTree benchmarks skipped.")
+    message(STATUS "benchmark not found. PicoTree benchmarks skipped.")
 endif()
 
 # The Python examples only get copied when the bindings module will be build.

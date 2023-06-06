@@ -146,10 +146,14 @@ class SpaceMap<PointMap<Scalar_, Dim_>> {
       : storage_(data, size, sdim) {}
 
   constexpr PointType operator[](SizeType i) const noexcept {
-    return {storage_.data + i * storage_.sdim, storage_.sdim};
+    return {data(i), storage_.sdim};
   }
 
   constexpr CvScalarType* data() const noexcept { return storage_.data; }
+
+  constexpr CvScalarType* data(SizeType i) const noexcept {
+    return storage_.data + i * storage_.sdim;
+  }
 
   constexpr SizeType size() const noexcept { return storage_.size; }
 

@@ -71,7 +71,7 @@ class KdTreeTest(unittest.TestCase):
         r = 1.0
 
         # Test if the query actually works
-        nns = t.search_aknn(a, 2, r)
+        nns = t.search_knn(a, 2, r)
         self.assertEqual(nns.shape, (3, 2))
 
         for i in range(len(nns)):
@@ -80,7 +80,7 @@ class KdTreeTest(unittest.TestCase):
 
         # Test that the memory is re-used
         nns[0][0][0] = 42
-        t.search_aknn(a, 2, r, nns)
+        t.search_knn(a, 2, r, nns)
         self.assertEqual(nns[0][0][0], 0)
 
     def test_search_radius(self):

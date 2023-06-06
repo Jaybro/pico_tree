@@ -88,27 +88,6 @@ inline void InsertSorted(
   *end = std::move(item);
 }
 
-//! \brief Returns the maximum amount of leaves given \p num_points and \p
-//! max_leaf_size.
-inline std::size_t MaxLeavesFromPoints(
-    std::size_t const num_points, std::size_t const max_leaf_size) {
-  // Each increase of the leaf size by a factor of two reduces the tree height
-  // by 1. Each reduction in tree height halves the amount of leaves.
-  // Rounding up the number of leaves means that the last one is not fully
-  // occupied.
-  return static_cast<std::size_t>(std::ceil(
-      num_points /
-      std::pow(
-          2.0, std::floor(std::log2(static_cast<double>(max_leaf_size))))));
-}
-
-//! \brief Returns the maximum amount of nodes given \p num_points and \p
-//! max_leaf_size.
-inline std::size_t MaxNodesFromPoints(
-    std::size_t const num_points, std::size_t const max_leaf_size = 1) {
-  return MaxLeavesFromPoints(num_points, max_leaf_size) * 2 - 1;
-}
-
 }  // namespace internal
 
 }  // namespace pico_tree

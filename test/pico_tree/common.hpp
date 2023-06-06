@@ -186,7 +186,7 @@ void TestKnn(
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_exact;
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_apprx;
   tree.SearchKnn(p, k, results_exact);
-  tree.SearchAknn(p, k, ratio, results_apprx);
+  tree.SearchKnn(p, k, ratio, results_apprx);
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> compare;
   SearchKnn<TraitsX>(p, points, k, tree.metric(), &compare);

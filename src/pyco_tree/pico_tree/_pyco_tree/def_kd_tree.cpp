@@ -130,12 +130,12 @@ void DefKdTree(std::string const& name, py::module* m) {
           "Search the k nearest neighbors for each of the input points. The "
           "memory layout of the output will be the same as that of the input.")
       .def(
-          "search_aknn",
+          "search_knn",
           static_cast<void (KdTree::*)(
               py::array_t<Scalar, 0> const,
               Index const,
               Scalar const,
-              py::array_t<Neighbor, 0>) const>(&KdTree::SearchAknn),
+              py::array_t<Neighbor, 0>) const>(&KdTree::SearchKnn),
           py::arg("pts").noconvert().none(false),
           py::arg("k").none(false),
           py::arg("e").none(false),
@@ -145,10 +145,10 @@ void DefKdTree(std::string const& name, py::module* m) {
           "output will be resized when its shape is not (npts, k). If resized, "
           "its memory layout will be the same as that of the input.")
       .def(
-          "search_aknn",
+          "search_knn",
           static_cast<py::array_t<Neighbor, 0> (KdTree::*)(
               py::array_t<Scalar, 0> const, Index const, Scalar const) const>(
-              &KdTree::SearchAknn),
+              &KdTree::SearchKnn),
           py::arg("pts").noconvert().none(false),
           py::arg("k").none(false),
           py::arg("e").none(false),

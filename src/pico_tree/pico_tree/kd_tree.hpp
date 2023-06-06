@@ -132,37 +132,6 @@ class KdTree {
     SearchKnn(x, knn.begin(), knn.end());
   }
 
-  //! \brief Searches for all the neighbors of point \p x that are within radius
-  //! \p radius and stores the results in output vector \p n.
-  //! \details Interpretation of the in and output distances depend on the
-  //! Metric. The default L2Squared results in squared distances.
-  //! \tparam P Point type.
-  //! \param x Input point.
-  //! \param radius Search radius.
-  //! \code{.cpp}
-  //! ScalarType distance = -2.0;
-  //! // E.g., L1: 2.0, L2Squared: 4.0
-  //! ScalarType metric_distance = kdtree.metric()(distance);
-  //! std::vector<Neighbor<IndexType, ScalarType>> n;
-  //! tree.SearchRadius(p, metric_distance, n);
-  //! \endcode
-  //! \param n Output points.
-  //! \param sort If true, the result set is sorted from closest to farthest
-  //! distance with respect to the query point.
-  template <typename P>
-  inline void SearchRadius(
-      P const& x,
-      ScalarType const radius,
-      std::vector<NeighborType>& n,
-      bool const sort = false) const {
-    internal::SearchRadius<NeighborType> v(radius, n);
-    SearchNearest(x, v);
-
-    if (sort) {
-      v.Sort();
-    }
-  }
-
   //! \brief Searches for the k approximate nearest neighbors of point \p x,
   //! where k equals std::distance(begin, end). It is expected that the value
   //! type of the iterator equals Neighbor<IndexType, ScalarType>.
@@ -192,12 +161,12 @@ class KdTree {
   //! ScalarType max_error = ScalarType(0.15);
   //! ScalarType e = tree.metric()(ScalarType(1.0) + max_error);
   //! std::vector<Neighbor<IndexType, ScalarType>> knn(k);
-  //! tree.SearchAknn(p, e, knn.begin(), knn.end());
+  //! tree.SearchKnn(p, e, knn.begin(), knn.end());
   //! // Optionally scale back to the actual metric distance.
   //! for (auto& nn : knn) { nn.second *= e; }
   //! \endcode
   template <typename P, typename RandomAccessIterator>
-  inline void SearchAknn(
+  inline void SearchKnn(
       P const& x,
       ScalarType const e,
       RandomAccessIterator begin,
@@ -216,9 +185,9 @@ class KdTree {
   //! and stores the results in output vector \p knn.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void
-  //! SearchAknn(P const&, RandomAccessIterator, RandomAccessIterator) const
+  //! SearchKnn(P const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
-  inline void SearchAknn(
+  inline void SearchKnn(
       P const& x,
       IndexType const k,
       ScalarType const e,
@@ -226,7 +195,38 @@ class KdTree {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn.resize(std::min(k, space_.size()));
-    SearchAknn(x, e, knn.begin(), knn.end());
+    SearchKnn(x, e, knn.begin(), knn.end());
+  }
+
+  //! \brief Searches for all the neighbors of point \p x that are within radius
+  //! \p radius and stores the results in output vector \p n.
+  //! \details Interpretation of the in and output distances depend on the
+  //! Metric. The default L2Squared results in squared distances.
+  //! \tparam P Point type.
+  //! \param x Input point.
+  //! \param radius Search radius.
+  //! \code{.cpp}
+  //! ScalarType distance = -2.0;
+  //! // E.g., L1: 2.0, L2Squared: 4.0
+  //! ScalarType metric_distance = kdtree.metric()(distance);
+  //! std::vector<Neighbor<IndexType, ScalarType>> n;
+  //! tree.SearchRadius(p, metric_distance, n);
+  //! \endcode
+  //! \param n Output points.
+  //! \param sort If true, the result set is sorted from closest to farthest
+  //! distance with respect to the query point.
+  template <typename P>
+  inline void SearchRadius(
+      P const& x,
+      ScalarType const radius,
+      std::vector<NeighborType>& n,
+      bool const sort = false) const {
+    internal::SearchRadius<NeighborType> v(radius, n);
+    SearchNearest(x, v);
+
+    if (sort) {
+      v.Sort();
+    }
   }
 
   //! \brief Returns all points within the box defined by \p min and \p max.

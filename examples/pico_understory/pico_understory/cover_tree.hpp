@@ -238,10 +238,10 @@ class CoverTree {
   //! Scalar max_error = Scalar(0.15);
   //! Scalar e = Scalar(1.0) + max_error;
   //! std::vector<Neighbor<Index, Scalar>> knn(k);
-  //! tree.SearchAknn(x, e, knn.begin(), knn.end());
+  //! tree.SearchKnn(x, e, knn.begin(), knn.end());
   //! \endcode
   template <typename P, typename RandomAccessIterator>
-  inline void SearchAknn(
+  inline void SearchKnn(
       P const& x,
       Scalar const e,
       RandomAccessIterator begin,
@@ -260,9 +260,9 @@ class CoverTree {
   //! and stores the results in output vector \p knn.
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void
-  //! SearchAknn(P const&, RandomAccessIterator, RandomAccessIterator) const
+  //! SearchKnn(P const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
-  inline void SearchAknn(
+  inline void SearchKnn(
       P const& x,
       Index const k,
       Scalar const e,
@@ -270,7 +270,7 @@ class CoverTree {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn.resize(std::min(k, space_.size()));
-    SearchAknn(x, e, knn.begin(), knn.end());
+    SearchKnn(x, e, knn.begin(), knn.end());
   }
 
   //! \brief Point set used by the tree.
