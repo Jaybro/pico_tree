@@ -4,9 +4,23 @@
 #include <pico_tree/metric.hpp>
 #include <pico_understory/metric.hpp>
 
-#include "common.hpp"
-
 using PointX = Point2f;
+
+template <typename Traits_>
+constexpr pico_tree::Size Dimension(typename Traits_::PointType const& point) {
+  if constexpr (Traits_::Dim != pico_tree::kDynamicSize) {
+    return Traits_::Dim;
+  } else {
+    return Traits_::Sdim(point);
+  }
+}
+
+template <typename Metric_, typename P0, typename P1>
+inline auto Distance(Metric_ const& metric, P0 const& p0, P1 const& p1) {
+  auto c0 = pico_tree::PointTraits<P0>::Coords(p0);
+  auto c1 = pico_tree::PointTraits<P1>::Coords(p1);
+  return metric(c0, c0 + Dimension<pico_tree::PointTraits<P0>>(p0), c1);
+}
 
 TEST(MetricTest, L1) {
   PointX p0{2.0f, 4.0f};

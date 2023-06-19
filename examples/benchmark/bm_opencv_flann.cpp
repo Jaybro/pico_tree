@@ -60,7 +60,9 @@ template <typename Scalar, std::size_t Dim>
 Scalar* RawCopy(std::vector<Point<Scalar, Dim>> const& points) {
   Scalar* copy = new Scalar[points.size() * Dim];
   std::copy(
-      points.begin()->data, points.begin()->data + points.size() * Dim, copy);
+      points.begin()->data(),
+      points.begin()->data() + points.size() * Dim,
+      copy);
   return copy;
 }
 
@@ -120,7 +122,7 @@ BENCHMARK_DEFINE_F(BmOpenCvFlann, KnnCt)(benchmark::State& state) {
     fl::Matrix<Scalar> mat_distances(distances.data(), 1, knn_count);
 
     for (auto& p : points_test_) {
-      fl::Matrix<Scalar> query(p.data, 1, 3);
+      fl::Matrix<Scalar> query(p.data(), 1, 3);
       tree.knnSearch(query, mat_indices, mat_distances, knn_count, psearch);
     }
   }

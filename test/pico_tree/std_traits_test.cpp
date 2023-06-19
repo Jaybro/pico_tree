@@ -17,7 +17,7 @@ TEST(StdTraitsTest, StdVector) {
       Point2f::Dim,
       points.size(),
       static_cast<std::size_t>(0),
-      points[0].data);
+      points[0].data());
 }
 
 TEST(StdTraitsTest, StdRefVector) {
@@ -30,5 +30,5 @@ TEST(StdTraitsTest, StdRefVector) {
       Point2f::Dim,
       points.size(),
       static_cast<std::size_t>(0),
-      points[0].data);
+      points[0].data());
 }

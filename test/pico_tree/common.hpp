@@ -2,22 +2,21 @@
 
 #include <algorithm>
 #include <pico_tree/core.hpp>
-#include <pico_tree/point_traits.hpp>
+#include <pico_tree/map_traits.hpp>
 
-template <typename Traits_>
-constexpr pico_tree::Size Dimension(typename Traits_::PointType const& point) {
-  if constexpr (Traits_::Dim != pico_tree::kDynamicSize) {
-    return Traits_::Dim;
-  } else {
-    return Traits_::Sdim(point);
-  }
+template <typename Traits_, typename Index_>
+auto CoordsAt(typename Traits_::SpaceType const& space, Index_ index) {
+  using PointType = typename Traits_::PointType;
+  using PointTraitsType = typename Traits_::template PointTraitsFor<PointType>;
+  return PointTraitsType::Coords(Traits_::PointAt(space, index));
 }
 
-template <typename Metric_, typename P0, typename P1>
-inline auto Distance(Metric_ const& metric, P0 const& p0, P1 const& p1) {
-  auto c0 = pico_tree::PointTraits<P0>::Coords(p0);
-  auto c1 = pico_tree::PointTraits<P1>::Coords(p1);
-  return metric(c0, c0 + Dimension<pico_tree::PointTraits<P0>>(p0), c1);
+template <typename Traits_>
+pico_tree::PointMap<typename Traits_::ScalarType const, Traits_::Dim>
+MakePointMap(
+    typename Traits_::SpaceType const& space,
+    typename Traits_::IndexType index) {
+  return {CoordsAt<Traits_>(space, index), Traits_::Sdim(space)};
 }
 
 inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
@@ -62,19 +61,17 @@ void CheckTraits(
   EXPECT_EQ(sdim, Traits::Sdim(space));
   EXPECT_EQ(static_cast<IndexType>(npts), Traits::Npts(space));
 
-  using PointTraits =
-      typename Traits::template PointTraitsFor<typename Traits::PointType>;
-  ScalarType const* point_data_tst = PointTraits::Coords(
-      Traits::PointAt(space, static_cast<IndexType>(point_index)));
+  ScalarType const* point_data_tst =
+      CoordsAt<Traits>(space, static_cast<IndexType>(point_index));
 
   for (pico_tree::Size i = 0; i < sdim; ++i) {
     FloatEq(point_data_ref[i], point_data_tst[i]);
   }
 }
 
-template <typename Traits, typename Index, typename Metric>
+template <typename Traits, typename Point, typename Index, typename Metric>
 void SearchKnn(
-    typename Traits::PointType const& point,
+    Point const& p,
     typename Traits::SpaceType const& space,
     Index const k,
     Metric const& metric,
@@ -83,7 +80,8 @@ void SearchKnn(
   Index const npts = Traits::Npts(space);
   knn->resize(static_cast<std::size_t>(npts));
   for (Index i = 0; i < npts; ++i) {
-    (*knn)[i] = {i, Distance(metric, point, Traits::PointAt(space, i))};
+    (*knn)[i] = {
+        i, metric(p.data(), p.data() + p.size(), CoordsAt<Traits>(space, i))};
   }
 
   Index const max_k = std::min(k, npts);
@@ -100,7 +98,6 @@ void TestBox(
   using TraitsX = typename Tree::TraitsType;
   using PointX = typename TraitsX::PointType;
   using Index = typename Tree::IndexType;
-  using PointTraitsX = typename TraitsX::template PointTraitsFor<PointX>;
 
   auto const points = tree.points();
 
@@ -113,7 +110,7 @@ void TestBox(
 
   for (auto j : idxs) {
     for (pico_tree::Size d = 0; d < PointX::Dim; ++d) {
-      auto v = PointTraitsX::Coords(TraitsX::PointAt(points, j))[d];
+      auto v = CoordsAt<TraitsX>(points, j)[d];
       EXPECT_GE(v, min_v);
       EXPECT_LE(v, max_v);
     }
@@ -125,7 +122,7 @@ void TestBox(
     bool contained = true;
 
     for (pico_tree::Size d = 0; d < PointX::Dim; ++d) {
-      auto v = PointTraitsX::Coords(TraitsX::PointAt(points, j))[d];
+      auto v = CoordsAt<TraitsX>(points, j)[d];
       if ((v < min_v) || (v > max_v)) {
         contained = false;
         break;
@@ -147,7 +144,7 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
   using Scalar = typename Tree::ScalarType;
 
   auto const points = tree.points();
-  auto const p = TraitsX::PointAt(points, TraitsX::Npts(points) / 2);
+  auto const p = MakePointMap<TraitsX>(points, TraitsX::Npts(points) / 2);
 
   auto const& metric = tree.metric();
   Scalar const lp_radius = metric(radius);
@@ -155,7 +152,8 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
   tree.SearchRadius(p, lp_radius, results);
 
   for (auto const& r : results) {
-    Scalar d = Distance(metric, p, TraitsX::PointAt(points, r.index));
+    Scalar d = metric(
+        p.data(), p.data() + p.size(), CoordsAt<TraitsX>(points, r.index));
 
     EXPECT_LE(d, lp_radius);
     EXPECT_EQ(d, r.distance);
@@ -164,7 +162,8 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
   std::size_t count = 0;
 
   for (Index j = 0; j < TraitsX::Npts(points); ++j) {
-    if (Distance(metric, p, TraitsX::PointAt(points, j)) <= lp_radius) {
+    if (metric(p.data(), p.data() + p.size(), CoordsAt<TraitsX>(points, j)) <=
+        lp_radius) {
       count++;
     }
   }
@@ -207,6 +206,6 @@ void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
   using TraitsX = typename Tree::TraitsType;
 
   auto const points = tree.points();
-  auto const p = TraitsX::PointAt(points, TraitsX::Npts(points) / 2);
+  auto p = MakePointMap<TraitsX>(points, TraitsX::Npts(points) / 2);
   TestKnn(tree, k, p);
 }

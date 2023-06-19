@@ -13,15 +13,22 @@
 namespace pico_tree {
 
 enum class SplittingRule {
-  //! \brief Splits a node on the median of the longest dimension of its box.
-  //! Also known as the standard split rule.
-  //! \details This splitting build a tree in O(n log n) time on average. It's
+  //! \brief Splits a node on the median point along the dimension of the node's
+  //! box longest side. This rule is also known as the standard split rule.
+  //! \details This rule builds a tree in O(n log n) time on average. It's
   //! generally slower compared to kSlidingMidpoint but results in a
   //! balanced KdTree.
   kLongestMedian,
-  //! \brief Bounding boxes of tree nodes are split in the middle along the
-  //! longest axis unless this results in an empty sub-node. In this case the
-  //! split gets adjusted to fit a single point into this sub-node.
+  //! \brief Splits a node's box halfway the dimension of its longest side. The
+  //! first dimension is chosen if multiple sides share being the longest. This
+  //! splitting rule can result in empty nodes.
+  //! \details The aspect ratio of the split is at most 2:1.
+  //! \see kSlidingMidpoint
+  kMidpoint,
+  //! \brief Splits a node's box halfway the dimension of its longest side. The
+  //! first dimension is chosen if multiple sides share being the longest. In
+  //! case the split results in an empty sub-node, the split is adjusted to
+  //! include a single point into that sub-node.
   //! \details Based on the paper "It's okay to be skinny, if your friends are
   //! fat". The aspect ratio of the split is at most 2:1 unless that results in
   //! an empty sub-node.
@@ -32,25 +39,25 @@ enum class SplittingRule {
   //! in O(1/e^d log n) time.
   //!
   //! The tree is build in O(n log n) time and results in a tree that is both
-  //! faster to build and query as compared to kLongestMedian.
+  //! faster to build and generally faster to query as compared to
+  //! kLongestMedian.
   kSlidingMidpoint
 };
 
 namespace internal {
 
-//! \see LongestMedianSplitterTag
-template <typename SpaceWrapper_>
+//! \see SplittingRule::kLongestMedian
+template <typename Space_>
 class SplitterLongestMedian {
  public:
-  using IndexType = typename SpaceWrapper_::IndexType;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
+  using IndexType = typename Space_::IndexType;
+  using ScalarType = typename Space_::ScalarType;
   using SizeType = Size;
-  using SpaceWrapperType = SpaceWrapper_;
-  using BoxType = Box<ScalarType, SpaceWrapper_::Dim>;
+  using SpaceType = Space_;
+  using BoxType = Box<ScalarType, Space_::Dim>;
 
-  SplitterLongestMedian(SpaceWrapperType const& space) : space_{space} {}
+  SplitterLongestMedian(SpaceType const& space) : space_{space} {}
 
-  //! \brief This function splits a node.
   template <typename RandomAccessIterator_>
   inline void operator()(
       IndexType const,  // depth
@@ -77,22 +84,59 @@ class SplitterLongestMedian {
   }
 
  private:
-  SpaceWrapperType const& space_;
+  SpaceType const& space_;
 };
 
-//! \see SlidingMidpointSplitterTag
-template <typename SpaceWrapper_>
+//! \see SplittingRule::kMidpoint
+template <typename Space_>
+class SplitterMidpoint {
+ public:
+  using IndexType = typename Space_::IndexType;
+  using ScalarType = typename Space_::ScalarType;
+  using SizeType = Size;
+  using SpaceType = Space_;
+  using BoxType = Box<ScalarType, Space_::Dim>;
+
+  SplitterMidpoint(SpaceType const& space) : space_{space} {}
+
+  template <typename RandomAccessIterator_>
+  inline void operator()(
+      IndexType const,  // depth
+      RandomAccessIterator_ begin,
+      RandomAccessIterator_ end,
+      BoxType const& box,
+      RandomAccessIterator_& split,
+      SizeType& split_dim,
+      ScalarType& split_val) const {
+    ScalarType max_delta;
+    box.LongestAxis(split_dim, max_delta);
+    split_val = max_delta / ScalarType(2.0) + box.min(split_dim);
+
+    // Everything smaller than split_val goes left, the rest right.
+    auto const comp =
+        [this, &split_dim, &split_val](IndexType const a) -> bool {
+      return space_[a][split_dim] < split_val;
+    };
+
+    split = std::partition(begin, end, comp);
+  }
+
+ private:
+  SpaceType const& space_;
+};
+
+//! \see SplittingRule::kSlidingMidpoint
+template <typename Space_>
 class SplitterSlidingMidpoint {
  public:
-  using IndexType = typename SpaceWrapper_::IndexType;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
+  using IndexType = typename Space_::IndexType;
+  using ScalarType = typename Space_::ScalarType;
   using SizeType = Size;
-  using SpaceWrapperType = SpaceWrapper_;
-  using BoxType = Box<ScalarType, SpaceWrapper_::Dim>;
+  using SpaceType = Space_;
+  using BoxType = Box<ScalarType, Space_::Dim>;
 
-  SplitterSlidingMidpoint(SpaceWrapperType const& space) : space_{space} {}
+  SplitterSlidingMidpoint(SpaceType const& space) : space_{space} {}
 
-  //! \brief This function splits a node.
   template <typename RandomAccessIterator_>
   inline void operator()(
       IndexType const,  // depth
@@ -144,7 +188,7 @@ class SplitterSlidingMidpoint {
   }
 
  private:
-  SpaceWrapperType const& space_;
+  SpaceType const& space_;
 };
 
 template <SplittingRule Rule_>
@@ -152,37 +196,40 @@ struct SplittingRuleTraits;
 
 template <>
 struct SplittingRuleTraits<SplittingRule::kLongestMedian> {
-  template <typename SpaceWrapper_>
-  using SplitterType = SplitterLongestMedian<SpaceWrapper_>;
+  template <typename Space_>
+  using SplitterType = SplitterLongestMedian<Space_>;
+};
+
+template <>
+struct SplittingRuleTraits<SplittingRule::kMidpoint> {
+  template <typename Space_>
+  using SplitterType = SplitterMidpoint<Space_>;
 };
 
 template <>
 struct SplittingRuleTraits<SplittingRule::kSlidingMidpoint> {
-  template <typename SpaceWrapper_>
-  using SplitterType = SplitterSlidingMidpoint<SpaceWrapper_>;
+  template <typename Space_>
+  using SplitterType = SplitterSlidingMidpoint<Space_>;
 };
 
 //! \brief This class provides the build algorithm of the KdTree. How the
 //! KdTree will be build depends on the Splitter template argument.
-template <
-    typename SpaceWrapper_,
-    SplittingRule SplittingRule_,
-    typename KdTreeData_>
+template <typename Space_, SplittingRule SplittingRule_, typename KdTreeData_>
 class BuildKdTreeImpl {
  public:
-  using IndexType = typename SpaceWrapper_::IndexType;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
+  using IndexType = typename Space_::IndexType;
+  using ScalarType = typename Space_::ScalarType;
   using SizeType = Size;
-  using SpaceWrapperType = SpaceWrapper_;
-  using BoxType = Box<ScalarType, SpaceWrapper_::Dim>;
+  using SpaceType = Space_;
+  using BoxType = Box<ScalarType, Space_::Dim>;
   using SplitterType = typename SplittingRuleTraits<
-      SplittingRule_>::template SplitterType<SpaceWrapper_>;
+      SplittingRule_>::template SplitterType<Space_>;
   using KdTreeDataType = KdTreeData_;
   using NodeType = typename KdTreeDataType::NodeType;
   using NodeAllocatorType = typename KdTreeDataType::NodeAllocatorType;
 
   BuildKdTreeImpl(
-      SpaceWrapperType const& space,
+      SpaceType const& space,
       IndexType const max_leaf_size,
       std::vector<IndexType>& indices,
       NodeAllocatorType& allocator)
@@ -286,7 +333,7 @@ class BuildKdTreeImpl {
     node.data.branch.right_max = right.max(split_dim);
   }
 
-  SpaceWrapperType const& space_;
+  SpaceType const& space_;
   typename std::vector<IndexType>::difference_type const max_leaf_size_;
   SplitterType splitter_;
   std::vector<IndexType>& indices_;
@@ -313,16 +360,13 @@ struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
   using NodeType = KdTreeNodeTopological<Index_, Scalar_>;
 };
 
-template <
-    typename SpaceWrapper_,
-    typename Metric_,
-    SplittingRule SplittingRule_>
+template <typename Space_, typename Metric_, SplittingRule SplittingRule_>
 class BuildKdTree {
  public:
-  using IndexType = typename SpaceWrapper_::IndexType;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  static Size constexpr Dim = SpaceWrapper_::Dim;
-  using SpaceWrapperType = SpaceWrapper_;
+  using IndexType = typename Space_::IndexType;
+  using ScalarType = typename Space_::ScalarType;
+  static Size constexpr Dim = Space_::Dim;
+  using SpaceType = Space_;
   //! \brief Node type based on Metric_::SpaceTag.
   using NodeType = typename KdTreeSpaceTagTraits<
       typename Metric_::SpaceTag>::template NodeType<IndexType, ScalarType>;
@@ -330,12 +374,12 @@ class BuildKdTree {
   using NodeAllocatorType = typename KdTreeDataType::NodeAllocatorType;
   using BoxType = Box<ScalarType, Dim>;
   using BuildKdTreeImplType =
-      BuildKdTreeImpl<SpaceWrapper_, SplittingRule_, KdTreeDataType>;
+      BuildKdTreeImpl<Space_, SplittingRule_, KdTreeDataType>;
 
   //! \brief Construct a KdTree given \p points , \p max_leaf_size and
   //! SplitterType.
   KdTreeDataType operator()(
-      SpaceWrapperType const& space, IndexType const max_leaf_size) {
+      SpaceType const& space, IndexType const max_leaf_size) {
     assert(space.size() > 0);
     assert(max_leaf_size > 0);
 

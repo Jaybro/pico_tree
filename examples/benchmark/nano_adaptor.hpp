@@ -24,7 +24,7 @@ class NanoAdaptor {
 
   //! \brief Returns the dim'th component of the idx'th point in the class:
   inline Scalar kdtree_get_pt(Index const idx, Index const dim) const {
-    return points_[idx].data[dim];
+    return points_[idx].data()[dim];
   }
 
   // Optional bounding-box computation: return false to default to a standard

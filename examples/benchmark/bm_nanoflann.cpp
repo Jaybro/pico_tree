@@ -79,8 +79,8 @@ BENCHMARK_DEFINE_F(BmNanoflann, KnnCt)(benchmark::State& state) {
     std::size_t sum = 0;
     for (auto const& p : points_test_) {
       benchmark::DoNotOptimize(
-          sum +=
-          tree.knnSearch(p.data, knn_count, indices.data(), distances.data()));
+          sum += tree.knnSearch(
+              p.data(), knn_count, indices.data(), distances.data()));
     }
   }
 }
@@ -135,7 +135,10 @@ BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
     for (auto const& p : points_test_) {
       benchmark::DoNotOptimize(
           sum += tree.radiusSearch(
-              p.data, squared, results, nanoflann::SearchParams{0, 0, false}));
+              p.data(),
+              squared,
+              results,
+              nanoflann::SearchParams{0, 0, false}));
     }
   }
 }

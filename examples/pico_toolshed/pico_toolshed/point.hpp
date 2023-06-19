@@ -16,14 +16,14 @@ class Point {
   static SizeType constexpr Dim = Dim_;
 
   inline ScalarType const& operator()(SizeType const i) const {
-    return data[i];
+    return coords[i];
   }
 
-  inline ScalarType& operator()(SizeType const i) { return data[i]; }
+  inline ScalarType& operator()(SizeType const i) { return coords[i]; }
 
   inline Point& operator+=(ScalarType const v) {
     for (SizeType i = 0; i < Dim; ++i) {
-      data[i] += v;
+      coords[i] += v;
     }
     return *this;
   }
@@ -36,7 +36,7 @@ class Point {
 
   inline Point& operator-=(ScalarType const v) {
     for (SizeType i = 0; i < Dim; ++i) {
-      data[i] -= v;
+      coords[i] -= v;
     }
     return *this;
   }
@@ -49,7 +49,7 @@ class Point {
 
   inline void Fill(ScalarType const v) {
     for (SizeType i = 0; i < Dim; ++i) {
-      data[i] = v;
+      coords[i] = v;
     }
   }
 
@@ -57,12 +57,18 @@ class Point {
   inline Point<OtherScalarType, Dim> Cast() const {
     Point<OtherScalarType, Dim> other;
     for (SizeType i = 0; i < Dim; ++i) {
-      other.data[i] = static_cast<OtherScalarType>(data[i]);
+      other.coords[i] = static_cast<OtherScalarType>(coords[i]);
     }
     return other;
   }
 
-  ScalarType data[Dim];
+  constexpr ScalarType* data() { return coords; }
+
+  constexpr ScalarType const* data() const { return coords; }
+
+  constexpr SizeType size() const { return Dim; }
+
+  ScalarType coords[Dim];
 };
 
 // A specialization of PointTraits must be defined within the pico_tree
@@ -77,13 +83,14 @@ struct PointTraits<Point<Scalar_, Dim_>> {
 
   // Returns a pointer to the coordinates of the input point.
   inline static ScalarType const* Coords(Point<ScalarType, Dim_> const& point) {
-    return point.data;
+    return point.data();
   }
 
   // Returns the spatial dimension of the input point. Note that the input
   // argument is ignored because the spatial dimension is known at compile time.
-  inline static std::size_t constexpr Sdim(Point<ScalarType, Dim_> const&) {
-    return Dim_;
+  inline static std::size_t constexpr Sdim(
+      Point<ScalarType, Dim_> const& point) {
+    return point.size();
   }
 };
 

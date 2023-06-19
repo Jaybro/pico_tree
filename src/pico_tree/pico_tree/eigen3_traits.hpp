@@ -63,13 +63,32 @@ struct EigenPointTraits {
   }
 };
 
+template <typename Derived>
+struct EigenTraitsBase {
+  static_assert(
+      Derived::RowsAtCompileTime == Eigen::Dynamic ||
+          Derived::ColsAtCompileTime == Eigen::Dynamic,
+      "FIXED_SIZE_MATRICES_ARE_NOT_SUPPORTED");
+
+  //! \brief The SpaceType of these traits.
+  using SpaceType = Derived;
+
+  //! \brief Returns the traits for the given input point type.
+  template <typename OtherPoint_>
+  using PointTraitsFor = PointTraits<OtherPoint_>;
+};
+
 //! \brief Space and Point traits for Eigen types.
-template <typename Derived, typename Index_, bool RowMajor>
+template <
+    typename Derived,
+    typename Index_,
+    bool RowMajor = Derived::IsRowMajor>
 struct EigenTraitsImpl;
 
 //! \brief Space and Point traits for ColMajor Eigen types.
 template <typename Derived, typename Index_>
-struct EigenTraitsImpl<Derived, Index_, false> {
+struct EigenTraitsImpl<Derived, Index_, false>
+    : public EigenTraitsBase<Derived> {
   //! \brief The size and index type of point coordinates.
   using SizeType = Size;
   //! \brief Spatial dimension.
@@ -79,6 +98,8 @@ struct EigenTraitsImpl<Derived, Index_, false> {
       Eigen::Block<Derived const, Derived::RowsAtCompileTime, 1, true>;
   //! \brief The index type of point coordinates.
   using IndexType = Index_;
+  //! \brief The scalar type of point coordinates.
+  using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
@@ -99,7 +120,8 @@ struct EigenTraitsImpl<Derived, Index_, false> {
 
 //! \brief Space and Point traits for RowMajor Eigen types.
 template <typename Derived, typename Index_>
-struct EigenTraitsImpl<Derived, Index_, true> {
+struct EigenTraitsImpl<Derived, Index_, true>
+    : public EigenTraitsBase<Derived> {
   //! \brief The size and index type of point coordinates.
   using SizeType = Size;
   //! \brief Spatial dimension.
@@ -109,6 +131,8 @@ struct EigenTraitsImpl<Derived, Index_, true> {
       Eigen::Block<Derived const, 1, Derived::ColsAtCompileTime, true>;
   //! \brief The index type of point coordinates.
   using IndexType = Index_;
+  //! \brief The scalar type of point coordinates.
+  using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
@@ -126,25 +150,6 @@ struct EigenTraitsImpl<Derived, Index_, true> {
       Eigen::MatrixBase<Derived> const& matrix, IndexType const idx) {
     return matrix.row(idx);
   }
-};
-
-//! \brief This struct simply reduces some of the template argument overhead.
-template <typename Derived, typename Index_>
-struct EigenTraitsBase
-    : public EigenTraitsImpl<Derived, Index_, Derived::IsRowMajor> {
-  static_assert(
-      Derived::RowsAtCompileTime == Eigen::Dynamic ||
-          Derived::ColsAtCompileTime == Eigen::Dynamic,
-      "FIXED_SIZE_MATRICES_ARE_NOT_SUPPORTED");
-
-  //! \brief The SpaceType of these traits.
-  using SpaceType = Derived;
-  //! \brief The scalar type of point coordinates.
-  using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
-
-  //! \brief Returns the traits for the given input point type.
-  template <typename OtherPoint_>
-  using PointTraitsFor = PointTraits<OtherPoint_>;
 };
 
 }  // namespace internal
@@ -186,7 +191,7 @@ template <
 struct EigenTraits<
     Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
     Index_>
-    : public internal::EigenTraitsBase<
+    : public internal::EigenTraitsImpl<
           Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
           Index_> {};
 
@@ -208,7 +213,7 @@ struct EigenTraits<
         MapOptions_,
         StrideType_>,
     Index_>
-    : public internal::EigenTraitsBase<
+    : public internal::EigenTraitsImpl<
           Eigen::Map<
               Eigen::
                   Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
