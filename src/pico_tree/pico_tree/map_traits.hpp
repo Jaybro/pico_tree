@@ -1,6 +1,7 @@
 #pragma once
 
 #include "map.hpp"
+#include "space_traits.hpp"
 
 namespace pico_tree {
 
@@ -20,28 +21,21 @@ struct PointTraits<PointMap<Scalar_, Dim_>> {
 
 //! \brief MapTraits provides an interface for spaces and points when working
 //! with a SpaceMap.
-//! \tparam Index_ Type used for indexing. Defaults to int.
-template <typename Point_, typename Index_ = int>
-struct MapTraits {
+template <typename Point_>
+struct SpaceTraits<SpaceMap<Point_>> {
   using SpaceType = SpaceMap<Point_>;
   using PointType = typename SpaceType::PointType;
   using ScalarType = typename SpaceType::ScalarType;
   using SizeType = typename SpaceType::SizeType;
   static SizeType constexpr Dim = SpaceType::Dim;
-  using IndexType = Index_;
-
-  //! \brief Returns the traits for the given input point type.
-  template <typename OtherPoint_>
-  using PointTraitsFor = PointTraits<OtherPoint_>;
 
   inline static SizeType Sdim(SpaceType const& space) { return space.sdim(); }
 
-  inline static IndexType Npts(SpaceType const& space) {
-    return static_cast<IndexType>(space.size());
-  }
+  inline static SizeType Npts(SpaceType const& space) { return space.size(); }
 
-  inline static auto PointAt(SpaceType const& space, IndexType const idx) {
-    return space[idx];
+  template <typename Index_>
+  inline static auto PointAt(SpaceType const& space, Index_ idx) {
+    return space[static_cast<SizeType>(idx)];
   }
 };
 

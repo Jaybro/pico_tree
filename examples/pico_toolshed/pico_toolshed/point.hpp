@@ -1,29 +1,26 @@
 #pragma once
 
 #include <iostream>
+#include <pico_tree/internal/point.hpp>
 #include <pico_tree/point_traits.hpp>
 #include <random>
 #include <vector>
 
-// Example point type.
 template <typename Scalar_, std::size_t Dim_>
-class Point {
-  static_assert(Dim_ > 0, "INVALID_SPATIAL_DIMENSION_POINT");
+struct Point : public pico_tree::internal::Point<Scalar_, Dim_> {
+  // Dynamic capability disabled.
+  static_assert(
+      Dim_ != pico_tree::kDynamicSize && Dim_ > 0,
+      "DIM_MUST_NOT_BE_DYNAMIC_AND_>_0");
 
- public:
-  using ScalarType = Scalar_;
-  using SizeType = std::size_t;
-  static SizeType constexpr Dim = Dim_;
-
-  inline ScalarType const& operator()(SizeType const i) const {
-    return coords[i];
-  }
-
-  inline ScalarType& operator()(SizeType const i) { return coords[i]; }
+  using pico_tree::internal::Point<Scalar_, Dim_>::elems_;
+  using pico_tree::internal::Point<Scalar_, Dim_>::size;
+  using typename pico_tree::internal::Point<Scalar_, Dim_>::ScalarType;
+  using typename pico_tree::internal::Point<Scalar_, Dim_>::SizeType;
 
   inline Point& operator+=(ScalarType const v) {
-    for (SizeType i = 0; i < Dim; ++i) {
-      coords[i] += v;
+    for (SizeType i = 0; i < size(); ++i) {
+      elems_[i] += v;
     }
     return *this;
   }
@@ -35,8 +32,8 @@ class Point {
   }
 
   inline Point& operator-=(ScalarType const v) {
-    for (SizeType i = 0; i < Dim; ++i) {
-      coords[i] -= v;
+    for (SizeType i = 0; i < size(); ++i) {
+      elems_[i] -= v;
     }
     return *this;
   }
@@ -48,31 +45,21 @@ class Point {
   }
 
   inline void Fill(ScalarType const v) {
-    for (SizeType i = 0; i < Dim; ++i) {
-      coords[i] = v;
+    for (SizeType i = 0; i < size(); ++i) {
+      elems_[i] = v;
     }
   }
 
   template <typename OtherScalarType>
-  inline Point<OtherScalarType, Dim> Cast() const {
-    Point<OtherScalarType, Dim> other;
-    for (SizeType i = 0; i < Dim; ++i) {
-      other.coords[i] = static_cast<OtherScalarType>(coords[i]);
+  inline Point<OtherScalarType, Dim_> Cast() const {
+    Point<OtherScalarType, Dim_> other;
+    for (SizeType i = 0; i < size(); ++i) {
+      other.elems_[i] = static_cast<OtherScalarType>(elems_[i]);
     }
     return other;
   }
-
-  constexpr ScalarType* data() { return coords; }
-
-  constexpr ScalarType const* data() const { return coords; }
-
-  constexpr SizeType size() const { return Dim; }
-
-  ScalarType coords[Dim];
 };
 
-// A specialization of PointTraits must be defined within the pico_tree
-// namespace and provide all the details of this example.
 namespace pico_tree {
 
 template <typename Scalar_, std::size_t Dim_>
@@ -81,13 +68,10 @@ struct PointTraits<Point<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static std::size_t constexpr Dim = Dim_;
 
-  // Returns a pointer to the coordinates of the input point.
   inline static ScalarType const* Coords(Point<ScalarType, Dim_> const& point) {
     return point.data();
   }
 
-  // Returns the spatial dimension of the input point. Note that the input
-  // argument is ignored because the spatial dimension is known at compile time.
   inline static std::size_t constexpr Sdim(
       Point<ScalarType, Dim_> const& point) {
     return point.size();
@@ -99,9 +83,9 @@ struct PointTraits<Point<Scalar_, Dim_>> {
 template <typename Scalar_, std::size_t Dim_>
 inline std::ostream& operator<<(
     std::ostream& s, Point<Scalar_, Dim_> const& p) {
-  s << p(0);
+  s << p[0];
   for (std::size_t i = 1; i < Dim_; ++i) {
-    s << " " << p(i);
+    s << " " << p[i];
   }
   return s;
 }
@@ -127,7 +111,7 @@ inline std::vector<Point> GenerateRandomN(
   std::vector<Point> random(n);
   for (auto& p : random) {
     for (std::size_t i = 0; i < Point::Dim; ++i) {
-      p(i) = dist(e2);
+      p[i] = dist(e2);
     }
   }
 

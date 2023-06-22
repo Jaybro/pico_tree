@@ -12,10 +12,7 @@ using Points3f = PyArrayMap<float, 3>;
 using Points3d = PyArrayMap<double, 3>;
 
 template <typename PointsX>
-using TraitsX = PyArrayMapTraits<
-    typename PointsX::ScalarType,
-    PointsX::Dim,
-    typename PointsX::IndexType>;
+using SpaceX = PyArrayMap<typename PointsX::ScalarType, PointsX::Dim>;
 
 using Neighborf = pico_tree::Neighbor<int, float>;
 using Neighbord = pico_tree::Neighbor<int, double>;

@@ -1,34 +1,42 @@
 #pragma once
 
 #include "pico_tree/core.hpp"
+#include "pico_tree/point_traits.hpp"
 
 namespace pico_tree {
 
 namespace internal {
 
-template <typename Traits_>
+template <typename Point_>
 class PointWrapper {
- public:
-  using PointType = typename Traits_::PointType;
-  using ScalarType = typename Traits_::ScalarType;
+  using PointTraitsType = PointTraits<Point_>;
+  using PointType = Point_;
+  using ScalarType = typename PointTraitsType::ScalarType;
   using SizeType = Size;
-  static SizeType constexpr Dim = Traits_::Dim;
+  static SizeType constexpr Dim = PointTraitsType::Dim;
 
+  inline ScalarType const* data() const {
+    return PointTraitsType::Coords(point_);
+  }
+
+  constexpr SizeType size() const {
+    if constexpr (Dim != kDynamicSize) {
+      return Dim;
+    } else {
+      return PointTraitsType::Sdim(point_);
+    }
+  }
+
+ public:
   inline explicit PointWrapper(PointType const& point) : point_(point) {}
 
   inline ScalarType const& operator[](std::size_t index) const {
     return data()[index];
   }
 
-  inline ScalarType const* data() const { return Traits_::Coords(point_); }
+  inline auto begin() const { return data(); }
 
-  constexpr SizeType size() const {
-    if constexpr (Dim != kDynamicSize) {
-      return Dim;
-    } else {
-      return Traits_::Sdim(point_);
-    }
-  }
+  inline auto end() const { return data() + size(); }
 
   inline PointType const& point() const { return point_; }
 

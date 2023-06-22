@@ -1,7 +1,7 @@
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/eigen3_traits.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <pico_tree/std_traits.hpp>
+#include <pico_tree/vector_traits.hpp>
 
 // NOTES:
 
@@ -50,7 +50,7 @@ void BasicVector() {
 
   // Including <pico_tree/eigen.hpp> provides support for Eigen types with
   // std::vector.
-  pico_tree::KdTree<pico_tree::StdTraits<std::vector<PointX>>> tree(
+  pico_tree::KdTree<std::vector<PointX>> tree(
       GenerateRandomEigenN<PointX>(kNumPoints, kArea), kMaxLeafCount);
 
   PointX p = PointX::Random() * kArea / Scalar(2.0);
@@ -74,7 +74,7 @@ void BasicMatrix() {
   // * Creating an Eigen::Map<>.
   // * Wrap with an std::reference_wrapper<>.
   {
-    pico_tree::KdTree<pico_tree::EigenTraits<Eigen::Matrix3Xf>> tree(
+    pico_tree::KdTree<Eigen::Matrix3Xf> tree(
         Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0),
         kMaxLeafCount);
 
@@ -89,9 +89,8 @@ void BasicMatrix() {
     Eigen::Matrix3Xf matrix =
         Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0);
 
-    pico_tree::KdTree<
-        pico_tree::EigenTraits<std::reference_wrapper<Eigen::Matrix3Xf>>>
-        tree(matrix, kMaxLeafCount);
+    pico_tree::KdTree<std::reference_wrapper<Eigen::Matrix3Xf>> tree(
+        matrix, kMaxLeafCount);
 
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree eigen ref", kRunCount);
@@ -114,7 +113,7 @@ void VectorMapColMajor() {
 
   std::cout << "Eigen RowMajor: " << Map::IsRowMajor << std::endl;
   {
-    pico_tree::KdTree<pico_tree::EigenTraits<Map>> tree(
+    pico_tree::KdTree<Map> tree(
         Map(points.data()->data(), Dim, points.size()), kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
@@ -139,7 +138,7 @@ void VectorMapRowMajor() {
   std::cout << "Eigen RowMajor: " << PointX::IsRowMajor << std::endl;
 
   {
-    pico_tree::KdTree<pico_tree::EigenTraits<Map>> tree(
+    pico_tree::KdTree<Map> tree(
         Map(points.data()->data(), points.size(), Dim), kMaxLeafCount);
 
     std::vector<pico_tree::Neighbor<Index, Scalar>> knn;

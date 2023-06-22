@@ -15,15 +15,15 @@ namespace pyco_tree {
 //! \brief pico_tree::KdTree with some added convenience functions to be mapped
 //! on the Python side of things.
 //! \see pico_tree::KdTree
-template <typename Traits, typename Metric>
-class KdTree : public pico_tree::KdTree<Traits, Metric> {
+template <typename Space_, typename Metric_>
+class KdTree : public pico_tree::KdTree<Space_, Metric_> {
  private:
   static constexpr int kChunkSize = 128;
 
-  using Index = typename Traits::IndexType;
-  using Scalar = typename Traits::ScalarType;
-  using Space = typename Traits::SpaceType;
-  using Base = pico_tree::KdTree<Traits, Metric>;
+  using Space = Space_;
+  using Index = typename Space_::IndexType;
+  using Scalar = typename Space_::ScalarType;
+  using Base = pico_tree::KdTree<Space_, Metric_>;
 
  public:
   using Base::Dim;

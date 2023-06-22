@@ -1,22 +1,22 @@
 #include <pico_toolshed/point.hpp>
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <pico_tree/std_traits.hpp>
+#include <pico_tree/vector_traits.hpp>
 
 //! \brief Search visitor that counts how many points were considered as a
 //! nearest neighbor.
 template <typename Neighbor>
 class SearchNnCounter {
- private:
-  using Index = typename Neighbor::IndexType;
-  using Scalar = typename Neighbor::ScalarType;
-
  public:
+  using NeighborType = Neighbor;
+  using IndexType = typename Neighbor::IndexType;
+  using ScalarType = typename Neighbor::ScalarType;
+
   //! \brief Creates a visitor for approximate nearest neighbor searching.
   //! \param nn Search result.
   inline SearchNnCounter(Neighbor* nn) : count_(0), nn_(*nn) {
     // Initial search distance.
-    nn_.distance = std::numeric_limits<Scalar>::max();
+    nn_.distance = std::numeric_limits<ScalarType>::max();
   }
 
   //! \brief Visit current point.
@@ -25,22 +25,22 @@ class SearchNnCounter {
   //! visitors' max() function. I.e., it found a new nearest neighbor.
   //! \param idx Point index.
   //! \param d Point distance (that depends on the metric).
-  inline void operator()(Index const idx, Scalar const dst) {
+  inline void operator()(IndexType const idx, ScalarType const dst) {
     count_++;
     nn_ = {idx, dst};
   }
 
   //! \brief Maximum search distance with respect to the query point.
   //! \details This method is required.
-  inline Scalar const& max() const { return nn_.distance; }
+  inline ScalarType const& max() const { return nn_.distance; }
 
   //! \brief Returns the amount of points that were considered the nearest
   //! neighbor.
   //! \details This method is not required.
-  inline Index const& count() const { return count_; }
+  inline IndexType const& count() const { return count_; }
 
  private:
-  Index count_;
+  IndexType count_;
   Neighbor& nn_;
 };
 
@@ -55,7 +55,7 @@ void Search3d() {
   Index point_count = 1024 * 1024;
   Scalar area_size = 1000;
 
-  pico_tree::KdTree<pico_tree::StdTraits<std::vector<PointX>>> tree(
+  pico_tree::KdTree<std::vector<PointX>> tree(
       GenerateRandomN<PointX>(point_count, area_size), max_leaf_size);
 
   Scalar min_v = 25.1f;
@@ -116,12 +116,12 @@ void Search3d() {
 // Search on the circle.
 void SearchS1() {
   using PointX = Point1f;
-  using TraitsX = pico_tree::StdTraits<std::vector<PointX>>;
-  using NeighborX = pico_tree::KdTree<TraitsX, pico_tree::SO2>::NeighborType;
+  using SpaceX = std::vector<PointX>;
+  using NeighborX = pico_tree::KdTree<SpaceX, pico_tree::SO2>::NeighborType;
 
   const auto pi = typename PointX::ScalarType(3.1415926537);
 
-  pico_tree::KdTree<TraitsX, pico_tree::SO2> tree(
+  pico_tree::KdTree<SpaceX, pico_tree::SO2> tree(
       GenerateRandomN<PointX>(512, -pi, pi), 10);
 
   std::array<NeighborX, 8> knn;

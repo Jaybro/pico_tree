@@ -7,34 +7,36 @@
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/internal/space_wrapper.hpp"
 #include "pico_tree/point_traits.hpp"
+#include "pico_tree/space_traits.hpp"
 
 namespace pico_tree {
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
 template <
-    typename Traits_,
+    typename Space_,
     typename Metric_ = L2Squared,
-    SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint>
+    SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint,
+    typename Index_ = int>
 class KdTree {
-  using SpaceWrapperType = internal::SpaceWrapper<Traits_>;
+  using SpaceWrapperType = internal::SpaceWrapper<Space_>;
   using BuildKdTreeType =
-      internal::BuildKdTree<SpaceWrapperType, Metric_, SplittingRule_>;
-  using NodeType = typename BuildKdTreeType::NodeType;
+      internal::BuildKdTree<SpaceWrapperType, Metric_, SplittingRule_, Index_>;
   using KdTreeDataType = typename BuildKdTreeType::KdTreeDataType;
+  using NodeType = typename KdTreeDataType::NodeType;
 
  public:
+  //! \brief Size type.
+  using SizeType = Size;
   //! \brief Index type.
-  using IndexType = typename Traits_::IndexType;
+  using IndexType = Index_;
   //! \brief Scalar type.
-  using ScalarType = typename Traits_::ScalarType;
+  using ScalarType = typename SpaceTraits<Space_>::ScalarType;
   //! \brief KdTree dimension. It equals pico_tree::kDynamicSize in case Dim is
   //! only known at run-time.
-  static Size constexpr Dim = Traits_::Dim;
-  //! \brief Traits_ with information about the input Spaces and Points.
-  using TraitsType = Traits_;
+  static SizeType constexpr Dim = SpaceTraits<Space_>::Dim;
   //! \brief Point set or adaptor type.
-  using SpaceType = typename Traits_::SpaceType;
+  using SpaceType = Space_;
   //! \brief The metric used for various searches.
   using MetricType = Metric_;
   //! \brief Neighbor type of various search resuls.
@@ -58,7 +60,7 @@ class KdTree {
   //!
   //! \param points The input point set (interface).
   //! \param max_leaf_size The maximum amount of points allowed in a leaf node.
-  KdTree(SpaceType space, IndexType max_leaf_size)
+  KdTree(SpaceType space, SizeType max_leaf_size)
       : space_(std::move(space)),
         metric_(),
         data_(BuildKdTreeType()(space_, max_leaf_size)) {}
@@ -85,7 +87,7 @@ class KdTree {
   //! \see internal::SearchAknn
   template <typename P, typename V>
   inline void SearchNearest(P const& x, V& visitor) const {
-    internal::PointWrapper<typename Traits_::template PointTraitsFor<P>> p(x);
+    internal::PointWrapper<P> p(x);
     SearchNearest(data_.root_node, p, visitor, typename Metric_::SpaceTag());
   }
 
@@ -125,7 +127,7 @@ class KdTree {
   //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
-      P const& x, IndexType const k, std::vector<NeighborType>& knn) const {
+      P const& x, SizeType const k, std::vector<NeighborType>& knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn.resize(std::min(k, space_.size()));
@@ -189,7 +191,7 @@ class KdTree {
   template <typename P>
   inline void SearchKnn(
       P const& x,
-      IndexType const k,
+      SizeType const k,
       ScalarType const e,
       std::vector<NeighborType>& knn) const {
     // If it happens that the point set has less points than k we just return
@@ -236,12 +238,12 @@ class KdTree {
   inline void SearchBox(
       P const& min, P const& max, std::vector<IndexType>& idxs) const {
     idxs.clear();
-    using PointTraitsType = typename Traits_::template PointTraitsFor<P>;
+    using PointTraitsType = PointTraits<P>;
     // Note that it's never checked if the bounding box intersects at all. For
     // now it is assumed that this check is not worth it: If there is any
     // overlap then the search is slower. So unless many queries don't intersect
     // there is no point in adding it.
-    internal::SearchBoxEuclidean<SpaceWrapperType, Metric_>(
+    internal::SearchBoxEuclidean<SpaceWrapperType, Metric_, IndexType>(
         space_,
         metric_,
         data_.indices,
@@ -312,9 +314,12 @@ class KdTree {
       PointWrapper_ const& point,
       V& visitor,
       EuclideanSpaceTag) const {
-    internal::
-        SearchNearestEuclidean<SpaceWrapperType, Metric_, PointWrapper_, V>(
-            space_, metric_, data_.indices, point, visitor)(node);
+    internal::SearchNearestEuclidean<
+        SpaceWrapperType,
+        Metric_,
+        PointWrapper_,
+        V,
+        IndexType>(space_, metric_, data_.indices, point, visitor)(node);
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
@@ -325,9 +330,12 @@ class KdTree {
       PointWrapper_ const& point,
       V& visitor,
       TopologicalSpaceTag) const {
-    internal::
-        SearchNearestTopological<SpaceWrapperType, Metric_, PointWrapper_, V>(
-            space_, metric_, data_.indices, point, visitor)(node);
+    internal::SearchNearestTopological<
+        SpaceWrapperType,
+        Metric_,
+        PointWrapper_,
+        V,
+        IndexType>(space_, metric_, data_.indices, point, visitor)(node);
   }
 
   //! \brief Point set used for querying point data.

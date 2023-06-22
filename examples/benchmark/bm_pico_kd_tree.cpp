@@ -1,6 +1,7 @@
+#include <pico_toolshed/dynamic_space.hpp>
 #include <pico_toolshed/point.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <pico_tree/std_traits.hpp>
+#include <pico_tree/vector_traits.hpp>
 
 #include "benchmark.hpp"
 
@@ -8,24 +9,17 @@ class BmPicoKdTree : public pico_tree::Benchmark {
  public:
 };
 
-// Index explicitly set to int.
 template <typename PointX>
-using PicoCtTraits =
-    pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>, int>;
-
-template <typename Traits_>
-struct DynamicDimTraits : public Traits_ {
-  static pico_tree::Size constexpr Dim = pico_tree::kDynamicSize;
-};
+using PicoCtSpace = std::reference_wrapper<std::vector<PointX>>;
 
 template <typename PointX>
-using PicoRtTraits = DynamicDimTraits<PicoCtTraits<PointX>>;
+using PicoRtSpace = DynamicSpace<std::reference_wrapper<std::vector<PointX>>>;
 
 template <typename PointX>
-using PicoKdTreeCtSldMid = pico_tree::KdTree<PicoCtTraits<PointX>>;
+using PicoKdTreeCtSldMid = pico_tree::KdTree<PicoCtSpace<PointX>>;
 
 template <typename PointX>
-using PicoKdTreeRtSldMid = pico_tree::KdTree<PicoRtTraits<PointX>>;
+using PicoKdTreeRtSldMid = pico_tree::KdTree<PicoRtSpace<PointX>>;
 
 // ****************************************************************************
 // Building the tree
@@ -43,7 +37,8 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, BuildRtSldMid)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
 
   for (auto _ : state) {
-    PicoKdTreeRtSldMid<PointX> tree(points_tree_, max_leaf_size);
+    PicoKdTreeRtSldMid<PointX> tree(
+        PicoRtSpace<PointX>(points_tree_), max_leaf_size);
   }
 }
 
@@ -180,7 +175,8 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, BoxRtSldMid)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   Scalar radius = static_cast<Scalar>(state.range(1)) / Scalar(10.0);
 
-  PicoKdTreeRtSldMid<PointX> tree(points_tree_, max_leaf_size);
+  PicoKdTreeRtSldMid<PointX> tree(
+      PicoRtSpace<PointX>(points_tree_), max_leaf_size);
 
   for (auto _ : state) {
     std::vector<Index> results;

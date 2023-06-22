@@ -62,13 +62,14 @@ class StaticBuffer {
 
 }  // namespace internal
 
-template <typename Traits_, typename Metric_ = L2>
+template <typename Space_, typename Metric_ = L2, typename Index_ = int>
 class CoverTree {
  private:
-  using Index = typename Traits_::IndexType;
+  using Traits_ = SpaceTraits<Space_>;
+  using Index = Index_;
   using Scalar = typename Traits_::ScalarType;
   using Space = typename Traits_::SpaceType;
-  using SpaceWrapperType = internal::SpaceWrapper<Traits_>;
+  using SpaceWrapperType = internal::SpaceWrapper<Space>;
 
  public:
   //! \brief Index type.
@@ -187,7 +188,7 @@ class CoverTree {
   //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
-      P const& x, Index const k, std::vector<NeighborType>& knn) const {
+      P const& x, Size const k, std::vector<NeighborType>& knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
     knn.resize(std::min(k, space_.size()));
@@ -264,7 +265,7 @@ class CoverTree {
   template <typename P>
   inline void SearchKnn(
       P const& x,
-      Index const k,
+      Size const k,
       Scalar const e,
       std::vector<NeighborType>& knn) const {
     // If it happens that the point set has less points than k we just return
@@ -611,7 +612,7 @@ class CoverTree {
   template <typename P, typename V>
   inline void SearchNearest(
       Node const* const node, P const& x, V& visitor) const {
-    internal::PointWrapper<typename Traits_::template PointTraitsFor<P>> p(x);
+    internal::PointWrapper<P> p(x);
     SearchNearest_(node, p, visitor);
   }
 
@@ -620,8 +621,7 @@ class CoverTree {
   template <typename PointWrapper_, typename V>
   inline void SearchNearest_(
       Node const* const node, PointWrapper_ const& point, V& visitor) const {
-    Scalar const d =
-        metric_(point.data(), point.data() + point.size(), space_[node->index]);
+    Scalar const d = metric_(point.begin(), point.end(), space_[node->index]);
     if (visitor.max() > d) {
       visitor(node->index, d);
     }
@@ -630,11 +630,7 @@ class CoverTree {
     sorted.reserve(node->children.size());
     for (auto const child : node->children) {
       sorted.push_back(
-          {child,
-           metric_(
-               point.data(),
-               point.data() + point.size(),
-               space_[child->index])});
+          {child, metric_(point.begin(), point.end(), space_[child->index])});
     }
 
     std::sort(
@@ -661,11 +657,9 @@ class CoverTree {
 
       // TODO The distance calculation can be cached. When SearchNeighbor is
       // called it's calculated again.
-      if (visitor.max() > (metric_(
-                               point.data(),
-                               point.data() + point.size(),
-                               space_[m.first->index]) -
-                           m.first->max_distance)) {
+      if (visitor.max() >
+          (metric_(point.begin(), point.end(), space_[m.first->index]) -
+           m.first->max_distance)) {
         SearchNearest_(m.first, point, visitor);
       }
     }

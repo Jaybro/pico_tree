@@ -1,7 +1,7 @@
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/kd_tree.hpp>
 #include <pico_tree/opencv_traits.hpp>
-#include <pico_tree/std_traits.hpp>
+#include <pico_tree/vector_traits.hpp>
 #include <random>
 
 using Index = int;
@@ -32,9 +32,8 @@ void BasicVector() {
   using PointX = cv::Point3_<Scalar>;
   std::vector<PointX> random = GenerateRandomPoint3N(kNumPoints, kArea);
 
-  pico_tree::KdTree<
-      pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>>
-      tree(random, 10);
+  pico_tree::KdTree<std::reference_wrapper<std::vector<PointX>>> tree(
+      random, 10);
 
   auto p = random[random.size() / 2];
 
@@ -52,7 +51,7 @@ void BasicMatrix() {
     cv::Mat random(kNumPoints, 3, cv::DataType<Scalar>::type);
     cv::randu(random, Scalar(0.0), kArea);
 
-    pico_tree::KdTree<pico_tree::CvTraits<Scalar, 3>> tree(random, 10);
+    pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(random, 10);
     pico_tree::PointMap<Scalar, 3> p(random.ptr<Scalar>(random.rows / 2));
 
     pico_tree::Neighbor<Index, Scalar> nn;
@@ -67,7 +66,8 @@ void BasicMatrix() {
     using PointX = cv::Point3_<Scalar>;
     std::vector<PointX> random = GenerateRandomPoint3N(kNumPoints, kArea);
 
-    pico_tree::KdTree<pico_tree::CvTraits<Scalar, 3>> tree(cv::Mat(random), 10);
+    pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(
+        cv::Mat(random), 10);
 
     PointX p = random[random.size() / 2];
 

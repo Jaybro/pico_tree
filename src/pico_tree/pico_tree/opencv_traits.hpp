@@ -88,29 +88,34 @@ struct PointTraits<cv::Vec<Scalar_, Dim_>> {
   }
 };
 
-//! \brief CvTraits provides an interface for cv::Mat. Each row is considered a
-//! point.
+// TODO Support cv::Mat_ (instead?).
+template <typename Scalar_, Size Dim_>
+struct MatWrapper {
+  inline MatWrapper(cv::Mat mat) : mat(mat) {}
+
+  inline operator cv::Mat const&() const { return mat; }
+
+  inline operator cv::Mat&() { return mat; }
+
+  cv::Mat mat;
+};
+
+//! \brief Provides an interface for cv::Mat. Each row is considered a point.
 //! \tparam Scalar_ Point coordinate type.
 //! \tparam Dim_ The spatial dimension of each point. Set to
 //! pico_tree::kDynamicSize when the dimension is only known at run-time.
-template <typename Scalar_, int Dim_>
-struct CvTraits {
+template <typename Scalar_, Size Dim_>
+struct SpaceTraits<MatWrapper<Scalar_, Dim_>> {
   //! \brief The SpaceType of these traits.
-  using SpaceType = cv::Mat;
+  using SpaceType = MatWrapper<Scalar_, Dim_>;
   //! \brief The point type used by SpaceType.
   using PointType = PointMap<Scalar_ const, Dim_>;
   //! \brief The scalar type of point coordinates.
   using ScalarType = Scalar_;
   //! \brief The size and index type of point coordinates.
   using SizeType = Size;
-  //! \brief The index type of point coordinates.
-  using IndexType = int;
   //! \brief Compile time spatial dimension.
   static constexpr SizeType Dim = Dim_;
-
-  //! \brief Returns the traits for the given input point type.
-  template <typename OtherPoint_>
-  using PointTraitsFor = PointTraits<OtherPoint_>;
 
   //! \brief Returns the dimension of the space in which the points reside.
   //! I.e., the amount of coordinates each point has.
@@ -125,16 +130,19 @@ struct CvTraits {
   }
 
   //! \brief Returns number of points contained by \p space.
-  inline static IndexType Npts(cv::Mat const& space) { return space.rows; }
+  inline static SizeType Npts(cv::Mat const& space) {
+    return static_cast<SizeType>(space.rows);
+  }
 
   //! \brief Returns the point at \p idx from \p space.
-  inline static PointType PointAt(cv::Mat const& space, IndexType const idx) {
+  template <typename Index_>
+  inline static PointType PointAt(cv::Mat const& space, Index_ idx) {
     if constexpr (Dim != kDynamicSize) {
-      return {space.ptr<Scalar_>(idx)};
+      return {space.ptr<Scalar_>(static_cast<int>(idx))};
     } else {
       // TODO The use of step1() is actually quite expensive. Perhaps there is
       // an alternative.
-      return {space.ptr<Scalar_>(idx), space.step1()};
+      return {space.ptr<Scalar_>(static_cast<int>(idx)), space.step1()};
     }
   }
 };

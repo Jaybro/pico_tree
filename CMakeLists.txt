@@ -59,7 +59,7 @@ if(NOT SKBUILD)
                 ${DOC_TARGET_NAME}
                 src/pico_tree)
 
-            message(STATUS "Doxygen found. Documentation can be build as: make ${DOC_TARGET_NAME}")
+            message(STATUS "Doxygen found. To build the documentation: cmake --build . --target ${DOC_TARGET_NAME}")
         else()
             message(STATUS "Doxygen not found. Documentation cannot be build.")
         endif()

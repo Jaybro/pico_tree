@@ -19,7 +19,7 @@ set(TEST_TARGET_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/kd_tree_builder_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kd_tree_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/metric_test.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/std_traits_test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/vector_traits_test.cpp
 )
 
 # gtest_add_tests fails on generator expressions like:

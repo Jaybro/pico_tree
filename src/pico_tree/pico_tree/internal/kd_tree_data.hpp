@@ -12,7 +12,8 @@ class KdTreeData {
  public:
   using IndexType = typename Node_::IndexType;
   using ScalarType = typename Node_::ScalarType;
-  using BoxType = internal::Box<ScalarType, Dim_>;
+  static Size constexpr Dim = Dim_;
+  using BoxType = internal::Box<ScalarType, Dim>;
   using NodeType = Node_;
   using NodeAllocatorType = ChunkAllocator<NodeType, 256>;
 

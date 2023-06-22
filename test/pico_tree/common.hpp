@@ -7,15 +7,13 @@
 template <typename Traits_, typename Index_>
 auto CoordsAt(typename Traits_::SpaceType const& space, Index_ index) {
   using PointType = typename Traits_::PointType;
-  using PointTraitsType = typename Traits_::template PointTraitsFor<PointType>;
+  using PointTraitsType = pico_tree::PointTraits<PointType>;
   return PointTraitsType::Coords(Traits_::PointAt(space, index));
 }
 
-template <typename Traits_>
+template <typename Traits_, typename Index_>
 pico_tree::PointMap<typename Traits_::ScalarType const, Traits_::Dim>
-MakePointMap(
-    typename Traits_::SpaceType const& space,
-    typename Traits_::IndexType index) {
+MakePointMap(typename Traits_::SpaceType const& space, Index_ index) {
   return {CoordsAt<Traits_>(space, index), Traits_::Sdim(space)};
 }
 
@@ -34,15 +32,13 @@ inline void FloatLe(double val1, double val2) {
 template <
     typename Traits,
     pico_tree::Size Dim,
-    typename IndexType,
     typename SpaceType,
-    typename NptsType,
     typename ScalarType>
 void CheckTraits(
     SpaceType const& space,
     pico_tree::Size sdim,
-    NptsType npts,
-    NptsType point_index,
+    pico_tree::Size npts,
+    pico_tree::Size point_index,
     ScalarType const* point_data_ref) {
   static_assert(
       std::is_same_v<typename Traits::SpaceType, SpaceType>,
@@ -51,18 +47,13 @@ void CheckTraits(
   static_assert(Traits::Dim == Dim, "TRAITS_DIM_NOT_EQUAL_TO_EXPECTED_DIM");
 
   static_assert(
-      std::is_same_v<typename Traits::IndexType, IndexType>,
-      "TRAITS_INDEX_TYPE_INCORRECT");
-
-  static_assert(
       std::is_same_v<typename Traits::ScalarType, ScalarType>,
       "TRAITS_SCALAR_TYPE_INCORRECT");
 
   EXPECT_EQ(sdim, Traits::Sdim(space));
-  EXPECT_EQ(static_cast<IndexType>(npts), Traits::Npts(space));
+  EXPECT_EQ(static_cast<pico_tree::Size>(npts), Traits::Npts(space));
 
-  ScalarType const* point_data_tst =
-      CoordsAt<Traits>(space, static_cast<IndexType>(point_index));
+  ScalarType const* point_data_tst = CoordsAt<Traits>(space, point_index);
 
   for (pico_tree::Size i = 0; i < sdim; ++i) {
     FloatEq(point_data_ref[i], point_data_tst[i]);
@@ -95,7 +86,7 @@ void TestBox(
     Tree const& tree,
     typename Tree::ScalarType const min_v,
     typename Tree::ScalarType const max_v) {
-  using TraitsX = typename Tree::TraitsType;
+  using TraitsX = pico_tree::SpaceTraits<typename Tree::SpaceType>;
   using PointX = typename TraitsX::PointType;
   using Index = typename Tree::IndexType;
 
@@ -118,7 +109,7 @@ void TestBox(
 
   std::size_t count = 0;
 
-  for (Index j = 0; j < TraitsX::Npts(points); ++j) {
+  for (pico_tree::Size j = 0; j < TraitsX::Npts(points); ++j) {
     bool contained = true;
 
     for (pico_tree::Size d = 0; d < PointX::Dim; ++d) {
@@ -139,7 +130,7 @@ void TestBox(
 
 template <typename Tree>
 void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
-  using TraitsX = typename Tree::TraitsType;
+  using TraitsX = pico_tree::SpaceTraits<typename Tree::SpaceType>;
   using Index = typename Tree::IndexType;
   using Scalar = typename Tree::ScalarType;
 
@@ -161,7 +152,7 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
 
   std::size_t count = 0;
 
-  for (Index j = 0; j < TraitsX::Npts(points); ++j) {
+  for (pico_tree::Size j = 0; j < TraitsX::Npts(points); ++j) {
     if (metric(p.data(), p.data() + p.size(), CoordsAt<TraitsX>(points, j)) <=
         lp_radius) {
       count++;
@@ -174,7 +165,7 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
 template <typename Tree, typename Point>
 void TestKnn(
     Tree const& tree, typename Tree::IndexType const k, Point const& p) {
-  using TraitsX = typename Tree::TraitsType;
+  using TraitsX = pico_tree::SpaceTraits<typename Tree::SpaceType>;
   using Index = typename Tree::IndexType;
   using Scalar = typename Tree::ScalarType;
 
@@ -203,7 +194,7 @@ void TestKnn(
 
 template <typename Tree>
 void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
-  using TraitsX = typename Tree::TraitsType;
+  using TraitsX = pico_tree::SpaceTraits<typename Tree::SpaceType>;
 
   auto const points = tree.points();
   auto p = MakePointMap<TraitsX>(points, TraitsX::Npts(points) / 2);

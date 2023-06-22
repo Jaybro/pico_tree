@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <pico_toolshed/dynamic_space.hpp>
 #include <pico_toolshed/point.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <pico_tree/std_traits.hpp>
+#include <pico_tree/vector_traits.hpp>
 
 #include "common.hpp"
 
@@ -13,41 +14,8 @@ namespace {
 template <typename PointX>
 using Space = std::reference_wrapper<std::vector<PointX>>;
 
-template <typename SpaceX>
-using Traits = pico_tree::StdTraits<SpaceX>;
-
 template <typename PointX>
-using KdTree = pico_tree::KdTree<Traits<Space<PointX>>>;
-
-// Wraps a vector and provides a dynamic spatial dimension.
-template <typename Point>
-class DynamicSpace {
- public:
-  using SizeType = pico_tree::Size;
-
-  DynamicSpace(std::vector<Point> const& space, SizeType sdim)
-      : space_(space), sdim_(sdim) {}
-
-  inline operator std::vector<Point> const&() const { return space_; }
-
-  SizeType sdim() const { return sdim_; }
-
- private:
-  std::vector<Point> const& space_;
-  SizeType sdim_;
-};
-
-// Supports a dynamic spatial dimension for vectors.
-template <typename Point>
-struct DynamicSpaceTraits : public pico_tree::StdTraits<std::vector<Point>> {
-  using SpaceType = DynamicSpace<Point>;
-  using SizeType = pico_tree::Size;
-  static SizeType constexpr Dim = pico_tree::kDynamicSize;
-
-  inline static SizeType SpaceSdim(DynamicSpace<Point> const& space) {
-    return space.sdim();
-  }
-};
+using KdTree = pico_tree::KdTree<Space<PointX>>;
 
 template <typename PointX>
 void QueryRange(
@@ -108,11 +76,11 @@ TEST(KdTreeTest, QueryKnn10) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 10); }
 
 TEST(KdTreeTest, QuerySo2Knn4) {
   using PointX = Point1f;
-  using TraitsX = Traits<Space<PointX>>;
+  using SpaceX = Space<PointX>;
 
   const auto pi = pico_tree::internal::kPi<typename KdTree<PointX>::ScalarType>;
   std::vector<PointX> random = GenerateRandomN<PointX>(256 * 256, -pi, pi);
-  pico_tree::KdTree<TraitsX, pico_tree::SO2> tree(random, 10);
+  pico_tree::KdTree<SpaceX, pico_tree::SO2> tree(random, 10);
   TestKnn(tree, static_cast<typename KdTree<PointX>::IndexType>(8), PointX{pi});
 }
 
@@ -141,20 +109,19 @@ TEST(KdTreeTest, WriteRead) {
   EXPECT_EQ(std::remove(filename.c_str()), 0);
 
   // Run time known dimensions.
-  using DSpace = DynamicSpace<Point2f>;
-  using DTraits = DynamicSpaceTraits<Point2f>;
+  using DSpace = DynamicSpace<Space<Point2f>>;
 
-  DSpace drandom(random, 2);
+  DSpace drandom(random);
 
   {
     // The points are not stored.
-    pico_tree::KdTree<DTraits> tree(drandom, 1);
-    pico_tree::KdTree<DTraits>::Save(tree, filename);
+    pico_tree::KdTree<DSpace> tree(drandom, 1);
+    pico_tree::KdTree<DSpace>::Save(tree, filename);
   }
   {
     // Points are required to load the tree.
-    pico_tree::KdTree<DTraits> tree =
-        pico_tree::KdTree<DTraits>::Load(drandom, filename);
+    pico_tree::KdTree<DSpace> tree =
+        pico_tree::KdTree<DSpace>::Load(drandom, filename);
     TestKnn(tree, Index(20));
   }
 

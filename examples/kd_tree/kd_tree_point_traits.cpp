@@ -1,6 +1,6 @@
 #include <iostream>
 #include <pico_tree/kd_tree.hpp>
-#include <pico_tree/std_traits.hpp>
+#include <pico_tree/vector_traits.hpp>
 
 // This example shows how to write a traits class for a custom point type that
 // is stored in an std::vector.
@@ -41,9 +41,8 @@ int main() {
   // Using an std::reference_wrapper prevents the KdTree from making a copy of
   // the input. The KdTree can take ownership of the pointset if we omit the
   // std::reference_wrapper and move the pointset inside the tree.
-  pico_tree::KdTree<
-      pico_tree::StdTraits<std::reference_wrapper<std::vector<PointXYZ>>>>
-      tree(points, max_leaf_size);
+  pico_tree::KdTree<std::reference_wrapper<std::vector<PointXYZ>>> tree(
+      points, max_leaf_size);
 
   PointXYZ query{4.0f, 4.0f, 4.0f};
   pico_tree::Neighbor<int, float> nn;

@@ -4,7 +4,8 @@ namespace pico_tree {
 
 //! \brief PointTraits provides an interface for the different point types that
 //! are supported by PicoTree.
-//! \details Example use of PointTraits can be seen in StdTraits.
+//! \details Example use of PointTraits can be seen in
+//! SpaceTraits<std::vector<Point_, Allocator_>>.
 //! \tparam Point_ Any of the point types supported by PointTraits.
 template <typename Point_>
 struct PointTraits;

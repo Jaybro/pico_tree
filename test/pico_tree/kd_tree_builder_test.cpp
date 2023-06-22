@@ -3,15 +3,12 @@
 #include <pico_toolshed/point.hpp>
 #include <pico_tree/internal/kd_tree_builder.hpp>
 #include <pico_tree/internal/space_wrapper.hpp>
-#include <pico_tree/std_traits.hpp>
+#include <pico_tree/vector_traits.hpp>
 
 namespace {
 
 template <typename PointX>
 using Space = std::reference_wrapper<std::vector<PointX>>;
-
-template <typename SpaceX>
-using Traits = pico_tree::StdTraits<SpaceX>;
 
 }  // namespace
 
@@ -21,13 +18,13 @@ TEST(KdTreeTest, SplitterMedian) {
   using Scalar = typename PointX::ScalarType;
   using SpaceX = Space<PointX>;
   using SplitterX = pico_tree::internal::SplitterLongestMedian<
-      pico_tree::internal::SpaceWrapper<Traits<SpaceX>>>;
+      pico_tree::internal::SpaceWrapper<SpaceX>>;
 
   // Check split of a list with an even amount of elements.
   std::vector<PointX> ptsx4{
       {0.0f, 4.0f}, {0.0f, 2.0f}, {0.0f, 3.0f}, {0.0f, 1.0f}};
   SpaceX spcx4(ptsx4);
-  pico_tree::internal::SpaceWrapper<Traits<SpaceX>> spcx4_wrapper(spcx4);
+  pico_tree::internal::SpaceWrapper<SpaceX> spcx4_wrapper(spcx4);
   std::vector<Index> idx4{0, 1, 2, 3};
 
   pico_tree::internal::Box<Scalar, 2> box(2);
@@ -44,7 +41,7 @@ TEST(KdTreeTest, SplitterMedian) {
 
   EXPECT_EQ(split - idx4.begin(), 2);
   EXPECT_EQ(split_dim, 0);
-  EXPECT_EQ(split_val, ptsx4[2](0));
+  EXPECT_EQ(split_val, ptsx4[2][0]);
 
   // Check split of a list with an odd amount of elements.
   std::vector<PointX> ptsx7{
@@ -56,7 +53,7 @@ TEST(KdTreeTest, SplitterMedian) {
       {0.0f, 1.0f},
       {1.0f, 7.0f}};
   SpaceX spcx7(ptsx7);
-  pico_tree::internal::SpaceWrapper<Traits<SpaceX>> spcx7_wrapper(spcx7);
+  pico_tree::internal::SpaceWrapper<SpaceX> spcx7_wrapper(spcx7);
   std::vector<Index> idx7{0, 1, 2, 3, 4, 5, 6};
 
   SplitterX splitter7(spcx7_wrapper);
@@ -64,14 +61,14 @@ TEST(KdTreeTest, SplitterMedian) {
 
   EXPECT_EQ(split - idx7.begin(), 3);
   EXPECT_EQ(split_dim, 0);
-  EXPECT_EQ(split_val, ptsx7[idx7[3]](0));
+  EXPECT_EQ(split_val, ptsx7[idx7[3]][0]);
 
   box.max(1) = 10.0f;
   splitter7(1, idx7.begin() + 3, idx7.end(), box, split, split_dim, split_val);
 
   EXPECT_EQ(split - idx7.begin(), 5);
   EXPECT_EQ(split_dim, 1);
-  EXPECT_EQ(split_val, ptsx7[idx7[5]](1));
+  EXPECT_EQ(split_val, ptsx7[idx7[5]][1]);
 }
 
 TEST(KdTreeTest, SplitterSlidingMidpoint) {
@@ -80,11 +77,11 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   using Scalar = typename PointX::ScalarType;
   using SpaceX = Space<PointX>;
   using SplitterX = pico_tree::internal::SplitterSlidingMidpoint<
-      pico_tree::internal::SpaceWrapper<Traits<SpaceX>>>;
+      pico_tree::internal::SpaceWrapper<SpaceX>>;
 
   std::vector<PointX> ptsx4{{0.0, 2.0}, {0.0, 1.0}, {0.0, 4.0}, {0.0, 3.0}};
   SpaceX spcx4(ptsx4);
-  pico_tree::internal::SpaceWrapper<Traits<SpaceX>> spcx4_wrapper(spcx4);
+  pico_tree::internal::SpaceWrapper<SpaceX> spcx4_wrapper(spcx4);
   std::vector<Index> idx4{0, 1, 2, 3};
 
   SplitterX splitter(spcx4_wrapper);
@@ -105,7 +102,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   EXPECT_EQ(split - idx4.begin(), 1);
   EXPECT_EQ(split_dim, 1);
-  EXPECT_EQ(split_val, ptsx4[0](1));
+  EXPECT_EQ(split_val, ptsx4[0][1]);
   EXPECT_EQ(idx4[0], 1);
   EXPECT_EQ(idx4[1], 0);
 
@@ -117,7 +114,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   EXPECT_EQ(split - idx4.begin(), 3);
   EXPECT_EQ(split_dim, 1);
-  EXPECT_EQ(split_val, ptsx4[2](1));
+  EXPECT_EQ(split_val, ptsx4[2][1]);
   EXPECT_EQ(idx4[3], 2);
 
   // Clean middle split. A general case where the split value falls somewhere
@@ -136,5 +133,5 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
 
   EXPECT_EQ(split - idx4.begin(), 3);
   EXPECT_EQ(split_dim, 0);
-  EXPECT_EQ(split_val, ptsx4[3](0));
+  EXPECT_EQ(split_val, ptsx4[3][0]);
 }

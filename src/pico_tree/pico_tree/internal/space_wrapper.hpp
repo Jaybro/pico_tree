@@ -2,32 +2,35 @@
 
 #include "pico_tree/core.hpp"
 #include "pico_tree/internal/box.hpp"
+#include "pico_tree/space_traits.hpp"
 
 namespace pico_tree {
 
 namespace internal {
 
-template <typename Traits_>
+template <typename Space_>
 class SpaceWrapper {
- public:
-  using SpaceType = typename Traits_::SpaceType;
-  using PointType = typename Traits_::PointType;
-  using PointTraitsType = typename Traits_::template PointTraitsFor<PointType>;
-  using ScalarType = typename Traits_::ScalarType;
+  using SpaceTraitsType = SpaceTraits<Space_>;
+  using SpaceType = Space_;
+  using PointType = typename SpaceTraitsType::PointType;
+  using PointTraitsType = PointTraits<PointType>;
   using SizeType = Size;
-  using IndexType = typename Traits_::IndexType;
-  static SizeType constexpr Dim = Traits_::Dim;
+
+ public:
+  using ScalarType = typename SpaceTraitsType::ScalarType;
+  static SizeType constexpr Dim = SpaceTraitsType::Dim;
 
   explicit SpaceWrapper(SpaceType space) : space_(std::move(space)) {}
 
-  inline ScalarType const* operator[](IndexType const idx) const {
-    return PointTraitsType::Coords(Traits_::PointAt(space_, idx));
+  template <typename Index_>
+  inline ScalarType const* operator[](Index_ const index) const {
+    return PointTraitsType::Coords(SpaceTraitsType::PointAt(space_, index));
   }
 
   inline Box<ScalarType, Dim> ComputeBoundingBox() const {
     Box<ScalarType, Dim> box(sdim());
     box.FillInverseMax();
-    for (IndexType i = 0; i < size(); ++i) {
+    for (SizeType i = 0; i < size(); ++i) {
       box.Fit(operator[](i));
     }
     return box;
@@ -37,11 +40,11 @@ class SpaceWrapper {
     if constexpr (Dim != kDynamicSize) {
       return Dim;
     } else {
-      return Traits_::Sdim(space_);
+      return SpaceTraitsType::Sdim(space_);
     }
   }
 
-  inline IndexType size() const { return Traits_::Npts(space_); }
+  inline SizeType size() const { return SpaceTraitsType::Npts(space_); }
 
   inline SpaceType const& space() const { return space_; }
 

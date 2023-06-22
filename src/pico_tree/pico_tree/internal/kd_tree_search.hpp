@@ -18,11 +18,13 @@ template <
     typename SpaceWrapper_,
     typename Metric_,
     typename PointWrapper_,
-    typename Visitor_>
+    typename Visitor_,
+    typename Index_>
 class SearchNearestEuclidean {
  public:
-  using IndexType = typename SpaceWrapper_::IndexType;
+  using IndexType = Index_;
   using ScalarType = typename SpaceWrapper_::ScalarType;
+  using PointType = Point<ScalarType, SpaceWrapper_::Dim>;
   //! \brief Node type supported by this SearchNearestEuclidean.
   using NodeType = KdTreeNodeEuclidean<IndexType, ScalarType>;
 
@@ -36,7 +38,7 @@ class SearchNearestEuclidean {
         metric_(metric),
         indices_(indices),
         query_(query),
-        node_box_offset_(space_.sdim()),
+        node_box_offset_(PointType::FromSize(space_.sdim())),
         visitor_(visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
@@ -51,8 +53,8 @@ class SearchNearestEuclidean {
     if (node->IsLeaf()) {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        ScalarType const d = metric_(
-            query_.data(), query_.data() + query_.size(), space_[indices_[i]]);
+        ScalarType const d =
+            metric_(query_.begin(), query_.end(), space_[indices_[i]]);
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -114,7 +116,7 @@ class SearchNearestEuclidean {
   Metric_ const& metric_;
   std::vector<IndexType> const& indices_;
   PointWrapper_ const& query_;
-  Point<ScalarType, SpaceWrapper_::Dim> node_box_offset_;
+  PointType node_box_offset_;
   Visitor_& visitor_;
 };
 
@@ -123,11 +125,13 @@ template <
     typename SpaceWrapper_,
     typename Metric_,
     typename PointWrapper_,
-    typename Visitor_>
+    typename Visitor_,
+    typename Index_>
 class SearchNearestTopological {
  public:
-  using IndexType = typename SpaceWrapper_::IndexType;
+  using IndexType = Index_;
   using ScalarType = typename SpaceWrapper_::ScalarType;
+  using PointType = Point<ScalarType, SpaceWrapper_::Dim>;
   //! \brief Node type supported by this SearchNearestTopological.
   using NodeType = KdTreeNodeTopological<IndexType, ScalarType>;
 
@@ -141,7 +145,7 @@ class SearchNearestTopological {
         metric_(metric),
         indices_(indices),
         query_(query),
-        node_box_offset_(space_.sdim()),
+        node_box_offset_(PointType::FromSize(space_.sdim())),
         visitor_(visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
@@ -156,8 +160,8 @@ class SearchNearestTopological {
     if (node->IsLeaf()) {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        ScalarType const d = metric_(
-            query_.data(), query_.data() + query_.size(), space_[indices_[i]]);
+        ScalarType const d =
+            metric_(query_.begin(), query_.end(), space_[indices_[i]]);
         if (visitor_.max() > d) {
           visitor_(indices_[i], d);
         }
@@ -213,7 +217,7 @@ class SearchNearestTopological {
   Metric_ const& metric_;
   std::vector<IndexType> const& indices_;
   PointWrapper_ const& query_;
-  Point<ScalarType, SpaceWrapper_::Dim> node_box_offset_;
+  PointType node_box_offset_;
   Visitor_& visitor_;
 };
 
@@ -223,7 +227,7 @@ class SearchNearestTopological {
 //! box of the query. We don't store the bounding box of each node but calculate
 //! them at run time. This slows down SearchBox in favor of having faster
 //! nearest neighbor searches.
-template <typename SpaceWrapper_, typename Metric_>
+template <typename SpaceWrapper_, typename Metric_, typename Index_>
 class SearchBoxEuclidean {
  public:
   // TODO Perhaps we can support it for both topological and Euclidean spaces.
@@ -231,7 +235,7 @@ class SearchBoxEuclidean {
       std::is_same_v<typename Metric_::SpaceTag, EuclideanSpaceTag>,
       "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
 
-  using IndexType = typename SpaceWrapper_::IndexType;
+  using IndexType = Index_;
   using ScalarType = typename SpaceWrapper_::ScalarType;
   static Size constexpr Dim = SpaceWrapper_::Dim;
   using BoxType = Box<ScalarType, Dim>;

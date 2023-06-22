@@ -61,10 +61,14 @@ PyArrayMap<Scalar_, Dim_> MakeMap(py::array_t<Scalar_, 0> const pts) {
       layout.row_major);
 }
 
-template <typename Scalar_, pico_tree::Size Dim_, typename Index_>
-struct PyArrayMapTraits
-    : public pico_tree::MapTraits<pico_tree::PointMap<Scalar_, Dim_>, Index_> {
-  using SpaceType = PyArrayMap<Scalar_, Dim_>;
+}  // namespace pyco_tree
+
+namespace pico_tree {
+
+template <typename Scalar_, pico_tree::Size Dim_>
+struct SpaceTraits<pyco_tree::PyArrayMap<Scalar_, Dim_>>
+    : public SpaceTraits<SpaceMap<pico_tree::PointMap<Scalar_, Dim_>>> {
+  using SpaceType = pyco_tree::PyArrayMap<Scalar_, Dim_>;
 };
 
-}  // namespace pyco_tree
+}  // namespace pico_tree
