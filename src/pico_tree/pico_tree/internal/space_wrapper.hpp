@@ -20,7 +20,7 @@ class SpaceWrapper {
   using ScalarType = typename SpaceTraitsType::ScalarType;
   static SizeType constexpr Dim = SpaceTraitsType::Dim;
 
-  explicit SpaceWrapper(SpaceType space) : space_(std::move(space)) {}
+  explicit SpaceWrapper(SpaceType const& space) : space_(space) {}
 
   template <typename Index_>
   inline ScalarType const* operator[](Index_ const index) const {
@@ -46,10 +46,8 @@ class SpaceWrapper {
 
   inline SizeType size() const { return SpaceTraitsType::Npts(space_); }
 
-  inline SpaceType const& space() const { return space_; }
-
  private:
-  SpaceType space_;
+  SpaceType const& space_;
 };
 
 }  // namespace internal

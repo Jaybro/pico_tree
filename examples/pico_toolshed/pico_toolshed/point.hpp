@@ -68,12 +68,11 @@ struct PointTraits<Point<Scalar_, Dim_>> {
   using ScalarType = Scalar_;
   static std::size_t constexpr Dim = Dim_;
 
-  inline static ScalarType const* Coords(Point<ScalarType, Dim_> const& point) {
+  inline static ScalarType const* Coords(PointType const& point) {
     return point.data();
   }
 
-  inline static std::size_t constexpr Sdim(
-      Point<ScalarType, Dim_> const& point) {
+  inline static std::size_t constexpr Sdim(PointType const& point) {
     return point.size();
   }
 };

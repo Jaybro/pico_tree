@@ -6,8 +6,6 @@
 #include "pico_tree/internal/point_wrapper.hpp"
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/internal/space_wrapper.hpp"
-#include "pico_tree/point_traits.hpp"
-#include "pico_tree/space_traits.hpp"
 
 namespace pico_tree {
 
@@ -31,10 +29,10 @@ class KdTree {
   //! \brief Index type.
   using IndexType = Index_;
   //! \brief Scalar type.
-  using ScalarType = typename SpaceTraits<Space_>::ScalarType;
+  using ScalarType = typename SpaceWrapperType::ScalarType;
   //! \brief KdTree dimension. It equals pico_tree::kDynamicSize in case Dim is
   //! only known at run-time.
-  static SizeType constexpr Dim = SpaceTraits<Space_>::Dim;
+  static SizeType constexpr Dim = SpaceWrapperType::Dim;
   //! \brief Point set or adaptor type.
   using SpaceType = Space_;
   //! \brief The metric used for various searches.
@@ -63,7 +61,7 @@ class KdTree {
   KdTree(SpaceType space, SizeType max_leaf_size)
       : space_(std::move(space)),
         metric_(),
-        data_(BuildKdTreeType()(space_, max_leaf_size)) {}
+        data_(BuildKdTreeType()(SpaceWrapperType(space_), max_leaf_size)) {}
 
   //! \brief The KdTree cannot be copied.
   //! \details The KdTree uses pointers to nodes and copying pointers is not
@@ -130,7 +128,7 @@ class KdTree {
       P const& x, SizeType const k, std::vector<NeighborType>& knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn.resize(std::min(k, space_.size()));
+    knn.resize(std::min(k, SpaceWrapperType(space_).size()));
     SearchKnn(x, knn.begin(), knn.end());
   }
 
@@ -196,7 +194,7 @@ class KdTree {
       std::vector<NeighborType>& knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn.resize(std::min(k, space_.size()));
+    knn.resize(std::min(k, SpaceWrapperType(space_).size()));
     SearchKnn(x, e, knn.begin(), knn.end());
   }
 
@@ -238,25 +236,25 @@ class KdTree {
   inline void SearchBox(
       P const& min, P const& max, std::vector<IndexType>& idxs) const {
     idxs.clear();
-    using PointTraitsType = PointTraits<P>;
+    SpaceWrapperType space(space_);
     // Note that it's never checked if the bounding box intersects at all. For
     // now it is assumed that this check is not worth it: If there is any
     // overlap then the search is slower. So unless many queries don't intersect
     // there is no point in adding it.
     internal::SearchBoxEuclidean<SpaceWrapperType, Metric_, IndexType>(
-        space_,
+        space,
         metric_,
         data_.indices,
         data_.root_box,
         internal::BoxMap<ScalarType const, Dim>(
-            PointTraitsType::Coords(min),
-            PointTraitsType::Coords(max),
-            space_.sdim()),
+            internal::PointWrapper<P>(min).begin(),
+            internal::PointWrapper<P>(max).begin(),
+            space.sdim()),
         idxs)(data_.root_node);
   }
 
   //! \brief Point set used by the tree.
-  inline SpaceType const& points() const { return space_.space(); }
+  inline SpaceType const& points() const { return space_; }
 
   //! \brief Metric used for search queries.
   inline MetricType const& metric() const { return metric_; }
@@ -308,38 +306,40 @@ class KdTree {
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node.
-  template <typename PointWrapper_, typename V>
+  template <typename PointWrapper_, typename Visitor_>
   inline void SearchNearest(
       NodeType const* const node,
       PointWrapper_ const& point,
-      V& visitor,
+      Visitor_& visitor,
       EuclideanSpaceTag) const {
+    SpaceWrapperType space(space_);
     internal::SearchNearestEuclidean<
         SpaceWrapperType,
         Metric_,
         PointWrapper_,
-        V,
-        IndexType>(space_, metric_, data_.indices, point, visitor)(node);
+        Visitor_,
+        IndexType>(space, metric_, data_.indices, point, visitor)(node);
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node.
-  template <typename PointWrapper_, typename V>
+  template <typename PointWrapper_, typename Visitor_>
   inline void SearchNearest(
       NodeType const* const node,
       PointWrapper_ const& point,
-      V& visitor,
+      Visitor_& visitor,
       TopologicalSpaceTag) const {
+    SpaceWrapperType space(space_);
     internal::SearchNearestTopological<
         SpaceWrapperType,
         Metric_,
         PointWrapper_,
-        V,
-        IndexType>(space_, metric_, data_.indices, point, visitor)(node);
+        Visitor_,
+        IndexType>(space, metric_, data_.indices, point, visitor)(node);
   }
 
   //! \brief Point set used for querying point data.
-  SpaceWrapperType space_;
+  SpaceType space_;
   //! \brief Metric used for comparing distances.
   MetricType metric_;
   //! \brief Data structure of the KdTree.

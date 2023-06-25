@@ -36,11 +36,13 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * Compile time and run time known dimensions.
   * Static tree builds.
   * Thread safe queries.
-* PicoTree can interface with different types of points or point sets through a traits class. This can be a custom implementation or one of the traits classes provided by this library:
-  * `pico_tree::StdTraits<>` supports interfacing with any `std::vector<PointType>`. It requires a specialization of `pico_tree::PointTraits<>` for each `PointType`. There are default `pico_tree::PointTraits<>` available for Eigen and OpenCV point types.
-  * `pico_tree::EigenTraits<>` supports interfacing with Eigen matrices.
-  * `pico_tree::CvTraits<>` supports interfacing with OpenCV matrices.
-  * `pico_tree::MapTraits<>` supports interfacing with raw pointers. It is assumed that points are laid out contiguously in memory.
+* PicoTree can interface with different types of points or point sets through a traits class. Interfacing with points requires a specialization of `pico_tree::PointTraits<>` and interfacing with point sets requires a specialization of `pico_tree::SpaceTraits<>`. This library provides default support for the following data types:
+  * `std::vector<PointType>`.
+    * It requires a specialization of `pico_tree::PointTraits<>` for each `PointType`. There are default `pico_tree::PointTraits<>` available for Eigen and OpenCV point types.
+  * `pico_tree::SpaceMap` and `pico_tree::PointMap`.
+    * These classes allow interfacing with raw pointers. It is assumed that points and their coordinates are laid out contiguously in memory.
+  * `Eigen::Matrix` and `Eigen::Map<Eigen::Matrix>`.
+  * `cv::Mat`.
 
 # Examples
 
