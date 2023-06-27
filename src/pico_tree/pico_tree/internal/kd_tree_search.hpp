@@ -29,10 +29,10 @@ class SearchNearestEuclidean {
   using NodeType = KdTreeNodeEuclidean<IndexType, ScalarType>;
 
   inline SearchNearestEuclidean(
-      SpaceWrapper_ const& space,
-      Metric_ const& metric,
+      SpaceWrapper_ space,
+      Metric_ metric,
       std::vector<IndexType> const& indices,
-      PointWrapper_ const& query,
+      PointWrapper_ query,
       Visitor_& visitor)
       : space_(space),
         metric_(metric),
@@ -112,10 +112,10 @@ class SearchNearestEuclidean {
     }
   }
 
-  SpaceWrapper_ const& space_;
-  Metric_ const& metric_;
+  SpaceWrapper_ space_;
+  Metric_ metric_;
   std::vector<IndexType> const& indices_;
-  PointWrapper_ const& query_;
+  PointWrapper_ query_;
   PointType node_box_offset_;
   Visitor_& visitor_;
 };
@@ -136,10 +136,10 @@ class SearchNearestTopological {
   using NodeType = KdTreeNodeTopological<IndexType, ScalarType>;
 
   inline SearchNearestTopological(
-      SpaceWrapper_ const& space,
-      Metric_ const& metric,
+      SpaceWrapper_ space,
+      Metric_ metric,
       std::vector<IndexType> const& indices,
-      PointWrapper_ const& query,
+      PointWrapper_ query,
       Visitor_& visitor)
       : space_(space),
         metric_(metric),
@@ -213,10 +213,10 @@ class SearchNearestTopological {
     }
   }
 
-  SpaceWrapper_ const& space_;
-  Metric_ const& metric_;
+  SpaceWrapper_ space_;
+  Metric_ metric_;
   std::vector<IndexType> const& indices_;
-  PointWrapper_ const& query_;
+  PointWrapper_ query_;
   PointType node_box_offset_;
   Visitor_& visitor_;
 };
@@ -242,8 +242,8 @@ class SearchBoxEuclidean {
   using BoxMapType = BoxMap<ScalarType const, Dim>;
 
   inline SearchBoxEuclidean(
-      SpaceWrapper_ const& space,
-      Metric_ const& metric,
+      SpaceWrapper_ space,
+      Metric_ metric,
       std::vector<IndexType> const& indices,
       BoxType const& root_box,
       BoxMapType const& query,
@@ -340,8 +340,8 @@ class SearchBoxEuclidean {
     }
   }
 
-  SpaceWrapper_ const& space_;
-  Metric_ const& metric_;
+  SpaceWrapper_ space_;
+  Metric_ metric_;
   std::vector<IndexType> const& indices_;
   // This variable is used for maintaining a running bounding box.
   BoxType box_;
