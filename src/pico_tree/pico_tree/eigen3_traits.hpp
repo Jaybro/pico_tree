@@ -150,7 +150,6 @@ struct EigenTraitsImpl<Derived, true> : public EigenTraitsBase<Derived> {
 }  // namespace internal
 
 //! \brief EigenTraits provides an interface for Eigen::Matrix<>.
-//! \tparam Index_ Type used for indexing. Defaults to int.
 template <
     typename Scalar_,
     int Rows_,
@@ -165,7 +164,6 @@ struct SpaceTraits<
 };
 
 //! \brief EigenTraits provides an interface for Eigen::Map<Eigen::Matrix<>>.
-//! \tparam Index_ Type used for indexing. Defaults to int.
 template <
     typename Scalar_,
     int Rows_,
@@ -183,44 +181,6 @@ struct SpaceTraits<Eigen::Map<
           Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
           MapOptions_,
           StrideType_>> {};
-
-//! \brief EigenTraits provides an interface for
-//! std::reference_wrapper<Eigen::Matrix<>>.
-//! \tparam Index_ Type used for indexing. Defaults to int.
-template <
-    typename Scalar_,
-    int Rows_,
-    int Cols_,
-    int Options_,
-    int MaxRows_,
-    int MaxCols_>
-struct SpaceTraits<std::reference_wrapper<
-    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>>>
-    : public SpaceTraits<
-          Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> {
-  //! \brief The SpaceType of these traits.
-  using SpaceType = std::reference_wrapper<
-      Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>>;
-};
-
-//! \brief EigenTraits provides an interface for
-//! std::reference_wrapper<Eigen::Matrix<> const>.
-//! \tparam Index_ Type used for indexing. Defaults to int.
-template <
-    typename Scalar_,
-    int Rows_,
-    int Cols_,
-    int Options_,
-    int MaxRows_,
-    int MaxCols_>
-struct SpaceTraits<std::reference_wrapper<
-    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const>>
-    : public SpaceTraits<
-          Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> {
-  //! \brief The SpaceType of these traits.
-  using SpaceType = std::reference_wrapper<
-      Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const>;
-};
 
 //! \brief PointTraits provides an interface for Eigen::Matrix<>.
 template <

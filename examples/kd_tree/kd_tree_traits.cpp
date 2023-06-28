@@ -51,15 +51,6 @@ struct SpaceTraits<std::deque<std::array<Scalar_, Dim_>>> {
   }
 };
 
-// This version of Traits makes the KdTree take the input by const reference.
-template <typename Scalar_, std::size_t Dim_>
-struct SpaceTraits<
-    std::reference_wrapper<std::deque<std::array<Scalar_, Dim_>>> const>
-    : public SpaceTraits<std::deque<std::array<Scalar_, Dim_>>> {
-  using SpaceType =
-      std::reference_wrapper<std::deque<std::array<Scalar_, Dim_>>> const;
-};
-
 }  // namespace pico_tree
 
 template <typename Tree>
@@ -82,7 +73,7 @@ int main() {
   {
     // A copy can be prevented by using an std::reference_wrapper.
     pico_tree::KdTree<
-        std::reference_wrapper<std::deque<std::array<float, 2>>> const>
+        std::reference_wrapper<std::deque<std::array<float, 2>> const>>
         tree(points, max_leaf_size);
 
     SearchPoint(tree);

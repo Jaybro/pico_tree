@@ -42,38 +42,4 @@ struct SpaceTraits<std::vector<Point_, Allocator_>> {
   }
 };
 
-//! \brief StdTraits provides an interface for
-//! std::reference_wrapper<std::vector<>> and points supported by
-//! PointTraits.
-//! \tparam Point_ Any of the point types supported by PointTraits.
-//! \tparam Allocator_ Allocator type used by the std::vector.
-template <typename Point_, typename Allocator_>
-struct SpaceTraits<std::reference_wrapper<std::vector<Point_, Allocator_>>>
-    : public SpaceTraits<std::vector<Point_, Allocator_>> {
-  //! \brief The SpaceType of these traits.
-  //! \details This overrides the SpaceType of the base class. No other
-  //! interface changes are required as an std::reference_wrapper can implicitly
-  //! be converted to its contained reference, which is a reference to an object
-  //! of the exact same type as that of the SpaceType of the base class.
-  using SpaceType = std::reference_wrapper<std::vector<Point_, Allocator_>>;
-};
-
-//! \brief StdTraits provides an interface for
-//! std::reference_wrapper<std::vector<> const> and points supported by
-//! PointTraits.
-//! \tparam Point_ Any of the point types supported by PointTraits.
-//! \tparam Allocator_ Allocator type used by the std::vector.
-template <typename Point_, typename Allocator_>
-struct SpaceTraits<
-    std::reference_wrapper<std::vector<Point_, Allocator_> const>>
-    : public SpaceTraits<std::vector<Point_, Allocator_>> {
-  //! \brief The SpaceType of these traits.
-  //! \details This overrides the SpaceType of the base class. No other
-  //! interface changes are required as an std::reference_wrapper can implicitly
-  //! be converted to its contained reference, which is a reference to an object
-  //! of the exact same type as that of the SpaceType of the base class.
-  using SpaceType =
-      std::reference_wrapper<std::vector<Point_, Allocator_> const>;
-};
-
 }  // namespace pico_tree
