@@ -13,7 +13,7 @@ See the table below to get an impression of the performance provided by the [KdT
 | [Scikit-learn KDTree][skkd] 0.22.2  | ...       | 12.2s         | ...        | 44.5s       |
 | [pykdtree][pykd] 1.3.6              | ...       | 1.0s          | ...        | 6.6s        |
 | [OpenCV FLANN][cvfn] 4.6.0          | 1.9s      | ...           | 4.7s       | ...         |
-| PicoTree KdTree v0.7.5              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
+| PicoTree KdTree v0.8.0              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
 
 It compares the performance of the build and query algorithms using two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863. The first point cloud is used to compare build times and both are used to compare query times. All benchmarks were generated with the following parameters: `max_leaf_size=10`, `knn=1` and `OMP_NUM_THREADS=1`. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
@@ -36,10 +36,10 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * Compile time and run time known dimensions.
   * Static tree builds.
   * Thread safe queries.
-* PicoTree can interface with different types of points or point sets through traits classes. These can be custom implementations or one of the `pico_tree::PointTraits<>` and `pico_tree::SpaceTraits<>` classes provided by this library. There is default support available for the following data types:
+* PicoTree can interface with different types of points or point sets through traits classes. These can be custom implementations or one of the `pico_tree::PointTraits<>` and `pico_tree::SpaceTraits<>` classes provided by this library. There is default support for the following data types:
   * `std::vector<PointType>`.
-    * It requires a specialization of `pico_tree::PointTraits<>` for each `PointType`. There are default `pico_tree::PointTraits<>` available for Eigen and OpenCV point types.
-  * `pico_tree::SpaceMap` and `pico_tree::PointMap`.
+    * A specialization of `pico_tree::PointTraits<>` is required for each `PointType`. There are traits available for Eigen and OpenCV point types.
+  * `pico_tree::SpaceMap<PointType>` and `pico_tree::PointMap<>`.
     * These classes allow interfacing with raw pointers. It is assumed that points and their coordinates are laid out contiguously in memory.
   * `Eigen::Matrix` and `Eigen::Map<Eigen::Matrix>`.
   * `cv::Mat`.
