@@ -34,7 +34,7 @@ class SearchNnCounter {
   //! \details This method is required.
   inline ScalarType const& max() const { return nn_.distance; }
 
-  //! \brief Returns the amount of points that were considered the nearest
+  //! \brief Returns the number of points that were considered the nearest
   //! neighbor.
   //! \details This method is not required.
   inline IndexType const& count() const { return count_; }

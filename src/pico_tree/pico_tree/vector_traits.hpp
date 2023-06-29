@@ -28,12 +28,12 @@ struct SpaceTraits<std::vector<Point_, Allocator_>> {
   static_assert(
       Dim != kDynamicSize, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
 
-  //! \brief Returns the dimension of the space in which the points reside.
-  //! I.e., the amount of coordinates each point has.
-  inline static SizeType constexpr Sdim(SpaceType const&) { return Dim; }
+  //! \brief Returns the number of coordinates or spatial dimension of each
+  //! point.
+  inline static SizeType constexpr sdim(SpaceType const&) { return Dim; }
 
   //! \brief Returns number of points contained by \p space.
-  inline static SizeType Npts(SpaceType const& space) { return space.size(); }
+  inline static SizeType size(SpaceType const& space) { return space.size(); }
 
   //! \brief Returns the point at \p idx from \p space.
   template <typename Index_>

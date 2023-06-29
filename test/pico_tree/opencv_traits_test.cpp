@@ -8,13 +8,12 @@
 TEST(OpenCvTest, Interface) {
   using Scalar = float;
   int constexpr Dim = 3;
-  using Traits = pico_tree::SpaceTraits<pico_tree::MatWrapper<Scalar, Dim>>;
 
   cv::Mat matrix(8, 3, cv::DataType<Scalar>::type);
   cv::randu(matrix, -Scalar(1.0), Scalar(1.0));
   cv::Mat row = matrix.row(matrix.rows - 1);
 
-  CheckTraits<Traits, Dim>(
+  CheckSpaceAdaptor<Dim>(
       pico_tree::MatWrapper<Scalar, Dim>(matrix),
       matrix.cols,
       matrix.rows,

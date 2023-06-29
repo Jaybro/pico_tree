@@ -30,12 +30,12 @@ struct PointTraits<cv::Point_<Scalar_>> {
   static SizeType constexpr Dim = 2;
 
   //! \brief Returns a pointer to the coordinates of \p point.
-  inline static ScalarType const* Coords(cv::Point_<Scalar_> const& point) {
+  inline static ScalarType const* data(cv::Point_<Scalar_> const& point) {
     return &point.x;
   }
 
   //! \brief Returns the spatial dimension of a cv::Point_.
-  inline static SizeType constexpr Sdim(cv::Point_<Scalar_> const&) {
+  inline static SizeType constexpr size(cv::Point_<Scalar_> const&) {
     return Dim;
   }
 };
@@ -55,12 +55,12 @@ struct PointTraits<cv::Point3_<Scalar_>> {
   static SizeType constexpr Dim = 3;
 
   //! \brief Returns a pointer to the coordinates of \p point.
-  inline static Scalar_ const* Coords(cv::Point3_<Scalar_> const& point) {
+  inline static Scalar_ const* data(cv::Point3_<Scalar_> const& point) {
     return &point.x;
   }
 
   //! \brief Returns the spatial dimension of a cv::Point3_.
-  inline static SizeType constexpr Sdim(cv::Point3_<Scalar_> const&) {
+  inline static SizeType constexpr size(cv::Point3_<Scalar_> const&) {
     return Dim;
   }
 };
@@ -78,12 +78,12 @@ struct PointTraits<cv::Vec<Scalar_, Dim_>> {
   static SizeType constexpr Dim = static_cast<SizeType>(Dim_);
 
   //! \brief Returns a pointer to the coordinates of \p point.
-  inline static Scalar_ const* Coords(cv::Vec<Scalar_, Dim_> const& point) {
+  inline static Scalar_ const* data(cv::Vec<Scalar_, Dim_> const& point) {
     return point.val;
   }
 
   //! \brief Returns the spatial dimension of a cv::Vec.
-  inline static SizeType constexpr Sdim(cv::Vec<Scalar_, Dim_> const&) {
+  inline static SizeType constexpr size(cv::Vec<Scalar_, Dim_> const&) {
     return Dim;
   }
 };
@@ -117,9 +117,9 @@ struct SpaceTraits<MatWrapper<Scalar_, Dim_>> {
   //! \brief Compile time spatial dimension.
   static constexpr SizeType Dim = Dim_;
 
-  //! \brief Returns the dimension of the space in which the points reside.
-  //! I.e., the amount of coordinates each point has.
-  inline static SizeType Sdim(cv::Mat const& space) {
+  //! \brief Returns the number of coordinates or spatial dimension of each
+  //! point.
+  inline static SizeType sdim(cv::Mat const& space) {
     if constexpr (Dim != kDynamicSize) {
       return Dim;
     } else {
@@ -130,7 +130,7 @@ struct SpaceTraits<MatWrapper<Scalar_, Dim_>> {
   }
 
   //! \brief Returns number of points contained by \p space.
-  inline static SizeType Npts(cv::Mat const& space) {
+  inline static SizeType size(cv::Mat const& space) {
     return static_cast<SizeType>(space.rows);
   }
 

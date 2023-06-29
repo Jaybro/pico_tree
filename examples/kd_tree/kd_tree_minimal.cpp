@@ -5,9 +5,7 @@
 // This example shows how to write a traits class for a custom point type that
 // is stored in an std::vector.
 
-// PointXYZ is based on the Point Cloud Library (PCL). Within PCL, PointXYZ is
-// actually a union between a float data[4] and a struct { float x, y, z; }, but
-// the traits we define here would still work.
+// PointXYZ is the custom point type for which we write a simple traits class.
 struct PointXYZ {
   float data[3];
 };
@@ -23,13 +21,12 @@ struct PointTraits<PointXYZ> {
   static std::size_t constexpr Dim = 3;
 
   // Returns a pointer to the coordinates of the input point.
-  inline static ScalarType const* Coords(PointXYZ const& point) {
+  inline static ScalarType const* data(PointXYZ const& point) {
     return point.data;
   }
 
-  // Returns the spatial dimension of the input point. Note that the input
-  // argument is ignored because the spatial dimension is known at compile time.
-  inline static std::size_t Sdim(PointXYZ const&) { return Dim; }
+  // Returns the number of coordinates or spatial dimension of each point.
+  inline static std::size_t size(PointXYZ const&) { return Dim; }
 };
 
 }  // namespace pico_tree

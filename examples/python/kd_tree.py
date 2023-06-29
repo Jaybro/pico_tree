@@ -54,7 +54,7 @@ def tree_creation_and_query_types():
 
     print("*** Radius Search ***")
     # A radius search doesn't return a numpy array but a custom vector of numpy
-    # arrays. This is because the amount of neighbors to each of input points
+    # arrays. This is because the number of neighbors to each of input points
     # may vary for a radius search.
     search_radius = t.metric(2.5)
     print(f"Result with radius: {search_radius}")

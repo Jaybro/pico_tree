@@ -8,11 +8,8 @@
 std::vector<Point2f> GetStdVector() { return {{1.0f, 2.0f}}; }
 
 TEST(StdTraitsTest, StdVector) {
-  using Space = std::vector<Point2f>;
-  using Traits = pico_tree::SpaceTraits<Space>;
-
   std::vector<Point2f> points = GetStdVector();
-  CheckTraits<Traits, Point2f::Dim>(
+  CheckSpaceAdaptor<Point2f::Dim>(
       points,
       Point2f::Dim,
       points.size(),
@@ -21,11 +18,8 @@ TEST(StdTraitsTest, StdVector) {
 }
 
 TEST(StdTraitsTest, StdRefVector) {
-  using Space = std::reference_wrapper<std::vector<Point2f>>;
-  using Traits = pico_tree::SpaceTraits<Space>;
-
   std::vector<Point2f> points = GetStdVector();
-  CheckTraits<Traits, Point2f::Dim>(
+  CheckSpaceAdaptor<Point2f::Dim>(
       std::ref(points),
       Point2f::Dim,
       points.size(),

@@ -10,7 +10,7 @@ namespace internal {
 //! memory and stores these in a list. Memory is only released when the resource
 //! is destructed or when calling the Release() method.
 //! \details A ListPoolResource is mainly useful for monotonically constructing
-//! objects of a single type when the total amount to be created cannot be known
+//! objects of a single type when the total number to be created cannot be known
 //! up front.
 //! <p/>
 //! A previous memory manager implementation was based on the std::deque. The

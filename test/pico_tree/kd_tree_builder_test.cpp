@@ -20,7 +20,7 @@ TEST(KdTreeTest, SplitterMedian) {
   using SplitterX = pico_tree::internal::SplitterLongestMedian<
       pico_tree::internal::SpaceWrapper<SpaceX>>;
 
-  // Check split of a list with an even amount of elements.
+  // Check split of a list with an even number of elements.
   std::vector<PointX> ptsx4{
       {0.0f, 4.0f}, {0.0f, 2.0f}, {0.0f, 3.0f}, {0.0f, 1.0f}};
   SpaceX spcx4(ptsx4);
@@ -43,7 +43,7 @@ TEST(KdTreeTest, SplitterMedian) {
   EXPECT_EQ(split_dim, 0);
   EXPECT_EQ(split_val, ptsx4[2][0]);
 
-  // Check split of a list with an odd amount of elements.
+  // Check split of a list with an odd number of elements.
   std::vector<PointX> ptsx7{
       {3.0f, 6.0f},
       {0.0f, 4.0f},

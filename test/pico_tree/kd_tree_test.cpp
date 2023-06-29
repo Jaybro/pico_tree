@@ -114,6 +114,9 @@ TEST(KdTreeTest, WriteRead) {
   DSpace drandom(random);
 
   {
+    static_assert(
+        pico_tree::KdTree<DSpace>::Dim == pico_tree::kDynamicSize,
+        "KD_TREE_DIM_NOT_DYNAMIC");
     // The points are not stored.
     pico_tree::KdTree<DSpace> tree(drandom, 1);
     pico_tree::KdTree<DSpace>::Save(tree, filename);
@@ -122,7 +125,7 @@ TEST(KdTreeTest, WriteRead) {
     // Points are required to load the tree.
     pico_tree::KdTree<DSpace> tree =
         pico_tree::KdTree<DSpace>::Load(drandom, filename);
-    TestKnn(tree, Index(20));
+    TestKnn(tree, 20);
   }
 
   EXPECT_EQ(std::remove(filename.c_str()), 0);

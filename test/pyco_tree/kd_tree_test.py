@@ -123,7 +123,7 @@ class KdTreeTest(unittest.TestCase):
         t.search_box(min, max, nns)
         self.assertEqual(nns[0][0], 0)
 
-        # Check the amount of indices found.
+        # Check the number of indices found.
         sizes = [1, 0, 3, 1]
         for n, s in zip(nns, sizes):
             self.assertEqual(len(n), s)

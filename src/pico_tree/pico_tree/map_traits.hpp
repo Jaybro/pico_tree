@@ -12,11 +12,11 @@ struct PointTraits<PointMap<Scalar_, Dim_>> {
   using SizeType = typename PointType::SizeType;
   static SizeType constexpr Dim = Dim_;
 
-  inline static ScalarType const* Coords(PointType const& point) {
+  inline static ScalarType const* data(PointType const& point) {
     return point.data();
   }
 
-  inline static SizeType Sdim(PointType const& point) { return point.size(); }
+  inline static SizeType size(PointType const& point) { return point.size(); }
 };
 
 //! \brief MapTraits provides an interface for spaces and points when working
@@ -29,9 +29,9 @@ struct SpaceTraits<SpaceMap<Point_>> {
   using SizeType = typename SpaceType::SizeType;
   static SizeType constexpr Dim = SpaceType::Dim;
 
-  inline static SizeType Sdim(SpaceType const& space) { return space.sdim(); }
+  inline static SizeType sdim(SpaceType const& space) { return space.sdim(); }
 
-  inline static SizeType Npts(SpaceType const& space) { return space.size(); }
+  inline static SizeType size(SpaceType const& space) { return space.size(); }
 
   template <typename Index_>
   inline static auto PointAt(SpaceType const& space, Index_ idx) {

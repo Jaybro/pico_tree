@@ -46,7 +46,7 @@ void BasicVector() {
 
 // This example shows to build a KdTree using a cv::Mat.
 void BasicMatrix() {
-  // Multiple columns based on the amount of coordinates in a point.
+  // Multiple columns based on the number of coordinates in a point.
   {
     cv::Mat random(kNumPoints, 3, cv::DataType<Scalar>::type);
     cv::randu(random, Scalar(0.0), kArea);

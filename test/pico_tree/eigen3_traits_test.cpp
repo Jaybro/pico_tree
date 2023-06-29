@@ -18,41 +18,27 @@ template <typename ColMatrix, typename RowMatrix>
 void CheckEigenAdaptorInterface() {
   ColMatrix col_matrix = ColMatrix::Random(4, 8);
   RowMatrix row_matrix = RowMatrix::Random(4, 8);
-  using ValColTraits = pico_tree::SpaceTraits<ColMatrix>;
-  using ValRowTraits = pico_tree::SpaceTraits<RowMatrix>;
-  using RefColTraits =
-      pico_tree::SpaceTraits<std::reference_wrapper<ColMatrix>>;
-  using RefRowTraits =
-      pico_tree::SpaceTraits<std::reference_wrapper<RowMatrix const>>;
 
-  CheckTraits<
-      ValColTraits,
-      static_cast<pico_tree::Size>(ColMatrix::RowsAtCompileTime)>(
+  CheckSpaceAdaptor<static_cast<pico_tree::Size>(ColMatrix::RowsAtCompileTime)>(
       col_matrix,
       col_matrix.rows(),
       col_matrix.cols(),
       static_cast<Eigen::Index>(0),
       col_matrix.col(0).data());
-  CheckTraits<
-      ValRowTraits,
-      static_cast<pico_tree::Size>(RowMatrix::ColsAtCompileTime)>(
+  CheckSpaceAdaptor<static_cast<pico_tree::Size>(RowMatrix::ColsAtCompileTime)>(
       row_matrix,
       row_matrix.cols(),
       row_matrix.rows(),
       static_cast<Eigen::Index>(0),
       row_matrix.row(0).data());
 
-  CheckTraits<
-      RefColTraits,
-      static_cast<pico_tree::Size>(ColMatrix::RowsAtCompileTime)>(
+  CheckSpaceAdaptor<static_cast<pico_tree::Size>(ColMatrix::RowsAtCompileTime)>(
       std::ref(col_matrix),
       col_matrix.rows(),
       col_matrix.cols(),
       col_matrix.cols() - 1,
       col_matrix.col(col_matrix.cols() - 1).data());
-  CheckTraits<
-      RefRowTraits,
-      static_cast<pico_tree::Size>(RowMatrix::ColsAtCompileTime)>(
+  CheckSpaceAdaptor<static_cast<pico_tree::Size>(RowMatrix::ColsAtCompileTime)>(
       std::cref(row_matrix),
       row_matrix.cols(),
       row_matrix.rows(),

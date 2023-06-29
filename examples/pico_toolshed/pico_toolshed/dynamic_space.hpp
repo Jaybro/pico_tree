@@ -12,7 +12,7 @@ class DynamicSpaceBase {
 
   inline explicit DynamicSpaceBase(Space_ space)
       : space_(std::move(space)),
-        sdim_(pico_tree::SpaceTraits<Space_>::Sdim(space_)) {}
+        sdim_(pico_tree::SpaceTraits<Space_>::sdim(space_)) {}
 
   inline SizeType sdim() const { return sdim_; }
 

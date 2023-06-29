@@ -57,7 +57,7 @@ class KdTree {
   //! The exact effect it has depends on the tree splitting mechanism.
   //!
   //! \param points The input point set (interface).
-  //! \param max_leaf_size The maximum amount of points allowed in a leaf node.
+  //! \param max_leaf_size The maximum number of points allowed in a leaf node.
   KdTree(SpaceType space, SizeType max_leaf_size)
       : space_(std::move(space)),
         metric_(),
@@ -143,7 +143,7 @@ class KdTree {
   //! neighbor: max_ann_distance = true_nn_distance * e. This holds true for
   //! each respective nn index i, 0 <= i < k.
   //!
-  //! The amount of requested neighbors, k, should be sufficiently large to get
+  //! The number of requested neighbors, k, should be sufficiently large to get
   //! a noticeable speed increase from this method. Within a leaf all points are
   //! compared to the query anyway, even if they are skipped. These calculations
   //! can be avoided by skipping leafs completely, which will never happen if

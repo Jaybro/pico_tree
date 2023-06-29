@@ -16,14 +16,14 @@ class PointWrapper {
   static SizeType constexpr Dim = PointTraitsType::Dim;
 
   inline ScalarType const* data() const {
-    return PointTraitsType::Coords(point_);
+    return PointTraitsType::data(point_);
   }
 
   constexpr SizeType size() const {
     if constexpr (Dim != kDynamicSize) {
       return Dim;
     } else {
-      return PointTraitsType::Sdim(point_);
+      return PointTraitsType::size(point_);
     }
   }
 

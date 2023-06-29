@@ -36,7 +36,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
   * Compile time and run time known dimensions.
   * Static tree builds.
   * Thread safe queries.
-* PicoTree can interface with different types of points or point sets through a traits class. Interfacing with points requires a specialization of `pico_tree::PointTraits<>` and interfacing with point sets requires a specialization of `pico_tree::SpaceTraits<>`. This library provides default support for the following data types:
+* PicoTree can interface with different types of points or point sets through traits classes. These can be custom implementations or one of the `pico_tree::PointTraits<>` and `pico_tree::SpaceTraits<>` classes provided by this library. There is default support available for the following data types:
   * `std::vector<PointType>`.
     * It requires a specialization of `pico_tree::PointTraits<>` for each `PointType`. There are default `pico_tree::PointTraits<>` available for Eigen and OpenCV point types.
   * `pico_tree::SpaceMap` and `pico_tree::PointMap`.
@@ -46,8 +46,8 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 # Examples
 
-* [Minimal working example](./examples/kd_tree/kd_tree_point_traits.cpp) for building and querying a KdTree using a custom point type.
-* Creating a [traits](./examples/kd_tree/kd_tree_traits.cpp) class for a custom type of point set.
+* [Minimal working example](./examples/kd_tree/kd_tree_minimal.cpp) using an std::vector of points.
+* Creating [traits](./examples/kd_tree/kd_tree_traits.cpp) classes for a custom point and point set.
 * Using the KdTree's [search](./examples/kd_tree/kd_tree_search.cpp) options and creating a custom search visitor.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).

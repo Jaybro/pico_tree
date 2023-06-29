@@ -16,13 +16,12 @@ struct PointTraits<std::array<Scalar_, Dim_>> {
   static std::size_t constexpr Dim = Dim_;
 
   // Returns a pointer to the coordinates of the input point.
-  inline static ScalarType const* Coords(PointType const& point) {
+  inline static ScalarType const* data(PointType const& point) {
     return point.data();
   }
 
-  // Returns the spatial dimension of the input point. Note that the input
-  // argument is ignored because the spatial dimension is known at compile time.
-  inline static std::size_t constexpr Sdim(PointType const&) { return Dim; }
+  // Returns the number of coordinates or spatial dimension of each point.
+  inline static constexpr std::size_t size(PointType const&) { return Dim; }
 };
 
 // Provides an interface for an std::deque<std::array>.
@@ -35,19 +34,19 @@ struct SpaceTraits<std::deque<std::array<Scalar_, Dim_>>> {
   // only known at run-time.
   static std::size_t constexpr Dim = Dim_;
 
-  // Returns the amount of coordinates of each point.
-  inline static std::size_t Sdim(SpaceType const&) { return Dim; }
+  // Returns the number of coordinates or spatial dimension of each point.
+  inline static constexpr std::size_t sdim(SpaceType const&) { return Dim; }
 
   // Returns number of points contained by the space.
-  inline static std::size_t Npts(SpaceType const& space) {
+  inline static std::size_t size(SpaceType const& space) {
     return space.size();
   }
 
-  // Returns the idx'th point from the input space.
+  // Returns a point from the input space at the specified index.
   template <typename Index_>
   inline static PointType const& PointAt(
-      SpaceType const& space, Index_ const idx) {
-    return space[static_cast<std::size_t>(idx)];
+      SpaceType const& space, Index_ const index) {
+    return space[static_cast<std::size_t>(index)];
   }
 };
 

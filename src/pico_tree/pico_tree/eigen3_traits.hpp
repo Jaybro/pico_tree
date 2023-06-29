@@ -60,12 +60,12 @@ struct EigenPointTraits {
   static SizeType constexpr Dim = EigenDimToPicoDim(EigenVectorDim<Derived>());
 
   //! \brief Returns a pointer to the coordinates of \p point.
-  inline static ScalarType const* Coords(Derived const& point) {
+  inline static ScalarType const* data(Derived const& point) {
     return point.derived().data();
   }
 
   //! \brief Returns the spatial dimension of \p point.
-  inline static SizeType Sdim(Derived const& point) {
+  inline static SizeType size(Derived const& point) {
     return static_cast<SizeType>(point.size());
   }
 };
@@ -98,14 +98,14 @@ struct EigenTraitsImpl<Derived, false> : public EigenTraitsBase<Derived> {
   //! \brief The scalar type of point coordinates.
   using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
 
-  //! \brief Returns the dimension of the space in which the points reside.
-  //! I.e., the amount of coordinates each point has.
-  inline static SizeType Sdim(Eigen::MatrixBase<Derived> const& matrix) {
+  //! \brief Returns the number of coordinates or spatial dimension of each
+  //! point.
+  inline static SizeType sdim(Eigen::MatrixBase<Derived> const& matrix) {
     return static_cast<SizeType>(matrix.rows());
   }
 
   //! \brief Returns the number of points.
-  inline static SizeType Npts(Derived const& matrix) {
+  inline static SizeType size(Derived const& matrix) {
     return static_cast<SizeType>(matrix.cols());
   }
 
@@ -129,14 +129,14 @@ struct EigenTraitsImpl<Derived, true> : public EigenTraitsBase<Derived> {
   //! \brief The scalar type of point coordinates.
   using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
 
-  //! \brief Returns the dimension of the space in which the points reside.
-  //! I.e., the amount of coordinates each point has.
-  inline static SizeType Sdim(Derived const& matrix) {
+  //! \brief Returns the number of coordinates or spatial dimension of each
+  //! point.
+  inline static SizeType sdim(Derived const& matrix) {
     return static_cast<SizeType>(matrix.cols());
   }
 
   //! \brief Returns the number of points.
-  inline static SizeType Npts(Derived const& matrix) {
+  inline static SizeType size(Derived const& matrix) {
     return static_cast<SizeType>(matrix.rows());
   }
 

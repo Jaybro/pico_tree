@@ -24,7 +24,7 @@ class SpaceWrapper {
 
   template <typename Index_>
   inline ScalarType const* operator[](Index_ const index) const {
-    return PointTraitsType::Coords(SpaceTraitsType::PointAt(space_, index));
+    return PointTraitsType::data(SpaceTraitsType::PointAt(space_, index));
   }
 
   inline Box<ScalarType, Dim> ComputeBoundingBox() const {
@@ -40,11 +40,11 @@ class SpaceWrapper {
     if constexpr (Dim != kDynamicSize) {
       return Dim;
     } else {
-      return SpaceTraitsType::Sdim(space_);
+      return SpaceTraitsType::sdim(space_);
     }
   }
 
-  inline SizeType size() const { return SpaceTraitsType::Npts(space_); }
+  inline SizeType size() const { return SpaceTraitsType::size(space_); }
 
  private:
   SpaceType const& space_;

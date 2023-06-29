@@ -18,7 +18,7 @@ The different KdTree implementations are compared to each other with respect to 
   * Nanoflann Midpoint variation.
   * PicoTree Sliding Midpoint (along the longest axis).
 * Radius search algorithm: The radius in meters divided by 10 (i.e. 1.5m and 3.0m).
-* Knn algorithm: The amount of neighbors searched.
+* Knn algorithm: The number of neighbors searched.
 
 The running time of the benchmark was kept reasonable by using two subsets of points and storing those in a simple binary format. The final point cloud sizes were as follows:
 
