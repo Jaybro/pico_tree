@@ -1,12 +1,43 @@
 #pragma once
 
 #include <algorithm>
+#include <iterator>
 
 #include "pico_tree/core.hpp"
 
 namespace pico_tree {
 
 namespace internal {
+
+//! \brief Inserts \p item in O(n) time at the index for which \p comp first
+//! holds true. The sequence must be sorted and remains sorted after insertion.
+//! The last item in the sequence is overwritten / "pushed out".
+//! \details The contents of the indices at which \p comp holds true are moved
+//! to the next index. Thus, starting from the end of the sequence, each item[i]
+//! gets replaced by item[i - 1] until \p comp results in false. The worst case
+//! has n comparisons and n copies, traversing the entire sequence.
+//! <p/>
+//! This algorithm is used as the inner loop of insertion sort:
+//! * https://en.wikipedia.org/wiki/Insertion_sort
+template <
+    typename RandomAccessIterator_,
+    typename Compare_ = std::less<
+        typename std::iterator_traits<RandomAccessIterator_>::value_type>>
+inline void InsertSorted(
+    RandomAccessIterator_ begin,
+    RandomAccessIterator_ end,
+    typename std::iterator_traits<RandomAccessIterator_>::value_type item,
+    Compare_ comp = Compare_()) {
+  std::advance(end, -1);
+  for (; end > begin && comp(item, *std::prev(end)); --end) {
+    *end = std::move(*std::prev(end));
+  }
+  // We update the inserted element outside of the loop. This is done for the
+  // case where we didn't break, simply reaching the end of the loop. This
+  // happens when we need to replace the first element in the sequence (the last
+  // item encountered).
+  *end = std::move(item);
+}
 
 //! \brief KdTree search visitor for finding a single nearest neighbor.
 template <typename Neighbor_>
@@ -17,7 +48,7 @@ class SearchNn {
   using ScalarType = typename Neighbor_::ScalarType;
 
   //! \private
-  inline SearchNn(NeighborType* nn) : nn_{*nn} {
+  inline SearchNn(NeighborType& nn) : nn_{nn} {
     nn_.distance = std::numeric_limits<ScalarType>::max();
   }
 
@@ -52,10 +83,10 @@ template <typename RandomAccessIterator_>
 class SearchKnn {
  public:
   static_assert(
-      std::is_same<
+      std::is_base_of_v<
+          std::random_access_iterator_tag,
           typename std::iterator_traits<
-              RandomAccessIterator_>::iterator_category,
-          std::random_access_iterator_tag>::value,
+              RandomAccessIterator_>::iterator_category>,
       "SEARCH_KNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
   using NeighborType =
@@ -92,15 +123,14 @@ class SearchKnn {
 //! \brief KdTree search visitor for finding all neighbors within a radius.
 template <typename Neighbor_>
 class SearchRadius {
- private:
+ public:
   using NeighborType = Neighbor_;
   using IndexType = typename Neighbor_::IndexType;
   using ScalarType = typename Neighbor_::ScalarType;
 
- public:
   //! \private
-  inline SearchRadius(ScalarType const radius, std::vector<NeighborType>* n)
-      : radius_{radius}, n_{*n} {
+  inline SearchRadius(ScalarType const radius, std::vector<NeighborType>& n)
+      : radius_{radius}, n_{n} {
     n_.clear();
   }
 
@@ -117,7 +147,7 @@ class SearchRadius {
   inline ScalarType max() const { return radius_; }
 
  private:
-  ScalarType const radius_;
+  ScalarType radius_;
   std::vector<NeighborType>& n_;
 };
 
@@ -138,10 +168,10 @@ template <typename RandomAccessIterator_>
 class SearchAknn {
  public:
   static_assert(
-      std::is_same<
+      std::is_base_of_v<
+          std::random_access_iterator_tag,
           typename std::iterator_traits<
-              RandomAccessIterator_>::iterator_category,
-          std::random_access_iterator_tag>::value,
+              RandomAccessIterator_>::iterator_category>,
       "SEARCH_AKNN_EXPECTED_RANDOM_ACCESS_ITERATOR");
 
   using NeighborType =

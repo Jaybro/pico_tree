@@ -1,5 +1,6 @@
 #include <pico_toolshed/point.hpp>
 #include <pico_toolshed/scoped_timer.hpp>
+#include <pico_tree/vector_traits.hpp>
 #include <pico_understory/cover_tree.hpp>
 
 #include "benchmark.hpp"
@@ -10,11 +11,10 @@ class BmPicoCoverTree : public pico_tree::Benchmark {
 
 // Index explicitly set to int.
 template <typename PointX>
-using PicoTraits =
-    pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>, int>;
+using PicoSpace = std::reference_wrapper<std::vector<PointX>>;
 
 template <typename PointX>
-using PicoCoverTree = pico_tree::CoverTree<PicoTraits<PointX>>;
+using PicoCoverTree = pico_tree::CoverTree<PicoSpace<PointX>>;
 
 // ****************************************************************************
 // Building the tree
@@ -54,7 +54,7 @@ BENCHMARK_DEFINE_F(BmPicoCoverTree, KnnCt)(benchmark::State& state) {
       ScopedTimer timer("query_group");
       for (; pi < group_end; ++pi) {
         auto const& p = points_test_[pi];
-        tree.SearchKnn(p, knn_count, &results);
+        tree.SearchKnn(p, knn_count, results);
         benchmark::DoNotOptimize(sum += results.size());
       }
     }

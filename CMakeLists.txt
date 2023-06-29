@@ -6,8 +6,8 @@ include (${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils.cmake)
 
 project(pico_tree
     LANGUAGES CXX
-    VERSION 0.7.5
-    DESCRIPTION "PicoTree is a C++ header only library with Python bindings for nearest neighbor searches and range searches using a KdTree."
+    VERSION 0.8.0
+    DESCRIPTION "PicoTree is a C++ header only library for fast nearest neighbor searches and range searches using a KdTree."
     HOMEPAGE_URL "https://github.com/Jaybro/pico_tree")
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -59,7 +59,7 @@ if(NOT SKBUILD)
                 ${DOC_TARGET_NAME}
                 src/pico_tree)
 
-            message(STATUS "Doxygen found. Documentation can be build as: make ${DOC_TARGET_NAME}")
+            message(STATUS "Doxygen found. To build the documentation: cmake --build . --target ${DOC_TARGET_NAME}")
         else()
             message(STATUS "Doxygen not found. Documentation cannot be build.")
         endif()

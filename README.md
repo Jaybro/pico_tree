@@ -13,7 +13,7 @@ See the table below to get an impression of the performance provided by the [KdT
 | [Scikit-learn KDTree][skkd] 0.22.2  | ...       | 12.2s         | ...        | 44.5s       |
 | [pykdtree][pykd] 1.3.6              | ...       | 1.0s          | ...        | 6.6s        |
 | [OpenCV FLANN][cvfn] 4.6.0          | 1.9s      | ...           | 4.7s       | ...         |
-| PicoTree KdTree v0.7.5              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
+| PicoTree KdTree v0.8.0              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
 
 It compares the performance of the build and query algorithms using two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863. The first point cloud is used to compare build times and both are used to compare query times. All benchmarks were generated with the following parameters: `max_leaf_size=10`, `knn=1` and `OMP_NUM_THREADS=1`. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
@@ -27,22 +27,27 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 # Capabilities
 
-* KdTree
-  * Nearest neighbors, approximate nearest neighbors, radius, and box searches.
-  * Customizable nearest neighbor searches, [metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)) and tree splitting techniques.
-  * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
+* KdTree:
+  * Nearest neighbor, approximate nearest neighbor, radius, box, and customizable nearest neighbor searches.
+  * Multiple tree splitting rules: `kLongestMedian`, `kMidpoint` and `kSlidingMidpoint`.
+  * [Metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)):
+    * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
+    * Available metrics: `L1`, `L2Squared`, `SO2`, and `SE2Squared`. Metrics can be customized.
   * Compile time and run time known dimensions.
   * Static tree builds.
   * Thread safe queries.
-* PicoTree can interface with different types of points or point sets through a traits class. This can be a custom implementation or one of the traits classes provided by this library:
-  * `pico_tree::StdTraits<>` supports interfacing with any `std::vector<PointType>`. It requires a specialization of `pico_tree::StdPointTraits<>` for each `PointType`. There are default `pico_tree::StdPointTraits<>` available for Eigen and OpenCV point types.
-  * `pico_tree::EigenTraits<>` supports interfacing with Eigen matrices.
-  * `pico_tree::CvTraits<>` supports interfacing with OpenCV matrices.
+* PicoTree can interface with different types of points or point sets through traits classes. These can be custom implementations or one of the `pico_tree::PointTraits<>` and `pico_tree::SpaceTraits<>` classes provided by this library. There is default support for the following data types:
+  * `std::vector<PointType>`.
+    * A specialization of `pico_tree::PointTraits<>` is required for each `PointType`. There are traits available for Eigen and OpenCV point types.
+  * `pico_tree::SpaceMap<PointType>` and `pico_tree::PointMap<>`.
+    * These classes allow interfacing with raw pointers. It is assumed that points and their coordinates are laid out contiguously in memory.
+  * `Eigen::Matrix` and `Eigen::Map<Eigen::Matrix>`.
+  * `cv::Mat`.
 
 # Examples
 
-* [Minimal working example](./examples/kd_tree/kd_tree_point_traits.cpp) for building and querying a KdTree using a custom point type.
-* Creating a [traits](./examples/kd_tree/kd_tree_traits.cpp) class for a custom type of point set.
+* [Minimal working example](./examples/kd_tree/kd_tree_minimal.cpp) using an std::vector of points.
+* Creating [traits](./examples/kd_tree/kd_tree_traits.cpp) classes for a custom point and point set.
 * Using the KdTree's [search](./examples/kd_tree/kd_tree_search.cpp) options and creating a custom search visitor.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).
@@ -51,7 +56,7 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 Minimum:
 
-* A compiler that is compliant with the C++11 standard or higher.
+* A compiler that is compliant with the C++17 standard or higher.
 * [CMake](https://cmake.org/). It is also possible to just copy and paste the [pico_tree](./src/pico_tree/) directory into an include directory.
 
 Optional:
@@ -60,7 +65,7 @@ Optional:
 * [Google Test](https://github.com/google/googletest). Used for running unit tests.
 * [Eigen](http://eigen.tuxfamily.org). To run the example that shows how Eigen data types can be used in combination with PicoTree.
 * [OpenCV](https://opencv.org/). To run the OpenCV example that shows how to work with OpenCV data types.
-* [Google Benchmark](https://github.com/google/benchmark) and a compiler that is compliant with the C++17 standard are needed to run any of the benchmarks. The [nanoflann](https://github.com/jlblancoc/nanoflann) and [OpenCV](https://opencv.org/) benchmarks also require their respective libraries to be installed.
+* [Google Benchmark](https://github.com/google/benchmark) is needed to run any of the benchmarks. The [nanoflann](https://github.com/jlblancoc/nanoflann) and [OpenCV](https://opencv.org/) benchmarks also require their respective libraries to be installed.
 
 Python bindings:
 * [Python](https://www.python.org/). Version 3.7 or higher.

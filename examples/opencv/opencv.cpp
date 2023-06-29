@@ -1,6 +1,7 @@
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/kd_tree.hpp>
-#include <pico_tree/opencv.hpp>
+#include <pico_tree/opencv_traits.hpp>
+#include <pico_tree/vector_traits.hpp>
 #include <random>
 
 using Index = int;
@@ -31,34 +32,32 @@ void BasicVector() {
   using PointX = cv::Point3_<Scalar>;
   std::vector<PointX> random = GenerateRandomPoint3N(kNumPoints, kArea);
 
-  pico_tree::KdTree<
-      pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>>>
-      tree(random, 10);
+  pico_tree::KdTree<std::reference_wrapper<std::vector<PointX>>> tree(
+      random, 10);
 
   auto p = random[random.size() / 2];
 
   pico_tree::Neighbor<Index, Scalar> nn;
   ScopedTimer t("pico_tree cv vector", kRunCount);
   for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchNn(p, &nn);
+    tree.SearchNn(p, nn);
   }
 }
 
 // This example shows to build a KdTree using a cv::Mat.
 void BasicMatrix() {
-  // Multiple columns based on the amount of coordinates in a point.
+  // Multiple columns based on the number of coordinates in a point.
   {
     cv::Mat random(kNumPoints, 3, cv::DataType<Scalar>::type);
     cv::randu(random, Scalar(0.0), kArea);
 
-    pico_tree::KdTree<pico_tree::CvTraits<Scalar, 3>> tree(random, 10);
-
-    pico_tree::CvMatRow<Scalar, 3> p(tree.points().rows / 2, tree.points());
+    pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(random, 10);
+    pico_tree::PointMap<Scalar, 3> p(random.ptr<Scalar>(random.rows / 2));
 
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree cv mat", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchNn(p, &nn);
+      tree.SearchNn(p, nn);
     }
   }
 
@@ -67,14 +66,15 @@ void BasicMatrix() {
     using PointX = cv::Point3_<Scalar>;
     std::vector<PointX> random = GenerateRandomPoint3N(kNumPoints, kArea);
 
-    pico_tree::KdTree<pico_tree::CvTraits<Scalar, 3>> tree(cv::Mat(random), 10);
+    pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(
+        cv::Mat(random), 10);
 
     PointX p = random[random.size() / 2];
 
     pico_tree::Neighbor<Index, Scalar> nn;
     ScopedTimer t("pico_tree cv mat", kRunCount);
     for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchNn(p, &nn);
+      tree.SearchNn(p, nn);
     }
   }
 }

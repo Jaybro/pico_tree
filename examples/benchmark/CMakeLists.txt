@@ -44,8 +44,6 @@ endif()
 add_executable(uosr_to_bin uosr_to_bin.cpp)
 set_default_target_properties(uosr_to_bin)
 target_link_libraries(uosr_to_bin PRIVATE pico_toolshed)
-# This executable requires <filesystem>
-target_compile_features(uosr_to_bin PRIVATE cxx_std_17)
 
 ################################################################################
 # bin_to_ascii
@@ -54,8 +52,6 @@ target_compile_features(uosr_to_bin PRIVATE cxx_std_17)
 add_executable(bin_to_ascii bin_to_ascii.cpp)
 set_default_target_properties(bin_to_ascii)
 target_link_libraries(bin_to_ascii PRIVATE pico_toolshed)
-# This executable requires <filesystem>
-target_compile_features(bin_to_ascii PRIVATE cxx_std_17)
 
 ################################################################################
 # plot_benchmarks

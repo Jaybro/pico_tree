@@ -4,7 +4,7 @@
 
 #include "format_bin.hpp"
 
-// It seems that there is a "threshold" to the amount of functions being
+// It seems that there is a "threshold" to the number of functions being
 // benchmarked. Having "too many" of them makes them become slow(er). This
 // appears to be due to code alignment. See similar issue and video referencing
 // that issue:

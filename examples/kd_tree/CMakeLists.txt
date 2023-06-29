@@ -1,6 +1,6 @@
-add_executable(kd_tree_point_traits kd_tree_point_traits.cpp)
-set_default_target_properties(kd_tree_point_traits)
-target_link_libraries(kd_tree_point_traits PUBLIC PicoTree::PicoTree)
+add_executable(kd_tree_minimal kd_tree_minimal.cpp)
+set_default_target_properties(kd_tree_minimal)
+target_link_libraries(kd_tree_minimal PUBLIC PicoTree::PicoTree)
 
 add_executable(kd_tree_traits kd_tree_traits.cpp)
 set_default_target_properties(kd_tree_traits)

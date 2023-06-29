@@ -10,7 +10,7 @@ namespace internal {
 //! memory and stores these in a list. Memory is only released when the resource
 //! is destructed or when calling the Release() method.
 //! \details A ListPoolResource is mainly useful for monotonically constructing
-//! objects of a single type when the total amount to be created cannot be known
+//! objects of a single type when the total number to be created cannot be known
 //! up front.
 //! <p/>
 //! A previous memory manager implementation was based on the std::deque. The
@@ -24,9 +24,9 @@ class ListPoolResource {
   struct Node;
 
  public:
-  static_assert(std::is_trivial<T>::value, "TYPE_T_IS_NOT_TRIVIAL");
+  static_assert(std::is_trivial_v<T>, "TYPE_T_IS_NOT_TRIVIAL");
   static_assert(
-      std::is_trivially_destructible<T>::value,
+      std::is_trivially_destructible_v<T>,
       "TYPE_T_IS_NOT_TRIVIALLY_DESTRUCTIBLE");
 
   //! \brief Value type allocated by the ListPoolResource.

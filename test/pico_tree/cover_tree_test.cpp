@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <pico_toolshed/point.hpp>
+#include <pico_tree/vector_traits.hpp>
 #include <pico_understory/cover_tree.hpp>
 
 #include "common.hpp"
@@ -12,11 +13,8 @@ namespace {
 template <typename PointX>
 using Space = std::reference_wrapper<std::vector<PointX>>;
 
-template <typename SpaceX>
-using Traits = pico_tree::StdTraits<SpaceX>;
-
 template <typename PointX>
-using CoverTree = pico_tree::CoverTree<Traits<Space<PointX>>>;
+using CoverTree = pico_tree::CoverTree<Space<PointX>>;
 
 template <typename PointX>
 void QueryRadius(

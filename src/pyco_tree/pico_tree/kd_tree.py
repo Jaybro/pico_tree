@@ -48,7 +48,7 @@ def KdTree(pts: np.array, metric: Metric, max_leaf_size: int):
     Args:
         pts (np.array): Input point set represented by a numpy ndarray of two dimensions.
         metric (Metric): Reference to a distance function.
-        max_leaf_size (int): The maximum amount of points contained by a leaf node.
+        max_leaf_size (int): The maximum number of points contained by a leaf node.
 
     Returns:
         A KdTree instance.

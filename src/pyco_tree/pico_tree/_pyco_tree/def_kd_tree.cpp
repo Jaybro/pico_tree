@@ -9,9 +9,9 @@ namespace py = pybind11;
 namespace pyco_tree {
 
 template <typename PointX>
-using KdTreeL1 = KdTree<TraitsX<PointX>, L1<TraitsX<PointX>>>;
+using KdTreeL1 = KdTree<SpaceX<PointX>, pico_tree::L1>;
 template <typename PointX>
-using KdTreeL2 = KdTree<TraitsX<PointX>, L2Squared<TraitsX<PointX>>>;
+using KdTreeL2 = KdTree<SpaceX<PointX>, pico_tree::L2Squared>;
 
 // Dynamic size KdTree
 using KdTreeXfL1 = KdTreeL1<PointsXf>;
@@ -130,12 +130,12 @@ void DefKdTree(std::string const& name, py::module* m) {
           "Search the k nearest neighbors for each of the input points. The "
           "memory layout of the output will be the same as that of the input.")
       .def(
-          "search_aknn",
+          "search_knn",
           static_cast<void (KdTree::*)(
               py::array_t<Scalar, 0> const,
               Index const,
               Scalar const,
-              py::array_t<Neighbor, 0>) const>(&KdTree::SearchAknn),
+              py::array_t<Neighbor, 0>) const>(&KdTree::SearchKnn),
           py::arg("pts").noconvert().none(false),
           py::arg("k").none(false),
           py::arg("e").none(false),
@@ -145,10 +145,10 @@ void DefKdTree(std::string const& name, py::module* m) {
           "output will be resized when its shape is not (npts, k). If resized, "
           "its memory layout will be the same as that of the input.")
       .def(
-          "search_aknn",
+          "search_knn",
           static_cast<py::array_t<Neighbor, 0> (KdTree::*)(
               py::array_t<Scalar, 0> const, Index const, Scalar const) const>(
-              &KdTree::SearchAknn),
+              &KdTree::SearchKnn),
           py::arg("pts").noconvert().none(false),
           py::arg("k").none(false),
           py::arg("e").none(false),
@@ -160,7 +160,7 @@ void DefKdTree(std::string const& name, py::module* m) {
           static_cast<void (KdTree::*)(
               py::array_t<Scalar, 0> const,
               Scalar const,
-              Neighborhoods*,
+              Neighborhoods&,
               bool const) const>(&KdTree::SearchRadius),
           py::arg("pts").noconvert().none(false),
           py::arg("radius").none(false),
@@ -183,7 +183,7 @@ void DefKdTree(std::string const& name, py::module* m) {
           static_cast<void (KdTree::*)(
               py::array_t<Scalar, 0> const,
               py::array_t<Scalar, 0> const,
-              Neighborhoods*) const>(&KdTree::SearchBox),
+              Neighborhoods&) const>(&KdTree::SearchBox),
           py::arg("min").noconvert().none(false),
           py::arg("max").noconvert().none(false),
           py::arg("box").noconvert().none(false),

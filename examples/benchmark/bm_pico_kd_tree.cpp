@@ -1,5 +1,7 @@
+#include <pico_toolshed/dynamic_space.hpp>
 #include <pico_toolshed/point.hpp>
 #include <pico_tree/kd_tree.hpp>
+#include <pico_tree/vector_traits.hpp>
 
 #include "benchmark.hpp"
 
@@ -7,20 +9,17 @@ class BmPicoKdTree : public pico_tree::Benchmark {
  public:
 };
 
-// Index explicitly set to int.
 template <typename PointX>
-using PicoTraits =
-    pico_tree::StdTraits<std::reference_wrapper<std::vector<PointX>>, int>;
+using PicoCtSpace = std::reference_wrapper<std::vector<PointX>>;
 
 template <typename PointX>
-using PicoKdTreeCtSldMid = pico_tree::KdTree<PicoTraits<PointX>>;
+using PicoRtSpace = DynamicSpace<std::reference_wrapper<std::vector<PointX>>>;
 
 template <typename PointX>
-using PicoKdTreeRtSldMid = pico_tree::KdTree<
-    PicoTraits<PointX>,
-    pico_tree::L2Squared<PicoTraits<PointX>>,
-    pico_tree::SplitterSlidingMidpoint<PicoTraits<PointX>>,
-    pico_tree::kDynamicDim>;
+using PicoKdTreeCtSldMid = pico_tree::KdTree<PicoCtSpace<PointX>>;
+
+template <typename PointX>
+using PicoKdTreeRtSldMid = pico_tree::KdTree<PicoRtSpace<PointX>>;
 
 // ****************************************************************************
 // Building the tree
@@ -38,7 +37,8 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, BuildRtSldMid)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
 
   for (auto _ : state) {
-    PicoKdTreeRtSldMid<PointX> tree(points_tree_, max_leaf_size);
+    PicoKdTreeRtSldMid<PointX> tree(
+        PicoRtSpace<PointX>(points_tree_), max_leaf_size);
   }
 }
 
@@ -67,7 +67,7 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, KnnCtSldMid)(benchmark::State& state) {
     std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_test_) {
-      tree.SearchKnn(p, knn_count, &results);
+      tree.SearchKnn(p, knn_count, results);
       benchmark::DoNotOptimize(sum += results.size());
     }
   }
@@ -115,7 +115,7 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, RadiusCtSldMid)(benchmark::State& state) {
     std::vector<pico_tree::Neighbor<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_test_) {
-      tree.SearchRadius(p, squared, &results);
+      tree.SearchRadius(p, squared, results);
       benchmark::DoNotOptimize(sum += results.size());
     }
   }
@@ -154,7 +154,7 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, BoxCtSldMid)(benchmark::State& state) {
     for (auto const& p : points_test_) {
       auto min = p - radius;
       auto max = p + radius;
-      tree.SearchBox(min, max, &results);
+      tree.SearchBox(min, max, results);
       benchmark::DoNotOptimize(sum += results.size());
     }
   }
@@ -175,7 +175,8 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, BoxRtSldMid)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   Scalar radius = static_cast<Scalar>(state.range(1)) / Scalar(10.0);
 
-  PicoKdTreeRtSldMid<PointX> tree(points_tree_, max_leaf_size);
+  PicoKdTreeRtSldMid<PointX> tree(
+      PicoRtSpace<PointX>(points_tree_), max_leaf_size);
 
   for (auto _ : state) {
     std::vector<Index> results;
@@ -183,7 +184,7 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, BoxRtSldMid)(benchmark::State& state) {
     for (auto const& p : points_test_) {
       auto min = p - radius;
       auto max = p + radius;
-      tree.SearchBox(min, max, &results);
+      tree.SearchBox(min, max, results);
       benchmark::DoNotOptimize(sum += results.size());
     }
   }

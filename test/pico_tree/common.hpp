@@ -1,6 +1,9 @@
 #pragma once
 
 #include <algorithm>
+#include <pico_tree/core.hpp>
+#include <pico_tree/internal/space_wrapper.hpp>
+#include <pico_tree/map_traits.hpp>
 
 inline void FloatEq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
 
@@ -14,62 +17,58 @@ inline void FloatLe(double val1, double val2) {
   EXPECT_PRED_FORMAT2(testing::DoubleLE, val1, val2);
 }
 
-template <
-    typename Traits,
-    int Dim,
-    typename IndexType,
-    typename SpaceType,
-    typename SdimType,
-    typename NptsType,
-    typename ScalarType>
-void CheckTraits(
-    SpaceType const& space,
-    SdimType sdim,
-    NptsType npts,
-    NptsType point_index,
-    ScalarType const* point_data_ref) {
+template <pico_tree::Size Dim, typename Space_, typename Scalar_>
+void CheckSpaceAdaptor(
+    Space_ const& space,
+    pico_tree::Size sdim,
+    pico_tree::Size npts,
+    pico_tree::Size point_index,
+    Scalar_ const* point_data_ref) {
+  using Traits = pico_tree::SpaceTraits<Space_>;
+
   static_assert(
-      std::is_same<typename Traits::SpaceType, SpaceType>::value,
+      std::is_same_v<typename Traits::SpaceType, Space_>,
       "TRAITS_SPACE_TYPE_INCORRECT");
 
   static_assert(Traits::Dim == Dim, "TRAITS_DIM_NOT_EQUAL_TO_EXPECTED_DIM");
 
   static_assert(
-      std::is_same<typename Traits::IndexType, IndexType>::value,
-      "TRAITS_INDEX_TYPE_INCORRECT");
-
-  static_assert(
-      std::is_same<typename Traits::ScalarType, ScalarType>::value,
+      std::is_same_v<typename Traits::ScalarType, Scalar_>,
       "TRAITS_SCALAR_TYPE_INCORRECT");
 
-  EXPECT_EQ(static_cast<int>(sdim), Traits::SpaceSdim(space));
-  EXPECT_EQ(static_cast<IndexType>(npts), Traits::SpaceNpts(space));
+  pico_tree::internal::SpaceWrapper<Space_> space_wrapper(space);
 
-  ScalarType const* point_data_tst = Traits::PointCoords(
-      Traits::PointAt(space, static_cast<IndexType>(point_index)));
+  EXPECT_EQ(sdim, space_wrapper.sdim());
+  EXPECT_EQ(npts, space_wrapper.size());
 
-  for (int i = 0; i < sdim; ++i) {
+  Scalar_ const* point_data_tst = space_wrapper[point_index];
+
+  for (pico_tree::Size i = 0; i < sdim; ++i) {
     FloatEq(point_data_ref[i], point_data_tst[i]);
   }
 }
 
-template <typename Traits, typename Index, typename Metric>
+template <typename Traits, typename Point, typename Index, typename Metric>
 void SearchKnn(
-    typename Traits::PointType const& point,
+    Point const& p,
     typename Traits::SpaceType const& space,
-    Index const k,
+    pico_tree::Size const k,
     Metric const& metric,
     std::vector<pico_tree::Neighbor<Index, typename Traits::ScalarType>>* knn) {
   //
-  Index const npts = Traits::SpaceNpts(space);
-  knn->resize(static_cast<std::size_t>(npts));
-  for (Index i = 0; i < npts; ++i) {
-    (*knn)[i] = {i, metric(point, Traits::PointAt(space, i))};
+  pico_tree::internal::SpaceWrapper<typename Traits::SpaceType> space_wrapper(
+      space);
+
+  knn->resize(space_wrapper.size());
+  for (pico_tree::Size i = 0; i < space_wrapper.size(); ++i) {
+    (*knn)[i] = {
+        static_cast<Index>(i),
+        metric(p.data(), p.data() + p.size(), space_wrapper[i])};
   }
 
-  Index const max_k = std::min(k, npts);
+  pico_tree::Size const max_k = std::min(k, space_wrapper.size());
   std::nth_element(knn->begin(), knn->begin() + (max_k - 1), knn->end());
-  knn->resize(static_cast<std::size_t>(max_k));
+  knn->resize(max_k);
   std::sort(knn->begin(), knn->end());
 }
 
@@ -78,23 +77,23 @@ void TestBox(
     Tree const& tree,
     typename Tree::ScalarType const min_v,
     typename Tree::ScalarType const max_v) {
-  using TraitsX = typename Tree::TraitsType;
-  using SpaceX = typename Tree::SpaceType;
-  using PointX = typename pico_tree::StdTraits<SpaceX>::PointType;
+  using PointX =
+      typename pico_tree::SpaceTraits<typename Tree::SpaceType>::PointType;
   using Index = typename Tree::IndexType;
 
-  auto const points = tree.points();
+  pico_tree::internal::SpaceWrapper<typename Tree::SpaceType> points(
+      tree.points());
 
   PointX min, max;
   min.Fill(min_v);
   max.Fill(max_v);
 
   std::vector<Index> idxs;
-  tree.SearchBox(min, max, &idxs);
+  tree.SearchBox(min, max, idxs);
 
   for (auto j : idxs) {
-    for (int d = 0; d < PointX::Dim; ++d) {
-      auto v = TraitsX::PointCoords(TraitsX::PointAt(points, j))[d];
+    for (pico_tree::Size d = 0; d < points.sdim(); ++d) {
+      auto v = points[j][d];
       EXPECT_GE(v, min_v);
       EXPECT_LE(v, max_v);
     }
@@ -102,11 +101,11 @@ void TestBox(
 
   std::size_t count = 0;
 
-  for (Index j = 0; j < TraitsX::SpaceNpts(points); ++j) {
+  for (pico_tree::Size j = 0; j < points.size(); ++j) {
     bool contained = true;
 
-    for (int d = 0; d < PointX::Dim; ++d) {
-      auto v = TraitsX::PointCoords(TraitsX::PointAt(points, j))[d];
+    for (pico_tree::Size d = 0; d < points.sdim(); ++d) {
+      auto v = points[j][d];
       if ((v < min_v) || (v > max_v)) {
         contained = false;
         break;
@@ -123,27 +122,31 @@ void TestBox(
 
 template <typename Tree>
 void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
-  using TraitsX = typename Tree::TraitsType;
   using Index = typename Tree::IndexType;
   using Scalar = typename Tree::ScalarType;
+  constexpr auto Dim = Tree::Dim;
 
-  auto const points = tree.points();
-  auto const p = TraitsX::PointAt(points, TraitsX::SpaceNpts(points) / 2);
+  pico_tree::internal::SpaceWrapper<typename Tree::SpaceType> points(
+      tree.points());
+  auto p = pico_tree::PointMap<Scalar const, Dim>(
+      points[points.size() / 2], points.sdim());
 
   auto const& metric = tree.metric();
   Scalar const lp_radius = metric(radius);
   std::vector<pico_tree::Neighbor<Index, Scalar>> results;
-  tree.SearchRadius(p, lp_radius, &results);
+  tree.SearchRadius(p, lp_radius, results);
 
   for (auto const& r : results) {
-    EXPECT_LE(metric(p, TraitsX::PointAt(points, r.index)), lp_radius);
-    EXPECT_EQ(metric(p, TraitsX::PointAt(points, r.index)), r.distance);
+    Scalar d = metric(p.data(), p.data() + p.size(), points[r.index]);
+
+    EXPECT_LE(d, lp_radius);
+    EXPECT_EQ(d, r.distance);
   }
 
   std::size_t count = 0;
 
-  for (Index j = 0; j < TraitsX::SpaceNpts(points); ++j) {
-    if (metric(p, TraitsX::PointAt(points, j)) <= lp_radius) {
+  for (pico_tree::Size j = 0; j < points.size(); ++j) {
+    if (metric(p.data(), p.data() + p.size(), points[j]) <= lp_radius) {
       count++;
     }
   }
@@ -152,9 +155,8 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
 }
 
 template <typename Tree, typename Point>
-void TestKnn(
-    Tree const& tree, typename Tree::IndexType const k, Point const& p) {
-  using TraitsX = typename Tree::TraitsType;
+void TestKnn(Tree const& tree, pico_tree::Size const k, Point const& p) {
+  using TraitsX = pico_tree::SpaceTraits<typename Tree::SpaceType>;
   using Index = typename Tree::IndexType;
   using Scalar = typename Tree::ScalarType;
 
@@ -164,8 +166,8 @@ void TestKnn(
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_exact;
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_apprx;
-  tree.SearchKnn(p, k, &results_exact);
-  tree.SearchAknn(p, k, ratio, &results_apprx);
+  tree.SearchKnn(p, k, results_exact);
+  tree.SearchKnn(p, k, ratio, results_apprx);
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> compare;
   SearchKnn<TraitsX>(p, points, k, tree.metric(), &compare);
@@ -183,9 +185,13 @@ void TestKnn(
 
 template <typename Tree>
 void TestKnn(Tree const& tree, typename Tree::IndexType const k) {
-  using TraitsX = typename Tree::TraitsType;
+  using ScalarType = typename Tree::ScalarType;
+  constexpr auto Dim = Tree::Dim;
 
-  auto const points = tree.points();
-  auto const p = TraitsX::PointAt(points, TraitsX::SpaceNpts(points) / 2);
+  auto points = pico_tree::internal::SpaceWrapper<typename Tree::SpaceType>(
+      tree.points());
+  auto p = pico_tree::PointMap<ScalarType const, Dim>(
+      points[points.size() / 2], points.sdim());
+
   TestKnn(tree, k, p);
 }

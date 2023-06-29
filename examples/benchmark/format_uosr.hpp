@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
@@ -48,14 +49,13 @@ class Isometry {
     return Isometry(R, t);
   }
 
-  inline void Transform(Point3d* p) const {
-    auto& d = *p;
-    double rx = d(0) * R_[0] + d(1) * R_[3] + d(2) * R_[6];
-    double ry = d(0) * R_[1] + d(1) * R_[4] + d(2) * R_[7];
-    double rz = d(0) * R_[2] + d(1) * R_[5] + d(2) * R_[8];
-    d(0) = rx + t_[0];
-    d(1) = ry + t_[1];
-    d(2) = rz + t_[2];
+  inline void Transform(Point3d& p) const {
+    double rx = p[0] * R_[0] + p[1] * R_[3] + p[2] * R_[6];
+    double ry = p[0] * R_[1] + p[1] * R_[4] + p[2] * R_[7];
+    double rz = p[0] * R_[2] + p[1] * R_[5] + p[2] * R_[8];
+    p[0] = rx + t_[0];
+    p[1] = ry + t_[1];
+    p[2] = rz + t_[2];
   }
 
  private:
@@ -70,7 +70,7 @@ class UosrScanReader {
             ReadPose(std::filesystem::path(path_3d).replace_extension(kPose))),
         stream_(internal::OpenStream(path_3d.string(), std::ios::in)) {}
 
-  inline bool ReadNext(Point3d* point) {
+  inline bool ReadNext(Point3d& point) {
     std::string line;
 
     if (!std::getline(stream_, line)) {
@@ -81,11 +81,11 @@ class UosrScanReader {
     char* end;
     std::stringstream ss(line);
     ss >> value;
-    (*point)(0) = std::strtod(value.c_str(), &end);
+    point[0] = std::strtod(value.c_str(), &end);
     ss >> value;
-    (*point)(1) = std::strtod(value.c_str(), &end);
+    point[1] = std::strtod(value.c_str(), &end);
     ss >> value;
-    (*point)(2) = std::strtod(value.c_str(), &end);
+    point[2] = std::strtod(value.c_str(), &end);
     // Fourth value would be the reflectance.
     // ss >> value;
     // float val = std::strtof(value.c_str(), &end);
@@ -144,7 +144,7 @@ inline void ReadUosr(
     // Printing the string doesn't show escape characters.
     std::cout << "Reading from scan: " << path.string() << std::endl;
     internal::UosrScanReader reader(path);
-    while (reader.ReadNext(&point)) {
+    while (reader.ReadNext(point)) {
       points->push_back(point.Cast<Scalar_>());
     }
   }

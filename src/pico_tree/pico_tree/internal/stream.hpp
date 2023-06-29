@@ -26,24 +26,24 @@ inline std::fstream OpenStream(
 class Stream {
  public:
   //! \brief Constructs a Stream using an input std::iostream.
-  Stream(std::iostream* stream) : stream_(*stream) {}
+  Stream(std::iostream& stream) : stream_(stream) {}
 
   //! \brief Reads a single value from the stream.
   //! \tparam T Type of the value.
   template <typename T>
-  inline void Read(T* value) {
-    stream_.read(reinterpret_cast<char*>(value), sizeof(T));
+  inline void Read(T& value) {
+    stream_.read(reinterpret_cast<char*>(&value), sizeof(T));
   }
 
   //! \brief Reads a vector of values from the stream.
   //! \details Reads the size of the vector followed by all its elements.
   //! \tparam T Type of a value.
   template <typename T>
-  inline void Read(std::vector<T>* values) {
+  inline void Read(std::vector<T>& values) {
     typename std::vector<T>::size_type size;
-    Read(&size);
-    values->resize(size);
-    stream_.read(reinterpret_cast<char*>(&(*values)[0]), sizeof(T) * size);
+    Read(size);
+    values.resize(size);
+    Read(size, values.data());
   }
 
   //! \brief Reads an array of values from the stream.

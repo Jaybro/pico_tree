@@ -21,13 +21,13 @@ struct StringTraits<double> {
   static std::string String() { return "float64"; }
 };
 
-template <typename Traits>
-struct StringTraits<pico_tree::L1<Traits>> {
+template <>
+struct StringTraits<pico_tree::L1> {
   static std::string String() { return "L1"; }
 };
 
-template <typename Traits>
-struct StringTraits<pico_tree::L2Squared<Traits>> {
+template <>
+struct StringTraits<pico_tree::L2Squared> {
   static std::string String() { return "L2Squared"; }
 };
 
@@ -60,13 +60,13 @@ struct ArrayLayout {
   py::ssize_t index_outer;
 };
 
-template <int Dim>
-inline bool IsDimCompatible(int dim) {
+template <pico_tree::Size Dim>
+inline bool IsDimCompatible(pico_tree::Size dim) {
   return Dim == dim;
 }
 
 template <>
-inline bool IsDimCompatible<pico_tree::kDynamicDim>(int) {
+inline bool IsDimCompatible<pico_tree::kDynamicSize>(pico_tree::Size) {
   return true;
 }
 

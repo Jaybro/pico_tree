@@ -43,8 +43,8 @@ def tree_creation_and_query_types():
     max_error = 0.75
     # Apply the metric function to the ratio to get the squared ratio.
     max_error_ratio = t.metric(1.0 + max_error)
-    knns = t.search_aknn(p, 2, max_error_ratio)
-    t.search_aknn(p, 2, max_error_ratio, knns)
+    knns = t.search_knn(p, 2, max_error_ratio)
+    t.search_knn(p, 2, max_error_ratio, knns)
     # Note that we scale back the ann distance its original distance.
     print("The 2nd closest to each input point:")
     for knn in knns:
@@ -54,7 +54,7 @@ def tree_creation_and_query_types():
 
     print("*** Radius Search ***")
     # A radius search doesn't return a numpy array but a custom vector of numpy
-    # arrays. This is because the amount of neighbors to each of input points
+    # arrays. This is because the number of neighbors to each of input points
     # may vary for a radius search.
     search_radius = t.metric(2.5)
     print(f"Result with radius: {search_radius}")
