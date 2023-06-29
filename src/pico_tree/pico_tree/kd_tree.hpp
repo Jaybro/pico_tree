@@ -263,7 +263,7 @@ class KdTree {
   static KdTree Load(SpaceType points, std::string const& filename) {
     std::fstream stream =
         internal::OpenStream(filename, std::ios::in | std::ios::binary);
-    return Load(std::move(points), &stream);
+    return Load(std::move(points), stream);
   }
 
   //! \brief Loads the tree in binary from \p stream .
@@ -274,8 +274,8 @@ class KdTree {
   //! point set.
   //! \li Does not check if the stored tree structure is valid for the given
   //! template arguments.
-  static KdTree Load(SpaceType points, std::iostream* stream) {
-    internal::Stream s(*stream);
+  static KdTree Load(SpaceType points, std::iostream& stream) {
+    internal::Stream s(stream);
     return KdTree(std::move(points), s);
   }
 
@@ -283,7 +283,7 @@ class KdTree {
   static void Save(KdTree const& tree, std::string const& filename) {
     std::fstream stream =
         internal::OpenStream(filename, std::ios::out | std::ios::binary);
-    Save(tree, &stream);
+    Save(tree, stream);
   }
 
   //! \brief Saves the tree in binary to \p stream .
@@ -291,8 +291,8 @@ class KdTree {
   //! load a KdTree on a single machine.
   //! \li Does not take memory endianness into account.
   //! \li Stores the tree structure but not the points.
-  static void Save(KdTree const& tree, std::iostream* stream) {
-    internal::Stream s(*stream);
+  static void Save(KdTree const& tree, std::iostream& stream) {
+    internal::Stream s(stream);
     KdTreeDataType::Save(tree.data_, s);
   }
 

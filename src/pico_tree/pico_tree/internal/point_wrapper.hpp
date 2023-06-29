@@ -38,8 +38,6 @@ class PointWrapper {
 
   inline auto end() const { return data() + size(); }
 
-  inline PointType const& point() const { return point_; }
-
  private:
   PointType const& point_;
 };

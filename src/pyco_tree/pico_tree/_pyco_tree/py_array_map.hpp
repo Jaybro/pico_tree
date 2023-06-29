@@ -20,8 +20,6 @@ class PyArrayMap
   using typename pico_tree::SpaceMap<PointType>::ScalarType;
   using typename pico_tree::SpaceMap<PointType>::SizeType;
   using pico_tree::SpaceMap<PointType>::Dim;
-  // Fixed to be an int.
-  using IndexType = int;
 
   inline PyArrayMap(Scalar_* data, SizeType npts, SizeType sdim, bool row_major)
       : pico_tree::SpaceMap<PointType>(data, npts, sdim),

@@ -28,18 +28,18 @@ struct SpaceTraits<std::vector<Point_, Allocator_>> {
   static_assert(
       Dim != kDynamicSize, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
 
-  //! \brief Returns the number of coordinates or spatial dimension of each
-  //! point.
-  inline static SizeType constexpr sdim(SpaceType const&) { return Dim; }
-
-  //! \brief Returns number of points contained by \p space.
-  inline static SizeType size(SpaceType const& space) { return space.size(); }
-
   //! \brief Returns the point at \p idx from \p space.
   template <typename Index_>
   inline static Point_ const& PointAt(SpaceType const& space, Index_ idx) {
     return space[static_cast<SizeType>(idx)];
   }
+
+  //! \brief Returns number of points contained by \p space.
+  inline static SizeType size(SpaceType const& space) { return space.size(); }
+
+  //! \brief Returns the number of coordinates or spatial dimension of each
+  //! point.
+  inline static SizeType constexpr sdim(SpaceType const&) { return Dim; }
 };
 
 }  // namespace pico_tree

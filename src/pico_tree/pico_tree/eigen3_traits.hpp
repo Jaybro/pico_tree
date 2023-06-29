@@ -7,13 +7,15 @@
 #include "space_traits.hpp"
 
 //! \file eigen3_traits.hpp
-//! \brief Provides an interface for spaces and points when working  with types
+//! \brief Provides an interface for spaces and points when working with types
 //! from Eigen3.
-//! \details It supports dynamic matrices and maps of dynamic matrices, but not
-//! for fixed size matrices or maps of those. Fixed size matrices are mostly
-//! useful when they are small. See section "Fixed vs. Dynamic size" of the
-//! following link:
+//! \details It supports SpaceTraits<> for dynamic matrices and maps of dynamic
+//! matrices, but not for fixed size matrices or maps of those. Fixed size
+//! matrices are mostly useful when they are small. See section "Fixed vs.
+//! Dynamic size" of the following link:
 //! * https://eigen.tuxfamily.org/dox/group__TutorialMatrixClass.html
+//!
+//! PointTraits<> are supported for any type of matrix or matrix map.
 
 namespace pico_tree {
 
@@ -98,10 +100,10 @@ struct EigenTraitsImpl<Derived, false> : public EigenTraitsBase<Derived> {
   //! \brief The scalar type of point coordinates.
   using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
 
-  //! \brief Returns the number of coordinates or spatial dimension of each
-  //! point.
-  inline static SizeType sdim(Eigen::MatrixBase<Derived> const& matrix) {
-    return static_cast<SizeType>(matrix.rows());
+  //! \brief Returns the point at index \p idx.
+  template <typename Index_>
+  inline static PointType PointAt(Derived const& matrix, Index_ idx) {
+    return matrix.col(static_cast<Eigen::Index>(idx));
   }
 
   //! \brief Returns the number of points.
@@ -109,10 +111,10 @@ struct EigenTraitsImpl<Derived, false> : public EigenTraitsBase<Derived> {
     return static_cast<SizeType>(matrix.cols());
   }
 
-  //! \brief Returns the point at index \p idx.
-  template <typename Index_>
-  inline static PointType PointAt(Derived const& matrix, Index_ idx) {
-    return matrix.col(static_cast<Eigen::Index>(idx));
+  //! \brief Returns the number of coordinates or spatial dimension of each
+  //! point.
+  inline static SizeType sdim(Eigen::MatrixBase<Derived> const& matrix) {
+    return static_cast<SizeType>(matrix.rows());
   }
 };
 
@@ -129,10 +131,10 @@ struct EigenTraitsImpl<Derived, true> : public EigenTraitsBase<Derived> {
   //! \brief The scalar type of point coordinates.
   using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
 
-  //! \brief Returns the number of coordinates or spatial dimension of each
-  //! point.
-  inline static SizeType sdim(Derived const& matrix) {
-    return static_cast<SizeType>(matrix.cols());
+  //! \brief Returns the point at index \p idx.
+  template <typename Index_>
+  inline static PointType PointAt(Derived const& matrix, Index_ idx) {
+    return matrix.row(static_cast<Eigen::Index>(idx));
   }
 
   //! \brief Returns the number of points.
@@ -140,10 +142,10 @@ struct EigenTraitsImpl<Derived, true> : public EigenTraitsBase<Derived> {
     return static_cast<SizeType>(matrix.rows());
   }
 
-  //! \brief Returns the point at index \p idx.
-  template <typename Index_>
-  inline static PointType PointAt(Derived const& matrix, Index_ idx) {
-    return matrix.row(static_cast<Eigen::Index>(idx));
+  //! \brief Returns the number of coordinates or spatial dimension of each
+  //! point.
+  inline static SizeType sdim(Derived const& matrix) {
+    return static_cast<SizeType>(matrix.cols());
   }
 };
 

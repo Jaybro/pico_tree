@@ -34,20 +34,20 @@ struct SpaceTraits<std::deque<std::array<Scalar_, Dim_>>> {
   // only known at run-time.
   static std::size_t constexpr Dim = Dim_;
 
-  // Returns the number of coordinates or spatial dimension of each point.
-  inline static constexpr std::size_t sdim(SpaceType const&) { return Dim; }
-
-  // Returns number of points contained by the space.
-  inline static std::size_t size(SpaceType const& space) {
-    return space.size();
-  }
-
   // Returns a point from the input space at the specified index.
   template <typename Index_>
   inline static PointType const& PointAt(
       SpaceType const& space, Index_ const index) {
     return space[static_cast<std::size_t>(index)];
   }
+
+  // Returns number of points contained by the space.
+  inline static std::size_t size(SpaceType const& space) {
+    return space.size();
+  }
+
+  // Returns the number of coordinates or spatial dimension of each point.
+  inline static constexpr std::size_t sdim(SpaceType const&) { return Dim; }
 };
 
 }  // namespace pico_tree

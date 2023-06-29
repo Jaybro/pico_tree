@@ -4,6 +4,9 @@
 
 namespace pico_tree {
 
+//! \brief SpaceTraits provides an interface for the different space types that
+//! are supported by PicoTree.
+//! \tparam Space_ Any of the space types supported by SpaceTraits.
 template <typename Space_>
 struct SpaceTraits;
 

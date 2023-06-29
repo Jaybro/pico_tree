@@ -5,15 +5,6 @@
 
 #include "common.hpp"
 
-namespace {
-
-using Index = int;
-
-template <typename SpaceX>
-using Traits = pico_tree::SpaceTraits<SpaceX>;
-
-}  // namespace
-
 template <typename ColMatrix, typename RowMatrix>
 void CheckEigenAdaptorInterface() {
   ColMatrix col_matrix = ColMatrix::Random(4, 8);

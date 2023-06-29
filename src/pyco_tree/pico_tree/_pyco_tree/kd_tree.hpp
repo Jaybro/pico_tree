@@ -20,10 +20,10 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
  private:
   static constexpr int kChunkSize = 128;
 
-  using Space = Space_;
-  using Index = typename Space_::IndexType;
-  using Scalar = typename Space_::ScalarType;
   using Base = pico_tree::KdTree<Space_, Metric_>;
+  using Space = Space_;
+  using Index = typename Base::IndexType;
+  using Scalar = typename Space_::ScalarType;
 
  public:
   using Base::Dim;

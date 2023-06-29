@@ -26,7 +26,7 @@ struct PointTraits<PointXYZ> {
   }
 
   // Returns the number of coordinates or spatial dimension of each point.
-  inline static std::size_t size(PointXYZ const&) { return Dim; }
+  inline static constexpr std::size_t size(PointXYZ const&) { return Dim; }
 };
 
 }  // namespace pico_tree

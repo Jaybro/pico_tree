@@ -1,5 +1,9 @@
 #pragma once
 
+//! \file map_traits.hpp
+//! \brief Provides an interface for spaces and points when working with raw
+//! pointers.
+
 #include "map.hpp"
 #include "space_traits.hpp"
 
@@ -29,14 +33,14 @@ struct SpaceTraits<SpaceMap<Point_>> {
   using SizeType = typename SpaceType::SizeType;
   static SizeType constexpr Dim = SpaceType::Dim;
 
-  inline static SizeType sdim(SpaceType const& space) { return space.sdim(); }
-
-  inline static SizeType size(SpaceType const& space) { return space.size(); }
-
   template <typename Index_>
   inline static auto PointAt(SpaceType const& space, Index_ idx) {
     return space[static_cast<SizeType>(idx)];
   }
+
+  inline static SizeType size(SpaceType const& space) { return space.size(); }
+
+  inline static SizeType sdim(SpaceType const& space) { return space.sdim(); }
 };
 
 }  // namespace pico_tree

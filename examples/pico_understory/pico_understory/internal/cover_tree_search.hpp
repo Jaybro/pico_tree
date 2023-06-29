@@ -21,9 +21,9 @@ class SearchNearestMetric {
   using NodeType = CoverTreeNode<IndexType, ScalarType>;
 
   SearchNearestMetric(
-      SpaceWrapper_ const& space,
-      Metric_ const& metric,
-      PointWrapper_ const& query,
+      SpaceWrapper_ space,
+      Metric_ metric,
+      PointWrapper_ query,
       Visitor_& visitor)
       : space_(space), metric_(metric), query_(query), visitor_(visitor) {}
 
@@ -79,9 +79,9 @@ class SearchNearestMetric {
     }
   }
 
-  SpaceWrapper_ const& space_;
-  Metric_ const& metric_;
-  PointWrapper_ const& query_;
+  SpaceWrapper_ space_;
+  Metric_ metric_;
+  PointWrapper_ query_;
   Visitor_& visitor_;
 };
 

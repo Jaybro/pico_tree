@@ -36,6 +36,8 @@ class SpaceWrapper {
     return box;
   }
 
+  inline SizeType size() const { return SpaceTraitsType::size(space_); }
+
   constexpr SizeType sdim() const {
     if constexpr (Dim != kDynamicSize) {
       return Dim;
@@ -43,8 +45,6 @@ class SpaceWrapper {
       return SpaceTraitsType::sdim(space_);
     }
   }
-
-  inline SizeType size() const { return SpaceTraitsType::size(space_); }
 
  private:
   SpaceType const& space_;

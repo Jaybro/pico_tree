@@ -9,7 +9,7 @@
 
 namespace pico_tree::internal {
 
-template <typename Space_, typename Metric_, typename CoverTreeData_>
+template <typename SpaceWrapper_, typename Metric_, typename CoverTreeData_>
 class BuildCoverTreeImpl {
  public:
   using IndexType = typename CoverTreeData_::IndexType;
@@ -18,8 +18,8 @@ class BuildCoverTreeImpl {
   using NodeAllocatorType = typename CoverTreeData_::NodeAllocatorType;
 
   BuildCoverTreeImpl(
-      Space_ const& space,
-      Metric_ const& metric,
+      SpaceWrapper_ space,
+      Metric_ metric,
       ScalarType base,
       NodeAllocatorType& allocator)
       : space_(space), metric_(metric), base_{base}, allocator_(allocator) {}
@@ -349,17 +349,17 @@ class BuildCoverTreeImpl {
     return max;
   }
 
-  Space_ const& space_;
-  Metric_ const& metric_;
+  SpaceWrapper_ space_;
+  Metric_ metric_;
   Base<ScalarType> base_;
   NodeAllocatorType& allocator_;
 };
 
-template <typename Space_, typename Metric_, typename Index_>
+template <typename SpaceWrapper_, typename Metric_, typename Index_>
 class BuildCoverTree {
   using IndexType = Index_;
-  using ScalarType = typename Space_::ScalarType;
-  static Size constexpr Dim = Space_::Dim;
+  using ScalarType = typename SpaceWrapper_::ScalarType;
+  static Size constexpr Dim = SpaceWrapper_::Dim;
 
  public:
   using CoverTreeDataType = CoverTreeData<IndexType, ScalarType>;
@@ -367,11 +367,11 @@ class BuildCoverTree {
   //! \brief Construct a KdTree given \p points , \p max_leaf_size and
   //! SplitterType.
   CoverTreeDataType operator()(
-      Space_ const& space, Metric_ const& metric, ScalarType base) {
+      SpaceWrapper_ space, Metric_ metric, ScalarType base) {
     assert(space.size() > 0);
 
     using BuildCoverTreeImplType =
-        BuildCoverTreeImpl<Space_, Metric_, CoverTreeDataType>;
+        BuildCoverTreeImpl<SpaceWrapper_, Metric_, CoverTreeDataType>;
     using NodeType = typename CoverTreeDataType::NodeType;
     using NodeAllocatorType = typename CoverTreeDataType::NodeAllocatorType;
 

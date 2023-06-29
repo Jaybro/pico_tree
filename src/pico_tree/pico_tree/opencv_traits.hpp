@@ -6,12 +6,12 @@
 #include "map_traits.hpp"
 
 //! \file opencv_traits.hpp
-//! \brief Contains traits and classes that provide OpenCV support for PicoTree.
+//! \brief Contains traits that provide OpenCV support for PicoTree.
 //! \details The following is supported:
-//! * std::vector<cv::Point_<>> via pico_tree::StdTraits<>
-//! * std::vector<cv::Point3_<>> via pico_tree::StdTraits<>
-//! * std::vector<cv::Vec_<>> via pico_tree::StdTraits<>
-//! * cv::Mat via pico_tree::CvTraits<>
+//! * std::vector<cv::Point_<>>
+//! * std::vector<cv::Point3_<>>
+//! * std::vector<cv::Vec_<>>
+//! * cv::Mat
 
 namespace pico_tree {
 
@@ -35,9 +35,7 @@ struct PointTraits<cv::Point_<Scalar_>> {
   }
 
   //! \brief Returns the spatial dimension of a cv::Point_.
-  inline static SizeType constexpr size(cv::Point_<Scalar_> const&) {
-    return Dim;
-  }
+  static constexpr SizeType size(cv::Point_<Scalar_> const&) { return Dim; }
 };
 
 //! \brief PointTraits provides an interface for cv::Point3_<>.
@@ -60,9 +58,7 @@ struct PointTraits<cv::Point3_<Scalar_>> {
   }
 
   //! \brief Returns the spatial dimension of a cv::Point3_.
-  inline static SizeType constexpr size(cv::Point3_<Scalar_> const&) {
-    return Dim;
-  }
+  static constexpr SizeType size(cv::Point3_<Scalar_> const&) { return Dim; }
 };
 
 //! \brief PointTraits provides an interface for cv::Vec<>.
@@ -83,9 +79,7 @@ struct PointTraits<cv::Vec<Scalar_, Dim_>> {
   }
 
   //! \brief Returns the spatial dimension of a cv::Vec.
-  inline static SizeType constexpr size(cv::Vec<Scalar_, Dim_> const&) {
-    return Dim;
-  }
+  static constexpr SizeType size(cv::Vec<Scalar_, Dim_> const&) { return Dim; }
 };
 
 // TODO Support cv::Mat_ (instead?).
@@ -117,23 +111,6 @@ struct SpaceTraits<MatWrapper<Scalar_, Dim_>> {
   //! \brief Compile time spatial dimension.
   static constexpr SizeType Dim = Dim_;
 
-  //! \brief Returns the number of coordinates or spatial dimension of each
-  //! point.
-  inline static SizeType sdim(cv::Mat const& space) {
-    if constexpr (Dim != kDynamicSize) {
-      return Dim;
-    } else {
-      // TODO The use of step1() is actually quite expensive. Perhaps there is
-      // an alternative.
-      return space.step1();
-    }
-  }
-
-  //! \brief Returns number of points contained by \p space.
-  inline static SizeType size(cv::Mat const& space) {
-    return static_cast<SizeType>(space.rows);
-  }
-
   //! \brief Returns the point at \p idx from \p space.
   template <typename Index_>
   inline static PointType PointAt(cv::Mat const& space, Index_ idx) {
@@ -143,6 +120,23 @@ struct SpaceTraits<MatWrapper<Scalar_, Dim_>> {
       // TODO The use of step1() is actually quite expensive. Perhaps there is
       // an alternative.
       return {space.ptr<Scalar_>(static_cast<int>(idx)), space.step1()};
+    }
+  }
+
+  //! \brief Returns number of points contained by \p space.
+  inline static SizeType size(cv::Mat const& space) {
+    return static_cast<SizeType>(space.rows);
+  }
+
+  //! \brief Returns the number of coordinates or spatial dimension of each
+  //! point.
+  static constexpr SizeType sdim(cv::Mat const& space) {
+    if constexpr (Dim != kDynamicSize) {
+      return Dim;
+    } else {
+      // TODO The use of step1() is actually quite expensive. Perhaps there is
+      // an alternative.
+      return space.step1();
     }
   }
 };
