@@ -2,7 +2,9 @@
 
 One of the PicoTree examples contains [benchmarks](../examples/benchmark/) of different KdTree implementations. This page compares the one of PicoTree with respect to [nanoflann](https://github.com/jlblancoc/nanoflann) and describes how to reproduce the input that was used for benchmarking.
 
-Results were generated on: 29-08-2021 using MinGW GCC 10.3 using PicoTree 0.7.4.
+The results described in this document were generated on 29-08-2021 using MinGW GCC 10.3, PicoTree v0.7.4 and Nanoflann v1.3.2.
+
+Note: The performance of PicoTree v0.8.0 released on 30-6-2023 is identical to that of v0.7.4. However, the build algorithm of nanoflann v1.5.0 regressed and has become 90% slower.
 
 # Data sets
 

@@ -8,10 +8,10 @@ See the table below to get an impression of the performance provided by the [KdT
 
 |                                     | Build C++ | Build Python  | Knn C++    | Knn Python  |
 | ----------------------------------- | --------- | ------------- | ---------- | ----------- |
-| [nanoflann][nano] v1.3.2            | 1.5s      | ...           | 3.2s       | ...         |
-| [SciPy KDTree][spkd] v1.6.3         | ...       | 5.0s          | ...        | 547.2s      |
-| [Scikit-learn KDTree][skkd] 0.22.2  | ...       | 12.2s         | ...        | 44.5s       |
-| [pykdtree][pykd] 1.3.6              | ...       | 1.0s          | ...        | 6.6s        |
+| [nanoflann][nano] v1.5.0            | 2.9s      | ...           | 3.2s       | ...         |
+| [SciPy KDTree][spkd] 1.11.0         | ...       | 4.5s          | ...        | 563.6s      |
+| [Scikit-learn KDTree][skkd] 1.2.2   | ...       | 6.2s          | ...        | 42.2s       |
+| [pykdtree][pykd] 1.3.7              | ...       | 1.0s          | ...        | 6.6s        |
 | [OpenCV FLANN][cvfn] 4.6.0          | 1.9s      | ...           | 4.7s       | ...         |
 | PicoTree KdTree v0.8.0              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
 

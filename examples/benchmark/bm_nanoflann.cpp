@@ -130,7 +130,7 @@ BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
   tree.buildIndex();
 
   for (auto _ : state) {
-    std::vector<std::pair<Index, Scalar>> results;
+    std::vector<nanoflann::ResultItem<Index, Scalar>> results;
     std::size_t sum = 0;
     for (auto const& p : points_test_) {
       benchmark::DoNotOptimize(
@@ -138,7 +138,7 @@ BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
               p.data(),
               squared,
               results,
-              nanoflann::SearchParams{0, 0, false}));
+              nanoflann::SearchParameters{0, false}));
     }
   }
 }
