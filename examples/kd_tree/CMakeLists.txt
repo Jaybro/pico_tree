@@ -1,11 +1,19 @@
-add_executable(kd_tree_minimal kd_tree_minimal.cpp)
-set_default_target_properties(kd_tree_minimal)
-target_link_libraries(kd_tree_minimal PUBLIC PicoTree::PicoTree)
+function(add_demo_executable TARGET_NAME)
+    add_executable(${TARGET_NAME} ${TARGET_NAME}.cpp)
+    set_default_target_properties(${TARGET_NAME})
+    target_link_libraries(${TARGET_NAME} PRIVATE pico_toolshed)
+endfunction()
 
-add_executable(kd_tree_traits kd_tree_traits.cpp)
-set_default_target_properties(kd_tree_traits)
-target_link_libraries(kd_tree_traits PUBLIC PicoTree::PicoTree)
+add_demo_executable(kd_tree_minimal)
 
-add_executable(kd_tree_search kd_tree_search.cpp)
-set_default_target_properties(kd_tree_search)
-target_link_libraries(kd_tree_search PUBLIC pico_toolshed)
+add_demo_executable(kd_tree_creation)
+
+add_demo_executable(kd_tree_search)
+
+add_demo_executable(kd_tree_dynamic_arrays)
+
+add_demo_executable(kd_tree_custom_point_type)
+
+add_demo_executable(kd_tree_custom_space_type)
+
+add_demo_executable(kd_tree_custom_search_visitor)

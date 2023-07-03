@@ -27,28 +27,38 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 # Capabilities
 
-* KdTree:
-  * Nearest neighbor, approximate nearest neighbor, radius, box, and customizable nearest neighbor searches.
-  * Multiple tree splitting rules: `kLongestMedian`, `kMidpoint` and `kSlidingMidpoint`.
-  * [Metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)):
-    * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
-    * Available metrics: `L1`, `L2Squared`, `SO2`, and `SE2Squared`. Metrics can be customized.
-  * Compile time and run time known dimensions.
-  * Static tree builds.
-  * Thread safe queries.
-* PicoTree can interface with different types of points or point sets through traits classes. These can be custom implementations or one of the `pico_tree::PointTraits<>` and `pico_tree::SpaceTraits<>` classes provided by this library. There is default support for the following data types:
+KdTree:
+* Nearest neighbor, approximate nearest neighbor, radius, box, and customizable nearest neighbor searches.
+* [Metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)):
+  * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
+  * Available metrics: `L1`, `L2Squared`, `SO2`, and `SE2Squared`. Metrics can be customized.
+* Multiple tree splitting rules: `kLongestMedian`, `kMidpoint` and `kSlidingMidpoint`.
+* Compile time and run time known dimensions.
+* Static tree builds.
+* Thread safe queries.
+
+PicoTree can interface with different types of points and point sets through traits classes. These can be custom implementations or one of the `pico_tree::SpaceTraits<>` and `pico_tree::PointTraits<>` classes provided by this library.
+* Space type support:
   * `std::vector<PointType>`.
-    * A specialization of `pico_tree::PointTraits<>` is required for each `PointType`. There are traits available for Eigen and OpenCV point types.
-  * `pico_tree::SpaceMap<PointType>` and `pico_tree::PointMap<>`.
-    * These classes allow interfacing with raw pointers. It is assumed that points and their coordinates are laid out contiguously in memory.
-  * `Eigen::Matrix` and `Eigen::Map<Eigen::Matrix>`.
+  * `pico_tree::SpaceMap<PointType>`.
+  * `Eigen::Matrix<>` and `Eigen::Map<Eigen::Matrix<>>`.
   * `cv::Mat`.
+* Point type support:
+  * Fixed size arrays and `std::array<>`.
+  * `pico_tree::PointMap<>`.
+  * `Eigen::Vector<>` and `Eigen::Map<Eigen::Vector<>>`.
+  * `cv::Vec<>`.
+* `pico_tree::SpaceMap<PointType>` and `pico_tree::PointMap<>` allow interfacing with dynamic size arrays. It is assumed that points and their coordinates are laid out contiguously in memory.
 
 # Examples
 
-* [Minimal working example](./examples/kd_tree/kd_tree_minimal.cpp) using an std::vector of points.
-* Creating [traits](./examples/kd_tree/kd_tree_traits.cpp) classes for a custom point and point set.
-* Using the KdTree's [search](./examples/kd_tree/kd_tree_search.cpp) options and creating a custom search visitor.
+* [Minimal working example](./examples/kd_tree/kd_tree_minimal.cpp) using an `std::vector<>` of points.
+* [Creating a KdTree](./examples/kd_tree/kd_tree_creation.cpp) and taking the input by value or reference.
+* Using the KdTree's [search](./examples/kd_tree/kd_tree_search.cpp) capabilities.
+* Working with [dynamic size arrays](./examples/kd_tree/kd_tree_dynamic_arrays.cpp).
+* Supporting a [custom point type](./examples/kd_tree/kd_tree_custom_point_type.cpp).
+* Supporting a [custom space type](./examples/kd_tree/kd_tree_custom_space_type.cpp).
+* Creating a [custom search visitor](./examples/kd_tree/kd_tree_custom_search_visitor.cpp).
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).
 

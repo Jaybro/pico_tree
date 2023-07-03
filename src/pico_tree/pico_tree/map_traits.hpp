@@ -34,7 +34,7 @@ struct SpaceTraits<SpaceMap<Point_>> {
   static SizeType constexpr Dim = SpaceType::Dim;
 
   template <typename Index_>
-  inline static auto PointAt(SpaceType const& space, Index_ idx) {
+  inline static decltype(auto) PointAt(SpaceType const& space, Index_ idx) {
     return space[static_cast<SizeType>(idx)];
   }
 

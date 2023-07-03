@@ -11,6 +11,10 @@ namespace pico_tree {
 
 //! \brief A KdTree is a binary tree that partitions space using hyper planes.
 //! \details https://en.wikipedia.org/wiki/K-d_tree
+//! \tparam Space_ Type of space.
+//! \tparam Metric_ Type of metric. Determines how distances are measured.
+//! \tparam SplittingRule_ The rule that determines how space is partitioned.
+//! \tparam Index_ Type of index.
 template <
     typename Space_,
     typename Metric_ = L2Squared,
