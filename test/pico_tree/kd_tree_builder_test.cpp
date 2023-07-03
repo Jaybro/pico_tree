@@ -71,6 +71,66 @@ TEST(KdTreeTest, SplitterMedian) {
   EXPECT_EQ(split_val, ptsx7[idx7[5]][1]);
 }
 
+TEST(KdTreeTest, SplitterMidpoint) {
+  using PointX = Point2f;
+  using Index = int;
+  using Scalar = typename PointX::ScalarType;
+  using SpaceX = Space<PointX>;
+  using SplitterX = pico_tree::internal::SplitterMidpoint<
+      pico_tree::internal::SpaceWrapper<SpaceX>>;
+
+  std::vector<PointX> ptsx4{{0.0, 2.0}, {0.0, 1.0}, {0.0, 4.0}, {0.0, 3.0}};
+  SpaceX spcx4(ptsx4);
+  pico_tree::internal::SpaceWrapper<SpaceX> spcx4_wrapper(spcx4);
+  std::vector<Index> idx4{0, 1, 2, 3};
+
+  SplitterX splitter(spcx4_wrapper);
+
+  pico_tree::internal::Box<Scalar, 2> box(2);
+  std::vector<Index>::iterator split;
+  pico_tree::Size split_dim;
+  Scalar split_val;
+
+  // Everything is forced to the right leaf. This means that the split must be
+  // on index 0.
+  box.min(0) = Scalar{0.0};
+  box.min(1) = Scalar{0.0};
+  box.max(0) = Scalar{0.0};
+  box.max(1) = Scalar{1.0};
+  splitter(0, idx4.begin(), idx4.end(), box, split, split_dim, split_val);
+
+  EXPECT_EQ(split - idx4.begin(), 0);
+  EXPECT_EQ(split_dim, 1);
+  EXPECT_EQ(split_val, (box.max(1) + box.min(1)) / Scalar{2.0});
+
+  // Everything is forced to the left leaf. This means that the split must be on
+  // index 4.
+  box.max(1) = Scalar{9.0};
+  splitter(0, idx4.begin(), idx4.end(), box, split, split_dim, split_val);
+
+  EXPECT_EQ(split - idx4.begin(), 4);
+  EXPECT_EQ(split_dim, 1);
+  EXPECT_EQ(split_val, (box.max(1) + box.min(1)) / Scalar{2.0});
+
+  // Clean middle split. A general case where the split value falls somewhere
+  // inbetween the range of numbers.
+  box.max(1) = Scalar{5.0};
+  splitter(0, idx4.begin(), idx4.end(), box, split, split_dim, split_val);
+
+  EXPECT_EQ(split - idx4.begin(), 2);
+  EXPECT_EQ(split_dim, 1);
+  EXPECT_EQ(split_val, (box.max(1) + box.min(1)) / Scalar{2.0});
+
+  // On dimension 0 we test what happens when all values are equal. Again
+  // everything moves to the left. So we want to split on index 4.
+  box.max(0) = Scalar{15.0};
+  splitter(0, idx4.begin(), idx4.end(), box, split, split_dim, split_val);
+
+  EXPECT_EQ(split - idx4.begin(), 4);
+  EXPECT_EQ(split_dim, 0);
+  EXPECT_EQ(split_val, (box.max(0) + box.min(0)) / Scalar{2.0});
+}
+
 TEST(KdTreeTest, SplitterSlidingMidpoint) {
   using PointX = Point2f;
   using Index = int;

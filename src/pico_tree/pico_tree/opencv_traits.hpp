@@ -82,16 +82,30 @@ struct PointTraits<cv::Vec<Scalar_, Dim_>> {
   static constexpr SizeType size(cv::Vec<Scalar_, Dim_> const&) { return Dim; }
 };
 
-// TODO Support cv::Mat_ (instead?).
 template <typename Scalar_, Size Dim_>
-struct MatWrapper {
-  inline MatWrapper(cv::Mat mat) : mat(mat) {}
+class MatWrapper {
+  using SizeType = Size;
 
-  inline operator cv::Mat const&() const { return mat; }
+ public:
+  inline MatWrapper(cv::Mat mat)
+      : mat_(mat),
+        size_(static_cast<SizeType>(mat_.rows)),
+        sdim_(mat_.step1()) {}
 
-  inline operator cv::Mat&() { return mat; }
+  inline operator cv::Mat const&() const { return mat_; }
 
-  cv::Mat mat;
+  inline operator cv::Mat&() { return mat_; }
+
+  inline SizeType size() const { return size_; }
+
+  inline SizeType sdim() const { return sdim_; }
+
+  inline cv::Mat const& mat() const { return mat_; }
+
+ private:
+  cv::Mat mat_;
+  SizeType size_;
+  SizeType sdim_;
 };
 
 //! \brief Provides an interface for cv::Mat. Each row is considered a point.
@@ -113,30 +127,26 @@ struct SpaceTraits<MatWrapper<Scalar_, Dim_>> {
 
   //! \brief Returns the point at \p idx from \p space.
   template <typename Index_>
-  inline static PointType PointAt(cv::Mat const& space, Index_ idx) {
+  inline static PointType PointAt(SpaceType const& space, Index_ idx) {
     if constexpr (Dim != kDynamicSize) {
-      return {space.ptr<Scalar_>(static_cast<int>(idx))};
+      return {space.mat().template ptr<Scalar_>(static_cast<int>(idx))};
     } else {
-      // TODO The use of step1() is actually quite expensive. Perhaps there is
-      // an alternative.
-      return {space.ptr<Scalar_>(static_cast<int>(idx)), space.step1()};
+      return {
+          space.mat().template ptr<Scalar_>(static_cast<int>(idx)),
+          space.sdim()};
     }
   }
 
   //! \brief Returns number of points contained by \p space.
-  inline static SizeType size(cv::Mat const& space) {
-    return static_cast<SizeType>(space.rows);
-  }
+  inline static SizeType size(SpaceType const& space) { return space.size(); }
 
   //! \brief Returns the number of coordinates or spatial dimension of each
   //! point.
-  static constexpr SizeType sdim(cv::Mat const& space) {
+  static constexpr SizeType sdim(SpaceType const& space) {
     if constexpr (Dim != kDynamicSize) {
       return Dim;
     } else {
-      // TODO The use of step1() is actually quite expensive. Perhaps there is
-      // an alternative.
-      return space.step1();
+      return space.sdim();
     }
   }
 };

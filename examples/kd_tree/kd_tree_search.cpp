@@ -3,60 +3,19 @@
 #include <pico_tree/kd_tree.hpp>
 #include <pico_tree/vector_traits.hpp>
 
-//! \brief Search visitor that counts how many points were considered as a
-//! nearest neighbor.
-template <typename Neighbor>
-class SearchNnCounter {
- public:
-  using NeighborType = Neighbor;
-  using IndexType = typename Neighbor::IndexType;
-  using ScalarType = typename Neighbor::ScalarType;
-
-  //! \brief Creates a visitor for approximate nearest neighbor searching.
-  //! \param nn Search result.
-  inline SearchNnCounter(Neighbor* nn) : count_(0), nn_(*nn) {
-    // Initial search distance.
-    nn_.distance = std::numeric_limits<ScalarType>::max();
-  }
-
-  //! \brief Visit current point.
-  //! \details This method is required. The KdTree calls this function when it
-  //! finds a point that is closer to the query than the result of this
-  //! visitors' max() function. I.e., it found a new nearest neighbor.
-  //! \param idx Point index.
-  //! \param d Point distance (that depends on the metric).
-  inline void operator()(IndexType const idx, ScalarType const dst) {
-    count_++;
-    nn_ = {idx, dst};
-  }
-
-  //! \brief Maximum search distance with respect to the query point.
-  //! \details This method is required.
-  inline ScalarType const& max() const { return nn_.distance; }
-
-  //! \brief Returns the number of points that were considered the nearest
-  //! neighbor.
-  //! \details This method is not required.
-  inline IndexType const& count() const { return count_; }
-
- private:
-  IndexType count_;
-  Neighbor& nn_;
-};
-
 // Different search options.
-void Search3d() {
+void SearchR3() {
   using PointX = Point3f;
-  using Index = int;
   using Scalar = typename PointX::ScalarType;
 
-  Index run_count = 1024 * 1024;
-  Index max_leaf_size = 12;
-  Index point_count = 1024 * 1024;
+  std::size_t run_count = 1024 * 1024;
+  std::size_t max_leaf_size = 12;
+  std::size_t point_count = 1024 * 1024;
   Scalar area_size = 1000;
 
-  pico_tree::KdTree<std::vector<PointX>> tree(
-      GenerateRandomN<PointX>(point_count, area_size), max_leaf_size);
+  using KdTree = pico_tree::KdTree<std::vector<PointX>>;
+
+  KdTree tree(GenerateRandomN<PointX>(point_count, area_size), max_leaf_size);
 
   Scalar min_v = 25.1f;
   Scalar max_v = 37.9f;
@@ -75,13 +34,16 @@ void Search3d() {
   // Apply the metric to the max ratio difference.
   Scalar max_error_ratio_metric = tree.metric()(1.0f + max_error_percentage);
 
-  pico_tree::Neighbor<Index, Scalar> nn;
-  std::vector<pico_tree::Neighbor<Index, Scalar>> knn;
+  using Neighbor = typename KdTree::NeighborType;
+  using Index = typename Neighbor::IndexType;
+
+  Neighbor nn;
+  std::vector<Neighbor> knn;
   std::vector<Index> idxs;
 
   {
     ScopedTimer t("kd_tree nn, radius and box", run_count);
-    for (Index i = 0; i < run_count; ++i) {
+    for (std::size_t i = 0; i < run_count; ++i) {
       tree.SearchNn(q, nn);
       tree.SearchKnn(q, 1, knn);
       tree.SearchRadius(q, search_radius_metric, knn, false);
@@ -89,11 +51,11 @@ void Search3d() {
     }
   }
 
-  Index k = 8;
+  std::size_t k = 8;
 
   {
     ScopedTimer t("kd_tree aknn", run_count);
-    for (Index i = 0; i < run_count; ++i) {
+    for (std::size_t i = 0; i < run_count; ++i) {
       // When the KdTree is created with the SlidingMidpointSplitter,
       // approximate nn queries can be answered in O(1/e^d log n) time.
       tree.SearchKnn(q, k, max_error_ratio_metric, knn);
@@ -102,15 +64,10 @@ void Search3d() {
 
   {
     ScopedTimer t("kd_tree knn", run_count);
-    for (Index i = 0; i < run_count; ++i) {
+    for (std::size_t i = 0; i < run_count; ++i) {
       tree.SearchKnn(q, k, knn);
     }
   }
-
-  SearchNnCounter<pico_tree::Neighbor<Index, Scalar>> v(&nn);
-  tree.SearchNearest(q, v);
-
-  std::cout << "Custom visitor # nns considered: " << v.count() << std::endl;
 }
 
 // Search on the circle.
@@ -136,7 +93,7 @@ void SearchS1() {
 }
 
 int main() {
-  Search3d();
+  SearchR3();
   SearchS1();
   return 0;
 }
