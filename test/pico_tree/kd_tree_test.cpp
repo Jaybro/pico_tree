@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <filesystem>
 #include <pico_toolshed/dynamic_space.hpp>
 #include <pico_toolshed/point.hpp>
 #include <pico_tree/kd_tree.hpp>
@@ -106,7 +107,7 @@ TEST(KdTreeTest, WriteRead) {
     TestKnn(tree, Index(20));
   }
 
-  EXPECT_EQ(std::remove(filename.c_str()), 0);
+  EXPECT_TRUE(std::filesystem::remove(filename));
 
   // Run time known dimensions.
   using DSpace = DynamicSpace<Space<Point2f>>;
@@ -128,5 +129,5 @@ TEST(KdTreeTest, WriteRead) {
     TestKnn(tree, 20);
   }
 
-  EXPECT_EQ(std::remove(filename.c_str()), 0);
+  EXPECT_TRUE(std::filesystem::remove(filename));
 }

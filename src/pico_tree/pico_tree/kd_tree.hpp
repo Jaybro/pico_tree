@@ -44,23 +44,18 @@ class KdTree {
   //! \brief Neighbor type of various search resuls.
   using NeighborType = Neighbor<IndexType, ScalarType>;
 
-  //! \brief Creates a KdTree given \p points and \p max_leaf_size.
+  //! \brief Creates a KdTree given \p space and \p max_leaf_size.
+  //! \details The KdTree takes \p space by value. This allows it to take
+  //! ownership of the point cloud. To avoid creating a copy of the input:
   //!
-  //! \details
-  //! The KdTree wants ownership of \p points to avoid problems that may occur
-  //! when keeping a const reference to the data. For example, using std::move()
-  //! on the point set would invalidate the local reference which is then
-  //! unrecoverable.
-  //!
-  //! To avoid a deep copy of the \p points object:
-  //! \li Move it: KdTree tree(std::move(points), max_leaf_size);
-  //! \li Implement its class as an adaptor that keeps a reference to the data.
+  //! \li Use move semantics: KdTree tree(std::move(space), max_leaf_size);
+  //! \li Use an std::reference_wrapper<SpaceType> as the SpaceType.
   //!
   //! The value of \p max_leaf_size influences the height and performance of the
   //! tree. The splitting mechanism determines data locality within the leafs.
   //! The exact effect it has depends on the tree splitting mechanism.
   //!
-  //! \param points The input point set (interface).
+  //! \param space The input point set.
   //! \param max_leaf_size The maximum number of points allowed in a leaf node.
   KdTree(SpaceType space, SizeType max_leaf_size)
       : space_(std::move(space)),

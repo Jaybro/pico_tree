@@ -2,9 +2,7 @@
 
 [![build-and-test](https://github.com/Jaybro/pico_tree/workflows/build-and-test/badge.svg)](https://github.com/Jaybro/pico_tree/actions?query=workflow%3Abuild-and-test) [![pip](https://github.com/Jaybro/pico_tree/workflows/pip/badge.svg)](https://github.com/Jaybro/pico_tree/actions?query=workflow%3Apip)
 
-PicoTree is a C++ header only library with [Python bindings](https://github.com/pybind/pybind11) for nearest neighbor searches and range searches using a KdTree.
-
-See the table below to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library versus several other implementations:
+PicoTree is a C++ header only library with [Python bindings](https://github.com/pybind/pybind11) for fast nearest neighbor searches and range searches using a KdTree. See the table below to get an impression of the performance provided by the [KdTree](https://en.wikipedia.org/wiki/K-d_tree) of this library versus several other implementations:
 
 |                                     | Build C++ | Build Python  | Knn C++    | Knn Python  |
 | ----------------------------------- | --------- | ------------- | ---------- | ----------- |
@@ -15,7 +13,7 @@ See the table below to get an impression of the performance provided by the [KdT
 | [OpenCV FLANN][cvfn] 4.6.0          | 1.9s      | ...           | 4.7s       | ...         |
 | PicoTree KdTree v0.8.0              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
 
-It compares the performance of the build and query algorithms using two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863. The first point cloud is used to compare build times and both are used to compare query times. All benchmarks were generated with the following parameters: `max_leaf_size=10`, `knn=1` and `OMP_NUM_THREADS=1`. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
+Two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863 were used to generate these numbers. The first to compare build times and both of them to compare query times. All benchmarks were generated on a single thread with the following parameters: `max_leaf_size=10` and `knn=1`. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
 [nano]: https://github.com/jlblancoc/nanoflann
 [spkd]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.html
@@ -36,6 +34,7 @@ KdTree:
 * Compile time and run time known dimensions.
 * Static tree builds.
 * Thread safe queries.
+* Optional [Python bindings](https://github.com/pybind/pybind11).
 
 PicoTree can interface with different types of points and point sets through traits classes. These can be custom implementations or one of the `pico_tree::SpaceTraits<>` and `pico_tree::PointTraits<>` classes provided by this library.
 * Space type support:
@@ -59,6 +58,7 @@ PicoTree can interface with different types of points and point sets through tra
 * Supporting a [custom point type](./examples/kd_tree/kd_tree_custom_point_type.cpp).
 * Supporting a [custom space type](./examples/kd_tree/kd_tree_custom_space_type.cpp).
 * Creating a [custom search visitor](./examples/kd_tree/kd_tree_custom_search_visitor.cpp).
+* [Saving and loading](./examples/kd_tree/kd_tree_save_and_load.cpp) a KdTree to and from a file.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).
 

@@ -17,3 +17,5 @@ add_demo_executable(kd_tree_custom_point_type)
 add_demo_executable(kd_tree_custom_space_type)
 
 add_demo_executable(kd_tree_custom_search_visitor)
+
+add_demo_executable(kd_tree_save_and_load)

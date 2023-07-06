@@ -42,7 +42,9 @@ template <typename Scalar_, Size Dim_>
 struct Point {
   static_assert(Dim_ == kDynamicSize || Dim_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
+  //! \private Using Pst__ is considered undefined behavior.
   using Pst__ = PointStorageTraits<Scalar_, Dim_>;
+  //! \private Using Elems__ is considered undefined behavior.
   using Elems__ = typename Pst__::Type;
 
   using ScalarType = Scalar_;
@@ -72,6 +74,7 @@ struct Point {
   //! \brief Returns the size of the container.
   constexpr SizeType size() const noexcept { return elems_.size(); }
 
+  //! \private Using elems_ is considered undefined behavior.
   Elems__ elems_;
 };
 

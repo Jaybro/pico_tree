@@ -10,7 +10,6 @@
 void ArrayOfScalars() {
   std::size_t count = 10;
   constexpr std::size_t Dim = 2;
-  std::size_t max_leaf_size = 3;
 
   // Dummy array of scalars.
   std::unique_ptr<double[]> data = std::make_unique<double[]>(count);
@@ -23,6 +22,7 @@ void ArrayOfScalars() {
   pico_tree::SpaceMap<pico_tree::PointMap<double, Dim>> map(
       data.get(), count / Dim);
 
+  std::size_t max_leaf_size = 3;
   pico_tree::KdTree<pico_tree::SpaceMap<pico_tree::PointMap<double, Dim>>> tree(
       map, max_leaf_size);
 
@@ -38,7 +38,6 @@ void ArrayOfScalars() {
 void ArrayOfPoints() {
   std::size_t count = 3;
   constexpr std::size_t Dim = 2;
-  std::size_t max_leaf_size = 3;
 
   // Dummy array of points.
   std::unique_ptr<std::array<double, Dim>[]> data =
@@ -50,10 +49,11 @@ void ArrayOfPoints() {
 
   pico_tree::SpaceMap<std::array<double, Dim>> map(data.get(), count);
 
+  std::size_t max_leaf_size = 3;
   pico_tree::KdTree<pico_tree::SpaceMap<std::array<double, Dim>>> tree(
       map, max_leaf_size);
 
-  std::array<double, Dim> const& query = *(data.get() + 1);
+  std::array<double, Dim> const& query = data[1];
   pico_tree::Neighbor<int, double> nn;
   tree.SearchNn(query, nn);
 
