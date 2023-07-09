@@ -5,11 +5,15 @@
 using namespace pico_tree;
 using namespace pico_tree::internal;
 
+namespace {
+
 Size constexpr kDynamicBoxDim = 4;
 
 inline Size constexpr Dim(Size dim) {
   return dim != kDynamicSize ? dim : kDynamicBoxDim;
 }
+
+}  // namespace
 
 template <typename T>
 class BoxTest : public testing::Test {};
