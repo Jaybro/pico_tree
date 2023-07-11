@@ -120,10 +120,12 @@ class SpaceMap : protected internal::Map<Point_, kDynamicSize> {
   static_assert(
       Dim != kDynamicSize, "SPACE_MAP_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
 
-  using internal::Map<Point_, kDynamicSize>::Map;
   using internal::Map<Point_, kDynamicSize>::operator[];
   using internal::Map<Point_, kDynamicSize>::data;
   using internal::Map<Point_, kDynamicSize>::size;
+
+  constexpr SpaceMap(CvPointType* data, SizeType size) noexcept
+      : internal::Map<Point_, kDynamicSize>::Map(data, size) {}
 
   constexpr SizeType sdim() const { return Dim; }
 };

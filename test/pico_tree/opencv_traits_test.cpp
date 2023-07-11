@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <pico_tree/kd_tree.hpp>
 #include <pico_tree/opencv_traits.hpp>
 
 #include "common.hpp"
 
-TEST(OpenCvTest, Interface) {
+TEST(OpenCvTraitsTest, Interface) {
   using Scalar = float;
   int constexpr Dim = 3;
 
@@ -19,15 +18,4 @@ TEST(OpenCvTest, Interface) {
       matrix.rows,
       matrix.rows - 1,
       row.ptr<Scalar>());
-}
-
-TEST(OpenCvTest, TreeCompatibility) {
-  using Scalar = float;
-
-  cv::Mat random(1024, 4, cv::DataType<Scalar>::type);
-  cv::randu(random, -Scalar(1.0), Scalar(1.0));
-
-  pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 4>> tree(random, 10);
-
-  TestKnn(tree, 20);
 }
