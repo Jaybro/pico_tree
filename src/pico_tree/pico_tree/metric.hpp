@@ -210,6 +210,41 @@ struct L2Squared {
   }
 };
 
+struct LInf {
+  //! \brief This tag specifies the supported space by this metric.
+  using SpaceTag = EuclideanSpaceTag;
+
+  template <
+      typename InputIterator1,
+      typename InputSentinel1,
+      typename InputIterator2>
+  constexpr auto operator()(
+      InputIterator1 begin1, InputSentinel1 end1, InputIterator2 begin2) const {
+    using ScalarType =
+        typename std::iterator_traits<InputIterator1>::value_type;
+
+    ScalarType d{};
+
+    for (; begin1 != end1; ++begin1, ++begin2) {
+      d = std::max(d, internal::Distance(*begin1, *begin2));
+    }
+
+    return d;
+  }
+
+  //! \brief Calculates the distance between two coordinates.
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
+    return internal::Distance(x, y);
+  }
+
+  //! \brief Returns the absolute value of \p x.
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(Scalar_ x) const {
+    return std::abs(x);
+  }
+};
+
 //! \brief The SO2 metric measures distances on the unit circle S1. It is the
 //! intrinsic metric of points in R2 on S1 given by the great-circel distance.
 //! \details Named after the Special Orthogonal Group of dimension 2. The circle

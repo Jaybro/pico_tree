@@ -8,17 +8,19 @@
 //! \file opencv_traits.hpp
 //! \brief Contains traits that provide OpenCV support for PicoTree.
 //! \details The following is supported:
-//! * std::vector<cv::Point_<>>
-//! * std::vector<cv::Point3_<>>
-//! * std::vector<cv::Vec_<>>
-//! * cv::Mat
+//! * cv::Vec_<> as a point type.
+//! * cv::Mat as a space type.
 
 namespace pico_tree {
 
 //! \brief PointTraits provides an interface for cv::Point_<>.
+//! \details PointTraits<cv::Point_<Scalar_>> violates the strict aliasing rule
+//! by interpreting a struct of scalars as an array of scalars and using this
+//! specialization is therefore UB. Note that this specialization will work in
+//! practice but you have been warned. Don't use it to avoid UB.
 template <typename Scalar_>
 struct PointTraits<cv::Point_<Scalar_>> {
-  static_assert(sizeof(cv::Point_<Scalar_>) == (sizeof(Scalar_) * 2), "");
+  static_assert(sizeof(cv::Point_<Scalar_>) == sizeof(Scalar_[2]), "");
 
   //! \brief Supported point type.
   using PointType = cv::Point_<Scalar_>;
@@ -39,9 +41,13 @@ struct PointTraits<cv::Point_<Scalar_>> {
 };
 
 //! \brief PointTraits provides an interface for cv::Point3_<>.
+//! \details PointTraits<cv::Point3_<Scalar_>> violates the strict aliasing rule
+//! by interpreting a struct of scalars as an array of scalars and using this
+//! specialization is therefore UB. Note that this specialization will work in
+//! practice but you have been warned. Don't use it to avoid UB.
 template <typename Scalar_>
 struct PointTraits<cv::Point3_<Scalar_>> {
-  static_assert(sizeof(cv::Point3_<Scalar_>) == (sizeof(Scalar_) * 3), "");
+  static_assert(sizeof(cv::Point3_<Scalar_>) == sizeof(Scalar_[3]), "");
 
   //! \brief Supported point type.
   using PointType = cv::Point3_<Scalar_>;

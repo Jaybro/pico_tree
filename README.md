@@ -29,7 +29,7 @@ KdTree:
 * Nearest neighbor, approximate nearest neighbor, radius, box, and customizable nearest neighbor searches.
 * [Metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)):
   * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
-  * Available metrics: `L1`, `L2Squared`, `SO2`, and `SE2Squared`. Metrics can be customized.
+  * Available metrics: `L1`, `L2Squared`, `LInf`, `SO2`, and `SE2Squared`. Metrics can be customized.
 * Multiple tree splitting rules: `kLongestMedian`, `kMidpoint` and `kSlidingMidpoint`.
 * Compile time and run time known dimensions.
 * Static tree builds.
@@ -51,8 +51,8 @@ PicoTree can interface with different types of points and point sets through tra
 
 # Examples
 
-* [Minimal working example](./examples/kd_tree/kd_tree_minimal.cpp) using an `std::vector<>` of points.
-* [Creating a KdTree](./examples/kd_tree/kd_tree_creation.cpp) and taking the input by value or reference.
+* [Minimal working example](./examples/kd_tree/kd_tree_minimal.cpp) for building and querying a KdTree.
+* [Creating a KdTree](./examples/kd_tree/kd_tree_creation.cpp) and having it take the input by value or reference.
 * Using the KdTree's [search](./examples/kd_tree/kd_tree_search.cpp) capabilities.
 * Working with [dynamic size arrays](./examples/kd_tree/kd_tree_dynamic_arrays.cpp).
 * Supporting a [custom point type](./examples/kd_tree/kd_tree_custom_point_type.cpp).

@@ -5,8 +5,6 @@
 #include <pico_tree/metric.hpp>
 #include <pico_understory/metric.hpp>
 
-using PointX = Point2f;
-
 template <typename Metric_, typename P0, typename P1>
 inline auto Distance(Metric_ const& metric, P0 const& p0, P1 const& p1) {
   auto w0 = pico_tree::internal::PointWrapper<P0>(p0);
@@ -15,8 +13,8 @@ inline auto Distance(Metric_ const& metric, P0 const& p0, P1 const& p1) {
 }
 
 TEST(MetricTest, L1) {
-  PointX p0{2.0f, 4.0f};
-  PointX p1{10.0f, 1.0f};
+  Point2f p0{2.0f, 4.0f};
+  Point2f p1{10.0f, 1.0f};
 
   pico_tree::L1 metric;
 
@@ -26,8 +24,8 @@ TEST(MetricTest, L1) {
 }
 
 TEST(MetricTest, L2) {
-  PointX p0{7.0f, 5.0f};
-  PointX p1{10.0f, 1.0f};
+  Point2f p0{7.0f, 5.0f};
+  Point2f p1{10.0f, 1.0f};
 
   pico_tree::L2 metric;
 
@@ -37,14 +35,25 @@ TEST(MetricTest, L2) {
 }
 
 TEST(MetricTest, L2Squared) {
-  PointX p0{2.0f, 4.0f};
-  PointX p1{10.0f, 1.0f};
+  Point2f p0{2.0f, 4.0f};
+  Point2f p1{10.0f, 1.0f};
 
   pico_tree::L2Squared metric;
 
   EXPECT_FLOAT_EQ(Distance(metric, p0, p1), 73.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 144.0f);
   EXPECT_FLOAT_EQ(metric(-3.1f), 9.61f);
+}
+
+TEST(MetricTest, LInf) {
+  Point2f p0{2.0f, 4.0f};
+  Point2f p1{10.0f, 1.0f};
+
+  pico_tree::LInf metric;
+
+  EXPECT_FLOAT_EQ(Distance(metric, p0, p1), 8.0f);
+  EXPECT_FLOAT_EQ(metric(-3.1f, 8.9f), 12.0f);
+  EXPECT_FLOAT_EQ(metric(-3.1f), 3.1f);
 }
 
 TEST(MetricTest, SO2) {

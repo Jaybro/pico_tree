@@ -27,8 +27,8 @@ class BoxBase {
   static constexpr SizeType Dim = BoxTraits<Derived>::Dim;
   static_assert(Dim == kDynamicSize || Dim > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
-  //! \brief Returns true if \p x is contained. A point on the edge considered
-  //! inside the box.
+  //! \brief Returns true if \p x is contained. A point on the edge is
+  //! considered inside the box.
   constexpr bool Contains(ScalarType const* x) const {
     // We use derived().size() which includes the constexpr part. Otherwise a
     // small trait needs to be written.
