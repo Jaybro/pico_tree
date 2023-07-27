@@ -22,6 +22,8 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
 
   using Base = pico_tree::KdTree<Space_, Metric_>;
   using Space = Space_;
+  // TODO Remove when MSVC++ has default support for OpenMP 3.0+.
+  using SSize = std::ptrdiff_t;
 
  public:
   using Base::Dim;
@@ -47,7 +49,7 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
-    for (SizeType i = 0; i < query.size(); ++i) {
+    for (SSize i = 0; i < static_cast<SSize>(query.size()); ++i) {
       Base::SearchKnn(query[i], output + i * k, output + (i + 1) * k);
     }
   }
@@ -69,7 +71,7 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
     auto output = static_cast<NeighborType*>(nns.mutable_data());
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
-    for (SizeType i = 0; i < query.size(); ++i) {
+    for (SSize i = 0; i < static_cast<SSize>(query.size()); ++i) {
       Base::SearchKnn(query[i], e, output + i * k, output + (i + 1) * k);
     }
   }
@@ -95,7 +97,7 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
-    for (SizeType i = 0; i < query.size(); ++i) {
+    for (SSize i = 0; i < static_cast<SSize>(query.size()); ++i) {
       Base::SearchRadius(query[i], radius, nns_data[i], sort);
     }
   }
@@ -125,7 +127,7 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
-    for (SizeType i = 0; i < query_min.size(); ++i) {
+    for (SSize i = 0; i < static_cast<SSize>(query_min.size()); ++i) {
       Base::SearchBox(query_min[i], query_max[i], box_data[i]);
     }
   }
