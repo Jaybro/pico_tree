@@ -31,6 +31,11 @@ struct StringTraits<pico_tree::L2Squared> {
   static std::string String() { return "L2Squared"; }
 };
 
+template <>
+struct StringTraits<pico_tree::LInf> {
+  static std::string String() { return "LInf"; }
+};
+
 template <typename T>
 bool IsRowMajor(py::array_t<T, 0> const& array) {
   return (array.flags() & py::array::c_style) > 0;

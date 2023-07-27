@@ -41,7 +41,7 @@ class KdTreeTest(unittest.TestCase):
 
     def test_metric(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
-        # L2
+        # L2Squared
         t = pt.KdTree(a, pt.Metric.L2Squared, 10)
         self.assertEqual(t.metric(-2.0), 4)
         # L1
@@ -61,9 +61,11 @@ class KdTreeTest(unittest.TestCase):
             self.assertAlmostEqual(nns[i][0][1], 0)
 
         # Test that the memory is re-used
-        nns[0][0][0] = 42
+        data = nns.ctypes.data
         t.search_knn(a, 2, nns)
-        self.assertEqual(nns[0][0][0], 0)
+        self.assertEqual(nns.ctypes.data, data)
+        t.search_knn(a, 3, nns)
+        self.assertNotEqual(nns.ctypes.data, data)
 
     def test_search_aknn(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
@@ -79,9 +81,11 @@ class KdTreeTest(unittest.TestCase):
             self.assertAlmostEqual(nns[i][0][1], 0)
 
         # Test that the memory is re-used
-        nns[0][0][0] = 42
+        data = nns.ctypes.data
         t.search_knn(a, 2, r, nns)
-        self.assertEqual(nns[0][0][0], 0)
+        self.assertEqual(nns.ctypes.data, data)
+        t.search_knn(a, 3, nns)
+        self.assertNotEqual(nns.ctypes.data, data)
 
     def test_search_radius(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
@@ -94,18 +98,21 @@ class KdTreeTest(unittest.TestCase):
         self.assertTrue(nns)
 
         for i, n in enumerate(nns):
+            self.assertEqual(len(n), 1)
             self.assertEqual(n[0][0], i)
             self.assertAlmostEqual(n[0][1], 0)
-
-        # Test that the memory is re-used
-        nns[0][0][0] = 42
-        t.search_radius(a, search_radius, nns)
-        self.assertEqual(nns[0][0][0], 0)
 
         # This checks if DArray is also a sequence.
         for i in range(len(nns)):
             self.assertEqual(nns[i][0][0], i)
             self.assertAlmostEqual(nns[i][0][1], 0)
+
+        # Test that the memory is re-used
+        datas = [x.ctypes.data for x in nns]
+        t.search_radius(a, search_radius, nns)
+        self.assertEqual([x.ctypes.data for x in nns], datas)
+        t.search_radius(a, search_radius**2, nns)
+        self.assertNotEqual([x.ctypes.data for x in nns], datas)
 
     def test_search_box(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)

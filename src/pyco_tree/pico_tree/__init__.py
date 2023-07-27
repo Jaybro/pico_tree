@@ -1,5 +1,5 @@
-__all__ = []
+__all__ = ['DArray', 'KdTree', 'Metric']
 
-from .metric import *
-from .kd_tree import *
+from .kd_tree import KdTree
+from .metric import Metric
 from ._pyco_tree import __doc__, DArray

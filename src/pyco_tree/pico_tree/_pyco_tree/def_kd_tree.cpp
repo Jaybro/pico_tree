@@ -11,35 +11,44 @@ namespace pyco_tree {
 template <typename PointX>
 using KdTreeL1 = KdTree<SpaceX<PointX>, pico_tree::L1>;
 template <typename PointX>
-using KdTreeL2 = KdTree<SpaceX<PointX>, pico_tree::L2Squared>;
-
-// Dynamic size KdTree
-using KdTreeXfL1 = KdTreeL1<PointsXf>;
-using KdTreeXfL2 = KdTreeL2<PointsXf>;
-using KdTreeXdL1 = KdTreeL1<PointsXd>;
-using KdTreeXdL2 = KdTreeL2<PointsXd>;
+using KdTreeL2Squared = KdTree<SpaceX<PointX>, pico_tree::L2Squared>;
+template <typename PointX>
+using KdTreeLInf = KdTree<SpaceX<PointX>, pico_tree::LInf>;
 
 // Fixed size 2d KdTree
 using KdTree2fL1 = KdTreeL1<Points2f>;
-using KdTree2fL2 = KdTreeL2<Points2f>;
+using KdTree2fL2Squared = KdTreeL2Squared<Points2f>;
+using KdTree2fLInf = KdTreeLInf<Points2f>;
 using KdTree2dL1 = KdTreeL1<Points2d>;
-using KdTree2dL2 = KdTreeL2<Points2d>;
+using KdTree2dL2Squared = KdTreeL2Squared<Points2d>;
+using KdTree2dLInf = KdTreeLInf<Points2d>;
 
 // Fixed size 3d KdTree
 using KdTree3fL1 = KdTreeL1<Points3f>;
-using KdTree3fL2 = KdTreeL2<Points3f>;
+using KdTree3fL2Squared = KdTreeL2Squared<Points3f>;
+using KdTree3fLInf = KdTreeLInf<Points3f>;
 using KdTree3dL1 = KdTreeL1<Points3d>;
-using KdTree3dL2 = KdTreeL2<Points3d>;
+using KdTree3dL2Squared = KdTreeL2Squared<Points3d>;
+using KdTree3dLInf = KdTreeLInf<Points3d>;
+
+// Dynamic size KdTree
+using KdTreeXfL1 = KdTreeL1<PointsXf>;
+using KdTreeXfL2Squared = KdTreeL2Squared<PointsXf>;
+using KdTreeXfLInf = KdTreeLInf<PointsXf>;
+using KdTreeXdL1 = KdTreeL1<PointsXd>;
+using KdTreeXdL2Squared = KdTreeL2Squared<PointsXd>;
+using KdTreeXdLInf = KdTreeLInf<PointsXd>;
 
 template <typename KdTree>
-void DefKdTree(std::string const& name, py::module* m) {
+void DefKdTree(std::string const& name, py::module& m) {
   using Index = typename KdTree::IndexType;
   using Scalar = typename KdTree::ScalarType;
+  using Size = pico_tree::Size;
   using Metric = typename KdTree::MetricType;
   using Neighbor = typename KdTree::NeighborType;
   using Neighborhoods = DArray;
 
-  py::class_<KdTree>(*m, name.c_str(), py::buffer_protocol())
+  py::class_<KdTree>(m, name.c_str(), py::buffer_protocol())
       .def(
           py::init<py::array_t<Scalar, 0>, Index>(),
           // We keep the input points alive until the KdTree is gone.
@@ -104,57 +113,65 @@ void DefKdTree(std::string const& name, py::module* m) {
       // to show which function we mean by using a static_cast.
       .def(
           "metric",
-          static_cast<Scalar (KdTree::*)(Scalar const) const>(&KdTree::metric),
+          static_cast<Scalar (KdTree::*)(Scalar) const>(&KdTree::metric),
           py::arg("scalar"),
           "Return a scalar with the metric applied.")
       .def(
           "search_knn",
           static_cast<void (KdTree::*)(
               py::array_t<Scalar, 0> const,
-              Index const,
+              Size const,
               py::array_t<Neighbor, 0>) const>(&KdTree::SearchKnn),
           py::arg("pts").noconvert().none(false),
           py::arg("k").none(false),
           py::arg("nns").noconvert().none(false),
-          "Search the k nearest neighbors for each of the input points and "
-          "store the result in the specified output array. The output will be "
-          "resized when its shape is not (npts, k). If resized, its memory "
-          "layout will be the same as that of the input.")
+          R"ptdoc(
+Search the k nearest neighbors for each of the input points and store
+the result in the specified output array. The output will be resized
+when its shape is not (npts, k). If resized, its memory layout will be
+the same as that of the input.
+)ptdoc")
       .def(
           "search_knn",
           static_cast<py::array_t<Neighbor, 0> (KdTree::*)(
-              py::array_t<Scalar, 0> const, Index const) const>(
+              py::array_t<Scalar, 0> const, Size const) const>(
               &KdTree::SearchKnn),
           py::arg("pts").noconvert().none(false),
           py::arg("k").none(false),
-          "Search the k nearest neighbors for each of the input points. The "
-          "memory layout of the output will be the same as that of the input.")
+          R"ptdoc(
+Search the k nearest neighbors for each of the input points. The memory
+layout of the output will be the same as that of the input.
+)ptdoc")
       .def(
           "search_knn",
           static_cast<void (KdTree::*)(
               py::array_t<Scalar, 0> const,
-              Index const,
+              Size const,
               Scalar const,
               py::array_t<Neighbor, 0>) const>(&KdTree::SearchKnn),
           py::arg("pts").noconvert().none(false),
           py::arg("k").none(false),
           py::arg("e").none(false),
           py::arg("nns").noconvert().none(false),
-          "Search the k approximate nearest neighbors for each of the input "
-          "points and store the result in the specified output array. The "
-          "output will be resized when its shape is not (npts, k). If resized, "
-          "its memory layout will be the same as that of the input.")
+          R"ptdoc(
+Search the k approximate nearest neighbors for each of the input points
+and store the result in the specified output array. The output will be
+resized when its shape is not (npts, k). If resized, its memory layout
+will be the same as that of the input.
+)ptdoc")
       .def(
           "search_knn",
           static_cast<py::array_t<Neighbor, 0> (KdTree::*)(
-              py::array_t<Scalar, 0> const, Index const, Scalar const) const>(
+              py::array_t<Scalar, 0> const, Size const, Scalar const) const>(
               &KdTree::SearchKnn),
           py::arg("pts").noconvert().none(false),
           py::arg("k").none(false),
           py::arg("e").none(false),
-          "Search the k approximate nearest neighbors for each of the input "
-          "points. The memory layout of the output will be the same as that of "
-          "the input.")
+          R"ptdoc(
+Search the k approximate nearest neighbors for each of the input
+points. The memory layout of the output will be the same as that of the
+input.
+)ptdoc")
       .def(
           "search_radius",
           static_cast<void (KdTree::*)(
@@ -166,8 +183,10 @@ void DefKdTree(std::string const& name, py::module* m) {
           py::arg("radius").none(false),
           py::arg("nns").noconvert().none(false),
           py::arg("sort").none(false) = false,
-          "Search for all neighbors within a radius of each of the input "
-          "points and store the result in the specified output.")
+          R"ptdoc(
+Search for all neighbors within a radius of each of the input points
+and store the result in the specified output.
+)ptdoc")
       .def(
           "search_radius",
           static_cast<Neighborhoods (KdTree::*)(
@@ -176,8 +195,9 @@ void DefKdTree(std::string const& name, py::module* m) {
           py::arg("pts").noconvert().none(false),
           py::arg("radius").none(false),
           py::arg("sort").none(false) = false,
-          "Search for all neighbors within a radius of each of the input "
-          "points.")
+          R"ptdoc(
+Search for all neighbors within a radius of each of the input points.
+)ptdoc")
       .def(
           "search_box",
           static_cast<void (KdTree::*)(
@@ -187,8 +207,10 @@ void DefKdTree(std::string const& name, py::module* m) {
           py::arg("min").noconvert().none(false),
           py::arg("max").noconvert().none(false),
           py::arg("box").noconvert().none(false),
-          "Search for all points within each of the axis aligned input boxes "
-          "and store the result in the specified output.")
+          R"ptdoc(
+Search for all points within each of the axis aligned input boxes and
+store the result in the specified output.
+)ptdoc")
       .def(
           "search_box",
           static_cast<Neighborhoods (KdTree::*)(
@@ -199,24 +221,32 @@ void DefKdTree(std::string const& name, py::module* m) {
           "Search for all points within each of the axis aligned input boxes.");
 }
 
-void DefKdTree(py::module* m) {
-  // Dynamic size KdTree
-  DefKdTree<KdTreeXfL1>("KdTreeXfL1", m);
-  DefKdTree<KdTreeXfL2>("KdTreeXfL2", m);
-  DefKdTree<KdTreeXdL1>("KdTreeXdL1", m);
-  DefKdTree<KdTreeXdL2>("KdTreeXdL2", m);
-
+void DefKdTree(py::module& m) {
+  // TODO: This should become faster to compile.
+  // TODO: Perhaps apply type erasure to reduce repetition.
   // Fixed size 2d KdTree
   DefKdTree<KdTree2fL1>("KdTree2fL1", m);
-  DefKdTree<KdTree2fL2>("KdTree2fL2", m);
+  DefKdTree<KdTree2fL2Squared>("KdTree2fL2Squared", m);
+  DefKdTree<KdTree2fLInf>("KdTree2fLInf", m);
   DefKdTree<KdTree2dL1>("KdTree2dL1", m);
-  DefKdTree<KdTree2dL2>("KdTree2dL2", m);
+  DefKdTree<KdTree2dL2Squared>("KdTree2dL2Squared", m);
+  DefKdTree<KdTree2dLInf>("KdTree2dLInf", m);
 
   // Fixed size 3d KdTree
   DefKdTree<KdTree3fL1>("KdTree3fL1", m);
-  DefKdTree<KdTree3fL2>("KdTree3fL2", m);
+  DefKdTree<KdTree3fL2Squared>("KdTree3fL2Squared", m);
+  DefKdTree<KdTree3fLInf>("KdTree3fLInf", m);
   DefKdTree<KdTree3dL1>("KdTree3dL1", m);
-  DefKdTree<KdTree3dL2>("KdTree3dL2", m);
+  DefKdTree<KdTree3dL2Squared>("KdTree3dL2Squared", m);
+  DefKdTree<KdTree3dLInf>("KdTree3dLInf", m);
+
+  // Dynamic size KdTree
+  DefKdTree<KdTreeXfL1>("KdTreeXfL1", m);
+  DefKdTree<KdTreeXfL2Squared>("KdTreeXfL2Squared", m);
+  DefKdTree<KdTreeXfLInf>("KdTreeXfLInf", m);
+  DefKdTree<KdTreeXdL1>("KdTreeXdL1", m);
+  DefKdTree<KdTreeXdL2Squared>("KdTreeXdL2Squared", m);
+  DefKdTree<KdTreeXdLInf>("KdTreeXdLInf", m);
 }
 
 }  // namespace pyco_tree

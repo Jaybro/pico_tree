@@ -6,25 +6,30 @@ namespace py = pybind11;
 
 namespace pyco_tree {
 
-void DefDArray(pybind11::module* m) {
+void DefDArray(pybind11::module& m) {
   py::class_<DArray>(
-      *m,
+      m,
       "DArray",
-      "A class whos instance is a dynamic array of numpy arrays. Resizing an "
-      "array and its contents is not possible but the values of the numpy "
-      "arrays may be modified. The numpy arrays always have a single dimension "
-      "and they don't have to be of equal size.")
+      R"ptdoc(
+A class whos instance represents a dynamic array of numpy arrays.
+Resizing an array and its contents is not possible but the values of
+the numpy arrays may be modified. The numpy arrays always have a single
+dimension and they don't have to be of equal size.
+)ptdoc")
       .def(
           py::init([](py::object dtype) {
             return DArray(py::dtype::from_args(dtype));
           }),
           py::arg("dtype").none(false),
-          "Create a DArray from any object that can be used to construct a "
-          "numpy dtype.")
+          R"ptdoc(
+Create a DArray from any object that can be used to construct a numpy
+dtype.
+)ptdoc")
       .def(
           "__iter__",
           [](DArray& a) { return py::make_iterator(a.begin(), a.end()); },
-          py::keep_alive<0, 1>())
+          py::keep_alive<0, 1>(),
+          "Return an iterator over the contained ndarrays.")
       .def(
           "__getitem__",
           [](DArray& a, DArray::difference_type i) {
@@ -39,7 +44,8 @@ void DefDArray(pybind11::module* m) {
             return a[static_cast<DArray::size_type>(i)];
           },
           py::arg("i").none(false),
-          py::keep_alive<0, 1>())
+          py::keep_alive<0, 1>(),
+          "x.__getitem__(y) <==> x[y].")
       // Slicing protocol
       .def(
           "__getitem__",
@@ -51,12 +57,9 @@ void DefDArray(pybind11::module* m) {
 
             return a.Copy(start, step, slice_length);
           },
-          py::arg("s"))
-      .def(
-          "__bool__",
-          [](DArray const& a) -> bool { return !a.empty(); },
-          "Check whether the list is nonempty")
-      .def("__len__", &DArray::size)
+          py::arg("s"),
+          "x.__getitem__(y) <==> x[y].")
+      .def("__len__", &DArray::size, "Return len(self).")
       .def_property_readonly(
           "dtype",
           &DArray::dtype,

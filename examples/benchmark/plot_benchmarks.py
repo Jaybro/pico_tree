@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import argparse
-from argparse import ArgumentParser
+from argparse import ArgumentParser, FileType
 import json
 import re
 import matplotlib.pyplot as plt
@@ -9,41 +8,41 @@ import matplotlib.pyplot as plt
 
 def create_arguments():
     parser = ArgumentParser(description='benchmark visualization tool')
-    parser.add_argument('-json_file', '-j', type=argparse.FileType('r'),
+    parser.add_argument('-json_file', '-j', type=FileType('r'),
                         required=True,
                         help='JSON file with benchmark data')
 
     return parser
 
 
-def get_benchmark_subset(benchmarks, pattern):
-    return [x for x in benchmarks if pattern.match(x['name'])]
+def filter_benchmarks(benchmarks, filter_pattern):
+    return [x for x in benchmarks if filter_pattern.match(x['name'])]
 
 
-def get_benchmarks(json):
+def filter_benchmark_categories(json):
     benchmarks = [x for x in json['benchmarks'] if x['name'].endswith('_mean')]
 
     if not benchmarks:
         benchmarks = json['benchmarks']
 
     return [
-        get_benchmark_subset(benchmarks, re.compile(r'.+/Build.+')),
-        get_benchmark_subset(benchmarks, re.compile(r'.+/(Knn|Nn).+')),
-        get_benchmark_subset(benchmarks, re.compile(r'.+/Radius.+'))
+        filter_benchmarks(benchmarks, re.compile(r'.+/Build.+')),
+        filter_benchmarks(benchmarks, re.compile(r'.+/(Knn|Nn).+')),
+        filter_benchmarks(benchmarks, re.compile(r'.+/Radius.+'))
     ]
 
 
-def get_plots(benchmarks_subset, pattern):
+def create_plots(benchmarks, pattern):
     plots = dict()
 
-    for x in benchmarks_subset:
+    for x in benchmarks:
         m = pattern.match(x['name'])
         k = m.group('tree') + '_' + \
             m.group('type') + (('_' + m.group('arg'))
                                if m.group('arg') else '')
         plots[k] = {'x': [], 'y': []}
 
-    for x in benchmarks_subset:
+    for x in benchmarks:
         m = pattern.match(x['name'])
         k = m.group('tree') + '_' + \
             m.group('type') + (('_' + m.group('arg'))
@@ -54,7 +53,7 @@ def get_plots(benchmarks_subset, pattern):
     return plots
 
 
-def get_figure(plots, title):
+def create_figure(plots, title):
     fig, ax = plt.subplots(figsize=(4, 4), tight_layout=True)
 
     for label in plots:
@@ -74,17 +73,19 @@ def main():
     parser = create_arguments()
     args = parser.parse_args()
 
-    benchmarks = get_benchmarks(json.load(args.json_file))
+    benchmarks = filter_benchmark_categories(json.load(args.json_file))
     re_info = r'^Bm(?P<tree>.+)/(Build|Knn|Nn|Radius)(?P<type>(Ct|Rt)[^/]*)/(?P<x>\d+)(/(?P<arg>\d+))?(_mean)?$'
-    plots = [get_plots(b, re.compile(re_info)) for b in benchmarks]
-
+    plots = [create_plots(b, re.compile(re_info)) for b in benchmarks]
+    titles = ['build time', 'knn search time', 'radius search time']
     # Format is determined by filename extension
     extension = '.png'
-    get_figure(plots[0], 'build time')[0].savefig(f'./build_time{extension}')
-    get_figure(plots[1], 'knn search time')[
-        0].savefig(f'./knn_search_time{extension}')
-    get_figure(plots[2], 'radius search time')[
-        0].savefig(f'./radius_search_time{extension}')
+    file_names = [
+        f'./build_time{extension}',
+        f'./knn_search_time{extension}',
+        f'./radius_search_time{extension}']
+
+    for i in range(len(plots)):
+        create_figure(plots[i], titles[i])[0].savefig(file_names[i])
     plt.show()
 
 

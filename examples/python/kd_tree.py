@@ -11,11 +11,12 @@ from time import perf_counter
 
 def tree_creation_and_query_types():
     print("*** KdTree Creation And Basic Information ***")
-    # An input array must have a dimension of two and it must be contiguous. A
-    # C contiguous array contains points in its rows and an F contiguous array
-    # contains points in its columns.
+    # An input array must have a dimension of two and it must be
+    # contiguous. A C contiguous array contains points in its rows and
+    # an F contiguous array contains points in its columns.
     p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
-    # Both the in and output distances are squared when using Metric.L2Squared.
+    # Both the in and output distances are squared when using
+    # Metric.L2Squared.
     t = pt.KdTree(p, pt.Metric.L2Squared, 1)
     print(f"{t}")
     print(f"Number of points used to build the tree: {t.npts}")
@@ -37,9 +38,10 @@ def tree_creation_and_query_types():
     print()
 
     print("*** Approximate Nearest Neighbor Search ***")
-    # Searching for approximate nearest neighbors works the same way.
-    # An approximate nearest neighbor can be at most a distance factor of 1+e
-    # farther away from the true nearest neighbor.
+    # Approximate nearest neighbor searches require an extra parameter
+    # compared to exact nearest neighbor searches, namely, a distance
+    # factor. An approximate nearest neighbor can be at most a factor
+    # of 1+e farther away from the true nearest neighbor.
     max_error = 0.75
     # Apply the metric function to the ratio to get the squared ratio.
     max_error_ratio = t.metric(1.0 + max_error)
@@ -48,14 +50,14 @@ def tree_creation_and_query_types():
     # Note that we scale back the ann distance its original distance.
     print("The 2nd closest to each input point:")
     for knn in knns:
-        print(
-            f"Point index {knn[1][0]} with distance {knn[1][1] * max_error_ratio}")
+        print("Point index {0} with distance {1}".format(
+            knn[1][0], knn[1][1] * max_error_ratio))
     print()
 
     print("*** Radius Search ***")
-    # A radius search doesn't return a numpy array but a custom vector of numpy
-    # arrays. This is because the number of neighbors to each of input points
-    # may vary for a radius search.
+    # A radius search doesn't return a numpy array but a custom vector
+    # of numpy arrays. This is because the number of neighbors to each
+    # of input points may vary for a radius search.
     search_radius = t.metric(2.5)
     print(f"Result with radius: {search_radius}")
     rnns = t.search_radius(p, search_radius)
@@ -69,8 +71,9 @@ def tree_creation_and_query_types():
     print()
 
     print("*** Box Search ***")
-    # A box search returns the same data structure as a radius search. However,
-    # instead of containing neighbors it simply contains indices.
+    # A box search returns the same data structure as a radius search.
+    # However, instead of containing neighbors it simply contains
+    # indices.
     min = np.array([[0, 0], [2, 2], [0, 0], [6, 6]], dtype=np.float32)
     max = np.array([[3, 3], [3, 3], [9, 9], [9, 9]], dtype=np.float32)
     bnns = t.search_box(min, max)
@@ -96,11 +99,14 @@ def tree_creation_and_query_types():
 def array_initialization():
     print("*** Array Initialization ***")
     p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float64)
-    # In and output distances are absolute distances when using Metric.L1.
+    # Metric.L1: The sum of absolute differences.
     t = pt.KdTree(p, pt.Metric.L1, 10)
+    # Metric.LInf: The max of absolute differences.
+    t = pt.KdTree(p, pt.Metric.LInf, 10)
 
-    # This type of forward initialization of arrays may be useful to streamline
-    # loops that depend on them and where reusing memory is desired. E.g.: ICP.
+    # This type of forward initialization of arrays may be useful to
+    # streamline loops that depend on them and where reusing memory is
+    # desired. E.g.: ICP.
     knns = np.empty((0), dtype=t.dtype_neighbor)
     print(knns.dtype)
     rnns = pt.DArray(dtype=t.dtype_neighbor)
@@ -112,9 +118,9 @@ def array_initialization():
 
 def performance_test_pico_tree():
     print("*** Performance against scans.bin ***")
-    # The benchmark documentation, docs/benchmark.md section "Running a new
-    # benchmark", explains how to generate a scans.bin file from an online
-    # dataset.
+    # The benchmark documentation, docs/benchmark.md section "Running a
+    # new benchmark", explains how to generate a scans.bin file from an
+    # online dataset.
     try:
         p0 = np.fromfile(Path(__file__).parent / "scans0.bin",
                          np.float32).reshape((-1, 3))
@@ -125,34 +131,36 @@ def performance_test_pico_tree():
         return
 
     cnt_build_time_before = perf_counter()
-    # Tree creation is only slightly slower in Python vs C++ using the bindings.
+    # Tree creation is only slightly slower in Python.
     t = pt.KdTree(p0, pt.Metric.L2Squared, 10)
-    #t = spKDTree(p0, leafsize=10)
-    #t = skKDTree(p0, leaf_size=10)
-    #t = pyKDTree(p0, leafsize=10)
+    # t = spKDTree(p0, leafsize=10)
+    # t = skKDTree(p0, leaf_size=10)
+    # t = pyKDTree(p0, leafsize=10)
     cnt_build_time_after = perf_counter()
-    print(f"{t} was built in {(cnt_build_time_after - cnt_build_time_before) * 1000.0}ms")
-    # Use the OMP_NUM_THREADS environment variable to influence the number of
-    # threads used for querying: export OMP_NUM_THREADS=1
+    print("{0} was built in {1}ms".format(
+        t, (cnt_build_time_after - cnt_build_time_before) * 1000.0))
+    # Use the OMP_NUM_THREADS environment variable to influence the
+    # number of threads used for querying: export OMP_NUM_THREADS=1
     k = 1
     cnt_query_time_before = perf_counter()
-    # Searching for nearest neighbors is a constant amount of time slower
-    # using the bindings as compared to the C++ benchmark (regardless of k).
-    # The following must be noted however: The Python benchmark simply calls
-    # the knn function provided by the Python bindings. As such it does not
-    # directly wrap the C++ benchmark. This means the performance difference is
-    # not only due to the bindings overhead. The C++ implementation benchmark
-    # may have been optimized more because is very simple. The bindings also
-    # have various extra overhead: checks, numpy array memory creation, OpenMP,
-    # etc.
-    # TODO The actual overhead is probably very similar to that of the KdTree
-    # creation, but it would be nice to measure the overhead w.r.t. the actual
-    # query.
+    # Searching for nearest neighbors is a constant amount of time
+    # slower using the bindings as compared to the C++ benchmark
+    # (regardless of k). The following must be noted however: The
+    # Python benchmark simply calls the knn function provided by the
+    # Python bindings. As such it does not directly wrap the C++
+    # benchmark. This means the performance difference is not only due
+    # to the bindings overhead. The C++ implementation benchmark may
+    # have been optimized more because is very simple. The bindings
+    # also have various extra overhead: checks, numpy array memory
+    # creation, OpenMP, etc.
+    # TODO The actual overhead is probably very similar to that of the
+    # KdTree creation, but it would be nice to measure the overhead
+    # w.r.t. the actual query.
     unused_knns = t.search_knn(p1, k)
-    #unused_dd, unused_ii = t.query(p1, k=k)
+    # unused_dd, unused_ii = t.query(p1, k=k)
     cnt_query_time_after = perf_counter()
-    print(
-        f"{len(p1)} points queried in {(cnt_query_time_after - cnt_query_time_before) * 1000.0}ms")
+    print("{0} points queried in {1}ms".format(
+        len(p1), (cnt_query_time_after - cnt_query_time_before) * 1000.0))
     print()
 
 

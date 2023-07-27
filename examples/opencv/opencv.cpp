@@ -11,17 +11,18 @@ Index const kNumPoints = 1024 * 1024 * 2;
 Scalar const kArea = 1000.0;
 std::size_t const kRunCount = 1024 * 1024;
 
-template <typename Scalar_>
-std::vector<cv::Point3_<Scalar_>> GenerateRandomPoint3N(int n, Scalar_ size) {
+template <typename Vec_>
+std::vector<Vec_> GenerateRandomVecN(
+    std::size_t n, typename Vec_::value_type size) {
   std::random_device rd;
   std::mt19937 e2(rd());
-  std::uniform_real_distribution<Scalar_> dist(0, size);
+  std::uniform_real_distribution<typename Vec_::value_type> dist(0, size);
 
-  std::vector<cv::Point3_<Scalar_>> random(n);
+  std::vector<Vec_> random(n);
   for (auto& p : random) {
-    p.x = dist(e2);
-    p.y = dist(e2);
-    p.z = dist(e2);
+    for (auto& c : p.val) {
+      c = dist(e2);
+    }
   }
 
   return random;
@@ -29,8 +30,8 @@ std::vector<cv::Point3_<Scalar_>> GenerateRandomPoint3N(int n, Scalar_ size) {
 
 // This example shows to build a KdTree from a vector of cv::Point3.
 void BasicVector() {
-  using PointX = cv::Point3_<Scalar>;
-  std::vector<PointX> random = GenerateRandomPoint3N(kNumPoints, kArea);
+  using PointX = cv::Vec<Scalar, 3>;
+  std::vector<PointX> random = GenerateRandomVecN<PointX>(kNumPoints, kArea);
 
   pico_tree::KdTree<std::reference_wrapper<std::vector<PointX>>> tree(
       random, 10);
@@ -63,8 +64,8 @@ void BasicMatrix() {
 
   // Single column cv::Mat based on a vector of points.
   {
-    using PointX = cv::Point3_<Scalar>;
-    std::vector<PointX> random = GenerateRandomPoint3N(kNumPoints, kArea);
+    using PointX = cv::Vec<Scalar, 3>;
+    std::vector<PointX> random = GenerateRandomVecN<PointX>(kNumPoints, kArea);
 
     pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(
         cv::Mat(random), 10);
