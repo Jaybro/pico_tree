@@ -1,8 +1,6 @@
 #pragma once
 
-namespace pico_tree {
-
-namespace internal {
+namespace pico_tree::internal {
 
 //!\brief Binary node base.
 template <typename Derived>
@@ -88,6 +86,4 @@ struct KdTreeNodeTopological
   KdTreeNodeData<KdTreeLeaf<Index_>, KdTreeBranchRange<Scalar_>> data;
 };
 
-}  // namespace internal
-
-}  // namespace pico_tree
+}  // namespace pico_tree::internal

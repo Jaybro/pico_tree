@@ -5,9 +5,7 @@
 
 #include "pico_tree/core.hpp"
 
-namespace pico_tree {
-
-namespace internal {
+namespace pico_tree::internal {
 
 //! \brief Inserts \p item in O(n) time at the index for which \p comp first
 //! holds true. The sequence must be sorted and remains sorted after insertion.
@@ -211,6 +209,4 @@ class SearchAknn {
   RandomAccessIterator_ active_end_;
 };
 
-}  // namespace internal
-
-}  // namespace pico_tree
+}  // namespace pico_tree::internal

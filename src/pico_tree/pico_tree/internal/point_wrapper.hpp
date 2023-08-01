@@ -3,9 +3,7 @@
 #include "pico_tree/core.hpp"
 #include "pico_tree/point_traits.hpp"
 
-namespace pico_tree {
-
-namespace internal {
+namespace pico_tree ::internal {
 
 template <typename Point_>
 class PointWrapper {
@@ -42,6 +40,4 @@ class PointWrapper {
   PointType const& point_;
 };
 
-}  // namespace internal
-
-}  // namespace pico_tree
+}  // namespace pico_tree::internal

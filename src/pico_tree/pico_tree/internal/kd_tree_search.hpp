@@ -1,7 +1,5 @@
 #pragma once
 
-#include <algorithm>
-#include <type_traits>
 #include <vector>
 
 #include "pico_tree/internal/box.hpp"
@@ -9,9 +7,7 @@
 #include "pico_tree/internal/point.hpp"
 #include "pico_tree/metric.hpp"
 
-namespace pico_tree {
-
-namespace internal {
+namespace pico_tree::internal {
 
 //! \brief This class provides a search nearest function for Euclidean spaces.
 template <
@@ -349,6 +345,4 @@ class SearchBoxEuclidean {
   std::vector<IndexType>& idxs_;
 };
 
-}  // namespace internal
-
-}  // namespace pico_tree
+}  // namespace pico_tree::internal

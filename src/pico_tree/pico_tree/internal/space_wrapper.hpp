@@ -4,9 +4,7 @@
 #include "pico_tree/internal/box.hpp"
 #include "pico_tree/space_traits.hpp"
 
-namespace pico_tree {
-
-namespace internal {
+namespace pico_tree::internal {
 
 template <typename Space_>
 class SpaceWrapper {
@@ -50,6 +48,4 @@ class SpaceWrapper {
   SpaceType const& space_;
 };
 
-}  // namespace internal
-
-}  // namespace pico_tree
+}  // namespace pico_tree::internal

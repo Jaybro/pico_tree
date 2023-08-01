@@ -27,9 +27,10 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 
 KdTree:
 * Nearest neighbor, approximate nearest neighbor, radius, box, and customizable nearest neighbor searches.
-* [Metrics](https://en.wikipedia.org/wiki/Metric_(mathematics)):
+* Different [metric spaces](https://en.wikipedia.org/wiki/Metric_space):
   * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
-  * Available metrics: `L1`, `L2Squared`, `LInf`, `SO2`, and `SE2Squared`. Metrics can be customized.
+  * Available distance functions: `L1`, `L2Squared`, `LInf`, `SO2`, and `SE2Squared`.
+  * Metrics can be customized.
 * Multiple tree splitting rules: `kLongestMedian`, `kMidpoint` and `kSlidingMidpoint`.
 * Compile time and run time known dimensions.
 * Static tree builds.

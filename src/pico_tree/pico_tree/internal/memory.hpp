@@ -2,9 +2,7 @@
 
 #include <type_traits>
 
-namespace pico_tree {
-
-namespace internal {
+namespace pico_tree::internal {
 
 //! \brief An instance of ListPoolResource constructs fixed size chunks of
 //! memory and stores these in a list. Memory is only released when the resource
@@ -128,6 +126,4 @@ class ChunkAllocator final {
   Chunk* chunk_;
 };
 
-}  // namespace internal
-
-}  // namespace pico_tree
+}  // namespace pico_tree::internal

@@ -7,9 +7,7 @@
 
 #include "pico_tree/core.hpp"
 
-namespace pico_tree {
-
-namespace internal {
+namespace pico_tree::internal {
 
 //! \details The non-specialized class knows its dimension at compile-time and
 //! uses an std::array for storing its data. Faster than using the std::vector
@@ -78,6 +76,4 @@ struct Point {
   Elems__ elems_;
 };
 
-}  // namespace internal
-
-}  // namespace pico_tree
+}  // namespace pico_tree::internal

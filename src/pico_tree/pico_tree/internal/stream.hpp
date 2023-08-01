@@ -3,9 +3,7 @@
 #include <fstream>
 #include <vector>
 
-namespace pico_tree {
-
-namespace internal {
+namespace pico_tree::internal {
 
 //! \brief Returns an std::fstream given a filename.
 //! \details Convenience function that throws an std::runtime_error in case it
@@ -82,6 +80,4 @@ class Stream {
   std::iostream& stream_;
 };
 
-}  // namespace internal
-
-}  // namespace pico_tree
+}  // namespace pico_tree::internal

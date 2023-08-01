@@ -85,7 +85,7 @@ class KdTree {
   template <typename P, typename V>
   inline void SearchNearest(P const& x, V& visitor) const {
     internal::PointWrapper<P> p(x);
-    SearchNearest(data_.root_node, p, visitor, typename Metric_::SpaceTag());
+    SearchNearest(p, visitor, typename Metric_::SpaceTag());
   }
 
   //! \brief Searches for the nearest neighbor of point \p x.
@@ -307,34 +307,30 @@ class KdTree {
   //! on their selection by visitor \p visitor for node \p node.
   template <typename PointWrapper_, typename Visitor_>
   inline void SearchNearest(
-      NodeType const* const node,
-      PointWrapper_ point,
-      Visitor_& visitor,
-      EuclideanSpaceTag) const {
+      PointWrapper_ point, Visitor_& visitor, EuclideanSpaceTag) const {
     internal::SearchNearestEuclidean<
         SpaceWrapperType,
         Metric_,
         PointWrapper_,
         Visitor_,
         IndexType>(
-        SpaceWrapperType(space_), metric_, data_.indices, point, visitor)(node);
+        SpaceWrapperType(space_), metric_, data_.indices, point, visitor)(
+        data_.root_node);
   }
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node.
   template <typename PointWrapper_, typename Visitor_>
   inline void SearchNearest(
-      NodeType const* const node,
-      PointWrapper_ point,
-      Visitor_& visitor,
-      TopologicalSpaceTag) const {
+      PointWrapper_ point, Visitor_& visitor, TopologicalSpaceTag) const {
     internal::SearchNearestTopological<
         SpaceWrapperType,
         Metric_,
         PointWrapper_,
         Visitor_,
         IndexType>(
-        SpaceWrapperType(space_), metric_, data_.indices, point, visitor)(node);
+        SpaceWrapperType(space_), metric_, data_.indices, point, visitor)(
+        data_.root_node);
   }
 
   //! \brief Point set used for querying point data.

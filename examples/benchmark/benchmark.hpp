@@ -1,8 +1,7 @@
 #include <benchmark/benchmark.h>
 
+#include <pico_toolshed/format/format_bin.hpp>
 #include <pico_toolshed/point.hpp>
-
-#include "format_bin.hpp"
 
 // It seems that there is a "threshold" to the number of functions being
 // benchmarked. Having "too many" of them makes them become slow(er). This
@@ -28,8 +27,8 @@ class Benchmark : public benchmark::Fixture {
   Benchmark() {
     // Here you may need to be patient depending on the size of the binaries.
     // Loaded for each benchmark.
-    pico_tree::ReadBin("./scans0.bin", &points_tree_);
-    pico_tree::ReadBin("./scans1.bin", &points_test_);
+    pico_tree::ReadBin("./scans0.bin", points_tree_);
+    pico_tree::ReadBin("./scans1.bin", points_test_);
   }
 
  protected:

@@ -116,7 +116,7 @@ class UosrScanReader {
 
 template <typename Scalar_>
 inline void ReadUosr(
-    std::string const& root, std::vector<Point<Scalar_, 3>>* points) {
+    std::string const& root, std::vector<Point<Scalar_, 3>>& points) {
   if (!std::filesystem::exists(root)) {
     std::cout << "Path doesn't exist: " << root << std::endl;
     std::exit(EXIT_FAILURE);
@@ -145,7 +145,7 @@ inline void ReadUosr(
     std::cout << "Reading from scan: " << path.string() << std::endl;
     internal::UosrScanReader reader(path);
     while (reader.ReadNext(point)) {
-      points->push_back(point.Cast<Scalar_>());
+      points.push_back(point.Cast<Scalar_>());
     }
   }
 }

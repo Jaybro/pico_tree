@@ -1,8 +1,7 @@
 #include <filesystem>
+#include <pico_toolshed/format/format_ascii.hpp>
+#include <pico_toolshed/format/format_bin.hpp>
 #include <pico_toolshed/point.hpp>
-
-#include "format_ascii.hpp"
-#include "format_bin.hpp"
 
 int main() {
   std::filesystem::path dirname_root = ".";
@@ -16,7 +15,7 @@ int main() {
   } else if (!std::filesystem::exists(path_ascii)) {
     std::cout << "Reading points in bin format..." << std::endl;
     std::vector<Point3f> points;
-    pico_tree::ReadBin(path_bin.string(), &points);
+    pico_tree::ReadBin(path_bin.string(), points);
     std::cout << "Read " << points.size() << " points." << std::endl;
     std::cout << "Writing points to ascii xyz format..." << std::endl;
     pico_tree::WriteAscii(path_ascii.string(), points);

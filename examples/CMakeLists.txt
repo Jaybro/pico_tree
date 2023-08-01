@@ -9,6 +9,7 @@ add_subdirectory(pico_understory)
 add_subdirectory(kd_tree)
 
 find_package(Eigen3 QUIET)
+
 if(Eigen3_FOUND)
     message(STATUS "Eigen3 found. Building Eigen example.")
     add_subdirectory(eigen)
@@ -17,6 +18,7 @@ else()
 endif()
 
 find_package(OpenCV QUIET)
+
 if(OpenCV_FOUND)
     message(STATUS "OpenCV found. Building OpenCV example.")
     add_subdirectory(opencv)
@@ -25,6 +27,7 @@ else()
 endif()
 
 find_package(benchmark QUIET)
+
 if(benchmark_FOUND)
     message(STATUS "benchmark found. Building PicoTree benchmarks.")
     add_subdirectory(benchmark)

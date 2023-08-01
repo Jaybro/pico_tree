@@ -6,9 +6,7 @@
 
 #include "pico_tree/core.hpp"
 
-namespace pico_tree {
-
-namespace internal {
+namespace pico_tree::internal {
 
 //! \brief BoxTraits exposes metadata for each of the different box types.
 //! \see Box
@@ -249,6 +247,4 @@ struct BoxTraits<BoxMap<Scalar_, Dim_>> {
   static Size constexpr Dim = Dim_;
 };
 
-}  // namespace internal
-
-}  // namespace pico_tree
+}  // namespace pico_tree::internal
