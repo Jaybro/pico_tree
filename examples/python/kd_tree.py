@@ -74,10 +74,20 @@ def tree_creation_and_query_types():
     # A box search returns the same data structure as a radius search.
     # However, instead of containing neighbors it simply contains
     # indices.
-    min = np.array([[0, 0], [2, 2], [0, 0], [6, 6]], dtype=np.float32)
-    max = np.array([[3, 3], [3, 3], [9, 9], [9, 9]], dtype=np.float32)
-    bnns = t.search_box(min, max)
-    t.search_box(min, max, bnns)
+    # An array of input boxes is defined as follows:
+    #   [min_0, max_0, min_1, max_1, ...]
+    boxes = np.array(
+        [[0, 0],
+         [3, 3],
+         [2, 2],
+         [3, 3],
+         [0, 0],
+         [9, 9],
+         [6, 6],
+         [9, 9]],
+        dtype=np.float32)
+    bnns = t.search_box(boxes)
+    t.search_box(boxes, bnns)
     print("Results for the orthogonal box search:")
     for bnn in bnns:
         print(f"{bnn}")

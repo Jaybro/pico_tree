@@ -107,28 +107,45 @@ class KdTreeTest(unittest.TestCase):
             self.assertEqual(nns[i][0][0], i)
             self.assertAlmostEqual(nns[i][0][1], 0)
 
-        # Test that the memory is re-used
-        datas = [x.ctypes.data for x in nns]
+        # Test that the memory is re-used by comparing memory addresses.
+        # In case the size of an array equals zero, its memory address is
+        # random. See darray.hpp for more details.
+        def addresses(nns):
+            return [x.ctypes.data if len(x) else 0 for x in nns]
+
+        datas = addresses(nns)
         t.search_radius(a, search_radius, nns)
-        self.assertEqual([x.ctypes.data for x in nns], datas)
+        self.assertEqual(addresses(nns), datas)
         t.search_radius(a, search_radius**2, nns)
-        self.assertNotEqual([x.ctypes.data for x in nns], datas)
+        self.assertNotEqual(addresses(nns), datas)
 
     def test_search_box(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
         t = pt.KdTree(a, pt.Metric.L2Squared, 10)
-
-        min = np.array([[0, 0], [2, 2], [0, 0], [6, 6]], dtype=np.float32)
-        max = np.array([[3, 3], [3, 3], [9, 9], [9, 9]], dtype=np.float32)
-        nns = t.search_box(min, max)
+        boxes = np.array(
+            [[0, 0],
+             [3, 3],
+             [2, 2],
+             [3, 3],
+             [0, 0],
+             [9, 9],
+             [6, 6],
+             [9, 9]],
+            dtype=np.float32)
+        nns = t.search_box(boxes)
         self.assertEqual(len(nns), 4)
         self.assertEqual(nns.dtype, t.dtype_index)
         self.assertTrue(nns)
 
-        # Test that the memory is re-used
-        nns[0][0] = 42
-        t.search_box(min, max, nns)
-        self.assertEqual(nns[0][0], 0)
+        # Test that the memory is re-used by comparing memory addresses.
+        # In case the size of an array equals zero, its memory address is
+        # random. See darray.hpp for more details.
+        def addresses(nns):
+            return [x.ctypes.data if len(x) else 0 for x in nns]
+
+        datas = addresses(nns)
+        t.search_box(boxes, nns)
+        self.assertEqual(addresses(nns), datas)
 
         # Check the number of indices found.
         sizes = [1, 0, 3, 1]

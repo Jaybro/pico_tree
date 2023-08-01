@@ -45,6 +45,16 @@ class DArrayImpl : public DArrayImplBase {
     // It is important that at the binding side of things we ensure that the
     // array is kept alive while the view is alive.
     // NOTE: At the time of writing an undocumented feature.
+
+    // In case the size of a vector equals 0, its data pointer can equal
+    // nullptr. When this happens, the library interface of numpy (as wrapped by
+    // pybind11) will allocate some memory and store the address to that memory
+    // instead of storing the nullptr address of the vector. This means that
+    // each time we create a view for the same empty vector, the memory address
+    // it stores may randomly change. This is not an issue, but good to document
+    // here. See:
+    //  * PyArray_NewFromDescr(...)
+    //  * https://numpy.org/doc/1.13/reference/c-api.array.html
     return pybind11::array_t<T, 0>(
         array_[i].size(), array_[i].data(), pybind11::none());
   }

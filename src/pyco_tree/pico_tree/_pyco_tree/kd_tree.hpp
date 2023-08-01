@@ -112,32 +112,29 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
   }
 
   void SearchBox(
-      py::array_t<ScalarType, 0> const min,
-      py::array_t<ScalarType, 0> const max,
-      DArray& box) const {
-    auto query_min = MakeMap<Dim>(min);
-    auto query_max = MakeMap<Dim>(max);
+      py::array_t<ScalarType, 0> const boxes, DArray& indices) const {
+    auto query = MakeMap<Dim>(boxes);
 
-    if (query_min.size() != query_max.size()) {
+    if (query.size() % 2 != 0) {
       throw std::invalid_argument("Query min and max don't have equal size.");
     }
 
-    auto& box_data = box.data<IndexType>();
-    box_data.resize(query_min.size());
+    std::size_t box_count = query.size() / std::size_t(2);
+    auto& indices_data = indices.data<IndexType>();
+    indices_data.resize(box_count);
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
-    for (SSize i = 0; i < static_cast<SSize>(query_min.size()); ++i) {
-      Base::SearchBox(query_min[i], query_max[i], box_data[i]);
+    for (SSize i = 0; i < static_cast<SSize>(box_count); ++i) {
+      auto index = static_cast<pico_tree::Size>(i * 2);
+      Base::SearchBox(query[index + 0], query[index + 1], indices_data[i]);
     }
   }
 
-  DArray SearchBox(
-      py::array_t<ScalarType, 0> const min,
-      py::array_t<ScalarType, 0> const max) const {
-    DArray box = DArray(std::vector<std::vector<IndexType>>());
-    SearchBox(min, max, box);
-    return box;
+  DArray SearchBox(py::array_t<ScalarType, 0> const boxes) const {
+    DArray indices = DArray(std::vector<std::vector<IndexType>>());
+    SearchBox(boxes, indices);
+    return indices;
   }
 
   inline ScalarType const* data() const { return points().data(); }

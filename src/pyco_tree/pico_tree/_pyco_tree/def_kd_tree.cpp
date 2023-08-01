@@ -201,23 +201,19 @@ Search for all neighbors within a radius of each of the input points.
       .def(
           "search_box",
           static_cast<void (KdTree::*)(
-              py::array_t<Scalar, 0> const,
-              py::array_t<Scalar, 0> const,
-              Neighborhoods&) const>(&KdTree::SearchBox),
-          py::arg("min").noconvert().none(false),
-          py::arg("max").noconvert().none(false),
-          py::arg("box").noconvert().none(false),
+              py::array_t<Scalar, 0> const, Neighborhoods&) const>(
+              &KdTree::SearchBox),
+          py::arg("boxes").noconvert().none(false),
+          py::arg("indices").noconvert().none(false),
           R"ptdoc(
 Search for all points within each of the axis aligned input boxes and
 store the result in the specified output.
 )ptdoc")
       .def(
           "search_box",
-          static_cast<Neighborhoods (KdTree::*)(
-              py::array_t<Scalar, 0> const, py::array_t<Scalar, 0> const)
+          static_cast<Neighborhoods (KdTree::*)(py::array_t<Scalar, 0> const)
                           const>(&KdTree::SearchBox),
-          py::arg("min").noconvert().none(false),
-          py::arg("max").noconvert().none(false),
+          py::arg("boxes").noconvert().none(false),
           "Search for all points within each of the axis aligned input boxes.");
 }
 
