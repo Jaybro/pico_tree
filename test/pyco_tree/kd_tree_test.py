@@ -51,10 +51,11 @@ class KdTreeTest(unittest.TestCase):
     def test_search_knn(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
         t = pt.KdTree(a, pt.Metric.L2Squared, 10)
+        k = 2
 
         # Test if the query actually works
-        nns = t.search_knn(a, 2)
-        self.assertEqual(nns.shape, (3, 2))
+        nns = t.search_knn(a, k)
+        self.assertEqual(nns.shape, (3, k))
 
         for i in range(len(nns)):
             self.assertEqual(nns[i][0][0], i)
@@ -62,19 +63,20 @@ class KdTreeTest(unittest.TestCase):
 
         # Test that the memory is re-used
         data = nns.ctypes.data
-        t.search_knn(a, 2, nns)
+        t.search_knn(a, k, nns)
         self.assertEqual(nns.ctypes.data, data)
-        t.search_knn(a, 3, nns)
+        t.search_knn(a, k + 1, nns)
         self.assertNotEqual(nns.ctypes.data, data)
 
-    def test_search_aknn(self):
+    def test_search_approximate_knn(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
         t = pt.KdTree(a, pt.Metric.L2Squared, 10)
-        r = 1.0
+        k = 2
+        s = 1.0
 
         # Test if the query actually works
-        nns = t.search_knn(a, 2, r)
-        self.assertEqual(nns.shape, (3, 2))
+        nns = t.search_knn(a, k, s)
+        self.assertEqual(nns.shape, (3, k))
 
         for i in range(len(nns)):
             self.assertEqual(nns[i][0][0], i)
@@ -82,17 +84,17 @@ class KdTreeTest(unittest.TestCase):
 
         # Test that the memory is re-used
         data = nns.ctypes.data
-        t.search_knn(a, 2, r, nns)
+        t.search_knn(a, k, s, nns)
         self.assertEqual(nns.ctypes.data, data)
-        t.search_knn(a, 3, nns)
+        t.search_knn(a, k + 1, nns)
         self.assertNotEqual(nns.ctypes.data, data)
 
     def test_search_radius(self):
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
         t = pt.KdTree(a, pt.Metric.L2Squared, 10)
 
-        search_radius = t.metric(2.5)
-        nns = t.search_radius(a, search_radius)
+        radius = t.metric(2.5)
+        nns = t.search_radius(a, radius)
         self.assertEqual(len(nns), 3)
         self.assertEqual(nns.dtype, t.dtype_neighbor)
         self.assertTrue(nns)
@@ -114,9 +116,42 @@ class KdTreeTest(unittest.TestCase):
             return [x.ctypes.data if len(x) else 0 for x in nns]
 
         datas = addresses(nns)
-        t.search_radius(a, search_radius, nns)
+        t.search_radius(a, radius, nns)
         self.assertEqual(addresses(nns), datas)
-        t.search_radius(a, search_radius**2, nns)
+        t.search_radius(a, radius**2, nns)
+        self.assertNotEqual(addresses(nns), datas)
+
+    def test_search_approximate_radius(self):
+        a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
+        t = pt.KdTree(a, pt.Metric.L2Squared, 10)
+        s = 1.0
+
+        radius = t.metric(2.5)
+        nns = t.search_radius(a, radius, s)
+        self.assertEqual(len(nns), 3)
+        self.assertEqual(nns.dtype, t.dtype_neighbor)
+        self.assertTrue(nns)
+
+        for i, n in enumerate(nns):
+            self.assertEqual(len(n), 1)
+            self.assertEqual(n[0][0], i)
+            self.assertAlmostEqual(n[0][1], 0)
+
+        # This checks if DArray is also a sequence.
+        for i in range(len(nns)):
+            self.assertEqual(nns[i][0][0], i)
+            self.assertAlmostEqual(nns[i][0][1], 0)
+
+        # Test that the memory is re-used by comparing memory addresses.
+        # In case the size of an array equals zero, its memory address is
+        # random. See darray.hpp for more details.
+        def addresses(nns):
+            return [x.ctypes.data if len(x) else 0 for x in nns]
+
+        datas = addresses(nns)
+        t.search_radius(a, radius, s, nns)
+        self.assertEqual(addresses(nns), datas)
+        t.search_radius(a, radius**2, s, nns)
         self.assertNotEqual(addresses(nns), datas)
 
     def test_search_box(self):
@@ -173,7 +208,10 @@ class KdTreeTest(unittest.TestCase):
         self.assertEqual(d.dtype, t.dtype_neighbor)
         self.assertFalse(d)
 
-        # 2) {'names':['index','distance'], 'formats':['<i4','<f8'], 'offsets':[0,8], 'itemsize':16}
+        # 2)
+        #   {'names':['index','distance'],
+        #    'formats':['<i4','<f8'],
+        #    'offsets':[0,8], 'itemsize':16}
         a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float64)
         t = pt.KdTree(a, pt.Metric.L2Squared, 10)
         d = pt.DArray(dtype=t.dtype_neighbor)

@@ -199,6 +199,38 @@ and store the result in the specified output.
 Search for all neighbors within a radius of each of the input points.
 )ptdoc")
       .def(
+          "search_radius",
+          static_cast<void (KdTree::*)(
+              py::array_t<Scalar, 0> const,
+              Scalar const,
+              Scalar const,
+              Neighborhoods&,
+              bool const) const>(&KdTree::SearchRadius),
+          py::arg("pts").noconvert().none(false),
+          py::arg("radius").none(false),
+          py::arg("e").none(false),
+          py::arg("nns").noconvert().none(false),
+          py::arg("sort").none(false) = false,
+          R"ptdoc(
+Search for the approximate neighbors within a radius of each of the
+input points and store the result in the specified output.
+)ptdoc")
+      .def(
+          "search_radius",
+          static_cast<Neighborhoods (KdTree::*)(
+              py::array_t<Scalar, 0> const,
+              Scalar const,
+              Scalar const,
+              bool const) const>(&KdTree::SearchRadius),
+          py::arg("pts").noconvert().none(false),
+          py::arg("radius").none(false),
+          py::arg("e").none(false),
+          py::arg("sort").none(false) = false,
+          R"ptdoc(
+Search for the approximate neighbors within a radius of each of the
+input points.
+)ptdoc")
+      .def(
           "search_box",
           static_cast<void (KdTree::*)(
               py::array_t<Scalar, 0> const, Neighborhoods&) const>(

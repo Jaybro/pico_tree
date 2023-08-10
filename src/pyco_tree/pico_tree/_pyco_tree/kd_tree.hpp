@@ -50,7 +50,8 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     for (SSize i = 0; i < static_cast<SSize>(query.size()); ++i) {
-      Base::SearchKnn(query[i], output + i * k, output + (i + 1) * k);
+      auto index = static_cast<SizeType>(i * k);
+      Base::SearchKnn(query[i], output + index, output + index + k);
     }
   }
 
@@ -72,7 +73,8 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
 
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     for (SSize i = 0; i < static_cast<SSize>(query.size()); ++i) {
-      Base::SearchKnn(query[i], e, output + i * k, output + (i + 1) * k);
+      auto index = static_cast<SizeType>(i * k);
+      Base::SearchKnn(query[i], e, output + index, output + index + k);
     }
   }
 
@@ -111,6 +113,34 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
     return nns;
   }
 
+  void SearchRadius(
+      py::array_t<ScalarType, 0> const pts,
+      ScalarType const radius,
+      ScalarType const e,
+      DArray& nns,
+      bool const sort) const {
+    auto query = MakeMap<Dim>(pts);
+
+    auto& nns_data = nns.data<NeighborType>();
+    nns_data.resize(query.size());
+
+#pragma omp parallel for schedule(dynamic, kChunkSize)
+    // TODO Reduce the vector resize overhead
+    for (SSize i = 0; i < static_cast<SSize>(query.size()); ++i) {
+      Base::SearchRadius(query[i], radius, e, nns_data[i], sort);
+    }
+  }
+
+  DArray SearchRadius(
+      py::array_t<ScalarType, 0> const pts,
+      ScalarType const radius,
+      ScalarType const e,
+      bool const sort) const {
+    DArray nns = DArray(std::vector<std::vector<NeighborType>>());
+    SearchRadius(pts, radius, e, nns, sort);
+    return nns;
+  }
+
   void SearchBox(
       py::array_t<ScalarType, 0> const boxes, DArray& indices) const {
     auto query = MakeMap<Dim>(boxes);
@@ -126,7 +156,7 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
 #pragma omp parallel for schedule(dynamic, kChunkSize)
     // TODO Reduce the vector resize overhead
     for (SSize i = 0; i < static_cast<SSize>(box_count); ++i) {
-      auto index = static_cast<pico_tree::Size>(i * 2);
+      auto index = static_cast<SizeType>(i * 2);
       Base::SearchBox(query[index + 0], query[index + 1], indices_data[i]);
     }
   }

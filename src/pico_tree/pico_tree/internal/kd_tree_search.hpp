@@ -49,11 +49,9 @@ class SearchNearestEuclidean {
     if (node->IsLeaf()) {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        ScalarType const d =
-            metric_(query_.begin(), query_.end(), space_[indices_[i]]);
-        if (visitor_.max() > d) {
-          visitor_(indices_[i], d);
-        }
+        visitor_(
+            indices_[i],
+            metric_(query_.begin(), query_.end(), space_[indices_[i]]));
       }
     } else {
       // Go left or right and then check if we should still go down the other
@@ -156,11 +154,9 @@ class SearchNearestTopological {
     if (node->IsLeaf()) {
       for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
            ++i) {
-        ScalarType const d =
-            metric_(query_.begin(), query_.end(), space_[indices_[i]]);
-        if (visitor_.max() > d) {
-          visitor_(indices_[i], d);
-        }
+        visitor_(
+            indices_[i],
+            metric_(query_.begin(), query_.end(), space_[indices_[i]]));
       }
     } else {
       // Go left or right and then check if we should still go down the other

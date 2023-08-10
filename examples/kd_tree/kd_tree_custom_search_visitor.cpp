@@ -3,8 +3,8 @@
 #include <pico_tree/kd_tree.hpp>
 #include <pico_tree/vector_traits.hpp>
 
-//! \brief Search visitor that counts how many points were considered as a
-//! nearest neighbor.
+// Search visitor that counts how many points were considered as a possible
+// nearest neighbor.
 template <typename Neighbor>
 class SearchNnCounter {
  public:
@@ -12,31 +12,30 @@ class SearchNnCounter {
   using IndexType = typename Neighbor::IndexType;
   using ScalarType = typename Neighbor::ScalarType;
 
-  //! \brief Creates a visitor for approximate nearest neighbor searching.
-  //! \param nn Search result.
+  // Create a visitor for approximate nearest neighbor searching. The argument
+  // is the search result.
   inline SearchNnCounter(Neighbor& nn) : count_(0), nn_(nn) {
     // Initial search distance.
     nn_.distance = std::numeric_limits<ScalarType>::max();
   }
 
-  //! \brief Visit current point.
-  //! \details This method is required. The KdTree calls this function when it
-  //! finds a point that is closer to the query than the result of this
-  //! visitors' max() function. I.e., it found a new nearest neighbor.
-  //! \param idx Point index.
-  //! \param d Point distance (that depends on the metric).
+  // Visit current point. This method is required. The search algorithm calls
+  // this function for every point it encounters in the KdTree. The arguments of
+  // the method are respectively the index and distance of the visited point.
   inline void operator()(IndexType const idx, ScalarType const dst) {
+    // Only update the nearest neighbor when the point we visit is actually
+    // closer to the query point.
+    if (max() > dst) {
+      nn_ = {idx, dst};
+    }
     count_++;
-    nn_ = {idx, dst};
   }
 
-  //! \brief Maximum search distance with respect to the query point.
-  //! \details This method is required.
+  // Maximum search distance with respect to the query point. This method is
+  // required. The nodes of the KdTree are filtered using this method.
   inline ScalarType const& max() const { return nn_.distance; }
 
-  //! \brief Returns the number of points that were considered the nearest
-  //! neighbor.
-  //! \details This method is not required.
+  // The amount of points visited during a query.
   inline IndexType const& count() const { return count_; }
 
  private:
@@ -62,7 +61,7 @@ int main() {
   SearchNnCounter<Neighbor> v(nn);
   tree.SearchNearest(q, v);
 
-  std::cout << "Custom visitor # nns considered: " << v.count() << std::endl;
+  std::cout << "Number of points visited: " << v.count() << std::endl;
 
   return 0;
 }

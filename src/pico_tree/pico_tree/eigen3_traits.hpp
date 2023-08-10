@@ -184,6 +184,27 @@ struct SpaceTraits<Eigen::Map<
           MapOptions_,
           StrideType_>> {};
 
+//! \brief EigenTraits provides an interface for Eigen::Map<Eigen::Matrix<>
+//! const>.
+template <
+    typename Scalar_,
+    int Rows_,
+    int Cols_,
+    int Options_,
+    int MaxRows_,
+    int MaxCols_,
+    int MapOptions_,
+    typename StrideType_>
+struct SpaceTraits<Eigen::Map<
+    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
+    MapOptions_,
+    StrideType_>>
+    : public internal::EigenTraitsImpl<Eigen::Map<
+          Eigen::
+              Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
+          MapOptions_,
+          StrideType_>> {};
+
 //! \brief PointTraits provides an interface for Eigen::Matrix<>.
 template <
     typename Scalar_,
@@ -214,6 +235,27 @@ struct PointTraits<Eigen::Map<
     StrideType_>>
     : public internal::EigenPointTraits<Eigen::Map<
           Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+          MapOptions_,
+          StrideType_>> {};
+
+//! \brief PointTraits provides an interface for Eigen::Map<Eigen::Matrix<>
+//! const>.
+template <
+    typename Scalar_,
+    int Rows_,
+    int Cols_,
+    int Options_,
+    int MaxRows_,
+    int MaxCols_,
+    int MapOptions_,
+    typename StrideType_>
+struct PointTraits<Eigen::Map<
+    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
+    MapOptions_,
+    StrideType_>>
+    : public internal::EigenPointTraits<Eigen::Map<
+          Eigen::
+              Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
           MapOptions_,
           StrideType_>> {};
 
