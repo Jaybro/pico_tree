@@ -22,10 +22,13 @@ template <
     typename Index_ = int>
 class KdTree {
   using SpaceWrapperType = internal::SpaceWrapper<Space_>;
+  //! \brief Node type based on Metric_::SpaceTag.
+  using NodeType =
+      typename internal::KdTreeSpaceTagTraits<typename Metric_::SpaceTag>::
+          template NodeType<Index_, typename SpaceWrapperType::ScalarType>;
   using BuildKdTreeType =
-      internal::BuildKdTree<SpaceWrapperType, Metric_, SplittingRule_, Index_>;
+      internal::BuildKdTree<NodeType, SpaceWrapperType::Dim, SplittingRule_>;
   using KdTreeDataType = typename BuildKdTreeType::KdTreeDataType;
-  using NodeType = typename KdTreeDataType::NodeType;
 
  public:
   //! \brief Size type.
@@ -78,10 +81,6 @@ class KdTree {
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor .
-  //! \see internal::SearchNn
-  //! \see internal::SearchKnn
-  //! \see internal::SearchRadius
-  //! \see internal::SearchAknn
   template <typename P, typename V>
   inline void SearchNearest(P const& x, V& visitor) const {
     internal::PointWrapper<P> p(x);
@@ -94,6 +93,35 @@ class KdTree {
   template <typename P>
   inline void SearchNn(P const& x, NeighborType& nn) const {
     internal::SearchNn<NeighborType> v(nn);
+    SearchNearest(x, v);
+  }
+
+  //! \brief Searches for the approximate nearest neighbor of point \p x.
+  //! \details Nodes in the tree are skipped by scaling down the search
+  //! distance and as a result the true nearest neighbor may not be found. An
+  //! approximate nearest neighbor will at most be a factor of distance ratio \p
+  //! e farther from the query point than the true nearest neighbor:
+  //! max_ann_distance = true_nn_distance * e.
+  //!
+  //! Interpretation of both the input error ratio and output distances
+  //! depend on the Metric. The default L2Squared calculates squared
+  //! distances. Using this metric, the input error ratio should be the
+  //! squared error ratio and the output distances will be squared distances
+  //! scaled by the inverse error ratio.
+  //!
+  //! Example:
+  //! \code{.cpp}
+  //! // A max error of 15%. I.e. max 15% farther away from the true nn.
+  //! ScalarType max_error = ScalarType(0.15);
+  //! ScalarType e = tree.metric()(ScalarType(1.0) + max_error);
+  //! Neighbor<IndexType, ScalarType> nn;
+  //! tree.SearchNn(p, e, nn);
+  //! // Optionally scale back to the actual metric distance.
+  //! nn.second *= e;
+  //! \endcode
+  template <typename P>
+  inline void SearchNn(P const& x, ScalarType const e, NeighborType& nn) const {
+    internal::SearchApproximateNn<NeighborType> v(e, nn);
     SearchNearest(x, v);
   }
 
@@ -111,7 +139,7 @@ class KdTree {
         std::is_same_v<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
             NeighborType>,
-        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
+        "ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_TYPE");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
     SearchNearest(x, v);
@@ -134,36 +162,10 @@ class KdTree {
   //! \brief Searches for the k approximate nearest neighbors of point \p x,
   //! where k equals std::distance(begin, end). It is expected that the value
   //! type of the iterator equals Neighbor<IndexType, ScalarType>.
-  //! \details This function can result in faster search queries compared to
-  //! KdTree::SearchKnn by skipping points and tree nodes. This is achieved by
-  //! scaling down the search distance, possibly not visiting the true nearest
-  //! neighbor. An approximate nearest neighbor will at most be a factor of
-  //! distance ratio \p e farther from the query point than the true nearest
-  //! neighbor: max_ann_distance = true_nn_distance * e. This holds true for
-  //! each respective nn index i, 0 <= i < k.
-  //!
-  //! The number of requested neighbors, k, should be sufficiently large to get
-  //! a noticeable speed increase from this method. Within a leaf all points are
-  //! compared to the query anyway, even if they are skipped. These calculations
-  //! can be avoided by skipping leafs completely, which will never happen if
-  //! all requested neighbors reside within a single one.
-  //!
-  //! Interpretation of both the input error ratio and output distances
-  //! depend on the Metric. The default L2Squared calculates squared
-  //! distances. Using this metric, the input error ratio should be the squared
-  //! error ratio and the output distances will be squared distances scaled by
-  //! the inverse error ratio.
-  //!
-  //! Example:
-  //! \code{.cpp}
-  //! // A max error of 15%. I.e. max 15% farther away from the true nn.
-  //! ScalarType max_error = ScalarType(0.15);
-  //! ScalarType e = tree.metric()(ScalarType(1.0) + max_error);
-  //! std::vector<Neighbor<IndexType, ScalarType>> knn(k);
-  //! tree.SearchKnn(p, e, knn.begin(), knn.end());
-  //! // Optionally scale back to the actual metric distance.
-  //! for (auto& nn : knn) { nn.second *= e; }
-  //! \endcode
+  //! \see template <typename P, typename RandomAccessIterator> void
+  //! SearchKnn(P const&, RandomAccessIterator, RandomAccessIterator) const
+  //! \see template <typename P, typename RandomAccessIterator> void SearchNn(P
+  //! const&, ScalarType, NeighborType&) const
   template <typename P, typename RandomAccessIterator>
   inline void SearchKnn(
       P const& x,
@@ -174,9 +176,9 @@ class KdTree {
         std::is_same_v<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
             NeighborType>,
-        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
+        "ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_TYPE");
 
-    internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
+    internal::SearchApproximateKnn<RandomAccessIterator> v(e, begin, end);
     SearchNearest(x, v);
   }
 
@@ -185,6 +187,8 @@ class KdTree {
   //! \tparam P Point type.
   //! \see template <typename P, typename RandomAccessIterator> void
   //! SearchKnn(P const&, RandomAccessIterator, RandomAccessIterator) const
+  //! \see template <typename P, typename RandomAccessIterator> void SearchNn(P
+  //! const&, ScalarType, NeighborType&) const
   template <typename P>
   inline void SearchKnn(
       P const& x,
@@ -221,6 +225,27 @@ class KdTree {
       std::vector<NeighborType>& n,
       bool const sort = false) const {
     internal::SearchRadius<NeighborType> v(radius, n);
+    SearchNearest(x, v);
+
+    if (sort) {
+      v.Sort();
+    }
+  }
+
+  //! \brief Searches for all approximate neighbors of point \p x that are
+  //! within radius \p radius and stores the results in output vector \p n.
+  //! \see template <typename P, typename RandomAccessIterator> void
+  //! SearchRadius(P const&, ScalarType, std::vector<NeighborType>&, bool) const
+  //! \see template <typename P, typename RandomAccessIterator> void SearchNn(P
+  //! const&, ScalarType, NeighborType&) const
+  template <typename P>
+  inline void SearchRadius(
+      P const& x,
+      ScalarType const radius,
+      ScalarType const e,
+      std::vector<NeighborType>& n,
+      bool const sort = false) const {
+    internal::SearchApproximateRadius<NeighborType> v(e, radius, n);
     SearchNearest(x, v);
 
     if (sort) {

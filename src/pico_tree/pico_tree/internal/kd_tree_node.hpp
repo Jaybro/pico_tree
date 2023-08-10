@@ -71,6 +71,14 @@ struct KdTreeNodeEuclidean
   using IndexType = Index_;
   using ScalarType = Scalar_;
 
+  template <typename Box_>
+  inline void SetBranch(
+      Box_ const& left_box, Box_ const& right_box, Size const split_dim) {
+    data.branch.split_dim = static_cast<int>(split_dim);
+    data.branch.left_max = left_box.max(split_dim);
+    data.branch.right_min = right_box.min(split_dim);
+  }
+
   //! \brief Node data as a union of a leaf and branch.
   KdTreeNodeData<KdTreeLeaf<Index_>, KdTreeBranchSplit<Scalar_>> data;
 };
@@ -81,6 +89,16 @@ struct KdTreeNodeTopological
     : public KdTreeNodeBase<KdTreeNodeTopological<Index_, Scalar_>> {
   using IndexType = Index_;
   using ScalarType = Scalar_;
+
+  template <typename Box_>
+  inline void SetBranch(
+      Box_ const& left_box, Box_ const& right_box, Size const split_dim) {
+    data.branch.split_dim = static_cast<int>(split_dim);
+    data.branch.left_min = left_box.min(split_dim);
+    data.branch.left_max = left_box.max(split_dim);
+    data.branch.right_min = right_box.min(split_dim);
+    data.branch.right_max = right_box.max(split_dim);
+  }
 
   //! \brief Node data as a union of a leaf and branch.
   KdTreeNodeData<KdTreeLeaf<Index_>, KdTreeBranchRange<Scalar_>> data;

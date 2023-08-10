@@ -11,7 +11,7 @@ PicoTree is a C++ header only library with [Python bindings](https://github.com/
 | [Scikit-learn KDTree][skkd] 1.2.2   | ...       | 6.2s          | ...        | 42.2s       |
 | [pykdtree][pykd] 1.3.7              | ...       | 1.0s          | ...        | 6.6s        |
 | [OpenCV FLANN][cvfn] 4.6.0          | 1.9s      | ...           | 4.7s       | ...         |
-| PicoTree KdTree v0.8.0              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
+| PicoTree KdTree v0.8.1              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
 
 Two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863 were used to generate these numbers. The first point cloud was the input to the build algorithm and the second to the query algorithm. All benchmarks were run on a single thread with the following parameters: `max_leaf_size=10` and `knn=1`. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
@@ -61,6 +61,7 @@ PicoTree can interface with different types of points and point sets through tra
 * Creating a [custom search visitor](./examples/kd_tree/kd_tree_custom_search_visitor.cpp).
 * [Saving and loading](./examples/kd_tree/kd_tree_save_and_load.cpp) a KdTree to and from a file.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
+* Running the KdTree on the [MNIST](./examples/mnist/mnist.cpp) [database](http://yann.lecun.com/exdb/mnist/).
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).
 
 # Requirements

@@ -31,7 +31,7 @@ template <typename T>
 inline constexpr bool is_matrix_base_v = is_matrix_base<T>::value;
 
 template <typename Derived>
-constexpr Eigen::Index EigenVectorDim() {
+constexpr int EigenVectorDim() {
   static_assert(
       (!Derived::IsRowMajor && Derived::ColsAtCompileTime == 1) ||
           (Derived::IsRowMajor && Derived::RowsAtCompileTime == 1),
@@ -40,7 +40,7 @@ constexpr Eigen::Index EigenVectorDim() {
                              : Derived::RowsAtCompileTime;
 }
 
-constexpr Size EigenDimToPicoDim(Eigen::Index dim) {
+constexpr Size EigenDimToPicoDim(int dim) {
   return dim == Eigen::Dynamic ? kDynamicSize : static_cast<Size>(dim);
 }
 
@@ -184,6 +184,27 @@ struct SpaceTraits<Eigen::Map<
           MapOptions_,
           StrideType_>> {};
 
+//! \brief EigenTraits provides an interface for Eigen::Map<Eigen::Matrix<>
+//! const>.
+template <
+    typename Scalar_,
+    int Rows_,
+    int Cols_,
+    int Options_,
+    int MaxRows_,
+    int MaxCols_,
+    int MapOptions_,
+    typename StrideType_>
+struct SpaceTraits<Eigen::Map<
+    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
+    MapOptions_,
+    StrideType_>>
+    : public internal::EigenTraitsImpl<Eigen::Map<
+          Eigen::
+              Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
+          MapOptions_,
+          StrideType_>> {};
+
 //! \brief PointTraits provides an interface for Eigen::Matrix<>.
 template <
     typename Scalar_,
@@ -214,6 +235,27 @@ struct PointTraits<Eigen::Map<
     StrideType_>>
     : public internal::EigenPointTraits<Eigen::Map<
           Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
+          MapOptions_,
+          StrideType_>> {};
+
+//! \brief PointTraits provides an interface for Eigen::Map<Eigen::Matrix<>
+//! const>.
+template <
+    typename Scalar_,
+    int Rows_,
+    int Cols_,
+    int Options_,
+    int MaxRows_,
+    int MaxCols_,
+    int MapOptions_,
+    typename StrideType_>
+struct PointTraits<Eigen::Map<
+    Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
+    MapOptions_,
+    StrideType_>>
+    : public internal::EigenPointTraits<Eigen::Map<
+          Eigen::
+              Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
           MapOptions_,
           StrideType_>> {};
 

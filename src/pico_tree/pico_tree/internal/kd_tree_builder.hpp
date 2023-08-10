@@ -290,7 +290,7 @@ class BuildKdTreeImpl {
       node->left = SplitIndices(depth + 1, begin, split, box);
       node->right = SplitIndices(depth + 1, split, end, right);
 
-      SetBranch(box, right, split_dim, *node);
+      node->SetBranch(box, right, split_dim);
 
       // Merges both child boxes. We can expect any of the min max values to
       // change except for the ones of split_dim.
@@ -309,28 +309,6 @@ class BuildKdTreeImpl {
     for (; begin < end; ++begin) {
       box.Fit(space_[*begin]);
     }
-  }
-
-  inline void SetBranch(
-      BoxType const& left,
-      BoxType const& right,
-      SizeType const split_dim,
-      KdTreeNodeEuclidean<IndexType, ScalarType>& node) const {
-    node.data.branch.split_dim = static_cast<int>(split_dim);
-    node.data.branch.left_max = left.max(split_dim);
-    node.data.branch.right_min = right.min(split_dim);
-  }
-
-  inline void SetBranch(
-      BoxType const& left,
-      BoxType const& right,
-      SizeType const split_dim,
-      KdTreeNodeTopological<IndexType, ScalarType>& node) const {
-    node.data.branch.split_dim = static_cast<int>(split_dim);
-    node.data.branch.left_min = left.min(split_dim);
-    node.data.branch.left_max = left.max(split_dim);
-    node.data.branch.right_min = right.min(split_dim);
-    node.data.branch.right_max = right.max(split_dim);
   }
 
   SpaceType const& space_;
@@ -360,38 +338,34 @@ struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
   using NodeType = KdTreeNodeTopological<Index_, Scalar_>;
 };
 
-template <
-    typename SpaceWrapper_,
-    typename Metric_,
-    SplittingRule SplittingRule_,
-    typename Index_>
+template <typename Node_, Size Dim_, SplittingRule SplittingRule_>
 class BuildKdTree {
-  using IndexType = Index_;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  static Size constexpr Dim = SpaceWrapper_::Dim;
-  //! \brief Node type based on Metric_::SpaceTag.
-  using NodeType = typename KdTreeSpaceTagTraits<
-      typename Metric_::SpaceTag>::template NodeType<IndexType, ScalarType>;
+  using IndexType = typename Node_::IndexType;
+  using ScalarType = typename Node_::ScalarType;
 
  public:
-  using KdTreeDataType = KdTreeData<NodeType, Dim>;
+  using KdTreeDataType = KdTreeData<Node_, Dim_>;
 
   //! \brief Construct a KdTree given \p points , \p max_leaf_size and
   //! SplitterType.
+  template <typename SpaceWrapper_>
   KdTreeDataType operator()(SpaceWrapper_ space, Size max_leaf_size) {
+    static_assert(
+        std::is_same_v<ScalarType, typename SpaceWrapper_::ScalarType>);
+    static_assert(Dim_ == SpaceWrapper_::Dim);
     assert(space.size() > 0);
     assert(max_leaf_size > 0);
 
     using BuildKdTreeImplType =
         BuildKdTreeImpl<SpaceWrapper_, SplittingRule_, KdTreeDataType>;
     using NodeAllocatorType = typename KdTreeDataType::NodeAllocatorType;
-    using BoxType = Box<ScalarType, Dim>;
+    using BoxType = Box<ScalarType, Dim_>;
 
     std::vector<IndexType> indices(space.size());
     std::iota(indices.begin(), indices.end(), 0);
     BoxType root_box = space.ComputeBoundingBox();
     NodeAllocatorType allocator;
-    NodeType* root_node =
+    Node_* root_node =
         BuildKdTreeImplType{space, max_leaf_size, indices, allocator}(root_box);
 
     return KdTreeDataType{

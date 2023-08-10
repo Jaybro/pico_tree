@@ -132,15 +132,26 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
       points[points.size() / 2], points.sdim());
 
   auto const& metric = tree.metric();
-  Scalar const lp_radius = metric(radius);
-  std::vector<pico_tree::Neighbor<Index, Scalar>> results;
-  tree.SearchRadius(p, lp_radius, results);
+  Scalar lp_radius = metric(radius);
+  Scalar lp_scale = metric(Scalar(1.5));
 
-  for (auto const& r : results) {
+  std::vector<pico_tree::Neighbor<Index, Scalar>> results_exact;
+  std::vector<pico_tree::Neighbor<Index, Scalar>> results_apprx;
+  tree.SearchRadius(p, lp_radius, results_exact);
+  tree.SearchRadius(p, lp_radius, lp_scale, results_apprx);
+
+  for (auto const& r : results_exact) {
     Scalar d = metric(p.data(), p.data() + p.size(), points[r.index]);
 
     EXPECT_LE(d, lp_radius);
     EXPECT_EQ(d, r.distance);
+  }
+
+  for (auto const& r : results_apprx) {
+    Scalar d = metric(p.data(), p.data() + p.size(), points[r.index]);
+
+    EXPECT_LE(d, lp_radius);
+    FloatEq(d, r.distance * lp_scale);
   }
 
   std::size_t count = 0;
@@ -151,7 +162,8 @@ void TestRadius(Tree const& tree, typename Tree::ScalarType const radius) {
     }
   }
 
-  EXPECT_EQ(count, results.size());
+  EXPECT_EQ(count, results_exact.size());
+  EXPECT_GE(count, results_apprx.size());
 }
 
 template <typename Tree, typename Point>
@@ -160,14 +172,13 @@ void TestKnn(Tree const& tree, pico_tree::Size const k, Point const& p) {
   using Index = typename Tree::IndexType;
   using Scalar = typename Tree::ScalarType;
 
-  // The data doesn't have to be by reference_wrapper, but that prevents a copy.
   auto const points = tree.points();
-  Scalar ratio = tree.metric()(Scalar(1.5));
+  Scalar lp_scale = tree.metric()(Scalar(1.5));
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_exact;
   std::vector<pico_tree::Neighbor<Index, Scalar>> results_apprx;
   tree.SearchKnn(p, k, results_exact);
-  tree.SearchKnn(p, k, ratio, results_apprx);
+  tree.SearchKnn(p, k, lp_scale, results_apprx);
 
   std::vector<pico_tree::Neighbor<Index, Scalar>> compare;
   SearchKnn<TraitsX>(p, points, k, tree.metric(), &compare);
@@ -177,8 +188,8 @@ void TestKnn(Tree const& tree, pico_tree::Size const k, Point const& p) {
     // Index is not tested in case it happens points have an equal distance.
     // TODO Would be nicer to test indices too.
     FloatEq(results_exact[i].distance, compare[i].distance);
-    // Because results_apprx[i] is already scaled: approx = approx / ratio,
-    // the check below is the same as: approx <= exact * ratio
+    // Because results_apprx[i] is already scaled: approx = approx / lp_scale,
+    // the check below is the same as: approx <= exact * lp_scale.
     FloatLe(results_apprx[i].distance, results_exact[i].distance);
   }
 }

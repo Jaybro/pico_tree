@@ -116,9 +116,10 @@ BENCHMARK_DEFINE_F(BmOpenCvFlann, KnnCt)(benchmark::State& state) {
   // There is also the option to query them all at once, but this doesn't really
   // change performance and this version looks more like the other benchmarks.
   for (auto _ : state) {
-    std::vector<Index> indices(knn_count);
+    // The only supported index type is int.
+    std::vector<int> indices(knn_count);
     std::vector<Scalar> distances(knn_count);
-    fl::Matrix<Index> mat_indices(indices.data(), 1, knn_count);
+    fl::Matrix<int> mat_indices(indices.data(), 1, knn_count);
     fl::Matrix<Scalar> mat_distances(distances.data(), 1, knn_count);
 
     for (auto& p : points_test_) {

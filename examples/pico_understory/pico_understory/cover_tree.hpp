@@ -80,21 +80,22 @@ class CoverTree {
         data_(BuildCoverTreeType()(SpaceWrapperType(space_), metric_, base)) {}
 
   //! \brief Searches for the nearest neighbor of point \p x.
-  //! \details Interpretation of the output distance depends on the Metric. The
-  //! default distance metric equals L2.
   template <typename P>
   inline void SearchNn(P const& x, NeighborType& nn) const {
     internal::SearchNn<NeighborType> v(nn);
     SearchNearest(data_.root_node, x, v);
   }
 
+  //! \brief Searches for an approximate nearest neighbor of point \p x.
+  template <typename P>
+  inline void SearchNn(P const& x, ScalarType const e, NeighborType& nn) const {
+    internal::SearchApproximateNn<NeighborType> v(e, nn);
+    SearchNearest(data_.root_node, x, v);
+  }
+
   //! \brief Searches for the k nearest neighbors of point \p x, where k equals
   //! std::distance(begin, end). It is expected that the value type of the
   //! iterator equals Neighbor<Index, Scalar>.
-  //! \details Interpretation of the output distances depend on the Metric. The
-  //! default L2 metric results in Euclidean distances.
-  //! \tparam P Point type.
-  //! \tparam RandomAccessIterator Iterator type.
   template <typename P, typename RandomAccessIterator>
   inline void SearchKnn(
       P const& x, RandomAccessIterator begin, RandomAccessIterator end) const {
@@ -102,7 +103,7 @@ class CoverTree {
         std::is_same_v<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
             NeighborType>,
-        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
+        "ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_TYPE");
 
     internal::SearchKnn<RandomAccessIterator> v(begin, end);
     SearchNearest(data_.root_node, x, v);
@@ -110,9 +111,6 @@ class CoverTree {
 
   //! \brief Searches for the \p k nearest neighbors of point \p x and stores
   //! the results in output vector \p knn.
-  //! \tparam P Point type.
-  //! \see template <typename P, typename RandomAccessIterator> void SearchKnn(P
-  //! const&, RandomAccessIterator, RandomAccessIterator) const
   template <typename P>
   inline void SearchKnn(
       P const& x, Size const k, std::vector<NeighborType>& knn) const {
@@ -122,16 +120,41 @@ class CoverTree {
     SearchKnn(x, knn.begin(), knn.end());
   }
 
+  //! \brief Searches for the k approximate nearest neighbors of point \p x,
+  //! where k equals std::distance(begin, end). It is expected that the value
+  //! type of the iterator equals Neighbor<Index, Scalar>.
+  template <typename P, typename RandomAccessIterator>
+  inline void SearchKnn(
+      P const& x,
+      Scalar const e,
+      RandomAccessIterator begin,
+      RandomAccessIterator end) const {
+    static_assert(
+        std::is_same_v<
+            typename std::iterator_traits<RandomAccessIterator>::value_type,
+            NeighborType>,
+        "ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_TYPE");
+
+    internal::SearchApproximateKnn<RandomAccessIterator> v(e, begin, end);
+    SearchNearest(data_.root_node, x, v);
+  }
+
+  //! \brief Searches for the \p k approximate nearest neighbors of point \p x
+  //! and stores the results in output vector \p knn.
+  template <typename P>
+  inline void SearchKnn(
+      P const& x,
+      Size const k,
+      Scalar const e,
+      std::vector<NeighborType>& knn) const {
+    // If it happens that the point set has less points than k we just return
+    // all points in the set.
+    knn.resize(std::min(k, SpaceWrapperType(space_).size()));
+    SearchKnn(x, e, knn.begin(), knn.end());
+  }
+
   //! \brief Searches for all the neighbors of point \p x that are within radius
   //! \p radius and stores the results in output vector \p n.
-  //! \details Interpretation of the in and output distances depend on the
-  //! Metric. The default L2 results in squared distances.
-  //! \tparam P Point type.
-  //! \param x Input point.
-  //! \param radius Search radius.
-  //! \param n Output points.
-  //! \param sort If true, the result set is sorted from closest to farthest
-  //! distance with respect to the query point.
   template <typename P>
   inline void SearchRadius(
       P const& x,
@@ -146,59 +169,21 @@ class CoverTree {
     }
   }
 
-  //! \brief Searches for the k approximate nearest neighbors of point \p x,
-  //! where k equals std::distance(begin, end). It is expected that the value
-  //! type of the iterator equals Neighbor<Index, Scalar>.
-  //! \details This function can result in faster search queries compared to
-  //! KdTree::SearchKnn by skipping points and tree nodes. This is achieved by
-  //! scaling down the search distance, possibly not visiting the true nearest
-  //! neighbor. An approximate nearest neighbor will at most be a factor of
-  //! distance ratio \p e farther from the query point than the true nearest
-  //! neighbor: max_ann_distance = true_nn_distance * e. This holds true for
-  //! each respective nn index i, 0 <= i < k.
-  //!
-  //! Interpretation of both the input error ratio and output distances depend
-  //! on the Metric. The default L2 metric calculates Euclidean distances.
-  //!
-  //! Example:
-  //! \code{.cpp}
-  //! // A max error of 15%. I.e. max 15% farther away from the true nn.
-  //! Scalar max_error = Scalar(0.15);
-  //! Scalar e = Scalar(1.0) + max_error;
-  //! std::vector<Neighbor<Index, Scalar>> knn(k);
-  //! tree.SearchKnn(x, e, knn.begin(), knn.end());
-  //! \endcode
-  template <typename P, typename RandomAccessIterator>
-  inline void SearchKnn(
-      P const& x,
-      Scalar const e,
-      RandomAccessIterator begin,
-      RandomAccessIterator end) const {
-    static_assert(
-        std::is_same_v<
-            typename std::iterator_traits<RandomAccessIterator>::value_type,
-            NeighborType>,
-        "SEARCH_ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_INDEX_SCALAR");
-
-    internal::SearchAknn<RandomAccessIterator> v(e, begin, end);
-    SearchNearest(data_.root_node, x, v);
-  }
-
-  //! \brief Searches for the \p k approximate nearest neighbors of point \p x
-  //! and stores the results in output vector \p knn.
-  //! \tparam P Point type.
-  //! \see template <typename P, typename RandomAccessIterator> void
-  //! SearchKnn(P const&, RandomAccessIterator, RandomAccessIterator) const
+  //! \brief Searches for the approximate neighbors of point \p x that are
+  //! within radius \p radius and stores the results in output vector \p n.
   template <typename P>
-  inline void SearchKnn(
+  inline void SearchRadius(
       P const& x,
-      Size const k,
+      Scalar const radius,
       Scalar const e,
-      std::vector<NeighborType>& knn) const {
-    // If it happens that the point set has less points than k we just return
-    // all points in the set.
-    knn.resize(std::min(k, SpaceWrapperType(space_).size()));
-    SearchKnn(x, e, knn.begin(), knn.end());
+      std::vector<NeighborType>& n,
+      bool const sort = false) const {
+    internal::SearchApproximateRadius<NeighborType> v(e, radius, n);
+    SearchNearest(data_.root_node, x, v);
+
+    if (sort) {
+      v.Sort();
+    }
   }
 
   //! \brief Point set used by the tree.
