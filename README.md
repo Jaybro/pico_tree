@@ -61,6 +61,7 @@ PicoTree can interface with different types of points and point sets through tra
 * Creating a [custom search visitor](./examples/kd_tree/kd_tree_custom_search_visitor.cpp).
 * [Saving and loading](./examples/kd_tree/kd_tree_save_and_load.cpp) a KdTree to and from a file.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
+* Running the KdTree on the [MNIST](./examples/mnist/mnist.cpp) [database](http://yann.lecun.com/exdb/mnist/).
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).
 
 # Requirements

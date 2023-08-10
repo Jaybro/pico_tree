@@ -35,6 +35,10 @@ else()
     message(STATUS "benchmark not found. PicoTree benchmarks skipped.")
 endif()
 
+if(Eigen3_FOUND)
+    add_subdirectory(mnist)
+endif()
+
 # The Python examples only get copied when the bindings module will be build.
 if(TARGET _pyco_tree)
     add_subdirectory(python)

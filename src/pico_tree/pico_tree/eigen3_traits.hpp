@@ -31,7 +31,7 @@ template <typename T>
 inline constexpr bool is_matrix_base_v = is_matrix_base<T>::value;
 
 template <typename Derived>
-constexpr Eigen::Index EigenVectorDim() {
+constexpr int EigenVectorDim() {
   static_assert(
       (!Derived::IsRowMajor && Derived::ColsAtCompileTime == 1) ||
           (Derived::IsRowMajor && Derived::RowsAtCompileTime == 1),
@@ -40,7 +40,7 @@ constexpr Eigen::Index EigenVectorDim() {
                              : Derived::RowsAtCompileTime;
 }
 
-constexpr Size EigenDimToPicoDim(Eigen::Index dim) {
+constexpr Size EigenDimToPicoDim(int dim) {
   return dim == Eigen::Dynamic ? kDynamicSize : static_cast<Size>(dim);
 }
 
