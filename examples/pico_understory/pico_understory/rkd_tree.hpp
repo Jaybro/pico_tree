@@ -63,10 +63,6 @@ class RKdTree {
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor .
-  //! \see internal::SearchNn
-  //! \see internal::SearchKnn
-  //! \see internal::SearchRadius
-  //! \see internal::SearchAknn
   template <typename P, typename V>
   inline void SearchNearest(P const& x, V& visitor) const {
     internal::PointWrapper<P> p(x);
