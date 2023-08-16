@@ -7,7 +7,7 @@
 #include <pico_tree/array_traits.hpp>
 #include <pico_tree/kd_tree.hpp>
 #include <pico_tree/vector_traits.hpp>
-#include <pico_understory/rkd_tree.hpp>
+#include <pico_understory/kd_forest.hpp>
 
 template <typename U, typename T, std::size_t N>
 std::array<U, N> Cast(std::array<T, N> const& i) {
@@ -32,7 +32,7 @@ std::vector<std::array<float, N>> Cast(
   return c;
 }
 
-int main(int argc, char** argv) {
+int main() {
   using ImageByte = std::array<std::byte, 28 * 28>;
   using ImageFloat = std::array<float, 28 * 28>;
 
@@ -66,13 +66,14 @@ int main(int argc, char** argv) {
 
   std::size_t max_leaf_size_ex = 16;
   std::size_t max_leaf_size_rp = 128;
-  // With 16 trees we can get a precision of around 85-90%.
-  // With 32 trees we can get a precision of around 95-97%.
-  std::size_t forest_size = 2;
+  // With 8 trees we can get a precision of around 79%.
+  // With 16 trees we can get a precision of around 93%.
+  // With 32 trees we can get a precision of around 98%.
+  std::size_t forest_size = 8;
   std::size_t count = images_test.size();
   std::vector<pico_tree::Neighbor<int, float>> nns(count);
 
-  if (!std::filesystem::exists(fn_images_train)) {
+  if (!std::filesystem::exists(fn_mnist_nns_gt)) {
     auto kd_tree = [&images_train, &max_leaf_size_ex]() {
       ScopedTimer t0("kd_tree build");
       return pico_tree::KdTree<std::reference_wrapper<std::vector<ImageFloat>>>(
@@ -95,15 +96,18 @@ int main(int argc, char** argv) {
 
   std::size_t equal = 0;
 
+  // Building the tree takes roughly forest_size times longer to do versus the
+  // regular KdTree. However, even with 32 trees, queries are more than a single
+  // order of magnitude faster.
   {
     auto rkd_tree = [&images_train, &max_leaf_size_rp, &forest_size]() {
-      ScopedTimer t0("rkd_tree build");
-      return pico_tree::RKdTree<
+      ScopedTimer t0("kd_forest build");
+      return pico_tree::KdForest<
           std::reference_wrapper<std::vector<ImageFloat>>>(
           images_train, max_leaf_size_rp, forest_size);
     }();
 
-    ScopedTimer t1("rkd_tree query");
+    ScopedTimer t1("kd_forest query");
     pico_tree::Neighbor<int, float> nn;
     for (std::size_t i = 0; i < nns.size(); ++i) {
       rkd_tree.SearchNn(images_test[i], nn);

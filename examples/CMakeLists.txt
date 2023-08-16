@@ -8,6 +8,8 @@ add_subdirectory(pico_understory)
 
 add_subdirectory(kd_tree)
 
+add_subdirectory(mnist)
+
 find_package(Eigen3 QUIET)
 
 if(Eigen3_FOUND)
@@ -33,10 +35,6 @@ if(benchmark_FOUND)
     add_subdirectory(benchmark)
 else()
     message(STATUS "benchmark not found. PicoTree benchmarks skipped.")
-endif()
-
-if(Eigen3_FOUND)
-    add_subdirectory(mnist)
 endif()
 
 # The Python examples only get copied when the bindings module will be build.

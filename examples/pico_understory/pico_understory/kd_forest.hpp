@@ -14,7 +14,7 @@ template <
     typename Metric_ = L2Squared,
     SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint,
     typename Index_ = int>
-class RKdTree {
+class KdForest {
   using SpaceWrapperType = internal::SpaceWrapper<Space_>;
   //! \brief Node type based on Metric_::SpaceTag.
   using NodeType =
@@ -41,25 +41,25 @@ class RKdTree {
   //! \brief Neighbor type of various search resuls.
   using NeighborType = Neighbor<IndexType, ScalarType>;
 
-  RKdTree(SpaceType space, SizeType max_leaf_size, SizeType forest_size)
+  KdForest(SpaceType space, SizeType max_leaf_size, SizeType forest_size)
       : space_(std::move(space)),
         metric_(),
         data_(BuildRKdTreeType()(
             SpaceWrapperType(space_), max_leaf_size, forest_size)) {}
 
-  //! \brief The RKdTree cannot be copied.
-  //! \details The RKdTree uses pointers to nodes and copying pointers is not
+  //! \brief The KdForest cannot be copied.
+  //! \details The KdForest uses pointers to nodes and copying pointers is not
   //! the same as creating a deep copy.
-  RKdTree(RKdTree const&) = delete;
+  KdForest(KdForest const&) = delete;
 
-  //! \brief Move constructor of the RKdTree.
-  RKdTree(RKdTree&&) = default;
+  //! \brief Move constructor of the KdForest.
+  KdForest(KdForest&&) = default;
 
-  //! \brief RKdTree copy assignment.
-  RKdTree& operator=(RKdTree const& other) = delete;
+  //! \brief KdForest copy assignment.
+  KdForest& operator=(KdForest const& other) = delete;
 
-  //! \brief RKdTree move assignment.
-  RKdTree& operator=(RKdTree&& other) = default;
+  //! \brief KdForest move assignment.
+  KdForest& operator=(KdForest&& other) = default;
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor .

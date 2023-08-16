@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <vector>
 
 #include "pico_tree/core.hpp"
@@ -55,6 +56,15 @@ struct Point {
   //! \brief Fills the storage with value \p v.
   constexpr void Fill(ScalarType v) {
     std::fill(elems_.begin(), elems_.end(), v);
+  }
+
+  //! \brief Normalize Point in place to unit length.
+  void Normalize() {
+    ScalarType l2 = ScalarType(0);
+    for (auto& e : elems_) l2 += e * e;
+
+    l2 = ScalarType(1) / std::sqrt(l2);
+    for (auto& e : elems_) e *= l2;
   }
 
   //! \brief Access the container data.

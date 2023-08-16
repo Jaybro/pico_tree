@@ -1,16 +1,14 @@
 #pragma once
 
-#include <random>
-
 #include "pico_tree/internal/kd_tree_builder.hpp"
-#include "rkd_tree_rr_data.hpp"
+#include "rkd_tree_hh_data.hpp"
 
 namespace pico_tree::internal {
 
 template <typename Node_, Size Dim_, SplittingRule SplittingRule_>
 class BuildRKdTree {
  public:
-  using RKdTreeDataType = RKdTreeRrData<Node_, Dim_>;
+  using RKdTreeDataType = RKdTreeHhData<Node_, Dim_>;
 
   template <typename SpaceWrapper_>
   std::vector<RKdTreeDataType> operator()(
@@ -22,12 +20,13 @@ class BuildRKdTree {
     using SpaceWrapperType = typename RKdTreeDataType::SpaceWrapperType;
     using BuildKdTreeType = BuildKdTree<Node_, Dim_, SplittingRule_>;
 
-    std::vector<RKdTreeDataType> trees(forest_size);
+    std::vector<RKdTreeDataType> trees;
+    trees.reserve(forest_size);
     for (std::size_t i = 0; i < forest_size; ++i) {
       auto r = RKdTreeDataType::RandomRotation(space);
       auto s = RKdTreeDataType::RotateSpace(r, space);
       auto t = BuildKdTreeType()(SpaceWrapperType(s), max_leaf_size);
-      trees[i] = {std::move(r), std::move(s), std::move(t)};
+      trees.push_back({std::move(r), std::move(s), std::move(t)});
     }
     return trees;
   }

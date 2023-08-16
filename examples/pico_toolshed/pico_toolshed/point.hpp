@@ -15,6 +15,8 @@ struct Point : public pico_tree::internal::Point<Scalar_, Dim_> {
 
   using pico_tree::internal::Point<Scalar_, Dim_>::elems_;
   using pico_tree::internal::Point<Scalar_, Dim_>::size;
+  using pico_tree::internal::Point<Scalar_, Dim_>::Fill;
+  using pico_tree::internal::Point<Scalar_, Dim_>::Normalize;
   using typename pico_tree::internal::Point<Scalar_, Dim_>::ScalarType;
   using typename pico_tree::internal::Point<Scalar_, Dim_>::SizeType;
 
@@ -42,12 +44,6 @@ struct Point : public pico_tree::internal::Point<Scalar_, Dim_> {
     Point p = *this;
     p -= v;
     return p;
-  }
-
-  inline void Fill(ScalarType const v) {
-    for (SizeType i = 0; i < size(); ++i) {
-      elems_[i] = v;
-    }
   }
 
   template <typename OtherScalarType>
