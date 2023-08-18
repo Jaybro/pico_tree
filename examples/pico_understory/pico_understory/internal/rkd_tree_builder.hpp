@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pico_tree/internal/kd_tree_builder.hpp"
-#include "rkd_tree_hh_data.hpp"
+#include "pico_understory/internal/rkd_tree_hh_data.hpp"
 
 namespace pico_tree::internal {
 

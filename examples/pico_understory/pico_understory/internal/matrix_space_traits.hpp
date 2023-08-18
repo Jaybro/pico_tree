@@ -1,7 +1,7 @@
 #pragma once
 
-#include "matrix_space.hpp"
 #include "pico_tree/map_traits.hpp"
+#include "pico_understory/internal/matrix_space.hpp"
 
 namespace pico_tree {
 

@@ -2,10 +2,10 @@
 
 #include <random>
 
-#include "matrix_space_traits.hpp"
 #include "pico_tree/internal/kd_tree_data.hpp"
 #include "pico_tree/internal/point.hpp"
 #include "pico_tree/internal/space_wrapper.hpp"
+#include "pico_understory/internal/matrix_space_traits.hpp"
 #include "point_traits.hpp"
 
 namespace pico_tree::internal {
@@ -29,12 +29,11 @@ inline Point<Scalar_, Dim_> RandomNormal(Size dim) {
 
 // Rotating datasets is computationally expensive. It is quadratic in the
 // dimension of the space. Because we're only actually interested in obtaining a
-// random orthogonal basis, any orthogonal transformation matrix will do.
-// Householder matrices can be used to obtain linear complexity for rotating a
-// dataset.
-// C. Silpa-Anan and R. Hartley. Optimised KD-trees for fast image descriptor
-// matching. In IEEE Conference on Computer Vision and Pattern Recognition,
-// pages 1-8, 2008.
+// random orthogonal basis, any orthogonal transformation matrix will do, such
+// as the Householder matrix. Householder matrices can be used to obtain linear
+// complexity for "rotating" a dataset. C. Silpa-Anan and R. Hartley, Optimised
+// KD-trees for fast image descriptor matching, In CVPR, 2008.
+// http://vigir.missouri.edu/~gdesouza/Research/Conference_CDs/IEEE_CVPR_2008/data/papers/298.pdf
 template <typename Node_, Size Dim_>
 class RKdTreeHhData {
  public:

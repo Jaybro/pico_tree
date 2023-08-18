@@ -61,7 +61,7 @@ PicoTree can interface with different types of points and point sets through tra
 * Creating a [custom search visitor](./examples/kd_tree/kd_tree_custom_search_visitor.cpp).
 * [Saving and loading](./examples/kd_tree/kd_tree_save_and_load.cpp) a KdTree to and from a file.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
-* Running the KdTree on the [MNIST](./examples/mnist/mnist.cpp) [database](http://yann.lecun.com/exdb/mnist/).
+* [Running the KdTree and KdForest](./examples/kd_forest/kd_forest.cpp) on the [MNIST](http://yann.lecun.com/exdb/mnist/) and [SIFT](http://corpus-texmex.irisa.fr/) datasets.
 * How to use the [KdTree with Python](./examples/python/kd_tree.py).
 
 # Requirements
@@ -113,9 +113,11 @@ $ pip install ./pico_tree
 
 # References
 
-* [Computational Geometry - Algorithms and Applications.](https://www.springer.com/gp/book/9783540779735) Mark de Berg, Otfried Cheong, Marc van Kreveld, and Mark Overmars, Springer-Verlag, third edition, 2008.
-* S. Maneewongvatana and D. M. Mount. [It's okay to be skinny, if your friends are fat.](http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf) 4th Annual CGC Workshop on Computational Geometry, 1999.
-* S. Arya and H. Y. Fu. [Expected-case complexity of approximate nearest neighbor searching.](https://www.cse.ust.hk/faculty/arya/pub/exp.pdf) InProceedings of the 11th ACM-SIAM Symposium on Discrete Algorithms, 2000.
-* S. Arya and D. M. Mount. [Algorithms for fast vector quantization.](https://www.cs.umd.edu/~mount/Papers/DCC.pdf) In IEEE Data Compression Conference, pages 381–390, March 1993.
-* N. Sample, M. Haines, M. Arnold and T. Purcell. [Optimizing Search Strategies in k-d Trees.](http://infolab.stanford.edu/~nsample/pubs/samplehaines.pdf) In: 5th WSES/IEEE World Multiconference on Circuits, Systems, Communications & Computers (CSCC 2001), July 2001.
-* A. Yershova and S. M. LaValle, [Improving Motion-Planning Algorithms by Efficient Nearest-Neighbor Searching.](http://msl.cs.uiuc.edu/~lavalle/papers/YerLav06.pdf) In IEEE Transactions on Robotics, vol. 23, no. 1, pp. 151-157, Feb. 2007.
+* J. L. Bentley, [Multidimensional binary search trees used for associative searching](https://dl.acm.org/doi/pdf/10.1145/361002.361007), Communications of the ACM, vol. 18, no. 9, pp. 509–517, 1975.
+* S. Arya and D. M. Mount, [Algorithms for fast vector quantization](https://www.cs.umd.edu/~mount/Papers/DCC.pdf), In IEEE Data Compression Conference, pp. 381–390, March 1993.
+* S. Maneewongvatana and D. M. Mount, [It's okay to be skinny, if your friends are fat](http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf), 4th Annual CGC Workshop on Computational Geometry, 1999.
+* S. Arya and H. Y. Fu, [Expected-case complexity of approximate nearest neighbor searching](https://www.cse.ust.hk/faculty/arya/pub/exp.pdf), InProceedings of the 11th ACM-SIAM Symposium on Discrete Algorithms, 2000.
+* N. Sample, M. Haines, M. Arnold and T. Purcell, [Optimizing Search Strategies in k-d Trees](http://infolab.stanford.edu/~nsample/pubs/samplehaines.pdf), In: 5th WSES/IEEE World Multiconference on Circuits, Systems, Communications & Computers (CSCC 2001), July 2001.
+* A. Yershova and S. M. LaValle, [Improving Motion-Planning Algorithms by Efficient Nearest-Neighbor Searching](http://msl.cs.uiuc.edu/~lavalle/papers/YerLav06.pdf), In IEEE Transactions on Robotics, vol. 23, no. 1, pp. 151-157, Feb. 2007.
+* M. de Berg, O. Cheong, M. van Kreveld, and M. Overmars, [Computational Geometry - Algorithms and Applications](https://www.springer.com/gp/book/9783540779735), Springer-Verlag, third edition, 2008.
+* C. Silpa-Anan and R. Hartley, [Optimised KD-trees for fast image descriptor matching](http://vigir.missouri.edu/~gdesouza/Research/Conference_CDs/IEEE_CVPR_2008/data/papers/298.pdf), In CVPR, 2008.

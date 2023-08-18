@@ -4,7 +4,6 @@
 
 #include "pico_tree/internal/kd_tree_node.hpp"
 #include "pico_tree/internal/point.hpp"
-#include "pico_tree/metric.hpp"
 
 namespace pico_tree::internal {
 

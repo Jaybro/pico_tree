@@ -1,9 +1,9 @@
 #pragma once
 
-#include <pico_tree/internal/point_wrapper.hpp>
-#include <pico_tree/internal/space_wrapper.hpp>
-#include <pico_tree/metric.hpp>
-
+#include "pico_tree/internal/point_wrapper.hpp"
+#include "pico_tree/internal/search_visitor.hpp"
+#include "pico_tree/internal/space_wrapper.hpp"
+#include "pico_tree/metric.hpp"
 #include "pico_understory/internal/rkd_tree_builder.hpp"
 #include "pico_understory/internal/rkd_tree_search.hpp"
 

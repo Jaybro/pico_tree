@@ -8,7 +8,7 @@ add_subdirectory(pico_understory)
 
 add_subdirectory(kd_tree)
 
-add_subdirectory(mnist)
+add_subdirectory(kd_forest)
 
 find_package(Eigen3 QUIET)
 
