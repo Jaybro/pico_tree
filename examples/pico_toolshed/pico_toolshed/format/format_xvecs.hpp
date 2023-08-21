@@ -1,8 +1,9 @@
 #pragma once
 
-#include <algorithm>
 #include <filesystem>
+#include <locale>
 #include <pico_tree/internal/stream.hpp>
+#include <type_traits>
 
 // http://corpus-texmex.irisa.fr/
 

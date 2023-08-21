@@ -8,9 +8,9 @@ target_sources(pico_understory
     ${CMAKE_CURRENT_LIST_DIR}/pico_understory/internal/cover_tree_data.hpp
     ${CMAKE_CURRENT_LIST_DIR}/pico_understory/internal/cover_tree_node.hpp
     ${CMAKE_CURRENT_LIST_DIR}/pico_understory/internal/cover_tree_search.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/pico_understory/internal/kd_tree_priority_search.hpp
     ${CMAKE_CURRENT_LIST_DIR}/pico_understory/internal/rkd_tree_builder.hpp
     ${CMAKE_CURRENT_LIST_DIR}/pico_understory/internal/rkd_tree_hh_data.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/pico_understory/internal/rkd_tree_search.hpp
     ${CMAKE_CURRENT_LIST_DIR}/pico_understory/internal/static_buffer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/pico_understory/cover_tree.hpp
     ${CMAKE_CURRENT_LIST_DIR}/pico_understory/metric.hpp
