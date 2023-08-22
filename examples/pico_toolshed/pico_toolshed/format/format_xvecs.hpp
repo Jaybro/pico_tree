@@ -27,8 +27,9 @@ inline std::string FormatString() {
 }
 
 inline std::string ToLower(std::string s) {
-  std::transform(
-      s.begin(), s.end(), s.begin(), [](auto c) { return std::tolower(c); });
+  std::transform(s.begin(), s.end(), s.begin(), [](auto c) {
+    return std::tolower(c, std::locale());
+  });
   return s;
 }
 
