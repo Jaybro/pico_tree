@@ -5,8 +5,9 @@ add_executable(${TEST_TARGET_NAME})
 set_default_target_properties(${TEST_TARGET_NAME})
 set_target_properties(${TEST_TARGET_NAME}
     PROPERTIES
-# The library should be compliant with the version of the standard that is
-# minimally required by this library.
+
+    # The library should be compliant with the version of the standard that is
+    # minimally required by this library.
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
@@ -26,8 +27,9 @@ set(TEST_TARGET_SOURCES
 )
 
 # gtest_add_tests fails on generator expressions like:
-#$<$<TARGET_EXISTS:Eigen3::Eigen>:${CMAKE_CURRENT_LIST_DIR}/eigen.cpp>
+# $<$<TARGET_EXISTS:Eigen3::Eigen>:${CMAKE_CURRENT_LIST_DIR}/eigen.cpp>
 find_package(Eigen3 QUIET)
+
 if(Eigen3_FOUND)
     message(STATUS "Eigen3 found. Building Eigen unit tests.")
     set(TEST_TARGET_SOURCES
@@ -39,6 +41,7 @@ else()
 endif()
 
 find_package(OpenCV QUIET)
+
 if(OpenCV_FOUND)
     message(STATUS "OpenCV found. Building OpenCV unit tests.")
     set(TEST_TARGET_SOURCES
@@ -53,6 +56,7 @@ target_sources(${TEST_TARGET_NAME} PRIVATE ${TEST_TARGET_SOURCES})
 target_link_libraries(${TEST_TARGET_NAME}
     ${PROJECT_NAME}
     pico_toolshed
+
     # Testing the understory structures here as well.
     pico_understory
     GTest::GTest
