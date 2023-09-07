@@ -108,7 +108,7 @@ class SplitterMidpoint {
       ScalarType& split_val) const {
     ScalarType max_delta;
     box.LongestAxis(split_dim, max_delta);
-    split_val = max_delta / ScalarType(2.0) + box.min(split_dim);
+    split_val = max_delta * ScalarType(0.5) + box.min(split_dim);
 
     // Everything smaller than split_val goes left, the rest right.
     auto const comp = [this, &split_dim, &split_val](auto const index) -> bool {

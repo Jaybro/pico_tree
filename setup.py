@@ -5,7 +5,7 @@ from skbuild import setup
 
 setup(name='pico_tree',
       # The same as the CMake project version.
-      version='0.8.1',
+      version='0.8.2',
       description='PicoTree Python Bindings',
       author='Jonathan Broere',
       url='https://github.com/Jaybro/pico_tree',

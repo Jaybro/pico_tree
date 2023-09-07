@@ -1,11 +1,11 @@
 #pragma once
 
-#include <pico_tree/internal/point_wrapper.hpp>
-#include <pico_tree/internal/space_wrapper.hpp>
-#include <pico_tree/metric.hpp>
-
+#include "pico_tree/internal/point_wrapper.hpp"
+#include "pico_tree/internal/search_visitor.hpp"
+#include "pico_tree/internal/space_wrapper.hpp"
+#include "pico_tree/metric.hpp"
+#include "pico_understory/internal/kd_tree_priority_search.hpp"
 #include "pico_understory/internal/rkd_tree_builder.hpp"
-#include "pico_understory/internal/rkd_tree_search.hpp"
 
 namespace pico_tree {
 
@@ -14,12 +14,10 @@ template <
     typename Metric_ = L2Squared,
     SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint,
     typename Index_ = int>
-class RKdTree {
+class KdForest {
   using SpaceWrapperType = internal::SpaceWrapper<Space_>;
-  //! \brief Node type based on Metric_::SpaceTag.
-  using NodeType =
-      typename internal::KdTreeSpaceTagTraits<typename Metric_::SpaceTag>::
-          template NodeType<Index_, typename SpaceWrapperType::ScalarType>;
+  using NodeType = internal::
+      KdTreeNodeTopological<Index_, typename SpaceWrapperType::ScalarType>;
   using BuildRKdTreeType =
       internal::BuildRKdTree<NodeType, SpaceWrapperType::Dim, SplittingRule_>;
   using RKdTreeDataType = typename BuildRKdTreeType::RKdTreeDataType;
@@ -41,41 +39,43 @@ class RKdTree {
   //! \brief Neighbor type of various search resuls.
   using NeighborType = Neighbor<IndexType, ScalarType>;
 
-  RKdTree(SpaceType space, SizeType max_leaf_size, SizeType forest_size)
+  KdForest(SpaceType space, SizeType max_leaf_size, SizeType forest_size)
       : space_(std::move(space)),
         metric_(),
         data_(BuildRKdTreeType()(
             SpaceWrapperType(space_), max_leaf_size, forest_size)) {}
 
-  //! \brief The RKdTree cannot be copied.
-  //! \details The RKdTree uses pointers to nodes and copying pointers is not
+  //! \brief The KdForest cannot be copied.
+  //! \details The KdForest uses pointers to nodes and copying pointers is not
   //! the same as creating a deep copy.
-  RKdTree(RKdTree const&) = delete;
+  KdForest(KdForest const&) = delete;
 
-  //! \brief Move constructor of the RKdTree.
-  RKdTree(RKdTree&&) = default;
+  //! \brief Move constructor of the KdForest.
+  KdForest(KdForest&&) = default;
 
-  //! \brief RKdTree copy assignment.
-  RKdTree& operator=(RKdTree const& other) = delete;
+  //! \brief KdForest copy assignment.
+  KdForest& operator=(KdForest const& other) = delete;
 
-  //! \brief RKdTree move assignment.
-  RKdTree& operator=(RKdTree&& other) = default;
+  //! \brief KdForest move assignment.
+  KdForest& operator=(KdForest&& other) = default;
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor .
   template <typename P, typename V>
-  inline void SearchNearest(P const& x, V& visitor) const {
+  inline void SearchNearest(
+      P const& x, SizeType max_leaves_visited, V& visitor) const {
     internal::PointWrapper<P> p(x);
-    SearchNearest(p, visitor, typename Metric_::SpaceTag());
+    SearchNearest(p, max_leaves_visited, visitor, typename Metric_::SpaceTag());
   }
 
   //! \brief Searches for the nearest neighbor of point \p x.
   //! \details Interpretation of the output distance depends on the Metric. The
   //! default L2Squared results in a squared distance.
   template <typename P>
-  inline void SearchNn(P const& x, NeighborType& nn) const {
+  inline void SearchNn(
+      P const& x, SizeType max_leaves_visited, NeighborType& nn) const {
     internal::SearchNn<NeighborType> v(nn);
-    SearchNearest(x, v);
+    SearchNearest(x, max_leaves_visited, v);
   }
 
  private:
@@ -83,14 +83,17 @@ class RKdTree {
   //! on their selection by visitor \p visitor for node \p node.
   template <typename PointWrapper_, typename Visitor_>
   inline void SearchNearest(
-      PointWrapper_ point, Visitor_& visitor, EuclideanSpaceTag) const {
+      PointWrapper_ point,
+      SizeType max_leaves_visited,
+      Visitor_& visitor,
+      EuclideanSpaceTag) const {
     // Range based for loop (rightfully) results in a warning that shouldn't be
     // needed if the user creates the forest with at least a single tree.
     for (std::size_t i = 0; i < data_.size(); ++i) {
       auto p = data_[i].RotatePoint(point);
       using PointWrapperType = internal::PointWrapper<decltype(p)>;
-      PointWrapperType w(p);
-      internal::SearchNearestEuclideanDefeatist<
+      PointWrapperType point_wrapper(p);
+      internal::PrioritySearchNearestEuclidean<
           typename RKdTreeDataType::SpaceWrapperType,
           Metric_,
           PointWrapperType,
@@ -99,7 +102,8 @@ class RKdTree {
           typename RKdTreeDataType::SpaceWrapperType(data_[i].space),
           metric_,
           data_[i].tree.indices,
-          w,
+          point_wrapper,
+          max_leaves_visited,
           visitor)(data_[i].tree.root_node);
     }
   }

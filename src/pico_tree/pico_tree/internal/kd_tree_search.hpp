@@ -10,6 +10,11 @@
 namespace pico_tree::internal {
 
 //! \brief This class provides a search nearest function for Euclidean spaces.
+//! \details S. Arya and D. M. Mount, Algorithms for fast vector quantization,
+//! In IEEE Data Compression Conference, pp. 381–390, March 1993.
+//! https://www.cs.umd.edu/~mount/Papers/DCC.pdf
+//! This paper describes the "Incremental Distance Calculation" technique  to
+//! speed up nearest neighbor queries.
 template <
     typename SpaceWrapper_,
     typename Metric_,
@@ -78,12 +83,6 @@ class SearchNearestEuclidean {
         node_2nd = node->left;
         new_offset = metric_(node->data.branch.left_max, v);
       }
-
-      // S. Arya and D. M. Mount. Algorithms for fast vector quantization. In
-      // IEEE Data Compression Conference, pages 381–390, March 1993
-      // https://www.cs.umd.edu/~mount/Papers/DCC.pdf
-      // This paper describes the "Incremental Distance Calculation" technique
-      // to speed up nearest neighbor queries.
 
       // The distance and offset for node_1st is the same as that of its parent.
       SearchNearest(node_1st, node_box_distance);
