@@ -6,6 +6,7 @@
 #include "pico_tree/internal/kd_tree_node.hpp"
 #include "pico_tree/internal/point.hpp"
 #include "pico_tree/metric.hpp"
+#include "pico_understory/internal/priority_queue.hpp"
 
 namespace pico_tree::internal {
 
@@ -48,40 +49,24 @@ class PrioritySearchNearestEuclidean {
   inline void operator()(NodeType const* const root_node) {
     std::size_t leaves_visited = 0;
     queue_.reserve(max_leaves_visited_);
-    queue_.push_back({ScalarType(0.0), root_node});
+    queue_.PushBack(ScalarType(0.0), root_node);
     while (!queue_.empty()) {
-      auto const [node_box_distance, node] = queue_.front();
+      auto const [node_box_distance, node] = queue_.Front();
 
       if (leaves_visited >= max_leaves_visited_ ||
           visitor_.max() < node_box_distance) {
         break;
       }
 
-      // TODO For small queues it's probably not worth it to use a deque.
-      queue_.erase(queue_.begin());
+      queue_.PopFront();
 
       SearchNearest(node, node_box_distance);
       ++leaves_visited;
+      queue_.reserve(max_leaves_visited_ - leaves_visited);
     }
   }
 
  private:
-  inline void Push(NodeType const* node, ScalarType node_box_distance) {
-    if (queue_.size() < max_leaves_visited_) {
-      if (queue_.empty()) {
-        queue_.push_back({node_box_distance, node});
-      } else if (queue_.back().first < node_box_distance) {
-        queue_.push_back({node_box_distance, node});
-      } else {
-        queue_.push_back(queue_.back());
-        InsertSorted(
-            queue_.begin(), std::prev(queue_.end()), {node_box_distance, node});
-      }
-    } else if (queue_.back().first > node_box_distance) {
-      InsertSorted(queue_.begin(), queue_.end(), {node_box_distance, node});
-    }
-  }
-
   // Add nodes to the priority queue until a leaf node is reached.
   inline void SearchNearest(
       NodeType const* const node, ScalarType node_box_distance) {
@@ -139,7 +124,7 @@ class PrioritySearchNearestEuclidean {
 
       // Add to priority queue to be searched later.
       if (visitor_.max() > node_box_distance) {
-        Push(node_2nd, node_box_distance);
+        queue_.PushBack(node_box_distance, node_2nd);
       }
     }
   }
@@ -151,7 +136,7 @@ class PrioritySearchNearestEuclidean {
   Size max_leaves_visited_;
   // TODO This gets created every query. Solving this would require a different
   // PicoTree interface. The queue probably shouldn't be too big.
-  std::vector<QueuePairType> queue_;
+  PriorityQueue<ScalarType, NodeType const*> queue_;
   Visitor_& visitor_;
 };
 

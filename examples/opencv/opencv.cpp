@@ -33,8 +33,7 @@ void BasicVector() {
   using PointX = cv::Vec<Scalar, 3>;
   std::vector<PointX> random = GenerateRandomVecN<PointX>(kNumPoints, kArea);
 
-  pico_tree::KdTree<std::reference_wrapper<std::vector<PointX>>> tree(
-      random, 10);
+  pico_tree::KdTree tree(std::cref(random), 10);
 
   auto p = random[random.size() / 2];
 

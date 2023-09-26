@@ -40,13 +40,12 @@ std::vector<PointX> GenerateRandomEigenN(
 // neighbors.
 void BasicVector() {
   using PointX = Eigen::Vector2f;
-  using KdTree = pico_tree::KdTree<std::vector<PointX>>;
-  using Scalar = typename KdTree::ScalarType;
-  using Index = typename KdTree::IndexType;
+  using Scalar = typename PointX::Scalar;
+  using Index = int;
 
   // Including <pico_tree/eigen3_traits.hpp> provides support for Eigen types
   // with std::vector.
-  pico_tree::KdTree<std::vector<PointX>> tree(
+  pico_tree::KdTree tree(
       GenerateRandomEigenN<PointX>(kNumPoints, kArea), kMaxLeafCount);
 
   PointX p = PointX::Random() * kArea / Scalar(2.0);

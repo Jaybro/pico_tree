@@ -116,4 +116,18 @@ class KdForest {
   std::vector<RKdTreeDataType> data_;
 };
 
+template <typename Space_>
+KdForest(Space_, Size)
+    -> KdForest<Space_, L2Squared, SplittingRule::kSlidingMidpoint, int>;
+
+template <
+    typename Metric_ = L2Squared,
+    SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint,
+    typename Index_ = int,
+    typename Space_>
+auto MakeKdForest(Space_&& space, Size max_leaf_size, Size forest_size) {
+  return KdForest<std::decay_t<Space_>, Metric_, SplittingRule_, Index_>(
+      std::forward<Space_>(space), max_leaf_size, forest_size);
+}
+
 }  // namespace pico_tree
