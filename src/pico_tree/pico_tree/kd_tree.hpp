@@ -366,4 +366,18 @@ class KdTree {
   KdTreeDataType data_;
 };
 
+template <typename Space_>
+KdTree(Space_, Size)
+    -> KdTree<Space_, L2Squared, SplittingRule::kSlidingMidpoint, int>;
+
+template <
+    typename Metric_ = L2Squared,
+    SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint,
+    typename Index_ = int,
+    typename Space_>
+auto MakeKdTree(Space_&& space, Size max_leaf_size) {
+  return KdTree<std::decay_t<Space_>, Metric_, SplittingRule_, Index_>(
+      std::forward<Space_>(space), max_leaf_size);
+}
+
 }  // namespace pico_tree

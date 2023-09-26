@@ -6,6 +6,12 @@
 
 namespace pico_tree::internal {
 
+//! \brief The SpaceWrapper class wraps makes working with any space type
+//! through its respective SpaceTraits a bit easier and it allows for the
+//! addition of extra convenience methods.
+//! \details The internals of PicoTree never use the specializations of the
+//! SpaceTraits class directly, but interface with any space type through this
+//! wrapper interface
 template <typename Space_>
 class SpaceWrapper {
   using SpaceTraitsType = SpaceTraits<Space_>;

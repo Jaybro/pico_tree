@@ -46,7 +46,7 @@ enum class SplittingRule {
 
 namespace internal {
 
-//! \see SplittingRule::kLongestMedian
+//! \copydoc SplittingRule::kLongestMedian
 template <typename SpaceWrapper_>
 class SplitterLongestMedian {
   using ScalarType = typename SpaceWrapper_::ScalarType;
@@ -86,7 +86,7 @@ class SplitterLongestMedian {
   SpaceWrapper_ space_;
 };
 
-//! \see SplittingRule::kMidpoint
+//! \copydoc SplittingRule::kMidpoint
 template <typename SpaceWrapper_>
 class SplitterMidpoint {
   using ScalarType = typename SpaceWrapper_::ScalarType;
@@ -122,7 +122,7 @@ class SplitterMidpoint {
   SpaceWrapper_ space_;
 };
 
-//! \see SplittingRule::kSlidingMidpoint
+//! \copydoc SplittingRule::kSlidingMidpoint
 template <typename SpaceWrapper_>
 class SplitterSlidingMidpoint {
   using ScalarType = typename SpaceWrapper_::ScalarType;

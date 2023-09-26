@@ -6,7 +6,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils.cmake)
 
 project(pico_tree
     LANGUAGES CXX
-    VERSION 0.8.2
+    VERSION 0.8.3
     DESCRIPTION "PicoTree is a C++ header only library for fast nearest neighbor searches and range searches using a KdTree."
     HOMEPAGE_URL "https://github.com/Jaybro/pico_tree")
 

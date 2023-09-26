@@ -3,8 +3,14 @@
 #include "pico_tree/core.hpp"
 #include "pico_tree/point_traits.hpp"
 
-namespace pico_tree ::internal {
+namespace pico_tree::internal {
 
+//! \brief The PointWrapper class wraps makes working with any point type
+//! through its respective PointTraits a bit easier and it allows for the
+//! addition of extra convenience methods.
+//! \details The internals of PicoTree never use the specializations of the
+//! PointTraits class directly, but interface with any point type through this
+//! wrapper interface.
 template <typename Point_>
 class PointWrapper {
   using PointTraitsType = PointTraits<Point_>;
