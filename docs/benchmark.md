@@ -4,7 +4,7 @@ One of the PicoTree examples contains [benchmarks](../examples/benchmark/) of di
 
 The results described in this document were generated on 29-08-2021 using MinGW GCC 10.3, PicoTree v0.7.4 and Nanoflann v1.3.2.
 
-Note: The performance of PicoTree v0.8.2 released on 07-09-2023 is identical to that of v0.7.4. However, the build algorithm of nanoflann v1.5.0 regressed and has become 90% slower.
+Note: The performance of PicoTree v0.8.3 released on 26-09-2023 is identical to that of v0.7.4. However, the build algorithm of nanoflann v1.5.0 regressed and has become 90% slower.
 
 # Data sets
 
