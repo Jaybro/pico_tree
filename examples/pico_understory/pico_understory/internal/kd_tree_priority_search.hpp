@@ -6,7 +6,6 @@
 #include "pico_tree/internal/kd_tree_node.hpp"
 #include "pico_tree/internal/point.hpp"
 #include "pico_tree/metric.hpp"
-#include "pico_understory/internal/priority_queue.hpp"
 
 namespace pico_tree::internal {
 
@@ -48,21 +47,19 @@ class PrioritySearchNearestEuclidean {
   //! \brief Search nearest neighbors starting from \p root_node.
   inline void operator()(NodeType const* const root_node) {
     std::size_t leaves_visited = 0;
-    queue_.reserve(max_leaves_visited_);
-    queue_.PushBack(ScalarType(0.0), root_node);
+    queue_.emplace(ScalarType(0.0), root_node);
     while (!queue_.empty()) {
-      auto const [node_box_distance, node] = queue_.Front();
+      auto const [node_box_distance, node] = queue_.top();
 
       if (leaves_visited >= max_leaves_visited_ ||
           visitor_.max() < node_box_distance) {
         break;
       }
 
-      queue_.PopFront();
+      queue_.pop();
 
       SearchNearest(node, node_box_distance);
       ++leaves_visited;
-      queue_.reserve(max_leaves_visited_ - leaves_visited);
     }
   }
 
@@ -124,7 +121,7 @@ class PrioritySearchNearestEuclidean {
 
       // Add to priority queue to be searched later.
       if (visitor_.max() > node_box_distance) {
-        queue_.PushBack(node_box_distance, node_2nd);
+        queue_.emplace(node_box_distance, node_2nd);
       }
     }
   }
@@ -136,7 +133,11 @@ class PrioritySearchNearestEuclidean {
   Size max_leaves_visited_;
   // TODO This gets created every query. Solving this would require a different
   // PicoTree interface. The queue probably shouldn't be too big.
-  PriorityQueue<ScalarType, NodeType const*> queue_;
+  std::priority_queue<
+      QueuePairType,
+      std::vector<QueuePairType>,
+      std::greater<QueuePairType>>
+      queue_;
   Visitor_& visitor_;
 };
 
