@@ -33,7 +33,7 @@ void BasicVector() {
   using PointX = cv::Vec<Scalar, 3>;
   std::vector<PointX> random = GenerateRandomVecN<PointX>(kNumPoints, kArea);
 
-  pico_tree::KdTree tree(std::cref(random), 10);
+  pico_tree::KdTree tree(std::cref(random), pico_tree::max_leaf_size_t(10));
 
   auto p = random[random.size() / 2];
 
@@ -51,7 +51,8 @@ void BasicMatrix() {
     cv::Mat random(kNumPoints, 3, cv::DataType<Scalar>::type);
     cv::randu(random, Scalar(0.0), kArea);
 
-    pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(random, 10);
+    pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(
+        random, pico_tree::max_leaf_size_t(10));
     pico_tree::PointMap<Scalar, 3> p(random.ptr<Scalar>(random.rows / 2));
 
     pico_tree::Neighbor<Index, Scalar> nn;
@@ -67,7 +68,7 @@ void BasicMatrix() {
     std::vector<PointX> random = GenerateRandomVecN<PointX>(kNumPoints, kArea);
 
     pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(
-        cv::Mat(random), 10);
+        cv::Mat(random), pico_tree::max_leaf_size_t(10));
 
     PointX p = random[random.size() / 2];
 

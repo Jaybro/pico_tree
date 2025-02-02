@@ -37,12 +37,11 @@ struct SpaceTraits<std::deque<std::array<Scalar_, Dim_>>> {
 }  // namespace pico_tree
 
 int main() {
-  std::size_t max_leaf_size = 1;
   std::deque<std::array<float, 2>> points{
       {0.0f, 1.0f}, {2.0f, 3.0f}, {4.0f, 5.0f}};
 
   pico_tree::KdTree<std::reference_wrapper<std::deque<std::array<float, 2>>>>
-      tree(points, max_leaf_size);
+      tree(points, pico_tree::max_leaf_size_t(1));
 
   std::array<float, 2> query{4.0f, 4.0f};
   pico_tree::Neighbor<int, float> nn;

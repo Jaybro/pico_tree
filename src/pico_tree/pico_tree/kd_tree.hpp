@@ -13,22 +13,15 @@ namespace pico_tree {
 //! \details https://en.wikipedia.org/wiki/K-d_tree
 //! \tparam Space_ Type of space.
 //! \tparam Metric_ Type of metric. Determines how distances are measured.
-//! \tparam SplittingRule_ The rule that determines how space is partitioned.
 //! \tparam Index_ Type of index.
-template <
-    typename Space_,
-    typename Metric_ = L2Squared,
-    SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint,
-    typename Index_ = int>
+template <typename Space_, typename Metric_ = L2Squared, typename Index_ = int>
 class KdTree {
   using SpaceWrapperType = internal::SpaceWrapper<Space_>;
   //! \brief Node type based on Metric_::SpaceTag.
   using NodeType =
       typename internal::KdTreeSpaceTagTraits<typename Metric_::SpaceTag>::
           template NodeType<Index_, typename SpaceWrapperType::ScalarType>;
-  using BuildKdTreeType =
-      internal::BuildKdTree<NodeType, SpaceWrapperType::Dim, SplittingRule_>;
-  using KdTreeDataType = typename BuildKdTreeType::KdTreeDataType;
+  using KdTreeDataType = internal::KdTreeData<NodeType, SpaceWrapperType::Dim>;
 
  public:
   //! \brief Size type.
@@ -59,11 +52,23 @@ class KdTree {
   //! The exact effect it has depends on the tree splitting mechanism.
   //!
   //! \param space The input point set.
-  //! \param max_leaf_size The maximum number of points allowed in a leaf node.
-  KdTree(SpaceType space, SizeType max_leaf_size)
+  //! \param stop_condition One of max_leaf_size_t or max_leaf_depth_t.
+  //! \param start_bounds One of bounds_from_space_t or bounds_t<Point_>.
+  //! \param splitter_rule_t One of median_max_side_t, midpoint_max_side_t, or
+  //! sliding_midpoint_max_side_t.
+  template <
+      typename Stop_,
+      typename Bounds_ = bounds_from_space_t,
+      typename Rule_ = sliding_midpoint_max_side_t>
+  KdTree(
+      SpaceType space,
+      splitter_stop_condition_t<Stop_> const& stop_condition,
+      splitter_start_bounds_t<Bounds_> const& start_bounds = Bounds_{},
+      splitter_rule_t<Rule_> const& rule = Rule_{})
       : space_(std::move(space)),
         metric_(),
-        data_(BuildKdTreeType()(SpaceWrapperType(space_), max_leaf_size)) {}
+        data_(internal::BuildKdTree<KdTreeDataType, Dim>()(
+            SpaceWrapperType(space_), stop_condition, start_bounds, rule)) {}
 
   //! \brief The KdTree cannot be copied.
   //! \details The KdTree uses pointers to nodes and copying pointers is not
@@ -366,18 +371,23 @@ class KdTree {
   KdTreeDataType data_;
 };
 
-template <typename Space_>
-KdTree(Space_, Size)
-    -> KdTree<Space_, L2Squared, SplittingRule::kSlidingMidpoint, int>;
+template <typename Space_, typename... Args>
+KdTree(Space_, Args...) -> KdTree<Space_, L2Squared, int>;
 
 template <
     typename Metric_ = L2Squared,
-    SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint,
     typename Index_ = int,
+    typename Stop_,
+    typename Rule_ = sliding_midpoint_max_side_t,
+    typename Bounds_ = bounds_from_space_t,
     typename Space_>
-auto MakeKdTree(Space_&& space, Size max_leaf_size) {
-  return KdTree<std::decay_t<Space_>, Metric_, SplittingRule_, Index_>(
-      std::forward<Space_>(space), max_leaf_size);
+KdTree<std::decay_t<Space_>, Metric_, Index_> MakeKdTree(
+    Space_&& space,
+    splitter_stop_condition_t<Stop_> const& stop_condition,
+    splitter_start_bounds_t<Bounds_> const& start_bounds = Bounds_{},
+    splitter_rule_t<Rule_> const& rule = Rule_{}) {
+  return KdTree<std::decay_t<Space_>, Metric_, Index_>(
+      std::forward<Space_>(space), stop_condition, start_bounds, rule);
 }
 
 }  // namespace pico_tree

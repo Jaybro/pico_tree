@@ -22,9 +22,8 @@ void ArrayOfScalars() {
   // argument: The spatial dimension known at run time.
   pico_tree::SpaceMap<pico_tree::PointMap<double, Dim>> map(data.get(), count);
 
-  std::size_t max_leaf_size = 3;
   pico_tree::KdTree<pico_tree::SpaceMap<pico_tree::PointMap<double, Dim>>> tree(
-      map, max_leaf_size);
+      map, pico_tree::max_leaf_size_t(3));
 
   // If Dim equals pico_tree::kDynamicSize, then PointMap will need a 2nd
   // argument: The spatial dimension known at run time.
@@ -52,9 +51,8 @@ void ArrayOfPoints() {
 
   pico_tree::SpaceMap<std::array<double, Dim>> map(data.get(), count);
 
-  std::size_t max_leaf_size = 3;
   pico_tree::KdTree<pico_tree::SpaceMap<std::array<double, Dim>>> tree(
-      map, max_leaf_size);
+      map, pico_tree::max_leaf_size_t(3));
 
   std::size_t index = 1;
   std::array<double, Dim> const& query = data[index];

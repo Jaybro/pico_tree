@@ -21,8 +21,7 @@ int main() {
   std::string filename = "tree.bin";
 
   // Save to file.
-  std::size_t max_leaf_size = 12;
-  KdTree::Save(KdTree(points, max_leaf_size), filename);
+  KdTree::Save(KdTree(points, pico_tree::max_leaf_size_t(12)), filename);
 
   // Load from file.
   auto tree = KdTree::Load(points, filename);

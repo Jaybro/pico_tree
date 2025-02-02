@@ -14,7 +14,7 @@ target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME ${PROJECT_PACKAGE_NAME})
 target_compile_options(${PROJECT_NAME} INTERFACE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
-          -Wall>
+          -Wall -Werror>
      $<$<CXX_COMPILER_ID:MSVC>:
           /W4>)
 

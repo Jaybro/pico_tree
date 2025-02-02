@@ -9,18 +9,14 @@
 
 namespace pico_tree {
 
-template <
-    typename Space_,
-    typename Metric_ = L2Squared,
-    SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint,
-    typename Index_ = int>
+template <typename Space_, typename Metric_ = L2Squared, typename Index_ = int>
 class KdForest {
   using SpaceWrapperType = internal::SpaceWrapper<Space_>;
+  // PrioritySearchNearestEuclidean only supports KdTreeNodeTopological.
   using NodeType = internal::
       KdTreeNodeTopological<Index_, typename SpaceWrapperType::ScalarType>;
-  using BuildRKdTreeType =
-      internal::BuildRKdTree<NodeType, SpaceWrapperType::Dim, SplittingRule_>;
-  using RKdTreeDataType = typename BuildRKdTreeType::RKdTreeDataType;
+  using RKdTreeDataType =
+      internal::RKdTreeHhData<NodeType, SpaceWrapperType::Dim>;
 
  public:
   //! \brief Size type.
@@ -42,8 +38,12 @@ class KdForest {
   KdForest(SpaceType space, SizeType max_leaf_size, SizeType forest_size)
       : space_(std::move(space)),
         metric_(),
-        data_(BuildRKdTreeType()(
-            SpaceWrapperType(space_), max_leaf_size, forest_size)) {}
+        data_(internal::BuildRKdTree<RKdTreeDataType, Dim>()(
+            SpaceWrapperType(space_),
+            max_leaf_size_t(max_leaf_size),
+            bounds_from_space,
+            sliding_midpoint_max_side,
+            forest_size)) {}
 
   //! \brief The KdForest cannot be copied.
   //! \details The KdForest uses pointers to nodes and copying pointers is not
@@ -117,16 +117,12 @@ class KdForest {
 };
 
 template <typename Space_>
-KdForest(Space_, Size)
-    -> KdForest<Space_, L2Squared, SplittingRule::kSlidingMidpoint, int>;
+KdForest(Space_, Size, Size) -> KdForest<Space_, L2Squared, int>;
 
-template <
-    typename Metric_ = L2Squared,
-    SplittingRule SplittingRule_ = SplittingRule::kSlidingMidpoint,
-    typename Index_ = int,
-    typename Space_>
-auto MakeKdForest(Space_&& space, Size max_leaf_size, Size forest_size) {
-  return KdForest<std::decay_t<Space_>, Metric_, SplittingRule_, Index_>(
+template <typename Metric_ = L2Squared, typename Index_ = int, typename Space_>
+KdForest<std::decay_t<Space_>, Metric_, Index_> MakeKdForest(
+    Space_&& space, Size max_leaf_size, Size forest_size) {
+  return KdForest<std::decay_t<Space_>, Metric_, Index_>(
       std::forward<Space_>(space), max_leaf_size, forest_size);
 }
 

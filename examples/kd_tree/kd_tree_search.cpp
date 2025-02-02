@@ -9,7 +9,7 @@ void SearchR3() {
   using Scalar = typename PointX::ScalarType;
 
   std::size_t run_count = 1024 * 1024;
-  std::size_t max_leaf_size = 12;
+  pico_tree::max_leaf_size_t max_leaf_size = 12;
   std::size_t point_count = 1024 * 1024;
   Scalar area_size = 1000;
 
@@ -79,7 +79,7 @@ void SearchS1() {
   const auto pi = typename PointX::ScalarType(3.1415926537);
 
   pico_tree::KdTree<SpaceX, pico_tree::SO2> tree(
-      GenerateRandomN<PointX>(512, -pi, pi), 10);
+      GenerateRandomN<PointX>(512, -pi, pi), pico_tree::max_leaf_size_t(10));
 
   std::array<NeighborX, 8> knn;
   tree.SearchKnn(PointX{pi}, knn.begin(), knn.end());

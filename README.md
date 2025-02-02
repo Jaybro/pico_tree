@@ -31,7 +31,7 @@ KdTree:
   * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
   * Available distance functions: `L1`, `L2Squared`, `LInf`, `SO2`, and `SE2Squared`.
   * Metrics can be customized.
-* Multiple tree splitting rules: `kLongestMedian`, `kMidpoint` and `kSlidingMidpoint`.
+* Multiple tree splitting rules: `median_max_side_t`, `midpoint_max_side_t` and `sliding_midpoint_max_side_t`.
 * Compile time and run time known dimensions.
 * Static tree builds.
 * Thread safe queries.

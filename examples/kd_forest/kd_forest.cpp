@@ -44,7 +44,7 @@ void RunKdTree(
     std::vector<Vector_> const& train,
     std::vector<Vector_> const& test,
     std::string const& fn_nns_gt,
-    std::size_t tree_max_leaf_size,
+    pico_tree::max_leaf_size_t tree_max_leaf_size,
     std::vector<pico_tree::Neighbor<int, Scalar_>>& nns) {
   using Space = std::reference_wrapper<std::vector<Vector_> const>;
 

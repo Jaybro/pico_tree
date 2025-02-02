@@ -26,7 +26,8 @@ using PicoKdTreeRtSldMid = pico_tree::KdTree<PicoRtSpace<PointX>>;
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, BuildCtSldMid)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
+  pico_tree::max_leaf_size_t max_leaf_size =
+      static_cast<std::size_t>(state.range(0));
 
   for (auto _ : state) {
     PicoKdTreeCtSldMid<PointX> tree(points_tree_, max_leaf_size);
@@ -34,7 +35,8 @@ BENCHMARK_DEFINE_F(BmPicoKdTree, BuildCtSldMid)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, BuildRtSldMid)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
+  pico_tree::max_leaf_size_t max_leaf_size =
+      static_cast<std::size_t>(state.range(0));
 
   for (auto _ : state) {
     PicoKdTreeRtSldMid<PointX> tree(
@@ -58,8 +60,9 @@ BENCHMARK_REGISTER_F(BmPicoKdTree, BuildRtSldMid)
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, KnnCtSldMid)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
-  int knn_count = state.range(1);
+  pico_tree::max_leaf_size_t max_leaf_size =
+      static_cast<std::size_t>(state.range(0));
+  std::size_t knn_count = static_cast<std::size_t>(state.range(1));
 
   PicoKdTreeCtSldMid<PointX> tree(points_tree_, max_leaf_size);
 
@@ -105,7 +108,8 @@ BENCHMARK_REGISTER_F(BmPicoKdTree, KnnCtSldMid)
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, RadiusCtSldMid)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
+  pico_tree::max_leaf_size_t max_leaf_size =
+      static_cast<std::size_t>(state.range(0));
   Scalar radius = static_cast<Scalar>(state.range(1)) / Scalar(10.0);
   Scalar squared = radius * radius;
 
@@ -143,7 +147,8 @@ BENCHMARK_REGISTER_F(BmPicoKdTree, RadiusCtSldMid)
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, BoxCtSldMid)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
+  pico_tree::max_leaf_size_t max_leaf_size =
+      static_cast<std::size_t>(state.range(0));
   Scalar radius = static_cast<Scalar>(state.range(1)) / Scalar(10.0);
 
   PicoKdTreeCtSldMid<PointX> tree(points_tree_, max_leaf_size);
@@ -172,7 +177,8 @@ BENCHMARK_REGISTER_F(BmPicoKdTree, BoxCtSldMid)
     ->Args({14, 15});
 
 BENCHMARK_DEFINE_F(BmPicoKdTree, BoxRtSldMid)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
+  pico_tree::max_leaf_size_t max_leaf_size =
+      static_cast<std::size_t>(state.range(0));
   Scalar radius = static_cast<Scalar>(state.range(1)) / Scalar(10.0);
 
   PicoKdTreeRtSldMid<PointX> tree(

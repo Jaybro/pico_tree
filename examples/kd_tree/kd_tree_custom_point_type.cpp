@@ -31,11 +31,10 @@ struct PointTraits<PointXYZ> {
 }  // namespace pico_tree
 
 int main() {
-  std::size_t max_leaf_size = 12;
   std::vector<PointXYZ> points{{0.0f, 1.0f, 2.0f}, {3.0f, 4.0f, 5.0f}};
 
   pico_tree::KdTree<std::reference_wrapper<std::vector<PointXYZ>>> tree(
-      points, max_leaf_size);
+      points, pico_tree::max_leaf_size_t(12));
 
   PointXYZ query{4.0f, 4.0f, 4.0f};
   pico_tree::Neighbor<int, float> nn;

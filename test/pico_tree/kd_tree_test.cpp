@@ -25,7 +25,7 @@ void QueryRange(
     typename PointX::ScalarType const min_v,
     typename PointX::ScalarType const max_v) {
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  KdTree<PointX> tree(random, 8);
+  KdTree<PointX> tree(random, pico_tree::max_leaf_size_t(8));
 
   TestBox(tree, min_v, max_v);
 }
@@ -36,7 +36,7 @@ void QueryRadius(
     typename PointX::ScalarType const area_size,
     typename PointX::ScalarType const radius) {
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  KdTree<PointX> tree(random, 8);
+  KdTree<PointX> tree(random, pico_tree::max_leaf_size_t(8));
 
   TestRadius(tree, radius);
 }
@@ -47,7 +47,7 @@ void QueryKnn(
     typename PointX::ScalarType const area_size,
     int const k) {
   std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  KdTree<PointX> tree1(random, 8);
+  KdTree<PointX> tree1(random, pico_tree::max_leaf_size_t(8));
 
   // "Test" move constructor.
   auto tree2 = std::move(tree1);
@@ -81,7 +81,8 @@ TEST(KdTreeTest, QuerySo2Knn4) {
 
   const auto pi = pico_tree::internal::kPi<typename KdTree<PointX>::ScalarType>;
   std::vector<PointX> random = GenerateRandomN<PointX>(256 * 256, -pi, pi);
-  pico_tree::KdTree<SpaceX, pico_tree::SO2> tree(random, 10);
+  pico_tree::KdTree<SpaceX, pico_tree::SO2> tree(
+      random, pico_tree::max_leaf_size_t(10));
   TestKnn(tree, static_cast<typename KdTree<PointX>::IndexType>(8), PointX{pi});
 }
 
@@ -98,7 +99,7 @@ TEST(KdTreeTest, WriteRead) {
   // Compile time known dimensions.
   {
     // The points are not stored.
-    KdTree<Point2f> tree(random, 1);
+    KdTree<Point2f> tree(random, pico_tree::max_leaf_size_t(1));
     KdTree<Point2f>::Save(tree, filename);
   }
   {
@@ -119,7 +120,7 @@ TEST(KdTreeTest, WriteRead) {
         pico_tree::KdTree<DSpace>::Dim == pico_tree::kDynamicSize,
         "KD_TREE_DIM_NOT_DYNAMIC");
     // The points are not stored.
-    pico_tree::KdTree<DSpace> tree(drandom, 1);
+    pico_tree::KdTree<DSpace> tree(drandom, pico_tree::max_leaf_size_t(1));
     pico_tree::KdTree<DSpace>::Save(tree, filename);
   }
   {

@@ -40,10 +40,9 @@ auto MakePointSet() { return Space{{0.0f, 1.0f, 2.0f}, {3.0f, 4.0f, 5.0f}}; }
 // In this example, the creation of a KdTree results in a copy of the input
 // point set. The KdTree has full ownership of the copy.
 void BuildKdTreeWithCopy() {
-  int max_leaf_size = 12;
   auto points = MakePointSet();
 
-  pico_tree::KdTree<Space> tree(points, max_leaf_size);
+  pico_tree::KdTree<Space> tree(points, pico_tree::max_leaf_size_t(12));
 
   QueryTree(tree);
 }
@@ -51,7 +50,7 @@ void BuildKdTreeWithCopy() {
 // In this example, the point sets are not copied but moved into the KdTrees
 // when they are created. Each tree has full ownership of the moved point set.
 void BuildKdTreeWithMove() {
-  int max_leaf_size = 12;
+  pico_tree::max_leaf_size_t max_leaf_size = 12;
   auto points = MakePointSet();
 
   pico_tree::KdTree<Space> tree1(std::move(points), max_leaf_size);
@@ -66,7 +65,7 @@ void BuildKdTreeWithMove() {
 // only a reference is copied by a KdTree. Each tree only has shallow ownership
 // of the input point set.
 void BuildKdTreeWithReference() {
-  int max_leaf_size = 12;
+  pico_tree::max_leaf_size_t max_leaf_size = 12;
   auto points = MakePointSet();
 
   // By reference.
@@ -83,7 +82,7 @@ void BuildKdTreeWithReference() {
 // This example shows that the type of the input point set may be deduced by the
 // compiler.
 void SpaceTypeDeduction() {
-  int max_leaf_size = 12;
+  pico_tree::max_leaf_size_t max_leaf_size = 12;
   auto points = MakePointSet();
 
   // The type of the first class template argument, the space type, is

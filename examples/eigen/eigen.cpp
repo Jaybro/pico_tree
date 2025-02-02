@@ -23,7 +23,7 @@ using PointsMapRowMajor = Eigen::Map<Eigen::Matrix<
 std::size_t const kRunCount = 1024 * 1024;
 std::size_t const kNumPoints = 1024 * 1024 * 2;
 float const kArea = 1000.0;
-std::size_t const kMaxLeafCount = 16;
+pico_tree::max_leaf_size_t const kMaxLeafCount = 16;
 
 template <typename PointX>
 std::vector<PointX> GenerateRandomEigenN(

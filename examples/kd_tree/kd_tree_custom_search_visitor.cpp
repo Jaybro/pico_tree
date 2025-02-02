@@ -47,7 +47,7 @@ int main() {
   using PointX = Point2f;
   using Scalar = typename PointX::ScalarType;
 
-  std::size_t max_leaf_size = 12;
+  pico_tree::max_leaf_size_t max_leaf_size = 12;
   std::size_t point_count = 1024 * 1024;
   Scalar area_size = 1000;
 

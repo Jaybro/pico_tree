@@ -9,7 +9,7 @@
 // used for storing points and a point can be either an array or an std::array.
 
 int main() {
-  std::size_t max_leaf_size = 12;
+  pico_tree::max_leaf_size_t max_leaf_size = 12;
   std::vector<std::array<float, 3>> points{
       {0.0f, 1.0f, 2.0f}, {3.0f, 4.0f, 5.0f}};
 

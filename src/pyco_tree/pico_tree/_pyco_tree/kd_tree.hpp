@@ -38,7 +38,7 @@ class KdTree : public pico_tree::KdTree<Space_, Metric_> {
 
  public:
   inline KdTree(py::array_t<ScalarType, 0> pts, SizeType max_leaf_size)
-      : Base(MakeMap<Dim>(pts), max_leaf_size) {}
+      : Base(MakeMap<Dim>(pts), pico_tree::max_leaf_size_t(max_leaf_size)) {}
 
   void SearchKnn(
       py::array_t<ScalarType, 0> const pts,
