@@ -4,21 +4,21 @@
 
 namespace pico_tree {
 
-//! \brief L2 metric for measuring Euclidean distances between points.
+//! \brief metric_l2 metric for measuring Euclidean distances between points.
 //! \details https://en.wikipedia.org/wiki/Euclidean_distance
-//! \see L1
-class L2 {
+//! \see metric_l1
+class metric_l2 {
  public:
   template <
-      typename InputIterator1,
-      typename InputSentinel1,
-      typename OutputIterator2>
+      typename InputIterator1_,
+      typename InputSentinel1_,
+      typename OutputIterator2_>
   constexpr auto operator()(
-      InputIterator1 begin1,
-      InputSentinel1 end1,
-      OutputIterator2 begin2) const {
+      InputIterator1_ begin1,
+      InputSentinel1_ end1,
+      OutputIterator2_ begin2) const {
     return std::sqrt(
-        internal::Sum(begin1, end1, begin2, internal::SquaredDistanceFn()));
+        internal::sum(begin1, end1, begin2, internal::squared_distance_fn()));
   }
 
   //! \brief Calculates the distance between two coordinates.

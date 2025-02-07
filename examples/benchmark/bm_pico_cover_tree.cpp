@@ -10,21 +10,22 @@ class BmPicoCoverTree : public pico_tree::Benchmark {
 };
 
 // Index explicitly set to int.
-template <typename PointX>
-using PicoSpace = std::reference_wrapper<std::vector<PointX>>;
+template <typename Point_>
+using pico_space = std::reference_wrapper<std::vector<Point_>>;
 
-template <typename PointX>
-using PicoCoverTree = pico_tree::CoverTree<PicoSpace<PointX>>;
+template <typename Point_>
+using pico_cover_tree = pico_tree::cover_tree<pico_space<Point_>>;
 
 // ****************************************************************************
 // Building the tree
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmPicoCoverTree, BuildCt)(benchmark::State& state) {
-  Scalar base = static_cast<Scalar>(state.range(0)) / Scalar(10.0);
+  scalar_type base =
+      static_cast<scalar_type>(state.range(0)) / scalar_type(10.0);
 
   for (auto _ : state) {
-    PicoCoverTree<PointX> tree(points_tree_, base);
+    pico_cover_tree<point_type> tree(points_tree_, base);
   }
 }
 
@@ -38,23 +39,24 @@ BENCHMARK_REGISTER_F(BmPicoCoverTree, BuildCt)
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmPicoCoverTree, KnnCt)(benchmark::State& state) {
-  Scalar base = static_cast<Scalar>(state.range(0)) / Scalar(10.0);
+  scalar_type base =
+      static_cast<scalar_type>(state.range(0)) / scalar_type(10.0);
   int knn_count = state.range(1);
 
-  PicoCoverTree<PointX> tree(points_tree_, base);
+  pico_cover_tree<point_type> tree(points_tree_, base);
 
   for (auto _ : state) {
-    std::vector<pico_tree::Neighbor<Index, Scalar>> results;
+    std::vector<pico_tree::neighbor<index_type, scalar_type>> results;
     std::size_t sum = 0;
     std::size_t group = 4000;
     std::size_t pi = 0;
     while (pi < points_test_.size()) {
       std::size_t group_end = std::min(pi + group, points_test_.size());
       std::flush(std::cout);
-      ScopedTimer timer("query_group");
+      pico_tree::scoped_timer timer("query_group");
       for (; pi < group_end; ++pi) {
         auto const& p = points_test_[pi];
-        tree.SearchKnn(p, knn_count, results);
+        tree.search_knn(p, knn_count, results);
         benchmark::DoNotOptimize(sum += results.size());
       }
     }

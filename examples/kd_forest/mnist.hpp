@@ -4,56 +4,58 @@
 #include <filesystem>
 #include <pico_toolshed/format/format_mnist.hpp>
 
-template <typename U, typename T, std::size_t N>
-std::array<U, N> Cast(std::array<T, N> const& i) {
-  std::array<U, N> c;
-  std::transform(i.begin(), i.end(), c.begin(), [](T a) -> U {
-    return static_cast<U>(a);
+template <typename U_, typename T_, std::size_t N_>
+std::array<U_, N_> cast(std::array<T_, N_> const& i) {
+  std::array<U_, N_> c;
+  std::transform(i.begin(), i.end(), c.begin(), [](T_ a) -> U_ {
+    return static_cast<U_>(a);
   });
   return c;
 }
 
-template <typename U, typename T, std::size_t N>
-std::vector<std::array<U, N>> Cast(std::vector<std::array<T, N>> const& i) {
-  std::vector<std::array<U, N>> c;
+template <typename U_, typename T_, std::size_t N_>
+std::vector<std::array<U_, N_>> cast(std::vector<std::array<T_, N_>> const& i) {
+  std::vector<std::array<U_, N_>> c;
   std::transform(
       i.begin(),
       i.end(),
       std::back_inserter(c),
-      [](std::array<T, N> const& a) -> std::array<U, N> { return Cast<U>(a); });
+      [](std::array<T_, N_> const& a) -> std::array<U_, N_> {
+        return cast<U_>(a);
+      });
   return c;
 }
 
-class Mnist {
+class mnist {
  private:
-  using Scalar = float;
-  using ImageByte = std::array<std::byte, 28 * 28>;
-  using ImageFloat = std::array<Scalar, 28 * 28>;
+  using scalar_type = float;
+  using image_byte = std::array<std::byte, 28 * 28>;
+  using image_float = std::array<scalar_type, 28 * 28>;
 
-  static std::vector<ImageFloat> ReadImages(std::string const& filename) {
+  static std::vector<image_float> read_images(std::string const& filename) {
     if (!std::filesystem::exists(filename)) {
       throw std::runtime_error(filename + " doesn't exist.");
     }
 
-    std::vector<ImageByte> images_u8;
-    pico_tree::ReadMnistImages(filename, images_u8);
-    return Cast<Scalar>(images_u8);
+    std::vector<image_byte> images_u8;
+    pico_tree::read_mnist_images(filename, images_u8);
+    return cast<scalar_type>(images_u8);
   }
 
  public:
-  using PointType = ImageFloat;
+  using point_type = image_float;
 
-  static std::string const kDatasetName;
+  static std::string const dataset_name;
 
-  static std::vector<PointType> ReadTrain() {
+  static std::vector<point_type> read_train() {
     std::string fn_images_train = "train-images.idx3-ubyte";
-    return ReadImages(fn_images_train);
+    return read_images(fn_images_train);
   }
 
-  static std::vector<PointType> ReadTest() {
+  static std::vector<point_type> read_test() {
     std::string fn_images_test = "t10k-images.idx3-ubyte";
-    return ReadImages(fn_images_test);
+    return read_images(fn_images_test);
   }
 };
 
-std::string const Mnist::kDatasetName = "mnist";
+std::string const mnist::dataset_name = "mnist";

@@ -2,7 +2,7 @@
 
 #include <array>
 #include <cstdint>
-#include <pico_tree/internal/stream.hpp>
+#include <pico_tree/internal/stream_wrapper.hpp>
 
 #include "endian.hpp"
 
@@ -12,73 +12,73 @@ namespace pico_tree {
 
 namespace internal {
 
-struct MnistImages {
-  struct Header {
-    static std::int32_t constexpr kMagicNumber = 2051;
+struct mnist_images {
+  struct header {
+    static constexpr std::int32_t magic_number = 2051;
     std::int32_t image_count;
     std::int32_t image_width;
     std::int32_t image_height;
   };
 };
 
-struct MnistLabels {
-  struct Header {
-    static std::int32_t constexpr kMagicNumber = 2049;
+struct mnist_labels {
+  struct header {
+    static constexpr std::int32_t magic_number = 2049;
     std::int32_t label_count;
   };
 };
 
 }  // namespace internal
 
-inline void ReadMnistImages(
+inline void read_mnist_images(
     std::string const& filename,
     std::vector<std::array<std::byte, 28 * 28>>& images) {
   using namespace internal;
 
-  std::fstream stream = OpenStream(filename, std::ios::in | std::ios::binary);
-  Stream wrapper(stream);
+  std::fstream stream = open_stream(filename, std::ios::in | std::ios::binary);
+  stream_wrapper wrapper(stream);
 
-  BigEndian<std::int32_t> magic_number;
-  wrapper.Read(magic_number);
-  if (magic_number() != MnistImages::Header::kMagicNumber) {
+  big_endian<std::int32_t> magic_number;
+  wrapper.read(magic_number);
+  if (magic_number() != mnist_images::header::magic_number) {
     throw std::runtime_error(
         "Incorrect signature: Expected MNIST images magic number.");
   }
 
-  MnistImages::Header header;
-  wrapper.Read(header);
-  header.image_count = BigEndian<std::int32_t>{header.image_count};
-  header.image_width = BigEndian<std::int32_t>{header.image_width};
-  header.image_height = BigEndian<std::int32_t>{header.image_height};
+  mnist_images::header header;
+  wrapper.read(header);
+  header.image_count = big_endian<std::int32_t>{header.image_count};
+  header.image_width = big_endian<std::int32_t>{header.image_width};
+  header.image_height = big_endian<std::int32_t>{header.image_height};
 
   if (header.image_width * header.image_height != 28 * 28) {
     throw std::runtime_error("Unexpected MNIST image dimensions.");
   }
 
   images.resize(header.image_count);
-  wrapper.Read(images.size(), images.data());
+  wrapper.read(images.size(), images.data());
 }
 
-inline void ReadMnistLabels(
+inline void read_mnist_labels(
     std::string const& filename, std::vector<std::byte>& labels) {
   using namespace internal;
 
-  std::fstream stream = OpenStream(filename, std::ios::in | std::ios::binary);
-  Stream wrapper(stream);
+  std::fstream stream = open_stream(filename, std::ios::in | std::ios::binary);
+  stream_wrapper wrapper(stream);
 
-  BigEndian<std::int32_t> magic_number;
-  wrapper.Read(magic_number);
-  if (magic_number() != MnistLabels::Header::kMagicNumber) {
+  big_endian<std::int32_t> magic_number;
+  wrapper.read(magic_number);
+  if (magic_number() != mnist_labels::header::magic_number) {
     throw std::runtime_error(
         "Incorrect signature: Expected MNIST labels magic number.");
   }
 
-  MnistLabels::Header header;
-  wrapper.Read(header);
-  header.label_count = BigEndian<std::int32_t>{header.label_count};
+  mnist_labels::header header;
+  wrapper.read(header);
+  header.label_count = big_endian<std::int32_t>{header.label_count};
 
   labels.resize(header.label_count);
-  wrapper.Read(labels.size(), labels.data());
+  wrapper.read(labels.size(), labels.data());
 }
 
 }  // namespace pico_tree

@@ -4,17 +4,17 @@
 
 namespace pyco_tree {
 
-using PointsXf = PyArrayMap<float, pico_tree::kDynamicSize>;
-using PointsXd = PyArrayMap<double, pico_tree::kDynamicSize>;
-using Points2f = PyArrayMap<float, 2>;
-using Points2d = PyArrayMap<double, 2>;
-using Points3f = PyArrayMap<float, 3>;
-using Points3d = PyArrayMap<double, 3>;
+using space_xf = py_array_map<float, pico_tree::dynamic_size>;
+using space_xd = py_array_map<double, pico_tree::dynamic_size>;
+using space_2f = py_array_map<float, 2>;
+using space_2d = py_array_map<double, 2>;
+using space_3f = py_array_map<float, 3>;
+using space_3d = py_array_map<double, 3>;
 
-template <typename PointsX>
-using SpaceX = PyArrayMap<typename PointsX::ScalarType, PointsX::Dim>;
+template <typename Points_>
+using space_x = py_array_map<typename Points_::scalar_type, Points_::dim>;
 
-using Neighborf = pico_tree::Neighbor<int, float>;
-using Neighbord = pico_tree::Neighbor<int, double>;
+using neighbor_f = pico_tree::neighbor<int, float>;
+using neighbor_d = pico_tree::neighbor<int, double>;
 
 }  // namespace pyco_tree

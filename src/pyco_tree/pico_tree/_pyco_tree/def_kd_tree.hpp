@@ -4,6 +4,6 @@
 
 namespace pyco_tree {
 
-void DefKdTree(pybind11::module& m);
+void def_kd_tree(pybind11::module& m);
 
 }  // namespace pyco_tree

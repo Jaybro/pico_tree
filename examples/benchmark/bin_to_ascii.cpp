@@ -14,11 +14,11 @@ int main() {
     std::cout << path_bin.string() << " doesn't exist." << std::endl;
   } else if (!std::filesystem::exists(path_ascii)) {
     std::cout << "Reading points in bin format..." << std::endl;
-    std::vector<Point3f> points;
-    pico_tree::ReadBin(path_bin.string(), points);
+    std::vector<pico_tree::point_3f> points;
+    pico_tree::read_bin(path_bin.string(), points);
     std::cout << "Read " << points.size() << " points." << std::endl;
     std::cout << "Writing points to ascii xyz format..." << std::endl;
-    pico_tree::WriteAscii(path_ascii.string(), points);
+    pico_tree::write_ascii(path_ascii.string(), points);
     std::cout << "Done." << std::endl;
   } else {
     std::cout << path_ascii.string() << " already exists." << std::endl;

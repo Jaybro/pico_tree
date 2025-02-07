@@ -5,19 +5,19 @@
 
 namespace pico_tree::internal {
 
-//! \brief The data structure that represents a CoverTree.
+//! \brief The data structure that represents a cover_tree.
 template <typename Index_, typename Scalar_>
-class CoverTreeData {
+class cover_tree_data {
  public:
-  using IndexType = Index_;
-  using ScalarType = Scalar_;
-  using NodeType = CoverTreeNode<Index_, Scalar_>;
-  using NodeAllocatorType = internal::StaticBuffer<NodeType>;
+  using index_type = Index_;
+  using scalar_type = Scalar_;
+  using node_type = cover_tree_node<Index_, Scalar_>;
+  using node_allocator_type = internal::static_buffer<node_type>;
 
   //! \brief Memory allocator for tree nodes.
-  NodeAllocatorType allocator;
-  //! \brief Root of the CoverTree.
-  NodeType* root_node;
+  node_allocator_type allocator;
+  //! \brief Root of the cover_tree.
+  node_type* root_node;
 };
 
 }  // namespace pico_tree::internal

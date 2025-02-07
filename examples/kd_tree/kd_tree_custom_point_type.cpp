@@ -9,23 +9,25 @@ struct PointXYZ {
   float data[3];
 };
 
-// A specialization of PointTraits must be defined within the pico_tree
+// A specialization of point_traits must be defined within the pico_tree
 // namespace and provide all the details of this example.
 namespace pico_tree {
 
 template <>
-struct PointTraits<PointXYZ> {
-  using PointType = PointXYZ;
-  using ScalarType = float;
-  // Spatial dimension. Set to pico_tree::kDynamicSize when the dimension is
+struct point_traits<PointXYZ> {
+  using point_type = PointXYZ;
+  using scalar_type = float;
+  // Spatial dimension. Set to pico_tree::dynamic_size when the dimension is
   // only known at run-time.
-  static std::size_t constexpr Dim = 3;
+  static constexpr pico_tree::size_t dim = 3;
 
   // Returns a pointer to the coordinates of the input point.
   inline static float const* data(PointXYZ const& point) { return point.data; }
 
   // Returns the number of coordinates or spatial dimension of each point.
-  inline static constexpr std::size_t size(PointXYZ const&) { return Dim; }
+  inline static constexpr pico_tree::size_t size(PointXYZ const&) {
+    return dim;
+  }
 };
 
 }  // namespace pico_tree
@@ -33,12 +35,12 @@ struct PointTraits<PointXYZ> {
 int main() {
   std::vector<PointXYZ> points{{0.0f, 1.0f, 2.0f}, {3.0f, 4.0f, 5.0f}};
 
-  pico_tree::KdTree<std::reference_wrapper<std::vector<PointXYZ>>> tree(
+  pico_tree::kd_tree<std::reference_wrapper<std::vector<PointXYZ>>> tree(
       points, pico_tree::max_leaf_size_t(12));
 
   PointXYZ query{4.0f, 4.0f, 4.0f};
-  pico_tree::Neighbor<int, float> nn;
-  tree.SearchNn(query, nn);
+  pico_tree::neighbor<int, float> nn;
+  tree.search_nn(query, nn);
 
   std::cout << "Index closest point: " << nn.index << std::endl;
 

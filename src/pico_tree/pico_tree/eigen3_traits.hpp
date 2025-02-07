@@ -9,143 +9,147 @@
 //! \file eigen3_traits.hpp
 //! \brief Provides an interface for spaces and points when working with types
 //! from Eigen3.
-//! \details It supports SpaceTraits<> for dynamic matrices and maps of dynamic
+//! \details It supports space_traits<> for dynamic matrices and maps of dynamic
 //! matrices, but not for fixed size matrices or maps of those. Fixed size
 //! matrices are mostly useful when they are small. See section "Fixed vs.
 //! Dynamic size" of the following link:
 //! * https://eigen.tuxfamily.org/dox/group__TutorialMatrixClass.html
 //!
-//! PointTraits<> are supported for any type of matrix or matrix map.
+//! point_traits<> are supported for any type of matrix or matrix map.
 
 namespace pico_tree {
 
 namespace internal {
 
-//! \brief A trait that determines if Derived inherits from Eigen::MatrixBase<>.
-template <typename Derived>
+//! \brief A trait that determines if Derived_ inherits from
+//! Eigen::MatrixBase<>.
+template <typename Derived_>
 struct is_matrix_base : public std::is_base_of<
-                            Eigen::MatrixBase<std::remove_cv_t<Derived>>,
-                            std::remove_cv_t<Derived>> {};
+                            Eigen::MatrixBase<std::remove_cv_t<Derived_>>,
+                            std::remove_cv_t<Derived_>> {};
 
 template <typename T>
 inline constexpr bool is_matrix_base_v = is_matrix_base<T>::value;
 
-template <typename Derived>
-constexpr int EigenVectorDim() {
+template <typename Derived_>
+constexpr int eigen_vector_dim() {
   static_assert(
-      (!Derived::IsRowMajor && Derived::ColsAtCompileTime == 1) ||
-          (Derived::IsRowMajor && Derived::RowsAtCompileTime == 1),
+      (!Derived_::IsRowMajor && Derived_::ColsAtCompileTime == 1) ||
+          (Derived_::IsRowMajor && Derived_::RowsAtCompileTime == 1),
       "DERIVED_TYPE_IS_NOT_A_VECTOR");
-  return Derived::IsRowMajor ? Derived::ColsAtCompileTime
-                             : Derived::RowsAtCompileTime;
+  return Derived_::IsRowMajor ? Derived_::ColsAtCompileTime
+                              : Derived_::RowsAtCompileTime;
 }
 
-constexpr Size EigenDimToPicoDim(int dim) {
-  return dim == Eigen::Dynamic ? kDynamicSize : static_cast<Size>(dim);
+constexpr size_t eigen_dim_to_pico_dim(int dim) {
+  return dim == Eigen::Dynamic ? dynamic_size : static_cast<size_t>(dim);
 }
 
-//! \brief EigenPointTraits provides an interface for the different point types
-//! that can be used with EigenTraits.
-//! \details Unlike the specialization of PointTraits for Eigen types, the
+//! \brief eigen_point_traits provides an interface for the different point
+//! types that can be used with EigenTraits.
+//! \details Unlike the specialization of point_traits for Eigen types, the
 //! internal implementation supports matrix expressions.
-template <typename Derived>
-struct EigenPointTraits {
+template <typename Derived_>
+struct eigen_point_traits {
   static_assert(
-      is_matrix_base_v<Derived>, "DERIVED_TYPE_IS_NOT_AN_EIGEN_MATRIX");
+      is_matrix_base_v<Derived_>, "DERIVED_TYPE_IS_NOT_AN_EIGEN_MATRIX");
   //! \brief Supported point type.
-  using PointType = Derived;
+  using point_type = Derived_;
   //! \brief The scalar type of point coordinates.
-  using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
+  using scalar_type = std::remove_cv_t<typename Derived_::Scalar>;
   //! \brief The size and index type of point coordinates.
-  using SizeType = Size;
+  using size_type = size_t;
   //! \brief Compile time spatial dimension.
-  static SizeType constexpr Dim = EigenDimToPicoDim(EigenVectorDim<Derived>());
+  static size_type constexpr dim =
+      eigen_dim_to_pico_dim(eigen_vector_dim<Derived_>());
 
   //! \brief Returns a pointer to the coordinates of \p point.
-  inline static ScalarType const* data(Derived const& point) {
+  inline static scalar_type const* data(Derived_ const& point) {
     return point.derived().data();
   }
 
   //! \brief Returns the spatial dimension of \p point.
-  inline static SizeType size(Derived const& point) {
-    return static_cast<SizeType>(point.size());
+  inline static size_type size(Derived_ const& point) {
+    return static_cast<size_type>(point.size());
   }
 };
 
-template <typename Derived>
-struct EigenTraitsBase {
+template <typename Derived_>
+struct eigen_traits_base {
   static_assert(
-      Derived::RowsAtCompileTime == Eigen::Dynamic ||
-          Derived::ColsAtCompileTime == Eigen::Dynamic,
+      Derived_::RowsAtCompileTime == Eigen::Dynamic ||
+          Derived_::ColsAtCompileTime == Eigen::Dynamic,
       "FIXED_SIZE_MATRICES_ARE_NOT_SUPPORTED");
 
-  //! \brief The SpaceType of these traits.
-  using SpaceType = Derived;
+  //! \brief The space_type of these traits.
+  using space_type = Derived_;
 };
 
 //! \brief Space and Point traits for Eigen types.
-template <typename Derived, bool RowMajor = Derived::IsRowMajor>
-struct EigenTraitsImpl;
+template <typename Derived_, bool RowMajor = Derived_::IsRowMajor>
+struct eigen_traits_impl;
 
 //! \brief Space and Point traits for ColMajor Eigen types.
-template <typename Derived>
-struct EigenTraitsImpl<Derived, false> : public EigenTraitsBase<Derived> {
+template <typename Derived_>
+struct eigen_traits_impl<Derived_, false> : public eigen_traits_base<Derived_> {
   //! \brief The size and index type of point coordinates.
-  using SizeType = Size;
+  using size_type = size_t;
   //! \brief Spatial dimension.
-  static SizeType constexpr Dim = EigenDimToPicoDim(Derived::RowsAtCompileTime);
-  //! \brief The point type used by Derived.
-  using PointType =
-      Eigen::Block<Derived const, Derived::RowsAtCompileTime, 1, true>;
+  static size_type constexpr dim =
+      eigen_dim_to_pico_dim(Derived_::RowsAtCompileTime);
+  //! \brief The point type used by Derived_.
+  using point_type =
+      Eigen::Block<Derived_ const, Derived_::RowsAtCompileTime, 1, true>;
   //! \brief The scalar type of point coordinates.
-  using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
+  using scalar_type = std::remove_cv_t<typename Derived_::Scalar>;
 
   //! \brief Returns the point at index \p idx.
   template <typename Index_>
-  inline static PointType PointAt(Derived const& matrix, Index_ idx) {
+  inline static point_type point_at(Derived_ const& matrix, Index_ idx) {
     return matrix.col(static_cast<Eigen::Index>(idx));
   }
 
   //! \brief Returns the number of points.
-  inline static SizeType size(Derived const& matrix) {
-    return static_cast<SizeType>(matrix.cols());
+  inline static size_type size(Derived_ const& matrix) {
+    return static_cast<size_type>(matrix.cols());
   }
 
   //! \brief Returns the number of coordinates or spatial dimension of each
   //! point.
-  inline static SizeType sdim(Eigen::MatrixBase<Derived> const& matrix) {
-    return static_cast<SizeType>(matrix.rows());
+  inline static size_type sdim(Eigen::MatrixBase<Derived_> const& matrix) {
+    return static_cast<size_type>(matrix.rows());
   }
 };
 
 //! \brief Space and Point traits for RowMajor Eigen types.
-template <typename Derived>
-struct EigenTraitsImpl<Derived, true> : public EigenTraitsBase<Derived> {
+template <typename Derived_>
+struct eigen_traits_impl<Derived_, true> : public eigen_traits_base<Derived_> {
   //! \brief The size and index type of point coordinates.
-  using SizeType = Size;
+  using size_type = size_t;
   //! \brief Spatial dimension.
-  static SizeType constexpr Dim = EigenDimToPicoDim(Derived::ColsAtCompileTime);
-  //! \brief The point type used by Derived.
-  using PointType =
-      Eigen::Block<Derived const, 1, Derived::ColsAtCompileTime, true>;
+  static size_type constexpr dim =
+      eigen_dim_to_pico_dim(Derived_::ColsAtCompileTime);
+  //! \brief The point type used by Derived_.
+  using point_type =
+      Eigen::Block<Derived_ const, 1, Derived_::ColsAtCompileTime, true>;
   //! \brief The scalar type of point coordinates.
-  using ScalarType = std::remove_cv_t<typename Derived::Scalar>;
+  using scalar_type = std::remove_cv_t<typename Derived_::Scalar>;
 
   //! \brief Returns the point at index \p idx.
   template <typename Index_>
-  inline static PointType PointAt(Derived const& matrix, Index_ idx) {
+  inline static point_type point_at(Derived_ const& matrix, Index_ idx) {
     return matrix.row(static_cast<Eigen::Index>(idx));
   }
 
   //! \brief Returns the number of points.
-  inline static SizeType size(Derived const& matrix) {
-    return static_cast<SizeType>(matrix.rows());
+  inline static size_type size(Derived_ const& matrix) {
+    return static_cast<size_type>(matrix.rows());
   }
 
   //! \brief Returns the number of coordinates or spatial dimension of each
   //! point.
-  inline static SizeType sdim(Derived const& matrix) {
-    return static_cast<SizeType>(matrix.cols());
+  inline static size_type sdim(Derived_ const& matrix) {
+    return static_cast<size_type>(matrix.cols());
   }
 };
 
@@ -159,9 +163,9 @@ template <
     int Options_,
     int MaxRows_,
     int MaxCols_>
-struct SpaceTraits<
+struct space_traits<
     Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>>
-    : public internal::EigenTraitsImpl<
+    : public internal::eigen_traits_impl<
           Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> {
 };
 
@@ -175,11 +179,11 @@ template <
     int MaxCols_,
     int MapOptions_,
     typename StrideType_>
-struct SpaceTraits<Eigen::Map<
+struct space_traits<Eigen::Map<
     Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
     MapOptions_,
     StrideType_>>
-    : public internal::EigenTraitsImpl<Eigen::Map<
+    : public internal::eigen_traits_impl<Eigen::Map<
           Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
           MapOptions_,
           StrideType_>> {};
@@ -195,17 +199,17 @@ template <
     int MaxCols_,
     int MapOptions_,
     typename StrideType_>
-struct SpaceTraits<Eigen::Map<
+struct space_traits<Eigen::Map<
     Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
     MapOptions_,
     StrideType_>>
-    : public internal::EigenTraitsImpl<Eigen::Map<
+    : public internal::eigen_traits_impl<Eigen::Map<
           Eigen::
               Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
           MapOptions_,
           StrideType_>> {};
 
-//! \brief PointTraits provides an interface for Eigen::Matrix<>.
+//! \brief point_traits provides an interface for Eigen::Matrix<>.
 template <
     typename Scalar_,
     int Rows_,
@@ -213,13 +217,13 @@ template <
     int Options_,
     int MaxRows_,
     int MaxCols_>
-struct PointTraits<
+struct point_traits<
     Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>>
-    : public internal::EigenPointTraits<
+    : public internal::eigen_point_traits<
           Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> {
 };
 
-//! \brief PointTraits provides an interface for Eigen::Map<Eigen::Matrix<>>.
+//! \brief point_traits provides an interface for Eigen::Map<Eigen::Matrix<>>.
 template <
     typename Scalar_,
     int Rows_,
@@ -229,16 +233,16 @@ template <
     int MaxCols_,
     int MapOptions_,
     typename StrideType_>
-struct PointTraits<Eigen::Map<
+struct point_traits<Eigen::Map<
     Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
     MapOptions_,
     StrideType_>>
-    : public internal::EigenPointTraits<Eigen::Map<
+    : public internal::eigen_point_traits<Eigen::Map<
           Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>,
           MapOptions_,
           StrideType_>> {};
 
-//! \brief PointTraits provides an interface for Eigen::Map<Eigen::Matrix<>
+//! \brief point_traits provides an interface for Eigen::Map<Eigen::Matrix<>
 //! const>.
 template <
     typename Scalar_,
@@ -249,20 +253,20 @@ template <
     int MaxCols_,
     int MapOptions_,
     typename StrideType_>
-struct PointTraits<Eigen::Map<
+struct point_traits<Eigen::Map<
     Eigen::Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
     MapOptions_,
     StrideType_>>
-    : public internal::EigenPointTraits<Eigen::Map<
+    : public internal::eigen_point_traits<Eigen::Map<
           Eigen::
               Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> const,
           MapOptions_,
           StrideType_>> {};
 
-//! \brief PointTraits provides an interface for Eigen::Block<>.
+//! \brief point_traits provides an interface for Eigen::Block<>.
 template <typename XprType_, int BlockRows_, int BlockCols_, bool InnerPanel_>
-struct PointTraits<Eigen::Block<XprType_, BlockRows_, BlockCols_, InnerPanel_>>
-    : public internal::EigenPointTraits<
+struct point_traits<Eigen::Block<XprType_, BlockRows_, BlockCols_, InnerPanel_>>
+    : public internal::eigen_point_traits<
           Eigen::Block<XprType_, BlockRows_, BlockCols_, InnerPanel_>> {};
 
 }  // namespace pico_tree

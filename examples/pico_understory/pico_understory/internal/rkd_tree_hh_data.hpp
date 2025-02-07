@@ -10,19 +10,19 @@
 
 namespace pico_tree::internal {
 
-template <typename Scalar_, Size Dim_>
-inline Point<Scalar_, Dim_> RandomNormal(Size dim) {
+template <typename Scalar_, size_t Dim_>
+inline point<Scalar_, Dim_> random_normal(size_t dim) {
   std::random_device rd;
   std::mt19937 e(rd());
   std::normal_distribution<Scalar_> gaussian(Scalar_(0), Scalar_(1));
 
-  Point<Scalar_, Dim_> v = Point<Scalar_, Dim_>::FromSize(dim);
+  point<Scalar_, Dim_> v = point<Scalar_, Dim_>::from_size(dim);
 
-  for (Size i = 0; i < dim; ++i) {
+  for (size_t i = 0; i < dim; ++i) {
     v[i] = gaussian(e);
   }
 
-  v.Normalize();
+  v.normalize();
 
   return v;
 }
@@ -34,58 +34,59 @@ inline Point<Scalar_, Dim_> RandomNormal(Size dim) {
 // complexity for "rotating" a dataset. C. Silpa-Anan and R. Hartley, Optimised
 // KD-trees for fast image descriptor matching, In CVPR, 2008.
 // http://vigir.missouri.edu/~gdesouza/Research/Conference_CDs/IEEE_CVPR_2008/data/papers/298.pdf
-template <typename Node_, Size Dim_>
-class RKdTreeHhData {
+template <typename Node_, size_t Dim_>
+class rkd_tree_hh_data {
  public:
-  using ScalarType = typename Node_::ScalarType;
-  static Size constexpr Dim = Dim_;
-  using NodeType = Node_;
-  using RotationType = Point<ScalarType, Dim_>;
-  using SpaceType = MatrixSpace<ScalarType, Dim_>;
-  using SpaceWrapperType = SpaceWrapper<SpaceType>;
+  using scalar_type = typename Node_::scalar_type;
+  static size_t constexpr dim = Dim_;
+  using node_type = Node_;
+  using rotation_type = point<scalar_type, Dim_>;
+  using space_type = matrix_space<scalar_type, Dim_>;
+  using space_wrapper_type = space_wrapper<space_type>;
 
   template <typename SpaceWrapper_>
-  static inline auto RandomRotation(SpaceWrapper_ space) {
-    return RandomNormal<ScalarType, Dim_>(space.sdim());
+  static inline auto random_rotation(SpaceWrapper_ space) {
+    return random_normal<scalar_type, Dim_>(space.sdim());
   }
 
   template <typename SpaceWrapper_>
-  static inline SpaceType RotateSpace(
-      RotationType const& rotation, SpaceWrapper_ space) {
-    SpaceType s(space.size(), space.sdim());
+  static inline space_type rotate_space(
+      rotation_type const& rotation, SpaceWrapper_ space) {
+    space_type s(space.size(), space.sdim());
 
     for (std::size_t i = 0; i < space.size(); ++i) {
       auto x = space[i];
       auto y = s.data(i);
-      RotatePoint(rotation, x, y);
+      rotate_point(rotation, x, y);
     }
 
     return s;
   }
 
   template <typename ArrayType_>
-  Point<ScalarType, Dim_> RotatePoint(ArrayType_ const& x) const {
-    Point<ScalarType, Dim_> y = Point<ScalarType, Dim_>::FromSize(space.sdim());
-    RotatePoint(rotation, x, y);
+  point<scalar_type, Dim_> rotate_point(ArrayType_ const& x) const {
+    point<scalar_type, Dim_> y =
+        point<scalar_type, Dim_>::from_size(space.sdim());
+    rotate_point(rotation, x, y);
     return y;
   }
 
-  RotationType rotation;
-  SpaceType space;
-  KdTreeData<Node_, Dim_> tree;
+  rotation_type rotation;
+  space_type space;
+  kd_tree_data<Node_, Dim_> tree;
 
  private:
   // In and out can be the same point.
   // https://en.wikipedia.org/wiki/Householder_transformation
   template <typename ArrayTypeIn_, typename ArrayTypeOut_>
-  static void RotatePoint(
-      RotationType const& rotation, ArrayTypeIn_ const& x, ArrayTypeOut_& y) {
-    ScalarType dot = ScalarType(0);
-    for (Size i = 0; i < rotation.size(); ++i) {
+  static void rotate_point(
+      rotation_type const& rotation, ArrayTypeIn_ const& x, ArrayTypeOut_& y) {
+    scalar_type dot = scalar_type(0);
+    for (size_t i = 0; i < rotation.size(); ++i) {
       dot += rotation[i] * x[i];
     }
-    dot *= ScalarType(2);
-    for (Size i = 0; i < rotation.size(); ++i) {
+    dot *= scalar_type(2);
+    for (size_t i = 0; i < rotation.size(); ++i) {
       y[i] = x[i] - (dot * rotation[i]);
     }
   }

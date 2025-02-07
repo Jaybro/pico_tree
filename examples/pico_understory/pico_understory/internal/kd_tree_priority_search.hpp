@@ -21,21 +21,21 @@ template <
     typename PointWrapper_,
     typename Visitor_,
     typename Index_>
-class PrioritySearchNearestEuclidean {
+class priority_search_nearest_euclidean {
  public:
-  using IndexType = Index_;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  using PointType = Point<ScalarType, SpaceWrapper_::Dim>;
-  //! \brief Node type supported by this PrioritySearchNearestEuclidean.
-  using NodeType = KdTreeNodeTopological<IndexType, ScalarType>;
-  using QueuePairType = std::pair<ScalarType, NodeType const*>;
+  using index_type = Index_;
+  using scalar_type = typename SpaceWrapper_::scalar_type;
+  using point_type = point<scalar_type, SpaceWrapper_::dim>;
+  //! \brief Node type supported by this priority_search_nearest_euclidean.
+  using node_type = kd_tree_node_topological<index_type, scalar_type>;
+  using queue_pair_type = std::pair<scalar_type, node_type const*>;
 
-  inline PrioritySearchNearestEuclidean(
+  inline priority_search_nearest_euclidean(
       SpaceWrapper_ space,
       Metric_ metric,
-      std::vector<IndexType> const& indices,
+      std::vector<index_type> const& indices,
       PointWrapper_ query,
-      Size max_leaves_visited,
+      size_t max_leaves_visited,
       Visitor_& visitor)
       : space_(space),
         metric_(metric),
@@ -45,9 +45,9 @@ class PrioritySearchNearestEuclidean {
         visitor_(visitor) {}
 
   //! \brief Search nearest neighbors starting from \p root_node.
-  inline void operator()(NodeType const* const root_node) {
+  inline void operator()(node_type const* const root_node) {
     std::size_t leaves_visited = 0;
-    queue_.emplace(ScalarType(0.0), root_node);
+    queue_.emplace(scalar_type(0.0), root_node);
     while (!queue_.empty()) {
       auto const [node_box_distance, node] = queue_.top();
 
@@ -58,17 +58,18 @@ class PrioritySearchNearestEuclidean {
 
       queue_.pop();
 
-      SearchNearest(node, node_box_distance);
+      search_nearest(node, node_box_distance);
       ++leaves_visited;
     }
   }
 
  private:
   // Add nodes to the priority queue until a leaf node is reached.
-  inline void SearchNearest(
-      NodeType const* const node, ScalarType node_box_distance) {
-    if (node->IsLeaf()) {
-      for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+  inline void search_nearest(
+      node_type const* const node, scalar_type node_box_distance) {
+    if (node->is_leaf()) {
+      for (index_type i = node->data.leaf.begin_idx;
+           i < node->data.leaf.end_idx;
            ++i) {
         visitor_(
             indices_[i],
@@ -77,11 +78,11 @@ class PrioritySearchNearestEuclidean {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      ScalarType const v = query_[node->data.branch.split_dim];
-      ScalarType old_offset;
-      ScalarType new_offset;
-      NodeType const* node_1st;
-      NodeType const* node_2nd;
+      scalar_type const v = query_[node->data.branch.split_dim];
+      scalar_type old_offset;
+      scalar_type new_offset;
+      node_type const* node_1st;
+      node_type const* node_2nd;
 
       // On equals we would possibly need to go left as well. However, this is
       // handled by the if statement below this one: the check that max search
@@ -95,7 +96,7 @@ class PrioritySearchNearestEuclidean {
         node_1st = node->left;
         node_2nd = node->right;
         if (v > node->data.branch.left_min) {
-          old_offset = ScalarType(0);
+          old_offset = scalar_type(0);
         } else {
           old_offset = metric_(node->data.branch.left_min, v);
         }
@@ -104,7 +105,7 @@ class PrioritySearchNearestEuclidean {
         node_1st = node->right;
         node_2nd = node->left;
         if (v < node->data.branch.right_max) {
-          old_offset = ScalarType(0);
+          old_offset = scalar_type(0);
         } else {
           old_offset = metric_(node->data.branch.right_max, v);
         }
@@ -112,7 +113,7 @@ class PrioritySearchNearestEuclidean {
       }
 
       // The distance and offset for node_1st is the same as that of its parent.
-      SearchNearest(node_1st, node_box_distance);
+      search_nearest(node_1st, node_box_distance);
 
       // Calculate the distance to node_2nd.
       // NOTE: This method only works with Lp norms to which the exponent is not
@@ -128,15 +129,15 @@ class PrioritySearchNearestEuclidean {
 
   SpaceWrapper_ space_;
   Metric_ metric_;
-  std::vector<IndexType> const& indices_;
+  std::vector<index_type> const& indices_;
   PointWrapper_ query_;
-  Size max_leaves_visited_;
+  size_t max_leaves_visited_;
   // TODO This gets created every query. Solving this would require a different
   // PicoTree interface. The queue probably shouldn't be too big.
   std::priority_queue<
-      QueuePairType,
-      std::vector<QueuePairType>,
-      std::greater<QueuePairType>>
+      queue_pair_type,
+      std::vector<queue_pair_type>,
+      std::greater<queue_pair_type>>
       queue_;
   Visitor_& visitor_;
 };

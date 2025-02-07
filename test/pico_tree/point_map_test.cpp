@@ -8,10 +8,10 @@ using namespace pico_tree;
 
 namespace {
 
-Size constexpr kDynamicMapDim = 4;
+size_t constexpr dynamic_map_dim = 4;
 
-constexpr Size Dim(Size dim) {
-  return dim != kDynamicSize ? dim : kDynamicMapDim;
+constexpr size_t dimension(size_t d) {
+  return d != dynamic_size ? d : dynamic_map_dim;
 }
 
 }  // namespace
@@ -19,10 +19,10 @@ constexpr Size Dim(Size dim) {
 template <typename T>
 class PointMapTest : public testing::Test {};
 
-template <typename Scalar_, Size Dim_>
-class PointMapTest<PointMap<Scalar_, Dim_>> : public testing::Test {
+template <typename Scalar_, size_t Dim_>
+class PointMapTest<point_map<Scalar_, Dim_>> : public testing::Test {
  public:
-  static constexpr Size Sdim = Dim(Dim_);
+  static constexpr size_t Sdim = dimension(Dim_);
 
   PointMapTest() : map_(scalars_.data(), Sdim) {
     std::iota(scalars_.begin(), scalars_.end(), Scalar_(0.0));
@@ -30,21 +30,21 @@ class PointMapTest<PointMap<Scalar_, Dim_>> : public testing::Test {
 
  protected:
   std::array<Scalar_, Sdim> scalars_;
-  PointMap<Scalar_, Dim_> map_;
+  point_map<Scalar_, Dim_> map_;
 };
 
 using PointMapTypes = testing::Types<
-    PointMap<float, 2>,
-    PointMap<double, 3>,
-    PointMap<float, kDynamicSize>>;
+    point_map<float, 2>,
+    point_map<double, 3>,
+    point_map<float, dynamic_size>>;
 
 TYPED_TEST_SUITE(PointMapTest, PointMapTypes);
 
 TYPED_TEST(PointMapTest, Accessors) {
-  using Scalar = typename TypeParam::ScalarType;
+  using scalar_type = typename TypeParam::scalar_type;
 
-  for (Size i = 0; i < this->map_.size(); ++i) {
-    EXPECT_EQ(this->map_[i], Scalar(i));
+  for (size_t i = 0; i < this->map_.size(); ++i) {
+    EXPECT_EQ(this->map_[i], scalar_type(i));
   }
 }
 

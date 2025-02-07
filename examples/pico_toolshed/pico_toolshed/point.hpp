@@ -6,78 +6,76 @@
 #include <random>
 #include <vector>
 
+namespace pico_tree {
+
 template <typename Scalar_, std::size_t Dim_>
-struct Point : public pico_tree::internal::Point<Scalar_, Dim_> {
+struct point : public pico_tree::internal::point<Scalar_, Dim_> {
   // Dynamic capability disabled.
   static_assert(
-      Dim_ != pico_tree::kDynamicSize && Dim_ > 0,
+      Dim_ != pico_tree::dynamic_size && Dim_ > 0,
       "DIM_MUST_NOT_BE_DYNAMIC_AND_>_0");
 
-  using pico_tree::internal::Point<Scalar_, Dim_>::elems_;
-  using pico_tree::internal::Point<Scalar_, Dim_>::size;
-  using pico_tree::internal::Point<Scalar_, Dim_>::Fill;
-  using pico_tree::internal::Point<Scalar_, Dim_>::Normalize;
-  using typename pico_tree::internal::Point<Scalar_, Dim_>::ScalarType;
-  using typename pico_tree::internal::Point<Scalar_, Dim_>::SizeType;
+  using pico_tree::internal::point<Scalar_, Dim_>::elems_;
+  using pico_tree::internal::point<Scalar_, Dim_>::size;
+  using pico_tree::internal::point<Scalar_, Dim_>::fill;
+  using pico_tree::internal::point<Scalar_, Dim_>::normalize;
+  using typename pico_tree::internal::point<Scalar_, Dim_>::scalar_type;
+  using typename pico_tree::internal::point<Scalar_, Dim_>::size_type;
 
-  inline Point& operator+=(ScalarType const v) {
-    for (SizeType i = 0; i < size(); ++i) {
+  inline point& operator+=(scalar_type const v) {
+    for (size_type i = 0; i < size(); ++i) {
       elems_[i] += v;
     }
     return *this;
   }
 
-  inline Point operator+(ScalarType const v) const {
-    Point p = *this;
+  inline point operator+(scalar_type const v) const {
+    point p = *this;
     p += v;
     return p;
   }
 
-  inline Point& operator-=(ScalarType const v) {
-    for (SizeType i = 0; i < size(); ++i) {
+  inline point& operator-=(scalar_type const v) {
+    for (size_type i = 0; i < size(); ++i) {
       elems_[i] -= v;
     }
     return *this;
   }
 
-  inline Point operator-(ScalarType const v) const {
-    Point p = *this;
+  inline point operator-(scalar_type const v) const {
+    point p = *this;
     p -= v;
     return p;
   }
 
-  template <typename OtherScalarType>
-  inline Point<OtherScalarType, Dim_> Cast() const {
-    Point<OtherScalarType, Dim_> other;
-    for (SizeType i = 0; i < size(); ++i) {
-      other.elems_[i] = static_cast<OtherScalarType>(elems_[i]);
+  template <typename OtherScalarType_>
+  inline point<OtherScalarType_, Dim_> cast() const {
+    point<OtherScalarType_, Dim_> other;
+    for (size_type i = 0; i < size(); ++i) {
+      other.elems_[i] = static_cast<OtherScalarType_>(elems_[i]);
     }
     return other;
   }
 };
 
-namespace pico_tree {
-
 template <typename Scalar_, std::size_t Dim_>
-struct PointTraits<Point<Scalar_, Dim_>> {
-  using PointType = Point<Scalar_, Dim_>;
-  using ScalarType = Scalar_;
-  static std::size_t constexpr Dim = Dim_;
+struct point_traits<point<Scalar_, Dim_>> {
+  using point_type = point<Scalar_, Dim_>;
+  using scalar_type = Scalar_;
+  static std::size_t constexpr dim = Dim_;
 
-  inline static ScalarType const* data(PointType const& point) {
-    return point.data();
+  inline static scalar_type const* data(point_type const& p) {
+    return p.data();
   }
 
-  inline static std::size_t constexpr size(PointType const& point) {
-    return point.size();
+  inline static std::size_t constexpr size(point_type const& p) {
+    return p.size();
   }
 };
 
-}  // namespace pico_tree
-
 template <typename Scalar_, std::size_t Dim_>
 inline std::ostream& operator<<(
-    std::ostream& s, Point<Scalar_, Dim_> const& p) {
+    std::ostream& s, point<Scalar_, Dim_> const& p) {
   s << p[0];
   for (std::size_t i = 1; i < Dim_; ++i) {
     s << " " << p[i];
@@ -85,27 +83,27 @@ inline std::ostream& operator<<(
   return s;
 }
 
-using Point1f = Point<float, 1>;
-using Point2f = Point<float, 2>;
-using Point3f = Point<float, 3>;
-using Point1d = Point<double, 1>;
-using Point2d = Point<double, 2>;
-using Point3d = Point<double, 3>;
+using point_1f = point<float, 1>;
+using point_2f = point<float, 2>;
+using point_3f = point<float, 3>;
+using point_1d = point<double, 1>;
+using point_2d = point<double, 2>;
+using point_3d = point<double, 3>;
 
 // Generates n random points uniformly distributed between the box defined by
 // min and max.
-template <typename Point>
-inline std::vector<Point> GenerateRandomN(
+template <typename Point_>
+inline std::vector<Point_> generate_random_n(
     std::size_t n,
-    typename Point::ScalarType min,
-    typename Point::ScalarType max) {
+    typename Point_::scalar_type min,
+    typename Point_::scalar_type max) {
   std::random_device rd;
   std::mt19937 e2(rd());
-  std::uniform_real_distribution<typename Point::ScalarType> dist(min, max);
+  std::uniform_real_distribution<typename Point_::scalar_type> dist(min, max);
 
-  std::vector<Point> random(n);
+  std::vector<Point_> random(n);
   for (auto& p : random) {
-    for (std::size_t i = 0; i < Point::Dim; ++i) {
+    for (std::size_t i = 0; i < Point_::dim; ++i) {
       p[i] = dist(e2);
     }
   }
@@ -114,8 +112,10 @@ inline std::vector<Point> GenerateRandomN(
 }
 
 // Generates n random points uniformly distributed over a box of size size.
-template <typename Point>
-inline std::vector<Point> GenerateRandomN(
-    std::size_t n, typename Point::ScalarType size) {
-  return GenerateRandomN<Point>(n, typename Point::ScalarType(0.0), size);
+template <typename Point_>
+inline std::vector<Point_> generate_random_n(
+    std::size_t n, typename Point_::scalar_type size) {
+  return generate_random_n<Point_>(n, typename Point_::scalar_type(0.0), size);
 }
+
+}  // namespace pico_tree

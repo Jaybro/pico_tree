@@ -2,7 +2,7 @@
 
 #include <filesystem>
 #include <locale>
-#include <pico_tree/internal/stream.hpp>
+#include <pico_tree/internal/stream_wrapper.hpp>
 #include <type_traits>
 
 // http://corpus-texmex.irisa.fr/
@@ -11,14 +11,14 @@ namespace pico_tree {
 
 namespace internal {
 
-template <typename T>
-inline std::string FormatString() {
+template <typename T_>
+inline std::string format_string() {
   if constexpr (
-      std::is_same_v<T, unsigned char> || std::is_same_v<T, std::byte>) {
+      std::is_same_v<T_, unsigned char> || std::is_same_v<T_, std::byte>) {
     return "bvecs";
-  } else if constexpr (std::is_same_v<T, float>) {
+  } else if constexpr (std::is_same_v<T_, float>) {
     return "fvecs";
-  } else if constexpr (std::is_same_v<T, int>) {
+  } else if constexpr (std::is_same_v<T_, int>) {
     return "ivecs";
   } else {
     throw std::runtime_error(
@@ -26,7 +26,7 @@ inline std::string FormatString() {
   }
 }
 
-inline std::string ToLower(std::string s) {
+inline std::string to_lower(std::string s) {
   std::transform(s.begin(), s.end(), s.begin(), [](auto c) {
     return std::tolower(c, std::locale());
   });
@@ -35,10 +35,11 @@ inline std::string ToLower(std::string s) {
 
 }  // namespace internal
 
-template <typename T, std::size_t N>
-void ReadXvecs(std::string const& filename, std::vector<std::array<T, N>>& v) {
-  auto format_string = internal::FormatString<T>();
-  auto filename_lower = internal::ToLower(filename);
+template <typename T_, std::size_t N_>
+void read_xvecs(
+    std::string const& filename, std::vector<std::array<T_, N_>>& v) {
+  auto format_string = internal::format_string<T_>();
+  auto filename_lower = internal::to_lower(filename);
 
   if (filename_lower.compare(
           filename_lower.size() - format_string.size(),
@@ -49,18 +50,18 @@ void ReadXvecs(std::string const& filename, std::vector<std::array<T, N>>& v) {
   }
 
   std::fstream fstream =
-      internal::OpenStream(filename, std::ios::in | std::ios::binary);
-  internal::Stream stream(fstream);
+      internal::open_stream(filename, std::ios::in | std::ios::binary);
+  internal::stream_wrapper stream(fstream);
 
   auto bytes = std::filesystem::file_size(filename);
-  std::size_t const element_size = sizeof(T);
-  std::size_t const row_size = sizeof(int) + element_size * N;
+  std::size_t const element_size = sizeof(T_);
+  std::size_t const row_size = sizeof(int) + element_size * N_;
   std::size_t const row_count = static_cast<std::size_t>(bytes) / row_size;
   v.resize(row_count);
   for (auto& r : v) {
     int coords;
-    stream.Read(coords);
-    stream.Read(r);
+    stream.read(coords);
+    stream.read(r);
   }
 }
 

@@ -6,21 +6,21 @@
 
 namespace pico_tree::internal {
 
-//! \brief This class provides a search nearest function for the CoverTree.
+//! \brief This class provides a search nearest function for the cover_tree.
 template <
     typename SpaceWrapper_,
     typename Metric_,
     typename PointWrapper_,
     typename Visitor_,
     typename Index_>
-class SearchNearestMetric {
+class search_nearest_metric {
  public:
-  using IndexType = Index_;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  using PointType = Point<ScalarType, SpaceWrapper_::Dim>;
-  using NodeType = CoverTreeNode<IndexType, ScalarType>;
+  using index_type = Index_;
+  using scalar_type = typename SpaceWrapper_::scalar_type;
+  using point_type = point<scalar_type, SpaceWrapper_::dim>;
+  using node_type = cover_tree_node<index_type, scalar_type>;
 
-  SearchNearestMetric(
+  search_nearest_metric(
       SpaceWrapper_ space,
       Metric_ metric,
       PointWrapper_ query,
@@ -28,19 +28,19 @@ class SearchNearestMetric {
       : space_(space), metric_(metric), query_(query), visitor_(visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
-  inline void operator()(NodeType const* const node) const {
-    SearchNearest(node);
+  inline void operator()(node_type const* const node) const {
+    search_nearest(node);
   }
 
  private:
-  inline void SearchNearest(NodeType const* const node) const {
-    ScalarType const d =
+  inline void search_nearest(node_type const* const node) const {
+    scalar_type const d =
         metric_(query_.begin(), query_.end(), space_[node->index]);
     if (visitor_.max() > d) {
       visitor_(node->index, d);
     }
 
-    std::vector<std::pair<NodeType const*, ScalarType>> sorted;
+    std::vector<std::pair<node_type const*, scalar_type>> sorted;
     sorted.reserve(node->children.size());
     for (auto const child : node->children) {
       sorted.push_back(
@@ -50,8 +50,8 @@ class SearchNearestMetric {
     std::sort(
         sorted.begin(),
         sorted.end(),
-        [](std::pair<NodeType const*, ScalarType> const& a,
-           std::pair<NodeType const*, ScalarType> const& b) -> bool {
+        [](std::pair<node_type const*, scalar_type> const& a,
+           std::pair<node_type const*, scalar_type> const& b) -> bool {
           return a.second < b.second;
         });
 
@@ -69,12 +69,12 @@ class SearchNearestMetric {
       // For "Faster Cover Trees" it is twice the cover distance due to the
       // first phase of the insert algorithm (not having a root at infinity).
 
-      // TODO The distance calculation can be cached. When SearchNeighbor is
+      // TODO The distance calculation can be cached. When search_neighbor is
       // called it's calculated again.
       if (visitor_.max() >
           (metric_(query_.begin(), query_.end(), space_[m.first->index]) -
            m.first->max_distance)) {
-        SearchNearest(m.first);
+        search_nearest(m.first);
       }
     }
   }

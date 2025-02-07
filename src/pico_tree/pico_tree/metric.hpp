@@ -8,49 +8,49 @@ namespace internal {
 
 //! \brief Mathematical constant pi. It is defined as the ratio of a circle's
 //! circumference to its diameter. Only available from C++20.
-template <typename T>
-inline T constexpr kPi = T(3.14159265358979323846l);
-template <typename T>
-inline T constexpr kTwoPi = T(6.28318530717958647693l);
+template <typename T_>
+inline T_ constexpr pi = T_(3.14159265358979323846l);
+template <typename T_>
+inline T_ constexpr two_pi = T_(6.28318530717958647693l);
 
 //! \brief Calculates the square of a number.
 template <typename Scalar_>
-constexpr Scalar_ Squared(Scalar_ x) {
+constexpr Scalar_ squared(Scalar_ x) {
   return x * x;
 }
 
 //! \brief Calculates the distance between two coordinates.
 template <typename Scalar_>
-constexpr Scalar_ Distance(Scalar_ x, Scalar_ y) {
+constexpr Scalar_ distance(Scalar_ x, Scalar_ y) {
   return std::abs(x - y);
 }
 
 //! \brief Calculates the distance between two coordinates.
-struct DistanceFn {
+struct distance_fn {
   template <typename Scalar_>
   constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
-    return Distance(x, y);
+    return distance(x, y);
   }
 };
 
 //! \brief Calculates the squared distance between two coordinates.
 template <typename Scalar_>
-constexpr Scalar_ SquaredDistance(Scalar_ x, Scalar_ y) {
-  return Squared(x - y);
+constexpr Scalar_ squared_distance(Scalar_ x, Scalar_ y) {
+  return squared(x - y);
 }
 
 //! \brief Calculates the squared distance between two coordinates.
-struct SquaredDistanceFn {
+struct squared_distance_fn {
   template <typename Scalar_>
   constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
-    return SquaredDistance(x, y);
+    return squared_distance(x, y);
   }
 };
 
 //! \brief Calculates the distance between coordinate \p x and the box defined
 //! by [ \p min, \p max ].
 template <typename Scalar_>
-constexpr Scalar_ DistanceBox(Scalar_ x, Scalar_ min, Scalar_ max) {
+constexpr Scalar_ distance_box(Scalar_ x, Scalar_ min, Scalar_ max) {
   if (x < min) {
     return min - x;
   } else if (x > max) {
@@ -63,31 +63,31 @@ constexpr Scalar_ DistanceBox(Scalar_ x, Scalar_ min, Scalar_ max) {
 //! \brief Calculates the squared distance between coordinate \p x and the box
 //! defined by [ \p min, \p max ].
 template <typename Scalar_>
-constexpr Scalar_ SquaredDistanceBox(Scalar_ x, Scalar_ min, Scalar_ max) {
-  return Squared(DistanceBox(x, min, max));
+constexpr Scalar_ squared_distance_box(Scalar_ x, Scalar_ min, Scalar_ max) {
+  return squared(distance_box(x, min, max));
 }
 
 //! \brief Calculates the angular distance between two coordinates.
 template <typename Scalar_>
-constexpr Scalar_ AngleDistance(Scalar_ x, Scalar_ y) {
+constexpr Scalar_ angle_distance(Scalar_ x, Scalar_ y) {
   Scalar_ const d = std::abs(x - y);
-  return std::min(d, internal::kTwoPi<Scalar_> - d);
+  return std::min(d, internal::two_pi<Scalar_> - d);
 }
 
 //! \brief Calculates the squared angular distance between two coordinates.
 template <typename Scalar_>
-constexpr Scalar_ SquaredAngleDistance(Scalar_ x, Scalar_ y) {
-  return Squared(AngleDistance(x, y));
+constexpr Scalar_ squared_angle_distance(Scalar_ x, Scalar_ y) {
+  return squared(angle_distance(x, y));
 }
 
 //! \brief Calculates the angular distance between coordinate \p x and the box
 //! defined by [ \p min, \p max ].
 template <typename Scalar_>
-constexpr Scalar_ AngleDistanceBox(Scalar_ x, Scalar_ min, Scalar_ max) {
+constexpr Scalar_ angle_distance_box(Scalar_ x, Scalar_ min, Scalar_ max) {
   // Rectangles can't currently wrap around the identification of PI ~ -PI
   // where the minimum is larger than he maximum.
   if (x < min || x > max) {
-    return std::min(AngleDistance(x, min), AngleDistance(x, max));
+    return std::min(angle_distance(x, min), angle_distance(x, max));
   } else {
     return Scalar_(0.0);
   }
@@ -96,32 +96,34 @@ constexpr Scalar_ AngleDistanceBox(Scalar_ x, Scalar_ min, Scalar_ max) {
 //! \brief Calculates the squared angular distance between a coordinate and a
 //! box.
 template <typename Scalar_>
-constexpr Scalar_ SquaredAngleDistanceBox(Scalar_ x, Scalar_ min, Scalar_ max) {
-  return Squared(AngleDistance(x, min, max));
+constexpr Scalar_ squared_angle_distance_box(
+    Scalar_ x, Scalar_ min, Scalar_ max) {
+  return squared(angle_distance(x, min, max));
 }
 
 //! \brief Calculates the squared angular distance between two coordinates.
 //! \details The circle S1 is represented by the range [-PI, PI] / -PI ~ PI.
-struct AngleDistanceFn {
+struct angle_distance_fn {
   template <typename Scalar_>
   constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
-    return AngleDistance(x, y);
+    return angle_distance(x, y);
   }
 };
 
 template <
-    typename InputIterator1,
-    typename InputSentinel1,
-    typename InputIterator2,
+    typename InputIterator1_,
+    typename InputSentinel1_,
+    typename InputIterator2_,
     typename BinaryOperator>
-constexpr auto Sum(
-    InputIterator1 begin1,
-    InputSentinel1 end1,
-    InputIterator2 begin2,
+constexpr auto sum(
+    InputIterator1_ begin1,
+    InputSentinel1_ end1,
+    InputIterator2_ begin2,
     BinaryOperator op) {
-  using ScalarType = typename std::iterator_traits<InputIterator1>::value_type;
+  using scalar_type =
+      typename std::iterator_traits<InputIterator1_>::value_type;
 
-  ScalarType d{};
+  scalar_type d{};
 
   for (; begin1 != end1; ++begin1, ++begin2) {
     d += op(*begin1, *begin2);
@@ -137,41 +139,43 @@ constexpr auto Sum(
 //! \details A space tag is used by PicoTree to select the most optimal
 //! algorithms for use with a particular space.
 //!
-//! Usings the TopologicalSpaceTag for metrics allows support for
+//! Usings the topological_space_tag for metrics allows support for
 //! identifications in point sets. A practical example is that of the unit
 //! circle represented by the interval [-PI, PI]. Here, -PI and PI are the same
 //! point on the circle and performing a radius query around both values should
 //! result in the same point set.
-class TopologicalSpaceTag {};
+class topological_space_tag {};
 
 //! \brief Identifies a metric to support the Euclidean space with PicoTree's
 //! search structures.
 //! \details Supports the fastest queries but doesn't support identificatons.
-//! \see TopologicalSpaceTag
-class EuclideanSpaceTag : public TopologicalSpaceTag {};
+//! \see topological_space_tag
+class euclidean_space_tag : public topological_space_tag {};
 
-//! \brief L1 metric for measuring the Taxicab or Manhattan distance between
-//! points.
+//! \brief metric_l1 metric for measuring the Taxicab or Manhattan distance
+//! between points.
 //! \details For more details:
 //! * https://en.wikipedia.org/wiki/Metric_space
 //! * https://en.wikipedia.org/wiki/Lp_space
-struct L1 {
+struct metric_l1 {
   //! \brief This tag specifies the supported space by this metric.
-  using SpaceTag = EuclideanSpaceTag;
+  using space_category = euclidean_space_tag;
 
   template <
-      typename InputIterator1,
-      typename InputSentinel1,
-      typename InputIterator2>
+      typename InputIterator1_,
+      typename InputSentinel1_,
+      typename InputIterator2_>
   constexpr auto operator()(
-      InputIterator1 begin1, InputSentinel1 end1, InputIterator2 begin2) const {
-    return internal::Sum(begin1, end1, begin2, internal::DistanceFn());
+      InputIterator1_ begin1,
+      InputSentinel1_ end1,
+      InputIterator2_ begin2) const {
+    return internal::sum(begin1, end1, begin2, internal::distance_fn());
   }
 
   //! \brief Calculates the distance between two coordinates.
   template <typename Scalar_>
   constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
-    return internal::Distance(x, y);
+    return internal::distance(x, y);
   }
 
   //! \brief Returns the absolute value of \p x.
@@ -181,52 +185,56 @@ struct L1 {
   }
 };
 
-//! \brief The L2Squared semimetric measures squared Euclidean distances between
-//! points. It does not satisfy the triangle inequality.
-//! \see L1
-struct L2Squared {
+//! \brief The metric_l2_squared semimetric measures squared Euclidean distances
+//! between points. It does not satisfy the triangle inequality.
+//! \see metric_l1
+struct metric_l2_squared {
   //! \brief This tag specifies the supported space by this metric.
-  using SpaceTag = EuclideanSpaceTag;
+  using space_category = euclidean_space_tag;
 
   template <
-      typename InputIterator1,
-      typename InputSentinel1,
-      typename InputIterator2>
+      typename InputIterator1_,
+      typename InputSentinel1_,
+      typename InputIterator2_>
   constexpr auto operator()(
-      InputIterator1 begin1, InputSentinel1 end1, InputIterator2 begin2) const {
-    return internal::Sum(begin1, end1, begin2, internal::SquaredDistanceFn());
+      InputIterator1_ begin1,
+      InputSentinel1_ end1,
+      InputIterator2_ begin2) const {
+    return internal::sum(begin1, end1, begin2, internal::squared_distance_fn());
   }
 
   //! \brief Calculates the distance between two coordinates.
   template <typename Scalar_>
   constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
-    return internal::SquaredDistance(x, y);
+    return internal::squared_distance(x, y);
   }
 
   //! \brief Returns the squared value of \p x.
   template <typename Scalar_>
   constexpr Scalar_ operator()(Scalar_ x) const {
-    return internal::Squared(x);
+    return internal::squared(x);
   }
 };
 
-struct LInf {
+struct metric_linf {
   //! \brief This tag specifies the supported space by this metric.
-  using SpaceTag = EuclideanSpaceTag;
+  using space_category = euclidean_space_tag;
 
   template <
-      typename InputIterator1,
-      typename InputSentinel1,
-      typename InputIterator2>
+      typename InputIterator1_,
+      typename InputSentinel1_,
+      typename InputIterator2_>
   constexpr auto operator()(
-      InputIterator1 begin1, InputSentinel1 end1, InputIterator2 begin2) const {
-    using ScalarType =
-        typename std::iterator_traits<InputIterator1>::value_type;
+      InputIterator1_ begin1,
+      InputSentinel1_ end1,
+      InputIterator2_ begin2) const {
+    using scalar_type =
+        typename std::iterator_traits<InputIterator1_>::value_type;
 
-    ScalarType d{};
+    scalar_type d{};
 
     for (; begin1 != end1; ++begin1, ++begin2) {
-      d = std::max(d, internal::Distance(*begin1, *begin2));
+      d = std::max(d, internal::distance(*begin1, *begin2));
     }
 
     return d;
@@ -235,7 +243,7 @@ struct LInf {
   //! \brief Calculates the distance between two coordinates.
   template <typename Scalar_>
   constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
-    return internal::Distance(x, y);
+    return internal::distance(x, y);
   }
 
   //! \brief Returns the absolute value of \p x.
@@ -245,7 +253,7 @@ struct LInf {
   }
 };
 
-//! \brief The SO2 metric measures distances on the unit circle S1. It is the
+//! \brief The metric_so2 measures distances on the unit circle S1. It is the
 //! intrinsic metric of points in R2 on S1 given by the great-circel distance.
 //! \details Named after the Special Orthogonal Group of dimension 2. The circle
 //! S1 is represented by the range [-PI, PI] / -PI ~ PI.
@@ -253,17 +261,17 @@ struct LInf {
 //! For more details:
 //! * https://en.wikipedia.org/wiki/Intrinsic_metric
 //! * https://en.wikipedia.org/wiki/Great-circle_distance
-struct SO2 {
+struct metric_so2 {
   //! \brief This tag specifies the supported space by this metric.
-  using SpaceTag = TopologicalSpaceTag;
+  using space_category = topological_space_tag;
 
   template <
-      typename InputIterator1,
-      typename InputSentinel1,
-      typename InputIterator2>
+      typename InputIterator1_,
+      typename InputSentinel1_,
+      typename InputIterator2_>
   constexpr auto operator()(
-      InputIterator1 begin1, InputSentinel1, InputIterator2 begin2) const {
-    return internal::AngleDistance(*begin1, *begin2);
+      InputIterator1_ begin1, InputSentinel1_, InputIterator2_ begin2) const {
+    return internal::angle_distance(*begin1, *begin2);
   }
 
   //! \brief Calculates the distance between coordinate \p x and the box defined
@@ -272,7 +280,7 @@ struct SO2 {
   //! Cartesian products of spaces but it is ignored here.
   template <typename Scalar_>
   constexpr Scalar_ operator()(Scalar_ x, Scalar_ min, Scalar_ max, int) const {
-    return internal::AngleDistanceBox(x, min, max);
+    return internal::angle_distance_box(x, min, max);
   }
 
   //! \brief Returns the absolute value of \p x.
@@ -282,24 +290,24 @@ struct SO2 {
   }
 };
 
-//! \brief The SE2Squared metric measures distances in Euclidean space between
+//! \brief The metric_se2_squared measures distances in Euclidean space between
 //! Euclidean motions.
 //! \details Named after the Special Euclidean group of dimension 2.
 //! For more details:
 //! * https://en.wikipedia.org/wiki/Euclidean_group
-struct SE2Squared {
+struct metric_se2_squared {
   //! \brief This tag specifies the supported space by this metric.
-  using SpaceTag = TopologicalSpaceTag;
+  using space_category = topological_space_tag;
 
   template <
-      typename InputIterator1,
-      typename InputSentinel1,
-      typename InputIterator2>
+      typename InputIterator1_,
+      typename InputSentinel1_,
+      typename InputIterator2_>
   constexpr auto operator()(
-      InputIterator1 begin1, InputSentinel1, InputIterator2 begin2) const {
-    return internal::Sum(
-               begin1, begin1 + 2, begin2, internal::SquaredDistanceFn()) +
-           internal::SquaredAngleDistance(*(begin1 + 2), *(begin2 + 2));
+      InputIterator1_ begin1, InputSentinel1_, InputIterator2_ begin2) const {
+    return internal::sum(
+               begin1, begin1 + 2, begin2, internal::squared_distance_fn()) +
+           internal::squared_angle_distance(*(begin1 + 2), *(begin2 + 2));
   }
 
   //! \brief Calculates the squared distance between coordinate \p x and the box
@@ -310,16 +318,16 @@ struct SE2Squared {
   constexpr Scalar_ operator()(
       Scalar_ x, Scalar_ min, Scalar_ max, int dim) const {
     if (dim < 2) {
-      return internal::SquaredDistanceBox(x, min, max);
+      return internal::squared_distance_box(x, min, max);
     } else {
-      return internal::SquaredAngleDistanceBox(x, min, max);
+      return internal::squared_angle_distance_box(x, min, max);
     }
   }
 
   //! \brief Returns the squared value of \p x.
   template <typename Scalar_>
   constexpr Scalar_ operator()(Scalar_ x) const {
-    return internal::Squared(x);
+    return internal::squared(x);
   }
 };
 

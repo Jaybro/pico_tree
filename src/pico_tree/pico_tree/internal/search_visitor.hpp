@@ -21,7 +21,7 @@ template <
     typename RandomAccessIterator_,
     typename Compare_ = std::less<
         typename std::iterator_traits<RandomAccessIterator_>::value_type>>
-inline void InsertSorted(
+inline void insert_sorted(
     RandomAccessIterator_ begin,
     RandomAccessIterator_ end,
     typename std::iterator_traits<RandomAccessIterator_>::value_type item,
@@ -37,39 +37,39 @@ inline void InsertSorted(
   *end = std::move(item);
 }
 
-//! \brief KdTree search visitor for finding a single nearest neighbor.
+//! \brief kd_tree search visitor for finding a single nearest neighbor.
 template <typename Neighbor_>
-class SearchNn {
+class search_nn {
  public:
-  using NeighborType = Neighbor_;
-  using IndexType = typename Neighbor_::IndexType;
-  using ScalarType = typename Neighbor_::ScalarType;
+  using neighbor_type = Neighbor_;
+  using index_type = typename Neighbor_::index_type;
+  using scalar_type = typename Neighbor_::scalar_type;
 
   //! \private
-  inline SearchNn(NeighborType& nn) : nn_{nn} {
-    nn_.distance = std::numeric_limits<ScalarType>::max();
+  inline search_nn(neighbor_type& nn) : nn_{nn} {
+    nn_.distance = std::numeric_limits<scalar_type>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(IndexType const idx, ScalarType const dst) const {
+  inline void operator()(index_type const idx, scalar_type const dst) const {
     if (max() > dst) {
       nn_ = {idx, dst};
     }
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline ScalarType max() const { return nn_.distance; }
+  inline scalar_type max() const { return nn_.distance; }
 
  private:
-  NeighborType& nn_;
+  neighbor_type& nn_;
 };
 
-//! \brief KdTree search visitor for finding k nearest neighbors using an
+//! \brief kd_tree search visitor for finding k nearest neighbors using an
 //! insertion sort.
 //! \details Even though insertion sort is a rather brute-force method for
 //! maintaining a sorted sequence, the k nearest neighbors, it performs fast in
 //! practice. This is likely due to points being reasonably ordered by the
-//! KdTree. The following strategies have been attempted:
+//! kd_tree. The following strategies have been attempted:
 //!  * std::vector::insert(std::lower_bound) - the predecessor of the current
 //!  version.
 //!  * std::push_heap(std::vector) and std::pop_heap(std::vector).
@@ -80,7 +80,7 @@ class SearchNn {
 //!  * Binary heap plus a heap sort seemed a lot faster than the Leonardo heap
 //!  with smooth sort.
 template <typename RandomAccessIterator_>
-class SearchKnn {
+class search_knn {
  public:
   static_assert(
       std::is_base_of_v<
@@ -89,32 +89,32 @@ class SearchKnn {
               RandomAccessIterator_>::iterator_category>,
       "EXPECTED_RANDOM_ACCESS_ITERATOR");
 
-  using NeighborType =
+  using neighbor_type =
       typename std::iterator_traits<RandomAccessIterator_>::value_type;
-  using IndexType = typename NeighborType::IndexType;
-  using ScalarType = typename NeighborType::ScalarType;
+  using index_type = typename neighbor_type::index_type;
+  using scalar_type = typename neighbor_type::scalar_type;
 
   //! \private
-  inline SearchKnn(RandomAccessIterator_ begin, RandomAccessIterator_ end)
+  inline search_knn(RandomAccessIterator_ begin, RandomAccessIterator_ end)
       : begin_{begin}, end_{end}, active_end_{begin} {
     // Initial search distance that gets updated once k neighbors have been
     // found.
-    std::prev(end_)->distance = std::numeric_limits<ScalarType>::max();
+    std::prev(end_)->distance = std::numeric_limits<scalar_type>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(IndexType const idx, ScalarType const dst) {
+  inline void operator()(index_type const idx, scalar_type const dst) {
     if (max() > dst) {
       if (active_end_ < end_) {
         ++active_end_;
       }
 
-      InsertSorted(begin_, active_end_, NeighborType{idx, dst});
+      insert_sorted(begin_, active_end_, neighbor_type{idx, dst});
     }
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline ScalarType max() const { return std::prev(end_)->distance; }
+  inline scalar_type max() const { return std::prev(end_)->distance; }
 
  private:
   RandomAccessIterator_ begin_;
@@ -122,22 +122,22 @@ class SearchKnn {
   RandomAccessIterator_ active_end_;
 };
 
-//! \brief KdTree search visitor for finding all neighbors within a radius.
+//! \brief kd_tree search visitor for finding all neighbors within a radius.
 template <typename Neighbor_>
-class SearchRadius {
+class search_radius {
  public:
-  using NeighborType = Neighbor_;
-  using IndexType = typename Neighbor_::IndexType;
-  using ScalarType = typename Neighbor_::ScalarType;
+  using neighbor_type = Neighbor_;
+  using index_type = typename Neighbor_::index_type;
+  using scalar_type = typename Neighbor_::scalar_type;
 
   //! \private
-  inline SearchRadius(ScalarType const radius, std::vector<NeighborType>& n)
+  inline search_radius(scalar_type const radius, std::vector<neighbor_type>& n)
       : radius_{radius}, n_{n} {
     n_.clear();
   }
 
   //! \brief Visit current point.
-  inline void operator()(IndexType const idx, ScalarType const dst) const {
+  inline void operator()(index_type const idx, scalar_type const dst) const {
     if (max() > dst) {
       n_.push_back({idx, dst});
     }
@@ -145,14 +145,14 @@ class SearchRadius {
 
   //! \brief Sort the neighbors by distance from the query point. Can be used
   //! after the search has ended.
-  inline void Sort() const { std::sort(n_.begin(), n_.end()); }
+  inline void sort() const { std::sort(n_.begin(), n_.end()); }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline ScalarType max() const { return radius_; }
+  inline scalar_type max() const { return radius_; }
 
  private:
-  ScalarType radius_;
-  std::vector<NeighborType>& n_;
+  scalar_type radius_;
+  std::vector<neighbor_type>& n_;
 };
 
 //! \brief Search visitor for finding an approximate nearest neighbor.
@@ -162,39 +162,39 @@ class SearchRadius {
 //! query point than the true nearest neighbor: max_ann_distance =
 //! true_nn_distance * e.
 template <typename Neighbor_>
-class SearchApproximateNn {
+class search_approximate_nn {
  public:
-  using NeighborType = Neighbor_;
-  using IndexType = typename Neighbor_::IndexType;
-  using ScalarType = typename Neighbor_::ScalarType;
+  using neighbor_type = Neighbor_;
+  using index_type = typename Neighbor_::index_type;
+  using scalar_type = typename Neighbor_::scalar_type;
 
   //! \private
-  inline SearchApproximateNn(ScalarType const e, NeighborType& nn)
-      : e_inv_{ScalarType(1.0) / e}, nn_{nn} {
-    nn_.distance = std::numeric_limits<ScalarType>::max();
+  inline search_approximate_nn(scalar_type const e, neighbor_type& nn)
+      : e_inv_{scalar_type(1.0) / e}, nn_{nn} {
+    nn_.distance = std::numeric_limits<scalar_type>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(IndexType const idx, ScalarType const dst) const {
-    ScalarType sdst = dst * e_inv_;
+  inline void operator()(index_type const idx, scalar_type const dst) const {
+    scalar_type sdst = dst * e_inv_;
     if (max() > sdst) {
       nn_ = {idx, sdst};
     }
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline ScalarType max() const { return nn_.distance; }
+  inline scalar_type max() const { return nn_.distance; }
 
  private:
-  ScalarType e_inv_;
-  NeighborType& nn_;
+  scalar_type e_inv_;
+  neighbor_type& nn_;
 };
 
 //! \brief Search visitor for finding approximate nearest neighbors.
-//! \see SearchApproximateNn
-//! \see SearchKnn
+//! \see search_approximate_nn
+//! \see search_knn
 template <typename RandomAccessIterator_>
-class SearchApproximateKnn {
+class search_approximate_knn {
  public:
   static_assert(
       std::is_base_of_v<
@@ -203,28 +203,28 @@ class SearchApproximateKnn {
               RandomAccessIterator_>::iterator_category>,
       "EXPECTED_RANDOM_ACCESS_ITERATOR");
 
-  using NeighborType =
+  using neighbor_type =
       typename std::iterator_traits<RandomAccessIterator_>::value_type;
-  using IndexType = typename NeighborType::IndexType;
-  using ScalarType = typename NeighborType::ScalarType;
+  using index_type = typename neighbor_type::index_type;
+  using scalar_type = typename neighbor_type::scalar_type;
 
   //! \private
-  inline SearchApproximateKnn(
-      ScalarType const e,
+  inline search_approximate_knn(
+      scalar_type const e,
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end)
-      : e_inv_{ScalarType(1.0) / e},
+      : e_inv_{scalar_type(1.0) / e},
         begin_{begin},
         end_{end},
         active_end_{begin} {
     // Initial search distance that gets updated once k neighbors have been
     // found.
-    std::prev(end_)->distance = std::numeric_limits<ScalarType>::max();
+    std::prev(end_)->distance = std::numeric_limits<scalar_type>::max();
   }
 
   //! \brief Visit current point.
-  inline void operator()(IndexType const idx, ScalarType const dst) {
-    ScalarType sdst = dst * e_inv_;
+  inline void operator()(index_type const idx, scalar_type const dst) {
+    scalar_type sdst = dst * e_inv_;
     if (max() > sdst) {
       if (active_end_ < end_) {
         ++active_end_;
@@ -232,41 +232,43 @@ class SearchApproximateKnn {
 
       // Replace the current maximum for which the distance is scaled to be:
       // d = d / e.
-      InsertSorted(begin_, active_end_, NeighborType{idx, sdst});
+      insert_sorted(begin_, active_end_, neighbor_type{idx, sdst});
     }
   }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline ScalarType max() const { return std::prev(end_)->distance; }
+  inline scalar_type max() const { return std::prev(end_)->distance; }
 
  private:
-  ScalarType e_inv_;
+  scalar_type e_inv_;
   RandomAccessIterator_ begin_;
   RandomAccessIterator_ end_;
   RandomAccessIterator_ active_end_;
 };
 
-//! \brief KdTree search visitor for finding the approximate neighbors within a
+//! \brief kd_tree search visitor for finding the approximate neighbors within a
 //! radius.
-//! \see SearchApproximateNn
-//! \see SearchRadius
+//! \see search_approximate_nn
+//! \see search_radius
 template <typename Neighbor_>
-class SearchApproximateRadius {
+class search_approximate_radius {
  public:
-  using NeighborType = Neighbor_;
-  using IndexType = typename Neighbor_::IndexType;
-  using ScalarType = typename Neighbor_::ScalarType;
+  using neighbor_type = Neighbor_;
+  using index_type = typename Neighbor_::index_type;
+  using scalar_type = typename Neighbor_::scalar_type;
 
   //! \private
-  inline SearchApproximateRadius(
-      ScalarType const e, ScalarType const radius, std::vector<NeighborType>& n)
-      : e_inv_{ScalarType(1.0) / e}, radius_{radius * e_inv_}, n_{n} {
+  inline search_approximate_radius(
+      scalar_type const e,
+      scalar_type const radius,
+      std::vector<neighbor_type>& n)
+      : e_inv_{scalar_type(1.0) / e}, radius_{radius * e_inv_}, n_{n} {
     n_.clear();
   }
 
   //! \brief Visit current point.
-  inline void operator()(IndexType const idx, ScalarType const dst) const {
-    ScalarType sdst = dst * e_inv_;
+  inline void operator()(index_type const idx, scalar_type const dst) const {
+    scalar_type sdst = dst * e_inv_;
     if (max() > sdst) {
       n_.push_back({idx, sdst});
     }
@@ -274,15 +276,15 @@ class SearchApproximateRadius {
 
   //! \brief Sort the neighbors by distance from the query point. Can be used
   //! after the search has ended.
-  inline void Sort() const { std::sort(n_.begin(), n_.end()); }
+  inline void sort() const { std::sort(n_.begin(), n_.end()); }
 
   //! \brief Maximum search distance with respect to the query point.
-  inline ScalarType max() const { return radius_; }
+  inline scalar_type max() const { return radius_; }
 
  private:
-  ScalarType e_inv_;
-  ScalarType radius_;
-  std::vector<NeighborType>& n_;
+  scalar_type e_inv_;
+  scalar_type radius_;
+  std::vector<neighbor_type>& n_;
 };
 
 }  // namespace pico_tree::internal

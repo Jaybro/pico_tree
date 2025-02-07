@@ -6,7 +6,7 @@
 namespace pico_tree::internal {
 
 template <typename T>
-T SwapEndian(T const& u) {
+T swap_endian(T const& u) {
   T s;
 
   std::byte const* up = reinterpret_cast<std::byte const*>(&u);
@@ -19,7 +19,7 @@ T SwapEndian(T const& u) {
 }
 
 template <typename T_>
-T_ BigEndianToNative(T_ v) {
+T_ big_endian_to_native(T_ v) {
   static_assert(std::is_integral_v<T_>, "NOT_AN_INTEGRAL_TYPE");
   static_assert(sizeof(T_) <= sizeof(std::size_t), "SIZE_UNSUPPORTED");
 
@@ -41,10 +41,10 @@ T_ BigEndianToNative(T_ v) {
 //! native endianness equals big endian then we're basically making a very
 //! elaborate copy. However, use of this class should be quite minimal.
 template <typename T_>
-struct BigEndian {
+struct big_endian {
   static_assert(std::is_integral_v<T_>, "NOT_AN_INTEGRAL_TYPE");
 
-  T_ operator()() const { return BigEndianToNative(value); }
+  T_ operator()() const { return big_endian_to_native(value); }
 
   operator T_() const { return this->operator()(); }
 

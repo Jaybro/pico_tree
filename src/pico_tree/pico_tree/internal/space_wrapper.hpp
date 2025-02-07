@@ -6,52 +6,52 @@
 
 namespace pico_tree::internal {
 
-//! \brief The SpaceWrapper class wraps makes working with any space type
-//! through its respective SpaceTraits a bit easier and it allows for the
+//! \brief The space_wrapper class wraps makes working with any space type
+//! through its respective space_traits a bit easier and it allows for the
 //! addition of extra convenience methods.
 //! \details The internals of PicoTree never use the specializations of the
-//! SpaceTraits class directly, but interface with any space type through this
+//! space_traits class directly, but interface with any space type through this
 //! wrapper interface
 template <typename Space_>
-class SpaceWrapper {
-  using SpaceTraitsType = SpaceTraits<Space_>;
-  using SpaceType = Space_;
-  using PointType = typename SpaceTraitsType::PointType;
-  using PointTraitsType = PointTraits<PointType>;
-  using SizeType = Size;
+class space_wrapper {
+  using space_traits_type = space_traits<Space_>;
+  using space_type = Space_;
+  using point_type = typename space_traits_type::point_type;
+  using point_traits_type = point_traits<point_type>;
+  using size_type = size_t;
 
  public:
-  using ScalarType = typename SpaceTraitsType::ScalarType;
-  static SizeType constexpr Dim = SpaceTraitsType::Dim;
+  using scalar_type = typename space_traits_type::scalar_type;
+  static size_type constexpr dim = space_traits_type::dim;
 
-  explicit SpaceWrapper(SpaceType const& space) : space_(space) {}
+  explicit space_wrapper(space_type const& space) : space_(space) {}
 
   template <typename Index_>
-  inline ScalarType const* operator[](Index_ const index) const {
-    return PointTraitsType::data(SpaceTraitsType::PointAt(space_, index));
+  inline scalar_type const* operator[](Index_ const index) const {
+    return point_traits_type::data(space_traits_type::point_at(space_, index));
   }
 
-  inline Box<ScalarType, Dim> ComputeBoundingBox() const {
-    Box<ScalarType, Dim> box(sdim());
-    box.FillInverseMax();
-    for (SizeType i = 0; i < size(); ++i) {
-      box.Fit(operator[](i));
+  inline box<scalar_type, dim> compute_bounding_box() const {
+    box<scalar_type, dim> box(sdim());
+    box.fill_inverse_max();
+    for (size_type i = 0; i < size(); ++i) {
+      box.fit(operator[](i));
     }
     return box;
   }
 
-  inline SizeType size() const { return SpaceTraitsType::size(space_); }
+  inline size_type size() const { return space_traits_type::size(space_); }
 
-  constexpr SizeType sdim() const {
-    if constexpr (Dim != kDynamicSize) {
-      return Dim;
+  constexpr size_type sdim() const {
+    if constexpr (dim != dynamic_size) {
+      return dim;
     } else {
-      return SpaceTraitsType::sdim(space_);
+      return space_traits_type::sdim(space_);
     }
   }
 
  private:
-  SpaceType const& space_;
+  space_type const& space_;
 };
 
 }  // namespace pico_tree::internal

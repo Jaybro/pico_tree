@@ -17,10 +17,10 @@ namespace fl = cvflann;
 // namespace fl = flann;
 
 // The OpenCV version of FLANN has improved query performance over the original
-// but does not include the flann::L2_3D<Scalar> distance class:
+// but does not include the flann::L2_3D<scalar_type> distance class:
 // https://github.com/flann-lib/flann/blob/master/src/cpp/flann/algorithms/dist.h
 // This distance class gives a reasonable performance boost over
-// (cv)flann::L2_Simple because it uses a compile time constant dimension count.
+// (cv)flann::L2_Simple because it uses a compile time constant Dim_ count.
 // NOTE: Strictly speaking it shouldn't be part of the performance test.
 namespace cvflann {
 
@@ -31,10 +31,10 @@ struct L2_3D {
   typedef T ElementType;
   typedef typename Accumulator<T>::Type ResultType;
 
-  template <typename Iterator1, typename Iterator2>
+  template <typename Iterator1_, typename Iterator2_>
   ResultType operator()(
-      Iterator1 a,
-      Iterator2 b,
+      Iterator1_ a,
+      Iterator2_ b,
       size_t size,
       ResultType /*worst_dist*/ = -1) const {
     ResultType result = ResultType();
@@ -56,12 +56,12 @@ struct L2_3D {
 
 }  // namespace cvflann
 
-template <typename Scalar, std::size_t Dim>
-Scalar* RawCopy(std::vector<Point<Scalar, Dim>> const& points) {
-  Scalar* copy = new Scalar[points.size() * Dim];
+template <typename Scalar_, std::size_t Dim_>
+Scalar_* raw_copy(std::vector<pico_tree::point<Scalar_, Dim_>> const& points) {
+  Scalar_* copy = new Scalar_[points.size() * Dim_];
   std::copy(
       points.begin()->data(),
-      points.begin()->data() + points.size() * Dim,
+      points.begin()->data() + points.size() * Dim_,
       copy);
   return copy;
 }
@@ -78,11 +78,12 @@ BENCHMARK_DEFINE_F(BmOpenCvFlann, BuildRt)(benchmark::State& state) {
   // we use it to improve query times during the Knn test.
   // The tree takes ownership of the copied data.
   // NOTE: One could argue the copy is part of the benchmark, but didn't add it.
-  fl::Matrix<Scalar> matrix(RawCopy(points_tree_), points_tree_.size(), 3);
+  fl::Matrix<scalar_type> matrix(
+      raw_copy(points_tree_), points_tree_.size(), 3);
   fl::KDTreeSingleIndexParams pindex(max_leaf_size, true);
 
   for (auto _ : state) {
-    fl::KDTreeSingleIndex<fl::L2_3D<Scalar>> tree(matrix, pindex);
+    fl::KDTreeSingleIndex<fl::L2_3D<scalar_type>> tree(matrix, pindex);
     tree.buildIndex();
   }
 }
@@ -104,10 +105,11 @@ BENCHMARK_DEFINE_F(BmOpenCvFlann, KnnCt)(benchmark::State& state) {
   // but it will replace (and delete) the original input. The reorder option
   // does has a small positive effect on the performance of the queries.
   // The tree takes ownership of the copied data.
-  fl::Matrix<Scalar> matrix(RawCopy(points_tree_), points_tree_.size(), 3);
+  fl::Matrix<scalar_type> matrix(
+      raw_copy(points_tree_), points_tree_.size(), 3);
   fl::KDTreeSingleIndexParams pindex(max_leaf_size, true);
   // "Custom" L2_3D metric has a decent positive effect on query times.
-  fl::KDTreeSingleIndex<fl::L2_3D<Scalar>> tree(matrix, pindex);
+  fl::KDTreeSingleIndex<fl::L2_3D<scalar_type>> tree(matrix, pindex);
   tree.buildIndex();
 
   // Search all nodes, no approximate search and no sorting.
@@ -118,12 +120,12 @@ BENCHMARK_DEFINE_F(BmOpenCvFlann, KnnCt)(benchmark::State& state) {
   for (auto _ : state) {
     // The only supported index type is int.
     std::vector<int> indices(knn_count);
-    std::vector<Scalar> distances(knn_count);
+    std::vector<scalar_type> distances(knn_count);
     fl::Matrix<int> mat_indices(indices.data(), 1, knn_count);
-    fl::Matrix<Scalar> mat_distances(distances.data(), 1, knn_count);
+    fl::Matrix<scalar_type> mat_distances(distances.data(), 1, knn_count);
 
     for (auto& p : points_test_) {
-      fl::Matrix<Scalar> query(p.data(), 1, 3);
+      fl::Matrix<scalar_type> query(p.data(), 1, 3);
       tree.knnSearch(query, mat_indices, mat_distances, knn_count, psearch);
     }
   }

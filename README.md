@@ -29,7 +29,7 @@ KdTree:
 * Nearest neighbor, approximate nearest neighbor, radius, box, and customizable nearest neighbor searches.
 * Different [metric spaces](https://en.wikipedia.org/wiki/Metric_space):
   * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
-  * Available distance functions: `L1`, `L2Squared`, `LInf`, `SO2`, and `SE2Squared`.
+  * Available distance functions: `metric_l1`, `metric_l2_squared`, `metric_linf`, `metric_so2`, and `metric_se2_squared`.
   * Metrics can be customized.
 * Multiple tree splitting rules: `median_max_side_t`, `midpoint_max_side_t` and `sliding_midpoint_max_side_t`.
 * Compile time and run time known dimensions.
@@ -37,18 +37,18 @@ KdTree:
 * Thread safe queries.
 * Optional [Python bindings](https://github.com/pybind/pybind11).
 
-PicoTree can interface with different types of points and point sets through traits classes. These can be custom implementations or one of the `pico_tree::SpaceTraits<>` and `pico_tree::PointTraits<>` classes provided by this library.
+PicoTree can interface with different types of points and point sets through traits classes. These can be custom implementations or one of the `pico_tree::space_traits<>` and `pico_tree::point_traits<>` classes provided by this library.
 * Space type support:
-  * `std::vector<PointType>`.
-  * `pico_tree::SpaceMap<PointType>`.
+  * `std::vector<point_type>`.
+  * `pico_tree::space_map<point_type>`.
   * `Eigen::Matrix<>` and `Eigen::Map<Eigen::Matrix<>>`.
   * `cv::Mat`.
 * Point type support:
   * Fixed size arrays and `std::array<>`.
-  * `pico_tree::PointMap<>`.
+  * `pico_tree::point_map<>`.
   * `Eigen::Vector<>` and `Eigen::Map<Eigen::Vector<>>`.
   * `cv::Vec<>`.
-* `pico_tree::SpaceMap<PointType>` and `pico_tree::PointMap<>` allow interfacing with dynamic size arrays. It is assumed that points and their coordinates are laid out contiguously in memory.
+* `pico_tree::space_map<point_type>` and `pico_tree::point_map<>` allow interfacing with dynamic size arrays. It is assumed that points and their coordinates are laid out contiguously in memory.
 
 # Examples
 

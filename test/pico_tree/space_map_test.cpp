@@ -8,45 +8,45 @@ using namespace pico_tree;
 
 namespace {
 
-Size constexpr kDynamicMapDim = 4;
+size_t constexpr dynamic_map_dim = 4;
 
-constexpr Size Dim(Size dim) {
-  return dim != kDynamicSize ? dim : kDynamicMapDim;
+constexpr size_t dimension(size_t d) {
+  return d != dynamic_size ? d : dynamic_map_dim;
 }
 
 }  // namespace
 
-template <typename T>
+template <typename T_>
 class SpaceMapTest : public testing::Test {};
 
 template <typename Point_>
-class SpaceMapTest<SpaceMap<Point_>> : public testing::Test {
+class SpaceMapTest<space_map<Point_>> : public testing::Test {
  public:
   SpaceMapTest() : map_(points_.data(), points_.size()) {
     std::size_t count = 0;
     for (auto& point : points_) {
       for (auto& coord : point) {
-        coord = typename SpaceMap<Point_>::ScalarType(count);
+        coord = typename space_map<Point_>::scalar_type(count);
         count++;
       }
     }
   }
 
-  Point_ const& PointAt(std::size_t index) const { return points_[index]; }
+  Point_ const& point_at(std::size_t index) const { return points_[index]; }
 
   std::size_t size() const { return points_.size(); }
 
-  constexpr std::size_t sdim() const { return PointTraits<Point_>::Dim; }
+  constexpr std::size_t sdim() const { return point_traits<Point_>::dim; }
 
  protected:
   std::array<Point_, 2> points_;
-  SpaceMap<Point_> map_;
+  space_map<Point_> map_;
 };
 
-template <typename Scalar_, Size Dim_>
-class SpaceMapTest<SpaceMap<PointMap<Scalar_, Dim_>>> : public testing::Test {
+template <typename Scalar_, size_t Dim_>
+class SpaceMapTest<space_map<point_map<Scalar_, Dim_>>> : public testing::Test {
  public:
-  static constexpr Size Sdim = Dim(Dim_);
+  static constexpr size_t Sdim = dimension(Dim_);
 
   SpaceMapTest() : map_(coords_.data(), coords_.size() / Sdim, Sdim) {
     std::size_t count = 0;
@@ -56,7 +56,7 @@ class SpaceMapTest<SpaceMap<PointMap<Scalar_, Dim_>>> : public testing::Test {
     }
   }
 
-  PointMap<Scalar_ const, Dim_> PointAt(std::size_t index) const {
+  point_map<Scalar_ const, Dim_> point_at(std::size_t index) const {
     return {coords_.data() + index * Sdim, Sdim};
   }
 
@@ -66,20 +66,20 @@ class SpaceMapTest<SpaceMap<PointMap<Scalar_, Dim_>>> : public testing::Test {
 
  protected:
   std::array<Scalar_, 2 * Sdim> coords_;
-  SpaceMap<PointMap<Scalar_, Dim_>> map_;
+  space_map<point_map<Scalar_, Dim_>> map_;
 };
 
 using SpaceMapTypes = testing::Types<
-    SpaceMap<std::array<float, 2>>,
-    SpaceMap<std::array<double, 3>>,
-    SpaceMap<PointMap<float, 2>>,
-    SpaceMap<PointMap<double, kDynamicSize>>>;
+    space_map<std::array<float, 2>>,
+    space_map<std::array<double, 3>>,
+    space_map<point_map<float, 2>>,
+    space_map<point_map<double, dynamic_size>>>;
 
 TYPED_TEST_SUITE(SpaceMapTest, SpaceMapTypes);
 
 TYPED_TEST(SpaceMapTest, Accessors) {
-  for (Size i = 0; i < this->map_.size(); ++i) {
-    EXPECT_EQ(this->map_[i].data(), this->PointAt(i).data());
+  for (size_t i = 0; i < this->map_.size(); ++i) {
+    EXPECT_EQ(this->map_[i].data(), this->point_at(i).data());
   }
 }
 

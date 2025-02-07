@@ -11,24 +11,24 @@ namespace pico_tree::internal {
 //! The papers are written using a base of 2, but for performance reasons they
 //! use a base of 1.3.
 template <typename Scalar_>
-struct Base {
-  template <typename Node>
-  inline Scalar_ CoverDistance(Node const& n) const {
+struct base {
+  template <typename Node_>
+  inline Scalar_ cover_distance(Node_ const& n) const {
     return std::pow(value, n.level);
   }
 
   //! Child distance is also the seperation distance.
-  template <typename Node>
-  inline Scalar_ ChildDistance(Node const& n) const {
+  template <typename Node_>
+  inline Scalar_ child_distance(Node_ const& n) const {
     return std::pow(value, n.level - Scalar_(1.0));
   }
 
-  template <typename Node>
-  inline Scalar_ ParentDistance(Node const& n) const {
+  template <typename Node_>
+  inline Scalar_ parent_distance(Node_ const& n) const {
     return std::pow(value, n.level + Scalar_(1.0));
   }
 
-  inline Scalar_ Level(Scalar_ const dst) const {
+  inline Scalar_ level(Scalar_ const dst) const {
     return std::log(dst) / std::log(value);
   }
 

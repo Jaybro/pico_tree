@@ -3,22 +3,24 @@
 
 class BmNanoflann : public pico_tree::Benchmark {
  public:
-  using NanoAdaptorX = NanoAdaptor<Index, PointX>;
+  using nano_adaptor_type = nano_adaptor<index_type, point_type>;
 };
 
-template <typename NanoAdaptor>
-using NanoKdTreeCt = nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::ScalarType, NanoAdaptor>,
-    NanoAdaptor,
-    NanoAdaptor::Dim,
-    typename NanoAdaptor::IndexType>;
+template <typename NanoAdaptor_>
+using nano_kd_tree_ct = nanoflann::KDTreeSingleIndexAdaptor<
+    nanoflann::
+        L2_Simple_Adaptor<typename NanoAdaptor_::scalar_type, NanoAdaptor_>,
+    NanoAdaptor_,
+    NanoAdaptor_::dim,
+    typename NanoAdaptor_::index_type>;
 
-template <typename NanoAdaptor>
-using NanoKdTreeRt = nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<typename NanoAdaptor::ScalarType, NanoAdaptor>,
-    NanoAdaptor,
+template <typename NanoAdaptor_>
+using nano_kd_tree_rt = nanoflann::KDTreeSingleIndexAdaptor<
+    nanoflann::
+        L2_Simple_Adaptor<typename NanoAdaptor_::scalar_type, NanoAdaptor_>,
+    NanoAdaptor_,
     -1,
-    typename NanoAdaptor::IndexType>;
+    typename NanoAdaptor_::index_type>;
 
 // ****************************************************************************
 // Building the tree
@@ -26,10 +28,10 @@ using NanoKdTreeRt = nanoflann::KDTreeSingleIndexAdaptor<
 
 BENCHMARK_DEFINE_F(BmNanoflann, BuildCt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  NanoAdaptorX adaptor(points_tree_);
+  nano_adaptor_type adaptor(points_tree_);
   for (auto _ : state) {
-    NanoKdTreeCt<NanoAdaptorX> tree(
-        PointX::Dim,
+    nano_kd_tree_ct<nano_adaptor_type> tree(
+        point_type::dim,
         adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
     tree.buildIndex();
@@ -38,10 +40,10 @@ BENCHMARK_DEFINE_F(BmNanoflann, BuildCt)(benchmark::State& state) {
 
 BENCHMARK_DEFINE_F(BmNanoflann, BuildRt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  NanoAdaptorX adaptor(points_tree_);
+  nano_adaptor_type adaptor(points_tree_);
   for (auto _ : state) {
-    NanoKdTreeRt<NanoAdaptorX> tree(
-        PointX::Dim,
+    nano_kd_tree_rt<nano_adaptor_type> tree(
+        point_type::dim,
         adaptor,
         nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
     tree.buildIndex();
@@ -66,16 +68,16 @@ BENCHMARK_REGISTER_F(BmNanoflann, BuildRt)
 BENCHMARK_DEFINE_F(BmNanoflann, KnnCt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
   int knn_count = state.range(1);
-  NanoAdaptorX adaptor(points_tree_);
-  NanoKdTreeCt<NanoAdaptorX> tree(
-      PointX::Dim,
+  nano_adaptor_type adaptor(points_tree_);
+  nano_kd_tree_ct<nano_adaptor_type> tree(
+      point_type::dim,
       adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
   tree.buildIndex();
 
   for (auto _ : state) {
-    std::vector<Index> indices(knn_count);
-    std::vector<Scalar> distances(knn_count);
+    std::vector<index_type> indices(knn_count);
+    std::vector<scalar_type> distances(knn_count);
     std::size_t sum = 0;
     for (auto const& p : points_test_) {
       benchmark::DoNotOptimize(
@@ -120,17 +122,18 @@ BENCHMARK_REGISTER_F(BmNanoflann, KnnCt)
 
 BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
   int max_leaf_size = state.range(0);
-  Scalar radius = static_cast<Scalar>(state.range(1)) / Scalar(10.0);
-  Scalar squared = radius * radius;
-  NanoAdaptorX adaptor(points_tree_);
-  NanoKdTreeCt<NanoAdaptorX> tree(
-      PointX::Dim,
+  scalar_type radius =
+      static_cast<scalar_type>(state.range(1)) / scalar_type(10.0);
+  scalar_type squared = radius * radius;
+  nano_adaptor_type adaptor(points_tree_);
+  nano_kd_tree_ct<nano_adaptor_type> tree(
+      point_type::dim,
       adaptor,
       nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf_size));
   tree.buildIndex();
 
   for (auto _ : state) {
-    std::vector<nanoflann::ResultItem<Index, Scalar>> results;
+    std::vector<nanoflann::ResultItem<index_type, scalar_type>> results;
     std::size_t sum = 0;
     for (auto const& p : points_test_) {
       benchmark::DoNotOptimize(

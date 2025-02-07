@@ -9,97 +9,102 @@
 
 namespace pico_tree {
 
-template <typename Space_, typename Metric_ = L2Squared, typename Index_ = int>
-class KdForest {
-  using SpaceWrapperType = internal::SpaceWrapper<Space_>;
-  // PrioritySearchNearestEuclidean only supports KdTreeNodeTopological.
-  using NodeType = internal::
-      KdTreeNodeTopological<Index_, typename SpaceWrapperType::ScalarType>;
-  using RKdTreeDataType =
-      internal::RKdTreeHhData<NodeType, SpaceWrapperType::Dim>;
+template <
+    typename Space_,
+    typename Metric_ = metric_l2_squared,
+    typename Index_ = int>
+class kd_forest {
+  using space_wrapper_type = internal::space_wrapper<Space_>;
+  // priority_search_nearest_euclidean only supports kd_tree_node_topological.
+  using node_type = internal::kd_tree_node_topological<
+      Index_,
+      typename space_wrapper_type::scalar_type>;
+  using rkd_tree_data_type =
+      internal::rkd_tree_hh_data<node_type, space_wrapper_type::dim>;
 
  public:
   //! \brief Size type.
-  using SizeType = Size;
+  using size_type = size_t;
   //! \brief Index type.
-  using IndexType = Index_;
+  using index_type = Index_;
   //! \brief Scalar type.
-  using ScalarType = typename SpaceWrapperType::ScalarType;
-  //! \brief KdTree dimension. It equals pico_tree::kDynamicSize in case Dim is
-  //! only known at run-time.
-  static SizeType constexpr Dim = SpaceWrapperType::Dim;
+  using scalar_type = typename space_wrapper_type::scalar_type;
+  //! \brief kd_tree dimension. It equals pico_tree::dynamic_size in case
+  //! dim is only known at run-time.
+  static size_type constexpr dim = space_wrapper_type::dim;
   //! \brief Point set or adaptor type.
-  using SpaceType = Space_;
+  using space_type = Space_;
   //! \brief The metric used for various searches.
-  using MetricType = Metric_;
+  using metric_type = Metric_;
   //! \brief Neighbor type of various search resuls.
-  using NeighborType = Neighbor<IndexType, ScalarType>;
+  using neighbor_type = neighbor<index_type, scalar_type>;
 
-  KdForest(SpaceType space, SizeType max_leaf_size, SizeType forest_size)
+  kd_forest(space_type space, size_type max_leaf_size, size_type forest_size)
       : space_(std::move(space)),
         metric_(),
-        data_(internal::BuildRKdTree<RKdTreeDataType, Dim>()(
-            SpaceWrapperType(space_),
+        data_(internal::build_rkd_tree<rkd_tree_data_type, dim>()(
+            space_wrapper_type(space_),
             max_leaf_size_t(max_leaf_size),
             bounds_from_space,
             sliding_midpoint_max_side,
             forest_size)) {}
 
-  //! \brief The KdForest cannot be copied.
-  //! \details The KdForest uses pointers to nodes and copying pointers is not
+  //! \brief The kd_forest cannot be copied.
+  //! \details The kd_forest uses pointers to nodes and copying pointers is not
   //! the same as creating a deep copy.
-  KdForest(KdForest const&) = delete;
+  kd_forest(kd_forest const&) = delete;
 
-  //! \brief Move constructor of the KdForest.
-  KdForest(KdForest&&) = default;
+  //! \brief Move constructor of the kd_forest.
+  kd_forest(kd_forest&&) = default;
 
-  //! \brief KdForest copy assignment.
-  KdForest& operator=(KdForest const& other) = delete;
+  //! \brief kd_forest copy assignment.
+  kd_forest& operator=(kd_forest const& other) = delete;
 
-  //! \brief KdForest move assignment.
-  KdForest& operator=(KdForest&& other) = default;
+  //! \brief kd_forest move assignment.
+  kd_forest& operator=(kd_forest&& other) = default;
 
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor .
-  template <typename P, typename V>
-  inline void SearchNearest(
-      P const& x, SizeType max_leaves_visited, V& visitor) const {
-    internal::PointWrapper<P> p(x);
-    SearchNearest(p, max_leaves_visited, visitor, typename Metric_::SpaceTag());
+  template <typename P_, typename V_>
+  inline void search_nearest(
+      P_ const& x, size_type max_leaves_visited, V_& visitor) const {
+    internal::point_wrapper<P_> p(x);
+    search_nearest(
+        p, max_leaves_visited, visitor, typename Metric_::space_category());
   }
 
   //! \brief Searches for the nearest neighbor of point \p x.
   //! \details Interpretation of the output distance depends on the Metric. The
-  //! default L2Squared results in a squared distance.
-  template <typename P>
-  inline void SearchNn(
-      P const& x, SizeType max_leaves_visited, NeighborType& nn) const {
-    internal::SearchNn<NeighborType> v(nn);
-    SearchNearest(x, max_leaves_visited, v);
+  //! default metric_l2_squared results in a squared distance.
+  template <typename P_>
+  inline void search_nn(
+      P_ const& x, size_type max_leaves_visited, neighbor_type& nn) const {
+    internal::search_nn<neighbor_type> v(nn);
+    search_nearest(x, max_leaves_visited, v);
   }
 
  private:
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node.
   template <typename PointWrapper_, typename Visitor_>
-  inline void SearchNearest(
+  inline void search_nearest(
       PointWrapper_ point,
-      SizeType max_leaves_visited,
+      size_type max_leaves_visited,
       Visitor_& visitor,
-      EuclideanSpaceTag) const {
+      euclidean_space_tag) const {
     // Range based for loop (rightfully) results in a warning that shouldn't be
     // needed if the user creates the forest with at least a single tree.
     for (std::size_t i = 0; i < data_.size(); ++i) {
-      auto p = data_[i].RotatePoint(point);
-      using PointWrapperType = internal::PointWrapper<decltype(p)>;
-      PointWrapperType point_wrapper(p);
-      internal::PrioritySearchNearestEuclidean<
-          typename RKdTreeDataType::SpaceWrapperType,
+      auto p = data_[i].rotate_point(point);
+      using point_wrapper_type = internal::point_wrapper<decltype(p)>;
+      point_wrapper_type point_wrapper(p);
+      internal::priority_search_nearest_euclidean<
+          typename rkd_tree_data_type::space_wrapper_type,
           Metric_,
-          PointWrapperType,
+          point_wrapper_type,
           Visitor_,
-          IndexType>(
-          typename RKdTreeDataType::SpaceWrapperType(data_[i].space),
+          index_type>(
+          typename rkd_tree_data_type::space_wrapper_type(data_[i].space),
           metric_,
           data_[i].tree.indices,
           point_wrapper,
@@ -109,20 +114,23 @@ class KdForest {
   }
 
   //! \brief Point set used for querying point data.
-  SpaceType space_;
+  space_type space_;
   //! \brief Metric used for comparing distances.
-  MetricType metric_;
-  //! \brief Data structure of the KdTree.
-  std::vector<RKdTreeDataType> data_;
+  metric_type metric_;
+  //! \brief Data structure of the kd_tree.
+  std::vector<rkd_tree_data_type> data_;
 };
 
 template <typename Space_>
-KdForest(Space_, Size, Size) -> KdForest<Space_, L2Squared, int>;
+kd_forest(Space_, size_t, size_t) -> kd_forest<Space_, metric_l2_squared, int>;
 
-template <typename Metric_ = L2Squared, typename Index_ = int, typename Space_>
-KdForest<std::decay_t<Space_>, Metric_, Index_> MakeKdForest(
-    Space_&& space, Size max_leaf_size, Size forest_size) {
-  return KdForest<std::decay_t<Space_>, Metric_, Index_>(
+template <
+    typename Metric_ = metric_l2_squared,
+    typename Index_ = int,
+    typename Space_>
+kd_forest<std::decay_t<Space_>, Metric_, Index_> make_kd_forest(
+    Space_&& space, size_t max_leaf_size, size_t forest_size) {
+  return kd_forest<std::decay_t<Space_>, Metric_, Index_>(
       std::forward<Space_>(space), max_leaf_size, forest_size);
 }
 

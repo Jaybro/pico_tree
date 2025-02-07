@@ -9,38 +9,38 @@
 
 namespace pico_tree {
 
-template <typename Scalar_, Size Dim_>
-struct PointTraits<PointMap<Scalar_, Dim_>> {
-  using PointType = PointMap<Scalar_, Dim_>;
-  using ScalarType = typename PointType::ScalarType;
-  using SizeType = typename PointType::SizeType;
-  static SizeType constexpr Dim = Dim_;
+template <typename Scalar_, size_t Dim_>
+struct point_traits<point_map<Scalar_, Dim_>> {
+  using point_type = point_map<Scalar_, Dim_>;
+  using scalar_type = typename point_type::scalar_type;
+  using size_type = typename point_type::size_type;
+  static size_type constexpr dim = Dim_;
 
-  inline static ScalarType const* data(PointType const& point) {
+  inline static scalar_type const* data(point_type const& point) {
     return point.data();
   }
 
-  inline static SizeType size(PointType const& point) { return point.size(); }
+  inline static size_type size(point_type const& point) { return point.size(); }
 };
 
 //! \brief MapTraits provides an interface for spaces and points when working
-//! with a SpaceMap.
+//! with a space_map.
 template <typename Point_>
-struct SpaceTraits<SpaceMap<Point_>> {
-  using SpaceType = SpaceMap<Point_>;
-  using PointType = typename SpaceType::PointType;
-  using ScalarType = typename SpaceType::ScalarType;
-  using SizeType = typename SpaceType::SizeType;
-  static SizeType constexpr Dim = SpaceType::Dim;
+struct space_traits<space_map<Point_>> {
+  using space_type = space_map<Point_>;
+  using point_type = typename space_type::point_type;
+  using scalar_type = typename space_type::scalar_type;
+  using size_type = typename space_type::size_type;
+  static size_type constexpr dim = space_type::dim;
 
   template <typename Index_>
-  inline static decltype(auto) PointAt(SpaceType const& space, Index_ idx) {
-    return space[static_cast<SizeType>(idx)];
+  inline static decltype(auto) point_at(space_type const& space, Index_ idx) {
+    return space[static_cast<size_type>(idx)];
   }
 
-  inline static SizeType size(SpaceType const& space) { return space.size(); }
+  inline static size_type size(space_type const& space) { return space.size(); }
 
-  inline static SizeType sdim(SpaceType const& space) { return space.sdim(); }
+  inline static size_type sdim(space_type const& space) { return space.sdim(); }
 };
 
 }  // namespace pico_tree

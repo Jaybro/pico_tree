@@ -7,127 +7,127 @@
 // https://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
 // https://eigen.tuxfamily.org/dox-devel/group__TopicStlContainers.html
 
-template <typename Point>
-using PointsMapColMajor = Eigen::Map<Eigen::Matrix<
-    typename Point::Scalar,
-    Point::RowsAtCompileTime,
+template <typename Point_>
+using points_map_col_major = Eigen::Map<Eigen::Matrix<
+    typename Point_::Scalar,
+    Point_::RowsAtCompileTime,
     Eigen::Dynamic>>;
 
-template <typename Point>
-using PointsMapRowMajor = Eigen::Map<Eigen::Matrix<
-    typename Point::Scalar,
+template <typename Point_>
+using points_map_row_major = Eigen::Map<Eigen::Matrix<
+    typename Point_::Scalar,
     Eigen::Dynamic,
-    Point::ColsAtCompileTime,
+    Point_::ColsAtCompileTime,
     Eigen::RowMajor>>;
 
-std::size_t const kRunCount = 1024 * 1024;
-std::size_t const kNumPoints = 1024 * 1024 * 2;
-float const kArea = 1000.0;
-pico_tree::max_leaf_size_t const kMaxLeafCount = 16;
+std::size_t const run_count = 1024 * 1024;
+std::size_t const num_points = 1024 * 1024 * 2;
+float const point_area = 1000.0;
+pico_tree::max_leaf_size_t const max_leaf_count = 16;
 
-template <typename PointX>
-std::vector<PointX> GenerateRandomEigenN(
-    std::size_t n, typename PointX::Scalar size) {
-  std::vector<PointX> random(n);
+template <typename Point_>
+std::vector<Point_> generate_random_eigen_n(
+    std::size_t n, typename Point_::Scalar size) {
+  std::vector<Point_> random(n);
   for (auto& p : random) {
-    p = PointX::Random() * size / typename PointX::Scalar(2.0);
+    p = Point_::Random() * size / typename Point_::Scalar(2.0);
   }
 
   return random;
 }
 
-// Creates a KdTree from a vector of Eigen::VectorX and searches for nearest
+// Creates a kd_tree from a vector of Eigen::VectorX and searches for nearest
 // neighbors.
-void BasicVector() {
-  using PointX = Eigen::Vector2f;
-  using Scalar = typename PointX::Scalar;
-  using Index = int;
+void basic_vector() {
+  using point = Eigen::Vector2f;
+  using scalar = typename point::Scalar;
+  using index = int;
 
   // Including <pico_tree/eigen3_traits.hpp> provides support for Eigen types
   // with std::vector.
-  pico_tree::KdTree tree(
-      GenerateRandomEigenN<PointX>(kNumPoints, kArea), kMaxLeafCount);
+  pico_tree::kd_tree tree(
+      generate_random_eigen_n<point>(num_points, point_area), max_leaf_count);
 
-  PointX p = PointX::Random() * kArea / Scalar(2.0);
+  point p = point::Random() * point_area / scalar(2.0);
 
-  pico_tree::Neighbor<Index, Scalar> nn;
-  ScopedTimer t("pico_tree eigen vector", kRunCount);
-  for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchNn(p, nn);
+  pico_tree::neighbor<index, scalar> nn;
+  pico_tree::scoped_timer t("pico_tree eigen vector", run_count);
+  for (std::size_t i = 0; i < run_count; ++i) {
+    tree.search_nn(p, nn);
   }
 }
 
-// Creates a KdTree from an Eigen::Matrix<> and searches for nearest neighbors.
-void BasicMatrix() {
-  using KdTree = pico_tree::KdTree<Eigen::Matrix3Xf>;
-  using Neighbor = typename KdTree::NeighborType;
-  using Scalar = typename Eigen::Matrix3Xf::Scalar;
-  constexpr int Dim = Eigen::Matrix3Xf::RowsAtCompileTime;
+// Creates a kd_tree from an Eigen::Matrix<> and searches for nearest neighbors.
+void basic_matrix() {
+  using kd_tree = pico_tree::kd_tree<Eigen::Matrix3Xf>;
+  using neighbor = typename kd_tree::neighbor_type;
+  using scalar = typename Eigen::Matrix3Xf::Scalar;
+  constexpr int dim = Eigen::Matrix3Xf::RowsAtCompileTime;
 
-  KdTree tree(
-      Eigen::Matrix3Xf::Random(Dim, kNumPoints) * kArea / Scalar(2.0),
-      kMaxLeafCount);
+  kd_tree tree(
+      Eigen::Matrix3Xf::Random(dim, num_points) * point_area / scalar(2.0),
+      max_leaf_count);
 
-  Eigen::Vector3f p = Eigen::Vector3f::Random() * kArea / Scalar(2.0);
-  Neighbor nn;
-  ScopedTimer t("pico_tree eigen matrix", kRunCount);
-  for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchNn(p, nn);
+  Eigen::Vector3f p = Eigen::Vector3f::Random() * point_area / scalar(2.0);
+  neighbor nn;
+  pico_tree::scoped_timer t("pico_tree eigen matrix", run_count);
+  for (std::size_t i = 0; i < run_count; ++i) {
+    tree.search_nn(p, nn);
   }
 }
 
-// Creates a KdTree from a col-major matrix. The matrix maps an
+// Creates a kd_tree from a col-major matrix. The matrix maps an
 // std::vector<Eigen::Vector3f>.
-void ColMajorSupport() {
-  using PointX = Eigen::Vector3f;
-  using Map = PointsMapColMajor<PointX>;
-  using KdTree = pico_tree::KdTree<Map>;
-  using Neighbor = typename KdTree::NeighborType;
-  using Scalar = typename PointX::Scalar;
-  constexpr int Dim = PointX::RowsAtCompileTime;
+void col_major_support() {
+  using point = Eigen::Vector3f;
+  using map = points_map_col_major<point>;
+  using kd_tree = pico_tree::kd_tree<map>;
+  using neighbor = typename kd_tree::neighbor_type;
+  using scalar = typename point::Scalar;
+  constexpr int dim = point::RowsAtCompileTime;
 
-  auto points = GenerateRandomEigenN<PointX>(kNumPoints, kArea);
-  PointX p = PointX::Random() * kArea / Scalar(2.0);
+  auto points = generate_random_eigen_n<point>(num_points, point_area);
+  point p = point::Random() * point_area / scalar(2.0);
 
-  std::cout << "Eigen RowMajor: " << Map::IsRowMajor << std::endl;
+  std::cout << "Eigen RowMajor: " << map::IsRowMajor << std::endl;
 
-  KdTree tree(Map(points.data()->data(), Dim, points.size()), kMaxLeafCount);
+  kd_tree tree(map(points.data()->data(), dim, points.size()), max_leaf_count);
 
-  std::vector<Neighbor> knn;
-  ScopedTimer t("pico_tree col major", kRunCount);
-  for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchKnn(p, 1, knn);
+  std::vector<neighbor> knn;
+  pico_tree::scoped_timer t("pico_tree col major", run_count);
+  for (std::size_t i = 0; i < run_count; ++i) {
+    tree.search_knn(p, 1, knn);
   }
 }
 
-// Creates a KdTree from a row-major matrix. The matrix maps an
+// Creates a kd_tree from a row-major matrix. The matrix maps an
 // std::vector<Eigen::RowVector3f>.
-void RowMajorSupport() {
-  using PointX = Eigen::RowVector3f;
-  using Map = PointsMapRowMajor<PointX>;
-  using KdTree = pico_tree::KdTree<Map>;
-  using Neighbor = typename KdTree::NeighborType;
-  using Scalar = typename PointX::Scalar;
-  constexpr int Dim = PointX::ColsAtCompileTime;
+void row_major_support() {
+  using point = Eigen::RowVector3f;
+  using map = points_map_row_major<point>;
+  using kd_tree = pico_tree::kd_tree<map>;
+  using neighbor = typename kd_tree::neighbor_type;
+  using scalar = typename point::Scalar;
+  constexpr int dim = point::ColsAtCompileTime;
 
-  auto points = GenerateRandomEigenN<PointX>(kNumPoints, kArea);
-  PointX p = PointX::Random() * kArea / Scalar(2.0);
+  auto points = generate_random_eigen_n<point>(num_points, point_area);
+  point p = point::Random() * point_area / scalar(2.0);
 
-  std::cout << "Eigen RowMajor: " << PointX::IsRowMajor << std::endl;
+  std::cout << "Eigen RowMajor: " << point::IsRowMajor << std::endl;
 
-  KdTree tree(Map(points.data()->data(), points.size(), Dim), kMaxLeafCount);
+  kd_tree tree(map(points.data()->data(), points.size(), dim), max_leaf_count);
 
-  std::vector<Neighbor> knn;
-  ScopedTimer t("pico_tree row major", kRunCount);
-  for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchKnn(p, 1, knn);
+  std::vector<neighbor> knn;
+  pico_tree::scoped_timer t("pico_tree row major", run_count);
+  for (std::size_t i = 0; i < run_count; ++i) {
+    tree.search_knn(p, 1, knn);
   }
 }
 
 int main() {
-  BasicVector();
-  BasicMatrix();
-  ColMajorSupport();
-  RowMajorSupport();
+  basic_vector();
+  basic_matrix();
+  col_major_support();
+  row_major_support();
   return 0;
 }

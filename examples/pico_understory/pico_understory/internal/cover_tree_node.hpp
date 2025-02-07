@@ -5,19 +5,19 @@
 namespace pico_tree::internal {
 
 template <typename Index_, typename Scalar_>
-struct CoverTreeNode {
-  using IndexType = Index_;
-  using ScalarType = Scalar_;
+struct cover_tree_node {
+  using index_type = Index_;
+  using scalar_type = Scalar_;
 
-  inline bool IsBranch() const { return !children.empty(); }
-  inline bool IsLeaf() const { return children.empty(); }
+  inline bool is_branch() const { return !children.empty(); }
+  inline bool is_leaf() const { return children.empty(); }
 
   // TODO Could be moved to the tree.
-  ScalarType level;
+  scalar_type level;
   //! \brief Distance to the farthest child.
-  ScalarType max_distance;
-  IndexType index;
-  std::vector<CoverTreeNode*> children;
+  scalar_type max_distance;
+  index_type index;
+  std::vector<cover_tree_node*> children;
 };
 
 }  // namespace pico_tree::internal

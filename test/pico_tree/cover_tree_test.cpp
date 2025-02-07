@@ -10,48 +10,54 @@
 // another one with the exact same signature.
 namespace {
 
-template <typename PointX>
-using Space = std::reference_wrapper<std::vector<PointX>>;
+template <typename Point_>
+using space = std::reference_wrapper<std::vector<Point_>>;
 
-template <typename PointX>
-using CoverTree = pico_tree::CoverTree<Space<PointX>>;
+template <typename Point_>
+using cover_tree = pico_tree::cover_tree<space<Point_>>;
 
-template <typename PointX>
-void QueryRadius(
+template <typename Point_>
+void query_radius(
     int const point_count,
-    typename PointX::ScalarType const area_size,
-    typename PointX::ScalarType const radius) {
-  using Scalar = typename PointX::ScalarType;
+    typename Point_::scalar_type const area_size,
+    typename Point_::scalar_type const radius) {
+  using scalar_type = typename Point_::scalar_type;
 
-  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  CoverTree<PointX> tree(random, Scalar(2.0));
+  std::vector<Point_> random =
+      pico_tree::generate_random_n<Point_>(point_count, area_size);
+  cover_tree<Point_> tree(random, scalar_type(2.0));
 
-  TestRadius(tree, radius);
+  test_radius(tree, radius);
 }
 
-template <typename PointX>
-void QueryKnn(
+template <typename Point_>
+void query_knn(
     int const point_count,
-    typename PointX::ScalarType const area_size,
+    typename Point_::scalar_type const area_size,
     int const k) {
-  using Index = int;
-  using Scalar = typename PointX::ScalarType;
+  using index_type = int;
+  using scalar_type = typename Point_::scalar_type;
 
-  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  CoverTree<PointX> tree(random, Scalar(2.0));
+  std::vector<Point_> random =
+      pico_tree::generate_random_n<Point_>(point_count, area_size);
+  cover_tree<Point_> tree(random, scalar_type(2.0));
 
   // This line compile time "tests" the move capability of the tree.
   auto tree2 = std::move(tree);
 
-  TestKnn(tree2, static_cast<Index>(k));
+  test_knn(tree2, static_cast<index_type>(k));
 }
 
 }  // namespace
 
 TEST(CoverTreeTest, QueryRadiusSubset2d) {
-  QueryRadius<Point2f>(1024 * 128, 100.0f, 2.5f);
+  query_radius<pico_tree::point_2f>(1024 * 128, 100.0f, 2.5f);
 }
 
-TEST(CoverTreeTest, QueryKnn1) { QueryKnn<Point2f>(1024 * 128, 100.0f, 1); }
+TEST(CoverTreeTest, QueryKnn1) {
+  query_knn<pico_tree::point_2f>(1024 * 128, 100.0f, 1);
+}
 
-TEST(CoverTreeTest, QueryKnn10) { QueryKnn<Point2f>(1024 * 128, 100.0f, 10); }
+TEST(CoverTreeTest, QueryKnn10) {
+  query_knn<pico_tree::point_2f>(1024 * 128, 100.0f, 10);
+}

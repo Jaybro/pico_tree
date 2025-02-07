@@ -15,9 +15,9 @@ KdTree. It wraps the C++ PicoTree library.
 )ptdoc";
 
   // Registered dtypes.
-  PYBIND11_NUMPY_DTYPE(pyco_tree::Neighborf, index, distance);
-  PYBIND11_NUMPY_DTYPE(pyco_tree::Neighbord, index, distance);
+  PYBIND11_NUMPY_DTYPE(pyco_tree::neighbor_f, index, distance);
+  PYBIND11_NUMPY_DTYPE(pyco_tree::neighbor_d, index, distance);
 
-  pyco_tree::DefDArray(m);
-  pyco_tree::DefKdTree(m);
+  pyco_tree::def_darray(m);
+  pyco_tree::def_kd_tree(m);
 }

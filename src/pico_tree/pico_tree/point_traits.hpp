@@ -2,14 +2,14 @@
 
 namespace pico_tree {
 
-//! \brief PointTraits provides an interface for the different point types that
+//! \brief point_traits provides an interface for the different point types that
 //! are supported by PicoTree.
-//! \details Examples of how a PointTraits can be created and used are linked
+//! \details Examples of how a point_traits can be created and used are linked
 //! below.
-//! \tparam Point_ Any of the point types supported by PointTraits.
-//! \see PointTraits<Scalar_[Dim_]>
-//! \see SpaceTraits<std::vector<Point_, Allocator_>>
+//! \tparam Point_ Any of the point types supported by point_traits.
+//! \see point_traits<Scalar_[Dim_]>
+//! \see space_traits<std::vector<Point_, Allocator_>>
 template <typename Point_>
-struct PointTraits;
+struct point_traits;
 
 }  // namespace pico_tree

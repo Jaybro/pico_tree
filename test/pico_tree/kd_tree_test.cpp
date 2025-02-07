@@ -12,122 +12,135 @@
 // another one with the exact same signature.
 namespace {
 
-template <typename PointX>
-using Space = std::reference_wrapper<std::vector<PointX>>;
+template <typename Point_>
+using space = std::reference_wrapper<std::vector<Point_>>;
 
-template <typename PointX>
-using KdTree = pico_tree::KdTree<Space<PointX>>;
+template <typename Point_>
+using kd_tree = pico_tree::kd_tree<space<Point_>>;
 
-template <typename PointX>
-void QueryRange(
+template <typename Point_>
+void query_range(
     int const point_count,
-    typename PointX::ScalarType const area_size,
-    typename PointX::ScalarType const min_v,
-    typename PointX::ScalarType const max_v) {
-  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  KdTree<PointX> tree(random, pico_tree::max_leaf_size_t(8));
+    typename Point_::scalar_type const area_size,
+    typename Point_::scalar_type const min_v,
+    typename Point_::scalar_type const max_v) {
+  std::vector<Point_> random =
+      pico_tree::generate_random_n<Point_>(point_count, area_size);
+  kd_tree<Point_> tree(random, pico_tree::max_leaf_size_t(8));
 
-  TestBox(tree, min_v, max_v);
+  test_box(tree, min_v, max_v);
 }
 
-template <typename PointX>
-void QueryRadius(
+template <typename Point_>
+void query_radius(
     int const point_count,
-    typename PointX::ScalarType const area_size,
-    typename PointX::ScalarType const radius) {
-  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  KdTree<PointX> tree(random, pico_tree::max_leaf_size_t(8));
+    typename Point_::scalar_type const area_size,
+    typename Point_::scalar_type const radius) {
+  std::vector<Point_> random =
+      pico_tree::generate_random_n<Point_>(point_count, area_size);
+  kd_tree<Point_> tree(random, pico_tree::max_leaf_size_t(8));
 
-  TestRadius(tree, radius);
+  test_radius(tree, radius);
 }
 
-template <typename PointX>
-void QueryKnn(
+template <typename Point_>
+void query_knn(
     int const point_count,
-    typename PointX::ScalarType const area_size,
+    typename Point_::scalar_type const area_size,
     int const k) {
-  std::vector<PointX> random = GenerateRandomN<PointX>(point_count, area_size);
-  KdTree<PointX> tree1(random, pico_tree::max_leaf_size_t(8));
+  std::vector<Point_> random =
+      pico_tree::generate_random_n<Point_>(point_count, area_size);
+  kd_tree<Point_> tree1(random, pico_tree::max_leaf_size_t(8));
 
   // "Test" move constructor.
   auto tree2 = std::move(tree1);
   // "Test" move assignment.
   tree1 = std::move(tree2);
 
-  TestKnn(tree1, static_cast<typename KdTree<PointX>::IndexType>(k));
+  test_knn(tree1, static_cast<typename kd_tree<Point_>::index_type>(k));
 }
 
 }  // namespace
 
 TEST(KdTreeTest, QueryRangeSubset2d) {
-  QueryRange<Point2f>(1024 * 1024, 100.0f, 15.1f, 34.9f);
+  query_range<pico_tree::point_2f>(1024 * 1024, 100.0f, 15.1f, 34.9f);
 }
 
 TEST(KdTreeTest, QueryRangeAll2d) {
-  QueryRange<Point2f>(1024, 10.0f, 0.0f, 10.0f);
+  query_range<pico_tree::point_2f>(1024, 10.0f, 0.0f, 10.0f);
 }
 
 TEST(KdTreeTest, QueryRadiusSubset2d) {
-  QueryRadius<Point2f>(1024 * 1024, 100.0f, 2.5f);
+  query_radius<pico_tree::point_2f>(1024 * 1024, 100.0f, 2.5f);
 }
 
-TEST(KdTreeTest, QueryKnn1) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 1); }
+TEST(KdTreeTest, QueryKnn1) {
+  query_knn<pico_tree::point_2f>(1024 * 1024, 100.0f, 1);
+}
 
-TEST(KdTreeTest, QueryKnn10) { QueryKnn<Point2f>(1024 * 1024, 100.0f, 10); }
+TEST(KdTreeTest, QueryKnn10) {
+  query_knn<pico_tree::point_2f>(1024 * 1024, 100.0f, 10);
+}
 
 TEST(KdTreeTest, QuerySo2Knn4) {
-  using PointX = Point1f;
-  using SpaceX = Space<PointX>;
+  using point_type = pico_tree::point_1f;
+  using space_type = space<point_type>;
 
-  const auto pi = pico_tree::internal::kPi<typename KdTree<PointX>::ScalarType>;
-  std::vector<PointX> random = GenerateRandomN<PointX>(256 * 256, -pi, pi);
-  pico_tree::KdTree<SpaceX, pico_tree::SO2> tree(
+  const auto pi =
+      pico_tree::internal::pi<typename kd_tree<point_type>::scalar_type>;
+  std::vector<point_type> random =
+      pico_tree::generate_random_n<point_type>(256 * 256, -pi, pi);
+  pico_tree::kd_tree<space_type, pico_tree::metric_so2> tree(
       random, pico_tree::max_leaf_size_t(10));
-  TestKnn(tree, static_cast<typename KdTree<PointX>::IndexType>(8), PointX{pi});
+  test_knn(
+      tree,
+      static_cast<typename kd_tree<point_type>::index_type>(8),
+      point_type{pi});
 }
 
 TEST(KdTreeTest, WriteRead) {
-  using Index = int;
-  using Scalar = typename Point2f::ScalarType;
-  Index point_count = 100;
-  Scalar area_size = 2;
-  std::vector<Point2f> random =
-      GenerateRandomN<Point2f>(point_count, area_size);
+  using point_type = pico_tree::point_2f;
+  using index_type = int;
+  using scalar_type = typename point_type::scalar_type;
+  index_type point_count = 100;
+  scalar_type area_size = 2;
+  std::vector<point_type> random =
+      pico_tree::generate_random_n<point_type>(point_count, area_size);
 
   std::string filename = "tree.bin";
 
   // Compile time known dimensions.
   {
     // The points are not stored.
-    KdTree<Point2f> tree(random, pico_tree::max_leaf_size_t(1));
-    KdTree<Point2f>::Save(tree, filename);
+    kd_tree<point_type> tree(random, pico_tree::max_leaf_size_t(1));
+    kd_tree<point_type>::save(tree, filename);
   }
   {
     // Points are required to load the tree.
-    KdTree<Point2f> tree = KdTree<Point2f>::Load(random, filename);
-    TestKnn(tree, Index(20));
+    kd_tree<point_type> tree = kd_tree<point_type>::load(random, filename);
+    test_knn(tree, index_type(20));
   }
 
   EXPECT_TRUE(std::filesystem::remove(filename));
 
   // Run time known dimensions.
-  using DSpace = DynamicSpace<Space<Point2f>>;
+  using space_type = pico_tree::dynamic_space<space<point_type>>;
 
-  DSpace drandom(random);
+  space_type drandom(random);
 
   {
     static_assert(
-        pico_tree::KdTree<DSpace>::Dim == pico_tree::kDynamicSize,
+        pico_tree::kd_tree<space_type>::dim == pico_tree::dynamic_size,
         "KD_TREE_DIM_NOT_DYNAMIC");
     // The points are not stored.
-    pico_tree::KdTree<DSpace> tree(drandom, pico_tree::max_leaf_size_t(1));
-    pico_tree::KdTree<DSpace>::Save(tree, filename);
+    pico_tree::kd_tree<space_type> tree(drandom, pico_tree::max_leaf_size_t(1));
+    pico_tree::kd_tree<space_type>::save(tree, filename);
   }
   {
     // Points are required to load the tree.
-    pico_tree::KdTree<DSpace> tree =
-        pico_tree::KdTree<DSpace>::Load(drandom, filename);
-    TestKnn(tree, 20);
+    pico_tree::kd_tree<space_type> tree =
+        pico_tree::kd_tree<space_type>::load(drandom, filename);
+    test_knn(tree, 20);
   }
 
   EXPECT_TRUE(std::filesystem::remove(filename));

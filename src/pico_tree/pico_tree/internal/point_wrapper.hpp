@@ -5,36 +5,36 @@
 
 namespace pico_tree::internal {
 
-//! \brief The PointWrapper class wraps makes working with any point type
-//! through its respective PointTraits a bit easier and it allows for the
+//! \brief The point_wrapper class wraps makes working with any point type
+//! through its respective point_traits a bit easier and it allows for the
 //! addition of extra convenience methods.
 //! \details The internals of PicoTree never use the specializations of the
-//! PointTraits class directly, but interface with any point type through this
+//! point_traits class directly, but interface with any point type through this
 //! wrapper interface.
 template <typename Point_>
-class PointWrapper {
-  using PointTraitsType = PointTraits<Point_>;
-  using PointType = Point_;
-  using ScalarType = typename PointTraitsType::ScalarType;
-  using SizeType = Size;
-  static SizeType constexpr Dim = PointTraitsType::Dim;
+class point_wrapper {
+  using point_traits_type = point_traits<Point_>;
+  using point_type = Point_;
+  using scalar_type = typename point_traits_type::scalar_type;
+  using size_type = size_t;
+  static constexpr size_type dim = point_traits_type::dim;
 
-  inline ScalarType const* data() const {
-    return PointTraitsType::data(point_);
+  inline scalar_type const* data() const {
+    return point_traits_type::data(point_);
   }
 
-  constexpr SizeType size() const {
-    if constexpr (Dim != kDynamicSize) {
-      return Dim;
+  constexpr size_type size() const {
+    if constexpr (dim != dynamic_size) {
+      return dim;
     } else {
-      return PointTraitsType::size(point_);
+      return point_traits_type::size(point_);
     }
   }
 
  public:
-  inline explicit PointWrapper(PointType const& point) : point_(point) {}
+  inline explicit point_wrapper(point_type const& point) : point_(point) {}
 
-  inline ScalarType const& operator[](std::size_t index) const {
+  inline scalar_type const& operator[](std::size_t index) const {
     return data()[index];
   }
 
@@ -43,7 +43,7 @@ class PointWrapper {
   inline auto end() const { return data() + size(); }
 
  private:
-  PointType const& point_;
+  point_type const& point_;
 };
 
 }  // namespace pico_tree::internal

@@ -4,6 +4,6 @@
 
 namespace pyco_tree {
 
-void DefDArray(pybind11::module& m);
+void def_darray(pybind11::module& m);
 
 }

@@ -4,15 +4,15 @@
 #include <pico_tree/vector_traits.hpp>
 #include <random>
 
-using Index = int;
-using Scalar = float;
+using index = int;
+using scalar = float;
 
-Index const kNumPoints = 1024 * 1024 * 2;
-Scalar const kArea = 1000.0;
-std::size_t const kRunCount = 1024 * 1024;
+index const num_points = 1024 * 1024 * 2;
+scalar const point_area = 1000.0;
+std::size_t const run_count = 1024 * 1024;
 
 template <typename Vec_>
-std::vector<Vec_> GenerateRandomVecN(
+std::vector<Vec_> generate_random_vec_n(
     std::size_t n, typename Vec_::value_type size) {
   std::random_device rd;
   std::mt19937 e2(rd());
@@ -28,60 +28,63 @@ std::vector<Vec_> GenerateRandomVecN(
   return random;
 }
 
-// This example shows to build a KdTree from a vector of cv::Point3.
-void BasicVector() {
-  using PointX = cv::Vec<Scalar, 3>;
-  std::vector<PointX> random = GenerateRandomVecN<PointX>(kNumPoints, kArea);
+// This example shows to build a kd_tree from a vector of cv::Point3.
+void basic_vector() {
+  using point = cv::Vec<scalar, 3>;
+  std::vector<point> random =
+      generate_random_vec_n<point>(num_points, point_area);
 
-  pico_tree::KdTree tree(std::cref(random), pico_tree::max_leaf_size_t(10));
+  pico_tree::kd_tree tree(std::cref(random), pico_tree::max_leaf_size_t(10));
 
   auto p = random[random.size() / 2];
 
-  pico_tree::Neighbor<Index, Scalar> nn;
-  ScopedTimer t("pico_tree cv vector", kRunCount);
-  for (std::size_t i = 0; i < kRunCount; ++i) {
-    tree.SearchNn(p, nn);
+  pico_tree::neighbor<index, scalar> nn;
+  pico_tree::scoped_timer t("pico_tree cv vector", run_count);
+  for (std::size_t i = 0; i < run_count; ++i) {
+    tree.search_nn(p, nn);
   }
 }
 
-// This example shows to build a KdTree using a cv::Mat.
-void BasicMatrix() {
+// This example shows to build a kd_tree using a cv::Mat.
+void basic_matrix() {
   // Multiple columns based on the number of coordinates in a point.
   {
-    cv::Mat random(kNumPoints, 3, cv::DataType<Scalar>::type);
-    cv::randu(random, Scalar(0.0), kArea);
+    constexpr int dim = 3;
+    cv::Mat random(num_points, dim, cv::DataType<scalar>::type);
+    cv::randu(random, scalar(0.0), point_area);
 
-    pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(
+    pico_tree::kd_tree<pico_tree::opencv_mat_wrapper<scalar, dim>> tree(
         random, pico_tree::max_leaf_size_t(10));
-    pico_tree::PointMap<Scalar, 3> p(random.ptr<Scalar>(random.rows / 2));
+    pico_tree::point_map<scalar const, dim> p = tree.points()[random.rows / 2];
 
-    pico_tree::Neighbor<Index, Scalar> nn;
-    ScopedTimer t("pico_tree cv mat", kRunCount);
-    for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchNn(p, nn);
+    pico_tree::neighbor<index, scalar> nn;
+    pico_tree::scoped_timer t("pico_tree cv mat", run_count);
+    for (std::size_t i = 0; i < run_count; ++i) {
+      tree.search_nn(p, nn);
     }
   }
 
   // Single column cv::Mat based on a vector of points.
   {
-    using PointX = cv::Vec<Scalar, 3>;
-    std::vector<PointX> random = GenerateRandomVecN<PointX>(kNumPoints, kArea);
+    using point = cv::Vec<scalar, 3>;
+    std::vector<point> random =
+        generate_random_vec_n<point>(num_points, point_area);
 
-    pico_tree::KdTree<pico_tree::MatWrapper<Scalar, 3>> tree(
+    pico_tree::kd_tree<pico_tree::opencv_mat_wrapper<scalar, 3>> tree(
         cv::Mat(random), pico_tree::max_leaf_size_t(10));
 
-    PointX p = random[random.size() / 2];
+    point p = random[random.size() / 2];
 
-    pico_tree::Neighbor<Index, Scalar> nn;
-    ScopedTimer t("pico_tree cv mat", kRunCount);
-    for (std::size_t i = 0; i < kRunCount; ++i) {
-      tree.SearchNn(p, nn);
+    pico_tree::neighbor<index, scalar> nn;
+    pico_tree::scoped_timer t("pico_tree cv mat", run_count);
+    for (std::size_t i = 0; i < run_count; ++i) {
+      tree.search_nn(p, nn);
     }
   }
 }
 
 int main() {
-  BasicVector();
-  BasicMatrix();
+  basic_vector();
+  basic_matrix();
   return 0;
 }

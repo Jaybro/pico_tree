@@ -5,17 +5,16 @@
 #include "common.hpp"
 
 TEST(OpenCvTraitsTest, Interface) {
-  using Scalar = float;
-  int constexpr Dim = 3;
+  using scalar_type = float;
+  constexpr pico_tree::size_t dim = 3;
 
-  cv::Mat matrix(8, 3, cv::DataType<Scalar>::type);
-  cv::randu(matrix, -Scalar(1.0), Scalar(1.0));
+  cv::Mat matrix(8, 3, cv::DataType<scalar_type>::type);
+  cv::randu(matrix, -scalar_type(1.0), scalar_type(1.0));
   cv::Mat row = matrix.row(matrix.rows - 1);
+  pico_tree::opencv_mat_wrapper<scalar_type, dim> space(matrix);
 
-  CheckSpaceAdaptor<Dim>(
-      pico_tree::MatWrapper<Scalar, Dim>(matrix),
-      matrix.cols,
-      matrix.rows,
-      matrix.rows - 1,
-      row.ptr<Scalar>());
+  check_space_adaptor<dim>(
+      space, matrix.cols, matrix.rows, matrix.rows - 1, row.ptr<scalar_type>());
+
+  static_assert(space.sdim() == dim);
 }

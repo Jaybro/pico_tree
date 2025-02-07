@@ -4,85 +4,90 @@
 #include <pico_tree/vector_traits.hpp>
 
 // Different search options.
-void SearchR3() {
-  using PointX = Point3f;
-  using Scalar = typename PointX::ScalarType;
+void search_r3() {
+  using point = pico_tree::point_3f;
+  using scalar = typename point::scalar_type;
 
   std::size_t run_count = 1024 * 1024;
   pico_tree::max_leaf_size_t max_leaf_size = 12;
   std::size_t point_count = 1024 * 1024;
-  Scalar area_size = 1000;
+  scalar area_size = 1000;
 
-  using KdTree = pico_tree::KdTree<std::vector<PointX>>;
+  using kd_tree = pico_tree::kd_tree<std::vector<point>>;
 
-  KdTree tree(GenerateRandomN<PointX>(point_count, area_size), max_leaf_size);
+  kd_tree tree(
+      pico_tree::generate_random_n<point>(point_count, area_size),
+      max_leaf_size);
 
-  Scalar min_v = 25.1f;
-  Scalar max_v = 37.9f;
-  PointX min, max, q;
-  min.Fill(min_v);
-  max.Fill(max_v);
-  q.Fill((max_v + min_v) / 2.0f);
+  scalar min_v = 25.1f;
+  scalar max_v = 37.9f;
+  point min, max, q;
+  min.fill(min_v);
+  max.fill(max_v);
+  q.fill((max_v + min_v) / 2.0f);
 
-  Scalar search_radius = 2.0f;
-  // When building KdTree with default template arguments, this is the squared
+  scalar search_radius = 2.0f;
+  // When building kd_tree with default template arguments, this is the squared
   // distance.
-  Scalar search_radius_metric = tree.metric()(search_radius);
+  scalar search_radius_metric = tree.metric()(search_radius);
   // The ann can not be further away than a factor of (1 + max_error_percentage)
   // from the real nn.
-  Scalar max_error_percentage = 0.2f;
+  scalar max_error_percentage = 0.2f;
   // Apply the metric to the max ratio difference.
-  Scalar max_error_ratio_metric = tree.metric()(1.0f + max_error_percentage);
+  scalar max_error_ratio_metric = tree.metric()(1.0f + max_error_percentage);
 
-  using Neighbor = typename KdTree::NeighborType;
-  using Index = typename Neighbor::IndexType;
+  using neighbor = typename kd_tree::neighbor_type;
+  using index = typename neighbor::index_type;
 
-  Neighbor nn;
-  std::vector<Neighbor> knn;
-  std::vector<Index> idxs;
+  neighbor nn;
+  std::vector<neighbor> knn;
+  std::vector<index> idxs;
 
   {
-    ScopedTimer t("kd_tree nn, radius and box", run_count);
+    pico_tree::scoped_timer t("kd_tree nn, radius and box", run_count);
     for (std::size_t i = 0; i < run_count; ++i) {
-      tree.SearchNn(q, nn);
-      tree.SearchKnn(q, 1, knn);
-      tree.SearchRadius(q, search_radius_metric, knn, false);
-      tree.SearchBox(min, max, idxs);
+      tree.search_nn(q, nn);
+      tree.search_knn(q, 1, knn);
+      tree.search_radius(q, search_radius_metric, knn, false);
+      tree.search_box(min, max, idxs);
     }
   }
 
   std::size_t k = 8;
 
   {
-    ScopedTimer t("kd_tree aknn", run_count);
+    pico_tree::scoped_timer t("kd_tree aknn", run_count);
     for (std::size_t i = 0; i < run_count; ++i) {
-      // When the KdTree is created with the SlidingMidpointSplitter,
-      // approximate nn queries can be answered in O(1/e^d log n) time.
-      tree.SearchKnn(q, k, max_error_ratio_metric, knn);
+      // When the kd_tree is created with the sliding_midpoint_max_side splitter
+      // rule (the default argument), approximate nn queries can be answered in
+      // O(1/e^d log n) time.
+      tree.search_knn(q, k, max_error_ratio_metric, knn);
     }
   }
 
   {
-    ScopedTimer t("kd_tree knn", run_count);
+    pico_tree::scoped_timer t("kd_tree knn", run_count);
     for (std::size_t i = 0; i < run_count; ++i) {
-      tree.SearchKnn(q, k, knn);
+      tree.search_knn(q, k, knn);
     }
   }
 }
 
 // Search on the circle.
-void SearchS1() {
-  using PointX = Point1f;
-  using SpaceX = std::vector<PointX>;
-  using NeighborX = pico_tree::KdTree<SpaceX, pico_tree::SO2>::NeighborType;
+void search_s1() {
+  using point = pico_tree::point_1f;
+  using space = std::vector<point>;
+  using neighbor =
+      pico_tree::kd_tree<space, pico_tree::metric_so2>::neighbor_type;
 
-  const auto pi = typename PointX::ScalarType(3.1415926537);
+  const auto pi = typename point::scalar_type(3.1415926537);
 
-  pico_tree::KdTree<SpaceX, pico_tree::SO2> tree(
-      GenerateRandomN<PointX>(512, -pi, pi), pico_tree::max_leaf_size_t(10));
+  pico_tree::kd_tree<space, pico_tree::metric_so2> tree(
+      pico_tree::generate_random_n<point>(512, -pi, pi),
+      pico_tree::max_leaf_size_t(10));
 
-  std::array<NeighborX, 8> knn;
-  tree.SearchKnn(PointX{pi}, knn.begin(), knn.end());
+  std::array<neighbor, 8> knn;
+  tree.search_knn(point{pi}, knn.begin(), knn.end());
 
   // These prints show that wrapping around near point -PI ~ PI is supported.
   std::cout << "Closest angles (index, distance, value): " << std::endl;
@@ -93,7 +98,7 @@ void SearchS1() {
 }
 
 int main() {
-  SearchR3();
-  SearchS1();
+  search_r3();
+  search_s1();
   return 0;
 }

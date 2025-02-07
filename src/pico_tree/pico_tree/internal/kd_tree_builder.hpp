@@ -29,7 +29,7 @@ struct splitter_rule_t {
 //! box longest side. This rule is also known as the standard split rule.
 //! \details This rule builds a tree in O(n log n) time on average. It's
 //! generally slower compared to sliding_midpoint_max_side_t but results in a
-//! balanced KdTree.
+//! balanced kd_tree.
 struct median_max_side_t : public splitter_rule_t<median_max_side_t> {
   constexpr explicit median_max_side_t() = default;
 };
@@ -137,15 +137,15 @@ struct bounds_t : public splitter_start_bounds_t<bounds_t<Point_>> {
 
 namespace internal {
 
-//! \copydoc SplittingRule::kLongestMedian
+//! \copydoc median_max_side_t
 template <typename SpaceWrapper_>
-class SplitterLongestMedian {
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  using SizeType = Size;
-  using BoxType = Box<ScalarType, SpaceWrapper_::Dim>;
+class splitter_median_max_side {
+  using scalar_type = typename SpaceWrapper_::scalar_type;
+  using size_type = size_t;
+  using box_type = box<scalar_type, SpaceWrapper_::dim>;
 
  public:
-  SplitterLongestMedian(SpaceWrapper_ space) : space_{space} {}
+  splitter_median_max_side(SpaceWrapper_ space) : space_{space} {}
 
   template <typename RandomAccessIterator_>
   inline void operator()(
@@ -153,12 +153,12 @@ class SplitterLongestMedian {
           RandomAccessIterator_>::value_type const,  // depth
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end,
-      BoxType const& box,
+      box_type const& box,
       RandomAccessIterator_& split,
-      SizeType& split_dim,
-      ScalarType& split_val) const {
-    ScalarType max_delta;
-    box.LongestAxis(split_dim, max_delta);
+      size_type& split_dim,
+      scalar_type& split_val) const {
+    scalar_type max_delta;
+    box.max_side(split_dim, max_delta);
 
     split = begin + (end - begin) / 2;
 
@@ -177,15 +177,15 @@ class SplitterLongestMedian {
   SpaceWrapper_ space_;
 };
 
-//! \copydoc SplittingRule::kMidpoint
+//! \copydoc midpoint_max_side_t
 template <typename SpaceWrapper_>
-class SplitterMidpoint {
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  using SizeType = Size;
-  using BoxType = Box<ScalarType, SpaceWrapper_::Dim>;
+class splitter_midpoint_max_side {
+  using scalar_type = typename SpaceWrapper_::scalar_type;
+  using size_type = size_t;
+  using box_type = box<scalar_type, SpaceWrapper_::dim>;
 
  public:
-  SplitterMidpoint(SpaceWrapper_ space) : space_{space} {}
+  splitter_midpoint_max_side(SpaceWrapper_ space) : space_{space} {}
 
   template <typename RandomAccessIterator_>
   inline void operator()(
@@ -193,13 +193,13 @@ class SplitterMidpoint {
           RandomAccessIterator_>::value_type const,  // depth
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end,
-      BoxType const& box,
+      box_type const& box,
       RandomAccessIterator_& split,
-      SizeType& split_dim,
-      ScalarType& split_val) const {
-    ScalarType max_delta;
-    box.LongestAxis(split_dim, max_delta);
-    split_val = max_delta * ScalarType(0.5) + box.min(split_dim);
+      size_type& split_dim,
+      scalar_type& split_val) const {
+    scalar_type max_delta;
+    box.max_side(split_dim, max_delta);
+    split_val = max_delta * scalar_type(0.5) + box.min(split_dim);
 
     // Everything smaller than split_val goes left, the rest right.
     auto const comp = [this, &split_dim, &split_val](auto const index) -> bool {
@@ -213,15 +213,15 @@ class SplitterMidpoint {
   SpaceWrapper_ space_;
 };
 
-//! \copydoc SplittingRule::kSlidingMidpoint
+//! \copydoc sliding_midpoint_max_side_t
 template <typename SpaceWrapper_>
-class SplitterSlidingMidpoint {
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  using SizeType = Size;
-  using BoxType = Box<ScalarType, SpaceWrapper_::Dim>;
+class splitter_sliding_midpoint_max_side {
+  using scalar_type = typename SpaceWrapper_::scalar_type;
+  using size_type = size_t;
+  using box_type = box<scalar_type, SpaceWrapper_::dim>;
 
  public:
-  SplitterSlidingMidpoint(SpaceWrapper_ space) : space_{space} {}
+  splitter_sliding_midpoint_max_side(SpaceWrapper_ space) : space_{space} {}
 
   template <typename RandomAccessIterator_>
   inline void operator()(
@@ -229,13 +229,13 @@ class SplitterSlidingMidpoint {
           RandomAccessIterator_>::value_type const,  // depth
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end,
-      BoxType const& box,
+      box_type const& box,
       RandomAccessIterator_& split,
-      SizeType& split_dim,
-      ScalarType& split_val) const {
-    ScalarType max_delta;
-    box.LongestAxis(split_dim, max_delta);
-    split_val = max_delta / ScalarType(2.0) + box.min(split_dim);
+      size_type& split_dim,
+      scalar_type& split_val) const {
+    scalar_type max_delta;
+    box.max_side(split_dim, max_delta);
+    split_val = max_delta / scalar_type(2.0) + box.min(split_dim);
 
     // Everything smaller than split_val goes left, the rest right.
     auto const comp = [this, &split_dim, &split_val](auto const index) -> bool {
@@ -278,61 +278,61 @@ class SplitterSlidingMidpoint {
 };
 
 template <typename Rule_>
-struct SplittingRuleTraits;
+struct splitter_rule_traits;
 
 template <>
-struct SplittingRuleTraits<median_max_side_t> {
+struct splitter_rule_traits<median_max_side_t> {
   template <typename SpaceWrapper_>
-  using SplitterType = SplitterLongestMedian<SpaceWrapper_>;
+  using splitter_type = splitter_median_max_side<SpaceWrapper_>;
 };
 
 template <>
-struct SplittingRuleTraits<midpoint_max_side_t> {
+struct splitter_rule_traits<midpoint_max_side_t> {
   template <typename SpaceWrapper_>
-  using SplitterType = SplitterMidpoint<SpaceWrapper_>;
+  using splitter_type = splitter_midpoint_max_side<SpaceWrapper_>;
 };
 
 template <>
-struct SplittingRuleTraits<sliding_midpoint_max_side_t> {
+struct splitter_rule_traits<sliding_midpoint_max_side_t> {
   template <typename SpaceWrapper_>
-  using SplitterType = SplitterSlidingMidpoint<SpaceWrapper_>;
+  using splitter_type = splitter_sliding_midpoint_max_side<SpaceWrapper_>;
 };
 
-//! \brief This class provides the build algorithm of the KdTree. How the
-//! KdTree will be build depends on the Splitter template argument.
+//! \brief This class provides the build algorithm of the kd_tree. How the
+//! kd_tree will be build depends on the Splitter template argument.
 template <
     typename SpaceWrapper_,
     typename Stop_,
     typename Rule_,
     typename KdTreeData_>
-class BuildKdTreeImpl {
+class build_kd_tree_impl {
  public:
-  using IndexType = typename KdTreeData_::IndexType;
-  using ScalarType = typename KdTreeData_::ScalarType;
-  using SizeType = Size;
-  using SpaceType = SpaceWrapper_;
-  using BoxType = Box<ScalarType, KdTreeData_::Dim>;
-  using SplitterType =
-      typename SplittingRuleTraits<Rule_>::template SplitterType<SpaceWrapper_>;
-  using KdTreeDataType = KdTreeData_;
-  using NodeType = typename KdTreeDataType::NodeType;
-  using NodeAllocatorType = typename KdTreeDataType::NodeAllocatorType;
+  using index_type = typename KdTreeData_::index_type;
+  using scalar_type = typename KdTreeData_::scalar_type;
+  using size_type = size_t;
+  using space_type = SpaceWrapper_;
+  using box_type = box<scalar_type, KdTreeData_::dim>;
+  using splitter_type = typename splitter_rule_traits<
+      Rule_>::template splitter_type<SpaceWrapper_>;
+  using kd_tree_data_type = KdTreeData_;
+  using node_type = typename kd_tree_data_type::node_type;
+  using node_allocator_type = typename kd_tree_data_type::node_allocator_type;
 
-  BuildKdTreeImpl(
-      SpaceType const& space,
-      SizeType const stop_value,
-      std::vector<IndexType>& indices,
-      NodeAllocatorType& allocator)
+  build_kd_tree_impl(
+      space_type const& space,
+      size_type const stop_value,
+      std::vector<index_type>& indices,
+      node_allocator_type& allocator)
       : space_(space),
-        stop_value_(static_cast<IndexType>(stop_value)),
+        stop_value_(static_cast<index_type>(stop_value)),
         splitter_(space_),
         indices_(indices),
         allocator_(allocator) {}
 
-  //! \brief Creates the full set of nodes for a KdTree.
-  inline NodeType* operator()(BoxType const& root_box) {
-    BoxType box(root_box);
-    return SplitIndices(0, indices_.begin(), indices_.end(), box);
+  //! \brief Creates the full set of nodes for a kd_tree.
+  inline node_type* operator()(box_type const& root_box) {
+    box_type box(root_box);
+    return split_indices(0, indices_.begin(), indices_.end(), box);
   }
 
  private:
@@ -347,17 +347,17 @@ class BuildKdTreeImpl {
   //! nodes can have smaller bounding boxes than the original ones, we can
   //! improve query times.
   template <typename RandomAccessIterator_>
-  inline NodeType* SplitIndices(
-      IndexType const depth,
+  inline node_type* split_indices(
+      index_type const depth,
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end,
-      BoxType& box) const {
-    NodeType* node = allocator_.Allocate();
+      box_type& box) const {
+    node_type* node = allocator_.allocate();
     //
     if (is_leaf(depth, begin, end)) {
       node->data.leaf.begin_idx =
-          static_cast<IndexType>(begin - indices_.begin());
-      node->data.leaf.end_idx = static_cast<IndexType>(end - indices_.begin());
+          static_cast<index_type>(begin - indices_.begin());
+      node->data.leaf.end_idx = static_cast<index_type>(end - indices_.begin());
       node->left = nullptr;
       node->right = nullptr;
       // Keep the original box in case it was empty. This can only happen with
@@ -365,49 +365,49 @@ class BuildKdTreeImpl {
       // TODO Optimize node usage for midpoint split (avoid empty nodes).
       if constexpr (std::is_same_v<Rule_, midpoint_max_side_t>) {
         if (end > begin) {
-          ComputeBoundingBox(begin, end, box);
+          compute_bounding_box(begin, end, box);
         }
       }
     } else {
       // split equals end for the left branch and begin for the right branch.
       RandomAccessIterator_ split;
-      SizeType split_dim;
-      ScalarType split_val;
+      size_type split_dim;
+      scalar_type split_val;
       splitter_(depth, begin, end, box, split, split_dim, split_val);
 
-      BoxType right = box;
+      box_type right = box;
       // Argument box will function as the left bounding box until we merge
       // left and right again at the end of this code section.
       box.max(split_dim) = split_val;
       right.min(split_dim) = split_val;
 
-      node->left = SplitIndices(depth + 1, begin, split, box);
-      node->right = SplitIndices(depth + 1, split, end, right);
+      node->left = split_indices(depth + 1, begin, split, box);
+      node->right = split_indices(depth + 1, split, end, right);
 
-      node->SetBranch(box, right, split_dim);
+      node->set_branch(box, right, split_dim);
 
       // Merges both child boxes. We can expect any of the min max values to
       // change except for the ones of split_dim.
-      box.Fit(right);
+      box.fit(right);
     }
 
     return node;
   }
 
   template <typename RandomAccessIterator_>
-  inline void ComputeBoundingBox(
+  inline void compute_bounding_box(
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end,
-      BoxType& box) const {
-    box.FillInverseMax();
+      box_type& box) const {
+    box.fill_inverse_max();
     for (; begin < end; ++begin) {
-      box.Fit(space_[*begin]);
+      box.fit(space_[*begin]);
     }
   }
 
   template <typename RandomAccessIterator_>
   inline bool is_leaf(
-      IndexType depth,
+      index_type depth,
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end) const {
     if constexpr (std::is_same_v<Stop_, max_leaf_size_t>) {
@@ -417,91 +417,91 @@ class BuildKdTreeImpl {
     }
   }
 
-  SpaceType const& space_;
-  IndexType const stop_value_;
-  SplitterType splitter_;
-  std::vector<IndexType>& indices_;
-  NodeAllocatorType& allocator_;
+  space_type const& space_;
+  index_type const stop_value_;
+  splitter_type splitter_;
+  std::vector<index_type>& indices_;
+  node_allocator_type& allocator_;
 };
 
-//! \brief KdTree meta information depending on the SpaceTag_ template argument.
+//! \brief kd_tree meta information depending on the SpaceTag_ template
+//! argument.
 template <typename SpaceTag_>
-struct KdTreeSpaceTagTraits;
+struct kd_tree_space_tag_traits;
 
-//! \brief KdTree meta information for the EuclideanSpaceTag.
+//! \brief kd_tree meta information for the euclidean_space_tag.
 template <>
-struct KdTreeSpaceTagTraits<EuclideanSpaceTag> {
+struct kd_tree_space_tag_traits<euclidean_space_tag> {
   //! \brief Supported node type.
   template <typename Index_, typename Scalar_>
-  using NodeType = KdTreeNodeEuclidean<Index_, Scalar_>;
+  using node_type = kd_tree_node_euclidean<Index_, Scalar_>;
 };
 
-//! \brief KdTree meta information for the TopologicalSpaceTag.
+//! \brief kd_tree meta information for the topological_space_tag.
 template <>
-struct KdTreeSpaceTagTraits<TopologicalSpaceTag> {
+struct kd_tree_space_tag_traits<topological_space_tag> {
   //! \brief Supported node type.
   template <typename Index_, typename Scalar_>
-  using NodeType = KdTreeNodeTopological<Index_, Scalar_>;
+  using node_type = kd_tree_node_topological<Index_, Scalar_>;
 };
 
-template <typename KdTreeData_, Size Dim_>
-class BuildKdTree {
-  using IndexType = typename KdTreeData_::IndexType;
-  using ScalarType = typename KdTreeData_::ScalarType;
-  using NodeType = typename KdTreeData_::NodeType;
-  using BoxType = Box<ScalarType, Dim_>;
+template <typename KdTreeData_, size_t Dim_>
+class build_kd_tree {
+  using index_type = typename KdTreeData_::index_type;
+  using scalar_type = typename KdTreeData_::scalar_type;
+  using node_type = typename KdTreeData_::node_type;
+  using box_type = box<scalar_type, Dim_>;
 
  public:
-  using KdTreeDataType = KdTreeData_;
+  using kd_tree_data_type = KdTreeData_;
 
-  //! \brief Construct a KdTree given \p points , \p max_leaf_size and
-  //! SplitterType.
+  //! \brief Construct a kd_tree.
   template <
       typename SpaceWrapper_,
       typename Stop_,
       typename Bounds_,
       typename Rule_>
-  KdTreeDataType operator()(
+  kd_tree_data_type operator()(
       SpaceWrapper_ space,
       splitter_stop_condition_t<Stop_> const& stop_condition,
       splitter_start_bounds_t<Bounds_> const& start_bounds,
       splitter_rule_t<Rule_> const&) {
     static_assert(
-        std::is_same_v<ScalarType, typename SpaceWrapper_::ScalarType>);
-    static_assert(Dim_ == SpaceWrapper_::Dim);
+        std::is_same_v<scalar_type, typename SpaceWrapper_::scalar_type>);
+    static_assert(Dim_ == SpaceWrapper_::dim);
     assert(space.size() > 0);
 
-    using BuildKdTreeImplType =
-        BuildKdTreeImpl<SpaceWrapper_, Stop_, Rule_, KdTreeDataType>;
-    using NodeAllocatorType = typename KdTreeDataType::NodeAllocatorType;
+    using build_kd_tree_impl_type =
+        build_kd_tree_impl<SpaceWrapper_, Stop_, Rule_, kd_tree_data_type>;
+    using node_allocator_type = typename kd_tree_data_type::node_allocator_type;
 
-    std::vector<IndexType> indices(space.size());
+    std::vector<index_type> indices(space.size());
     std::iota(indices.begin(), indices.end(), 0);
-    BoxType root_box = box_from_bounds(space, start_bounds.derived());
-    NodeAllocatorType allocator;
-    NodeType* root_node = BuildKdTreeImplType{
+    box_type root_box = box_from_bounds(space, start_bounds.derived());
+    node_allocator_type allocator;
+    node_type* root_node = build_kd_tree_impl_type{
         space, stop_condition.derived().value, indices, allocator}(root_box);
 
-    return KdTreeDataType{
+    return kd_tree_data_type{
         std::move(indices), root_box, std::move(allocator), root_node};
   }
 
  private:
   template <typename SpaceWrapper_>
-  BoxType box_from_bounds(SpaceWrapper_ space, bounds_from_space_t) const {
-    return space.ComputeBoundingBox();
+  box_type box_from_bounds(SpaceWrapper_ space, bounds_from_space_t) const {
+    return space.compute_bounding_box();
   }
 
   template <typename SpaceWrapper_, typename Point_>
-  BoxType box_from_bounds(
+  box_type box_from_bounds(
       SpaceWrapper_ space, bounds_t<Point_> const& bounds) const {
-    internal::PointWrapper<Point_> min(bounds.min());
-    internal::PointWrapper<Point_> max(bounds.max());
-    BoxType box(space.sdim());
+    internal::point_wrapper<Point_> min(bounds.min());
+    internal::point_wrapper<Point_> max(bounds.max());
+    box_type box(space.sdim());
 
-    box.FillInverseMax();
-    box.Fit(min.data());
-    box.Fit(max.data());
+    box.fill_inverse_max();
+    box.fit(min.data());
+    box.fit(max.data());
     return box;
   }
 };

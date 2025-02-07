@@ -21,38 +21,39 @@ template <
     typename PointWrapper_,
     typename Visitor_,
     typename Index_>
-class SearchNearestEuclidean {
+class search_nearest_euclidean {
  public:
-  using IndexType = Index_;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  using PointType = Point<ScalarType, SpaceWrapper_::Dim>;
-  //! \brief Node type supported by this SearchNearestEuclidean.
-  using NodeType = KdTreeNodeEuclidean<IndexType, ScalarType>;
+  using index_type = Index_;
+  using scalar_type = typename SpaceWrapper_::scalar_type;
+  using point_type = point<scalar_type, SpaceWrapper_::dim>;
+  //! \brief Node type supported by search_nearest_euclidean.
+  using node_type = kd_tree_node_euclidean<index_type, scalar_type>;
 
-  inline SearchNearestEuclidean(
+  inline search_nearest_euclidean(
       SpaceWrapper_ space,
       Metric_ metric,
-      std::vector<IndexType> const& indices,
+      std::vector<index_type> const& indices,
       PointWrapper_ query,
       Visitor_& visitor)
       : space_(space),
         metric_(metric),
         indices_(indices),
         query_(query),
-        node_box_offset_(PointType::FromSize(space_.sdim())),
+        node_box_offset_(point_type::from_size(space_.sdim())),
         visitor_(visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
-  inline void operator()(NodeType const* const node) {
-    node_box_offset_.Fill(ScalarType(0.0));
-    SearchNearest(node, ScalarType(0.0));
+  inline void operator()(node_type const* const node) {
+    node_box_offset_.fill(scalar_type(0.0));
+    search_nearest(node, scalar_type(0.0));
   }
 
  private:
-  inline void SearchNearest(
-      NodeType const* const node, ScalarType node_box_distance) {
-    if (node->IsLeaf()) {
-      for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+  inline void search_nearest(
+      node_type const* const node, scalar_type node_box_distance) {
+    if (node->is_leaf()) {
+      for (index_type i = node->data.leaf.begin_idx;
+           i < node->data.leaf.end_idx;
            ++i) {
         visitor_(
             indices_[i],
@@ -61,10 +62,10 @@ class SearchNearestEuclidean {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      ScalarType const v = query_[node->data.branch.split_dim];
-      ScalarType new_offset;
-      NodeType const* node_1st;
-      NodeType const* node_2nd;
+      scalar_type const v = query_[node->data.branch.split_dim];
+      scalar_type new_offset;
+      node_type const* node_1st;
+      node_type const* node_2nd;
 
       // On equals we would possibly need to go left as well. However, this is
       // handled by the if statement below this one: the check that max search
@@ -85,12 +86,12 @@ class SearchNearestEuclidean {
       }
 
       // The distance and offset for node_1st is the same as that of its parent.
-      SearchNearest(node_1st, node_box_distance);
+      search_nearest(node_1st, node_box_distance);
 
       // Calculate the distance to node_2nd.
       // NOTE: This method only works with Lp norms to which the exponent is not
       // applied.
-      ScalarType const old_offset =
+      scalar_type const old_offset =
           node_box_offset_[node->data.branch.split_dim];
       node_box_distance = node_box_distance - old_offset + new_offset;
 
@@ -99,7 +100,7 @@ class SearchNearestEuclidean {
       // split value we determine if we should go into the neighboring node.
       if (visitor_.max() >= node_box_distance) {
         node_box_offset_[node->data.branch.split_dim] = new_offset;
-        SearchNearest(node_2nd, node_box_distance);
+        search_nearest(node_2nd, node_box_distance);
         node_box_offset_[node->data.branch.split_dim] = old_offset;
       }
     }
@@ -107,9 +108,9 @@ class SearchNearestEuclidean {
 
   SpaceWrapper_ space_;
   Metric_ metric_;
-  std::vector<IndexType> const& indices_;
+  std::vector<index_type> const& indices_;
   PointWrapper_ query_;
-  PointType node_box_offset_;
+  point_type node_box_offset_;
   Visitor_& visitor_;
 };
 
@@ -120,38 +121,39 @@ template <
     typename PointWrapper_,
     typename Visitor_,
     typename Index_>
-class SearchNearestTopological {
+class search_nearest_topological {
  public:
-  using IndexType = Index_;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  using PointType = Point<ScalarType, SpaceWrapper_::Dim>;
-  //! \brief Node type supported by this SearchNearestTopological.
-  using NodeType = KdTreeNodeTopological<IndexType, ScalarType>;
+  using index_type = Index_;
+  using scalar_type = typename SpaceWrapper_::scalar_type;
+  using point_type = point<scalar_type, SpaceWrapper_::dim>;
+  //! \brief Node type supported by search_nearest_topological.
+  using node_type = kd_tree_node_topological<index_type, scalar_type>;
 
-  inline SearchNearestTopological(
+  inline search_nearest_topological(
       SpaceWrapper_ space,
       Metric_ metric,
-      std::vector<IndexType> const& indices,
+      std::vector<index_type> const& indices,
       PointWrapper_ query,
       Visitor_& visitor)
       : space_(space),
         metric_(metric),
         indices_(indices),
         query_(query),
-        node_box_offset_(PointType::FromSize(space_.sdim())),
+        node_box_offset_(point_type::from_size(space_.sdim())),
         visitor_(visitor) {}
 
   //! \brief Search nearest neighbors starting from \p node.
-  inline void operator()(NodeType const* const node) {
-    node_box_offset_.Fill(ScalarType(0.0));
-    SearchNearest(node, ScalarType(0.0));
+  inline void operator()(node_type const* const node) {
+    node_box_offset_.fill(scalar_type(0.0));
+    search_nearest(node, scalar_type(0.0));
   }
 
  private:
-  inline void SearchNearest(
-      NodeType const* const node, ScalarType node_box_distance) {
-    if (node->IsLeaf()) {
-      for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+  inline void search_nearest(
+      node_type const* const node, scalar_type node_box_distance) {
+    if (node->is_leaf()) {
+      for (index_type i = node->data.leaf.begin_idx;
+           i < node->data.leaf.end_idx;
            ++i) {
         visitor_(
             indices_[i],
@@ -160,21 +162,21 @@ class SearchNearestTopological {
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      ScalarType const v = query_[node->data.branch.split_dim];
+      scalar_type const v = query_[node->data.branch.split_dim];
       // Determine the distance to the boxes of the children of this node.
-      ScalarType const d1 = metric_(
+      scalar_type const d1 = metric_(
           v,
           node->data.branch.left_min,
           node->data.branch.left_max,
           node->data.branch.split_dim);
-      ScalarType const d2 = metric_(
+      scalar_type const d2 = metric_(
           v,
           node->data.branch.right_min,
           node->data.branch.right_max,
           node->data.branch.split_dim);
-      NodeType const* node_1st;
-      NodeType const* node_2nd;
-      ScalarType new_offset;
+      node_type const* node_1st;
+      node_type const* node_2nd;
+      scalar_type new_offset;
 
       // Visit the closest child/box first.
       if (d1 < d2) {
@@ -187,9 +189,9 @@ class SearchNearestTopological {
         new_offset = d1;
       }
 
-      SearchNearest(node_1st, node_box_distance);
+      search_nearest(node_1st, node_box_distance);
 
-      ScalarType const old_offset =
+      scalar_type const old_offset =
           node_box_offset_[node->data.branch.split_dim];
       node_box_distance = node_box_distance - old_offset + new_offset;
 
@@ -198,7 +200,7 @@ class SearchNearestTopological {
       // split value we determine if we should go into the neighboring node.
       if (visitor_.max() >= node_box_distance) {
         node_box_offset_[node->data.branch.split_dim] = new_offset;
-        SearchNearest(node_2nd, node_box_distance);
+        search_nearest(node_2nd, node_box_distance);
         node_box_offset_[node->data.branch.split_dim] = old_offset;
       }
     }
@@ -206,39 +208,39 @@ class SearchNearestTopological {
 
   SpaceWrapper_ space_;
   Metric_ metric_;
-  std::vector<IndexType> const& indices_;
+  std::vector<index_type> const& indices_;
   PointWrapper_ query_;
-  PointType node_box_offset_;
+  point_type node_box_offset_;
   Visitor_& visitor_;
 };
 
 //! \brief A functor that provides range searches for Euclidean spaces. Query
-//! time is bounded by O(n^(1-1/Dim)+k).
+//! time is bounded by O(n^(1-1/dimension)+k).
 //! \details Many tree nodes are excluded by checking if they intersect with the
 //! box of the query. We don't store the bounding box of each node but calculate
-//! them at run time. This slows down SearchBox in favor of having faster
+//! them at run time. This slows down search_box in favor of having faster
 //! nearest neighbor searches.
 template <typename SpaceWrapper_, typename Metric_, typename Index_>
-class SearchBoxEuclidean {
+class search_box_euclidean {
  public:
   // TODO Perhaps we can support it for both topological and Euclidean spaces.
   static_assert(
-      std::is_same_v<typename Metric_::SpaceTag, EuclideanSpaceTag>,
+      std::is_same_v<typename Metric_::space_category, euclidean_space_tag>,
       "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
 
-  using IndexType = Index_;
-  using ScalarType = typename SpaceWrapper_::ScalarType;
-  static Size constexpr Dim = SpaceWrapper_::Dim;
-  using BoxType = Box<ScalarType, Dim>;
-  using BoxMapType = BoxMap<ScalarType const, Dim>;
+  using index_type = Index_;
+  using scalar_type = typename SpaceWrapper_::scalar_type;
+  static size_t constexpr dim = SpaceWrapper_::dim;
+  using box_type = box<scalar_type, dim>;
+  using box_map_type = box_map<scalar_type const, dim>;
 
-  inline SearchBoxEuclidean(
+  inline search_box_euclidean(
       SpaceWrapper_ space,
       Metric_ metric,
-      std::vector<IndexType> const& indices,
-      BoxType const& root_box,
-      BoxMapType const& query,
-      std::vector<IndexType>& idxs)
+      std::vector<index_type> const& indices,
+      box_type const& root_box,
+      box_map_type const& query,
+      std::vector<index_type>& idxs)
       : space_(space),
         metric_(metric),
         indices_(indices),
@@ -247,24 +249,25 @@ class SearchBoxEuclidean {
         idxs_(idxs) {}
 
   //! \brief Range search starting from \p node.
-  template <typename Node>
-  inline void operator()(Node const* const node) {
-    if (node->IsLeaf()) {
-      for (IndexType i = node->data.leaf.begin_idx; i < node->data.leaf.end_idx;
+  template <typename Node_>
+  inline void operator()(Node_ const* const node) {
+    if (node->is_leaf()) {
+      for (index_type i = node->data.leaf.begin_idx;
+           i < node->data.leaf.end_idx;
            ++i) {
-        if (query_.Contains(space_[indices_[i]])) {
+        if (query_.contains(space_[indices_[i]])) {
           idxs_.push_back(indices_[i]);
         }
       }
     } else {
-      ScalarType old_value = box_.max(node->data.branch.split_dim);
+      scalar_type old_value = box_.max(node->data.branch.split_dim);
       box_.max(node->data.branch.split_dim) = node->data.branch.left_max;
 
       // Check if the left node is fully contained. If true, report all its
       // indices. Else, if its partially contained, continue the range search
       // down the left node.
-      if (query_.Contains(box_)) {
-        ReportNode(node->left);
+      if (query_.contains(box_)) {
+        report_node(node->left);
       } else if (
           query_.min(node->data.branch.split_dim) <
           node->data.branch.left_max) {
@@ -276,8 +279,8 @@ class SearchBoxEuclidean {
       box_.min(node->data.branch.split_dim) = node->data.branch.right_min;
 
       // Same as the left side.
-      if (query_.Contains(box_)) {
-        ReportNode(node->right);
+      if (query_.contains(box_)) {
+        report_node(node->right);
       } else if (
           query_.max(node->data.branch.split_dim) >
           node->data.branch.right_min) {
@@ -290,12 +293,12 @@ class SearchBoxEuclidean {
 
  private:
   //! \brief Reports all indices contained by \p node.
-  template <typename Node>
-  inline void ReportNode(Node const* const node) const {
-    IndexType begin;
-    IndexType end;
+  template <typename Node_>
+  inline void report_node(Node_ const* const node) const {
+    index_type begin;
+    index_type end;
 
-    if (node->IsLeaf()) {
+    if (node->is_leaf()) {
       begin = node->data.leaf.begin_idx;
       end = node->data.leaf.end_idx;
     } else {
@@ -303,8 +306,8 @@ class SearchBoxEuclidean {
       // right. This means that for any node, its left-most and right-most leaf
       // node descendants will respectively store the begin index and end index
       // of the entire range of points contained by that node.
-      begin = ReportLeft(node->left);
-      end = ReportRight(node->right);
+      begin = report_left(node->left);
+      end = report_right(node->right);
     }
 
     std::copy(
@@ -313,31 +316,31 @@ class SearchBoxEuclidean {
         std::back_inserter(idxs_));
   }
 
-  template <typename Node>
-  inline IndexType ReportLeft(Node const* const node) const {
-    if (node->IsLeaf()) {
+  template <typename Node_>
+  inline index_type report_left(Node_ const* const node) const {
+    if (node->is_leaf()) {
       return node->data.leaf.begin_idx;
     } else {
-      return ReportLeft(node->left);
+      return report_left(node->left);
     }
   }
 
-  template <typename Node>
-  inline IndexType ReportRight(Node const* const node) const {
-    if (node->IsLeaf()) {
+  template <typename Node_>
+  inline index_type report_right(Node_ const* const node) const {
+    if (node->is_leaf()) {
       return node->data.leaf.end_idx;
     } else {
-      return ReportRight(node->right);
+      return report_right(node->right);
     }
   }
 
   SpaceWrapper_ space_;
   Metric_ metric_;
-  std::vector<IndexType> const& indices_;
+  std::vector<index_type> const& indices_;
   // This variable is used for maintaining a running bounding box.
-  BoxType box_;
-  BoxMapType const& query_;
-  std::vector<IndexType>& idxs_;
+  box_type box_;
+  box_map_type const& query_;
+  std::vector<index_type>& idxs_;
 };
 
 }  // namespace pico_tree::internal

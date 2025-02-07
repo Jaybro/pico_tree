@@ -5,67 +5,67 @@
 
 namespace pico_tree::internal {
 
-template <typename Scalar_, Size Dim_>
-struct MatrixSpaceStorage {
-  constexpr MatrixSpaceStorage(Size size, Size)
+template <typename Scalar_, size_t Dim_>
+struct matrix_space_storage {
+  constexpr matrix_space_storage(size_t size, size_t)
       : size(size), elems(size * sdim) {}
 
-  Size size;
-  static Size constexpr sdim = Dim_;
+  size_t size;
+  static constexpr size_t sdim = Dim_;
   std::vector<Scalar_> elems;
 };
 
 template <typename Scalar_>
-struct MatrixSpaceStorage<Scalar_, kDynamicSize> {
-  constexpr MatrixSpaceStorage(Size size, Size sdim)
+struct matrix_space_storage<Scalar_, dynamic_size> {
+  constexpr matrix_space_storage(size_t size, size_t sdim)
       : size(size), sdim(sdim), elems(size * sdim) {}
 
-  Size size;
-  Size sdim;
+  size_t size;
+  size_t sdim;
   std::vector<Scalar_> elems;
 };
 
-template <typename Scalar_, Size Dim_>
-class MatrixSpace {
+template <typename Scalar_, size_t Dim_>
+class matrix_space {
  public:
-  using ScalarType = Scalar_;
-  using SizeType = pico_tree::Size;
-  static SizeType constexpr Dim = Dim_;
+  using scalar_type = Scalar_;
+  using size_type = pico_tree::size_t;
+  static size_type constexpr dim = Dim_;
 
-  constexpr MatrixSpace(SizeType size) noexcept : storage_(size, Dim) {}
+  constexpr matrix_space(size_type size) noexcept : storage_(size, dim) {}
 
-  constexpr MatrixSpace(SizeType size, SizeType sdim) noexcept
+  constexpr matrix_space(size_type size, size_type sdim) noexcept
       : storage_(size, sdim) {}
 
-  constexpr PointMap<Scalar_ const, Dim_> operator[](
-      SizeType i) const noexcept {
+  constexpr point_map<Scalar_ const, Dim_> operator[](
+      size_type i) const noexcept {
     return {data(i), storage_.sdim};
   }
 
-  constexpr PointMap<Scalar_, Dim_> operator[](SizeType i) noexcept {
+  constexpr point_map<Scalar_, Dim_> operator[](size_type i) noexcept {
     return {data(i), storage_.sdim};
   }
 
-  constexpr ScalarType const* data() const noexcept {
+  constexpr scalar_type const* data() const noexcept {
     return storage_.elems.data();
   }
 
-  constexpr ScalarType* data() noexcept { return storage_.elems.data(); }
+  constexpr scalar_type* data() noexcept { return storage_.elems.data(); }
 
-  constexpr ScalarType const* data(SizeType i) const noexcept {
+  constexpr scalar_type const* data(size_type i) const noexcept {
     return storage_.elems.data() + i * storage_.sdim;
   }
 
-  constexpr ScalarType* data(SizeType i) noexcept {
+  constexpr scalar_type* data(size_type i) noexcept {
     return storage_.elems.data() + i * storage_.sdim;
   }
 
-  constexpr SizeType size() const noexcept { return storage_.size; }
+  constexpr size_type size() const noexcept { return storage_.size; }
 
-  constexpr SizeType sdim() const noexcept { return storage_.sdim; }
+  constexpr size_type sdim() const noexcept { return storage_.sdim; }
 
  protected:
-  internal::MatrixSpaceStorage<Scalar_, Dim_> storage_;
+  internal::matrix_space_storage<Scalar_, Dim_> storage_;
 };
 
 }  // namespace pico_tree::internal

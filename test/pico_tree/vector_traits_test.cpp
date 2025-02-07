@@ -6,28 +6,28 @@
 #include "common.hpp"
 
 TEST(VectorTraitsTest, Interface) {
-  std::vector<Point2f> points = {{1.0f, 2.0f}, {3.0f, 4.0f}};
+  std::vector<pico_tree::point_2f> points = {{1.0f, 2.0f}, {3.0f, 4.0f}};
 
-  CheckSpaceAdaptor<Point2f::Dim>(
+  check_space_adaptor<pico_tree::point_2f::dim>(
       points,
-      Point2f::Dim,
+      pico_tree::point_2f::dim,
       points.size(),
-      static_cast<pico_tree::Size>(0),
+      static_cast<pico_tree::size_t>(0),
       points[0].data());
   // VectorTraitsTest is used to test the default std::reference_wrapper<>
   // specialization.
-  CheckSpaceAdaptor<Point2f::Dim>(
+  check_space_adaptor<pico_tree::point_2f::dim>(
       std::ref(points),
-      Point2f::Dim,
+      pico_tree::point_2f::dim,
       points.size(),
-      static_cast<pico_tree::Size>(0),
+      static_cast<pico_tree::size_t>(0),
       points[0].data());
   // VectorTraitsTest is used to test the default std::reference_wrapper<const>
   // specialization.
-  CheckSpaceAdaptor<Point2f::Dim>(
+  check_space_adaptor<pico_tree::point_2f::dim>(
       std::cref(points),
-      Point2f::Dim,
+      pico_tree::point_2f::dim,
       points.size(),
-      static_cast<pico_tree::Size>(0),
+      static_cast<pico_tree::size_t>(0),
       points[0].data());
 }

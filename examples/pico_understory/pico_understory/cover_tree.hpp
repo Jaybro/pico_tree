@@ -32,188 +32,189 @@
 
 namespace pico_tree {
 
-template <typename Space_, typename Metric_ = L2, typename Index_ = int>
-class CoverTree {
+template <typename Space_, typename Metric_ = metric_l2, typename Index_ = int>
+class cover_tree {
  private:
-  using Index = Index_;
-  using Space = Space_;
-  using SpaceWrapperType = internal::SpaceWrapper<Space>;
-  using Scalar = typename SpaceWrapperType::ScalarType;
-  using Node = internal::CoverTreeNode<Index, Scalar>;
-  using BuildCoverTreeType =
-      internal::BuildCoverTree<SpaceWrapperType, Metric_, Index_>;
-  using CoverTreeDataType = typename BuildCoverTreeType::CoverTreeDataType;
+  using space_wrapper_type = internal::space_wrapper<Space_>;
+  using node_type = internal::
+      cover_tree_node<Index_, typename space_wrapper_type::scalar_type>;
+  using build_cover_tree_type =
+      internal::build_cover_tree<space_wrapper_type, Metric_, Index_>;
+  using cover_tree_data_type =
+      typename build_cover_tree_type::cover_tree_data_type;
 
  public:
   //! \brief Index type.
-  using IndexType = Index;
-  //! \brief Scalar type.
-  using ScalarType = Scalar;
-  //! \brief CoverTree dimension. It equals pico_tree::kDynamicSize in case Dim
-  //! is only known at run-time.
-  static constexpr int Dim = SpaceWrapperType::Dim;
+  using index_type = Index_;
+  //! \brief scalar_type type.
+  using scalar_type = typename space_wrapper_type::scalar_type;
+  //! \brief cover_tree dimension. It equals pico_tree::dynamic_size in case
+  //! dim is only known at run-time.
+  static constexpr int dim = space_wrapper_type::dim;
   //! \brief Point set or adaptor type.
-  using SpaceType = Space;
+  using space_type = Space_;
   //! \brief The metric used for various searches.
-  using MetricType = Metric_;
+  using metric_type = Metric_;
   //! \brief Neighbor type of various search resuls.
-  using NeighborType = Neighbor<Index, Scalar>;
+  using neighbor_type = neighbor<index_type, scalar_type>;
 
  public:
-  //! \brief The CoverTree cannot be copied.
-  //! \details The CoverTree uses pointers to nodes and copying pointers is not
+  //! \brief The cover_tree cannot be copied.
+  //! \details The cover_tree uses pointers to nodes and copying pointers is not
   //! the same as creating a deep copy. For now we are not interested in
   //! providing a deep copy.
   //! \private
-  CoverTree(CoverTree const&) = delete;
+  cover_tree(cover_tree const&) = delete;
 
-  //! \brief Move constructor of the CoverTree.
+  //! \brief Move constructor of the cover_tree.
   //! \details The move constructor is not implicitly created because of the
   //! deleted copy constructor.
   //! \private
-  CoverTree(CoverTree&&) = default;
+  cover_tree(cover_tree&&) = default;
 
-  //! \brief Creates a CoverTree given \p points and a leveling \p base.
-  CoverTree(Space space, Scalar base)
+  //! \brief Creates a cover_tree given \p points and a leveling \p base.
+  cover_tree(space_type space, scalar_type base)
       : space_(std::move(space)),
         metric_(),
-        data_(BuildCoverTreeType()(SpaceWrapperType(space_), metric_, base)) {}
+        data_(build_cover_tree_type()(
+            space_wrapper_type(space_), metric_, base)) {}
 
   //! \brief Searches for the nearest neighbor of point \p x.
-  template <typename P>
-  inline void SearchNn(P const& x, NeighborType& nn) const {
-    internal::SearchNn<NeighborType> v(nn);
-    SearchNearest(data_.root_node, x, v);
+  template <typename P_>
+  inline void search_nn(P_ const& x, neighbor_type& nn) const {
+    internal::search_nn<neighbor_type> v(nn);
+    search_nearest(data_.root_node, x, v);
   }
 
   //! \brief Searches for an approximate nearest neighbor of point \p x.
-  template <typename P>
-  inline void SearchNn(P const& x, ScalarType const e, NeighborType& nn) const {
-    internal::SearchApproximateNn<NeighborType> v(e, nn);
-    SearchNearest(data_.root_node, x, v);
+  template <typename P_>
+  inline void search_nn(
+      P_ const& x, scalar_type const e, neighbor_type& nn) const {
+    internal::search_approximate_nn<neighbor_type> v(e, nn);
+    search_nearest(data_.root_node, x, v);
   }
 
   //! \brief Searches for the k nearest neighbors of point \p x, where k equals
   //! std::distance(begin, end). It is expected that the value type of the
-  //! iterator equals Neighbor<Index, Scalar>.
-  template <typename P, typename RandomAccessIterator>
-  inline void SearchKnn(
-      P const& x, RandomAccessIterator begin, RandomAccessIterator end) const {
+  //! iterator equals Neighbor<Index, scalar_type>.
+  template <typename P_, typename RandomAccessIterator>
+  inline void search_knn(
+      P_ const& x, RandomAccessIterator begin, RandomAccessIterator end) const {
     static_assert(
         std::is_same_v<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            NeighborType>,
+            neighbor_type>,
         "ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_TYPE");
 
-    internal::SearchKnn<RandomAccessIterator> v(begin, end);
-    SearchNearest(data_.root_node, x, v);
+    internal::search_knn<RandomAccessIterator> v(begin, end);
+    search_nearest(data_.root_node, x, v);
   }
 
   //! \brief Searches for the \p k nearest neighbors of point \p x and stores
   //! the results in output vector \p knn.
-  template <typename P>
-  inline void SearchKnn(
-      P const& x, Size const k, std::vector<NeighborType>& knn) const {
+  template <typename P_>
+  inline void search_knn(
+      P_ const& x, size_t const k, std::vector<neighbor_type>& knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn.resize(std::min(k, SpaceWrapperType(space_).size()));
-    SearchKnn(x, knn.begin(), knn.end());
+    knn.resize(std::min(k, space_wrapper_type(space_).size()));
+    search_knn(x, knn.begin(), knn.end());
   }
 
   //! \brief Searches for the k approximate nearest neighbors of point \p x,
   //! where k equals std::distance(begin, end). It is expected that the value
-  //! type of the iterator equals Neighbor<Index, Scalar>.
-  template <typename P, typename RandomAccessIterator>
-  inline void SearchKnn(
-      P const& x,
-      Scalar const e,
+  //! type of the iterator equals Neighbor<Index, scalar_type>.
+  template <typename P_, typename RandomAccessIterator>
+  inline void search_knn(
+      P_ const& x,
+      scalar_type const e,
       RandomAccessIterator begin,
       RandomAccessIterator end) const {
     static_assert(
         std::is_same_v<
             typename std::iterator_traits<RandomAccessIterator>::value_type,
-            NeighborType>,
+            neighbor_type>,
         "ITERATOR_VALUE_TYPE_DOES_NOT_EQUAL_NEIGHBOR_TYPE");
 
-    internal::SearchApproximateKnn<RandomAccessIterator> v(e, begin, end);
-    SearchNearest(data_.root_node, x, v);
+    internal::search_approximate_knn<RandomAccessIterator> v(e, begin, end);
+    search_nearest(data_.root_node, x, v);
   }
 
   //! \brief Searches for the \p k approximate nearest neighbors of point \p x
   //! and stores the results in output vector \p knn.
-  template <typename P>
-  inline void SearchKnn(
-      P const& x,
-      Size const k,
-      Scalar const e,
-      std::vector<NeighborType>& knn) const {
+  template <typename P_>
+  inline void search_knn(
+      P_ const& x,
+      size_t const k,
+      scalar_type const e,
+      std::vector<neighbor_type>& knn) const {
     // If it happens that the point set has less points than k we just return
     // all points in the set.
-    knn.resize(std::min(k, SpaceWrapperType(space_).size()));
-    SearchKnn(x, e, knn.begin(), knn.end());
+    knn.resize(std::min(k, space_wrapper_type(space_).size()));
+    search_knn(x, e, knn.begin(), knn.end());
   }
 
   //! \brief Searches for all the neighbors of point \p x that are within radius
   //! \p radius and stores the results in output vector \p n.
-  template <typename P>
-  inline void SearchRadius(
-      P const& x,
-      Scalar const radius,
-      std::vector<NeighborType>& n,
+  template <typename P_>
+  inline void search_radius(
+      P_ const& x,
+      scalar_type const radius,
+      std::vector<neighbor_type>& n,
       bool const sort = false) const {
-    internal::SearchRadius<NeighborType> v(radius, n);
-    SearchNearest(data_.root_node, x, v);
+    internal::search_radius<neighbor_type> v(radius, n);
+    search_nearest(data_.root_node, x, v);
 
     if (sort) {
-      v.Sort();
+      v.sort();
     }
   }
 
   //! \brief Searches for the approximate neighbors of point \p x that are
   //! within radius \p radius and stores the results in output vector \p n.
-  template <typename P>
-  inline void SearchRadius(
-      P const& x,
-      Scalar const radius,
-      Scalar const e,
-      std::vector<NeighborType>& n,
+  template <typename P_>
+  inline void search_radius(
+      P_ const& x,
+      scalar_type const radius,
+      scalar_type const e,
+      std::vector<neighbor_type>& n,
       bool const sort = false) const {
-    internal::SearchApproximateRadius<NeighborType> v(e, radius, n);
-    SearchNearest(data_.root_node, x, v);
+    internal::search_approximate_radius<neighbor_type> v(e, radius, n);
+    search_nearest(data_.root_node, x, v);
 
     if (sort) {
-      v.Sort();
+      v.sort();
     }
   }
 
   //! \brief Point set used by the tree.
-  inline Space const& points() const { return space_; }
+  inline space_type const& points() const { return space_; }
 
   //! \brief Metric used for search queries.
-  inline MetricType const& metric() const { return metric_; }
+  inline metric_type const& metric() const { return metric_; }
 
  private:
   //! \brief Returns the nearest neighbor (or neighbors) of point \p x depending
   //! on their selection by visitor \p visitor for node \p node .
-  template <typename P, typename Visitor_>
-  inline void SearchNearest(
-      Node const* const node, P const& x, Visitor_& visitor) const {
-    internal::PointWrapper<P> p(x);
-    SpaceWrapperType space(space_);
-    internal::SearchNearestMetric<
-        SpaceWrapperType,
-        MetricType,
-        internal::PointWrapper<P>,
+  template <typename P_, typename Visitor_>
+  inline void search_nearest(
+      node_type const* const node, P_ const& x, Visitor_& visitor) const {
+    internal::point_wrapper<P_> p(x);
+    space_wrapper_type space(space_);
+    internal::search_nearest_metric<
+        space_wrapper_type,
+        metric_type,
+        internal::point_wrapper<P_>,
         Visitor_,
-        IndexType>(space, metric_, p, visitor)(node);
+        index_type>(space, metric_, p, visitor)(node);
   }
 
   //! Point set used for querying point data.
-  SpaceType space_;
+  space_type space_;
   //! Metric used for comparing distances.
-  MetricType metric_;
-  //! Data structure of the CoverTree.
-  CoverTreeDataType data_;
+  metric_type metric_;
+  //! Data structure of the cover_tree.
+  cover_tree_data_type data_;
 };
 
 }  // namespace pico_tree
