@@ -40,7 +40,8 @@ class map {
   using size_type = size_t;
   static constexpr size_type extent = Extent_;
 
-  constexpr map(element_type* data) noexcept : storage_(data, extent) {}
+  explicit constexpr map(element_type* data) noexcept
+      : storage_(data, extent) {}
 
   constexpr map(element_type* data, size_type size) noexcept
       : storage_(data, size) {}

@@ -88,82 +88,62 @@ struct point_traits<cv::Vec<Scalar_, Dim_>> {
   static constexpr size_type size(cv::Vec<Scalar_, Dim_> const&) { return dim; }
 };
 
-//! \brief The opencv_mat_wrapper class provides compile time properties to a
+//! \brief The opencv_mat_map class provides compile time properties to a
 //! cv::Mat.
+//! \see space_map<Scalar_, Dim_>
 template <typename Scalar_, size_t Dim_>
-class opencv_mat_wrapper {
+class opencv_mat_map : private space_map<point_map<Scalar_, Dim_>> {
+  using space_map<point_map<Scalar_, Dim_>>::space_map;
+
  public:
-  using scalar_type = Scalar_;
-  using size_type = size_t;
-  static constexpr size_type dim = Dim_;
-  using point_type = point_map<Scalar_ const, Dim_>;
+  using opencv_mat_type =
+      std::conditional_t<std::is_const_v<Scalar_>, cv::Mat const, cv::Mat>;
+  using typename space_map<point_map<Scalar_, Dim_>>::point_type;
+  using typename space_map<point_map<Scalar_, Dim_>>::scalar_type;
+  using space_map<point_map<Scalar_, Dim_>>::dim;
+  using typename space_map<point_map<Scalar_, Dim_>>::size_type;
 
-  inline opencv_mat_wrapper(cv::Mat mat)
-      : mat_(mat),
-        size_(static_cast<size_type>(mat_.rows)),
-        sdim_(mat_.step1()) {
-    if constexpr (dim != dynamic_size) {
-      assert(dim == sdim_);
-    }
-  }
+  using space_map<point_map<Scalar_, Dim_>>::operator[];
+  using space_map<point_map<Scalar_, Dim_>>::data;
+  using space_map<point_map<Scalar_, Dim_>>::size;
+  using space_map<point_map<Scalar_, Dim_>>::sdim;
 
-  inline point_type operator[](int i) const {
-    if constexpr (dim != dynamic_size) {
-      return {data(i)};
-    } else {
-      return {data(i), sdim()};
-    }
-  }
+  inline opencv_mat_map(opencv_mat_type mat)
+      : space_map<point_map<Scalar_, Dim_>>::space_map(
+            mat.template ptr<Scalar_>(),
+            static_cast<size_type>(mat.rows),
+            mat.step1()),
+        mat_(mat) {}
 
-  inline operator cv::Mat const&() const { return mat_; }
+  inline operator opencv_mat_type&() const { return mat_; }
 
-  inline operator cv::Mat&() { return mat_; }
-
-  inline scalar_type const* data(int i) const {
-    return mat_.template ptr<Scalar_>(i);
-  }
-
-  inline size_type size() const { return size_; }
-
-  inline constexpr size_type sdim() const {
-    if constexpr (dim != dynamic_size) {
-      return dim;
-    } else {
-      return sdim_;
-    }
-  }
-
-  inline cv::Mat const& mat() const { return mat_; }
-
-  inline cv::Mat& mat() { return mat_; }
+  inline opencv_mat_type& mat() const { return mat_; }
 
  private:
-  cv::Mat mat_;
-  size_type size_;
-  size_type sdim_;
+  opencv_mat_type mat_;
 };
 
 //! \brief Provides an interface for cv::Mat. Each row is considered a point.
 //! \tparam Scalar_ Point coordinate type.
 //! \tparam Dim_ The spatial dimension of each point. Set to
-//! pico_tree::kDynamicSize when the dimension is only known at run-time.
+//! pico_tree::dynamic_size when the dimension is only known at run-time.
 template <typename Scalar_, size_t Dim_>
-struct space_traits<opencv_mat_wrapper<Scalar_, Dim_>> {
+struct space_traits<opencv_mat_map<Scalar_, Dim_>> {
   //! \brief The space_type of these traits.
-  using space_type = opencv_mat_wrapper<Scalar_, Dim_>;
+  using space_type = opencv_mat_map<Scalar_, Dim_>;
   //! \brief The point type used by space_type.
-  using point_type = point_map<Scalar_ const, Dim_>;
+  using point_type = typename space_type::point_type;
   //! \brief The scalar type of point coordinates.
-  using scalar_type = Scalar_;
+  using scalar_type = typename space_type::scalar_type;
   //! \brief The size and index type of point coordinates.
-  using size_type = size_t;
+  using size_type = typename space_type::size_type;
   //! \brief Compile time spatial dimension.
-  static constexpr size_type dim = Dim_;
+  static constexpr size_type dim = space_type::dim;
 
   //! \brief Returns the point at \p idx from \p space.
   template <typename Index_>
   inline static point_type point_at(space_type const& space, Index_ idx) {
-    return space[static_cast<int>(idx)];
+    return space[static_cast<size_type>(idx)];
   }
 
   //! \brief Returns number of points contained by \p space.

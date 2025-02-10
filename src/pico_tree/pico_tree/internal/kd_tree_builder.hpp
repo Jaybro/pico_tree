@@ -88,17 +88,17 @@ struct splitter_stop_condition_t {
 
 //! \brief The maximum number of points allowed in a leaf node.
 struct max_leaf_size_t : public splitter_stop_condition_t<max_leaf_size_t> {
-  constexpr max_leaf_size_t(std::size_t v) : value(v) { assert(value > 0); }
+  constexpr max_leaf_size_t(size_t v) : value(v) { assert(value > 0); }
 
-  std::size_t value;
+  size_t value;
 };
 
 //! \brief The maximum depth allowed for a leaf node. A depth of zero means that
 //! the root node becomes a leaf node.
 struct max_leaf_depth_t : public splitter_stop_condition_t<max_leaf_depth_t> {
-  constexpr max_leaf_depth_t(std::size_t v) : value(v) {}
+  constexpr max_leaf_depth_t(size_t v) : value(v) {}
 
-  std::size_t value;
+  size_t value;
 };
 
 template <typename Derived_>
@@ -343,7 +343,7 @@ class build_kd_tree_impl {
   //! until leaf nodes are reached. Inside the leaf nodes the boxes are updated
   //! to be the bounding boxes of the points they contain. While unwinding the
   //! recursion we update the split information for each branch node based on
-  //! merging leaf nodes. Since the updated split informaton based on the leaf
+  //! merging leaf nodes. Since the updated split information based on the leaf
   //! nodes can have smaller bounding boxes than the original ones, we can
   //! improve query times.
   template <typename RandomAccessIterator_>
@@ -413,7 +413,12 @@ class build_kd_tree_impl {
     if constexpr (std::is_same_v<Stop_, max_leaf_size_t>) {
       return (end - begin) <= stop_value_;
     } else {
-      return depth == stop_value_;
+      // Either stop when the depth is reached or when the amount of points that
+      // remain are equal or less than 1. In the latter case the data cannot be
+      // split any further and stopping here also prevents problems for the
+      // sliding_midpoint_max_side_t splitter rule where none of the branches is
+      // allowed to be empty.
+      return (depth == stop_value_) || ((end - begin) <= 1);
     }
   }
 
@@ -500,8 +505,8 @@ class build_kd_tree {
     box_type box(space.sdim());
 
     box.fill_inverse_max();
-    box.fit(min.data());
-    box.fit(max.data());
+    box.fit(min.begin());
+    box.fit(max.begin());
     return box;
   }
 };

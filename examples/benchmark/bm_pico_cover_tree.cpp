@@ -41,7 +41,7 @@ BENCHMARK_REGISTER_F(BmPicoCoverTree, BuildCt)
 BENCHMARK_DEFINE_F(BmPicoCoverTree, KnnCt)(benchmark::State& state) {
   scalar_type base =
       static_cast<scalar_type>(state.range(0)) / scalar_type(10.0);
-  int knn_count = state.range(1);
+  pico_tree::size_t knn_count = static_cast<pico_tree::size_t>(state.range(1));
 
   pico_cover_tree<point_type> tree(points_tree_, base);
 

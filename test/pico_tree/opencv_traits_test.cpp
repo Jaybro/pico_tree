@@ -11,7 +11,7 @@ TEST(OpenCvTraitsTest, Interface) {
   cv::Mat matrix(8, 3, cv::DataType<scalar_type>::type);
   cv::randu(matrix, -scalar_type(1.0), scalar_type(1.0));
   cv::Mat row = matrix.row(matrix.rows - 1);
-  pico_tree::opencv_mat_wrapper<scalar_type, dim> space(matrix);
+  pico_tree::opencv_mat_map<scalar_type, dim> space(matrix);
 
   check_space_adaptor<dim>(
       space, matrix.cols, matrix.rows, matrix.rows - 1, row.ptr<scalar_type>());

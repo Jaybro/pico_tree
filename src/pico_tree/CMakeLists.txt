@@ -13,10 +13,10 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME ${PROJECT_PACKAGE_NAME})
 target_compile_options(${PROJECT_NAME} INTERFACE
-     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
-          -Wall -Werror>
+     $<BUILD_INTERFACE:$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+          -Wall -Wextra -Wconversion>
      $<$<CXX_COMPILER_ID:MSVC>:
-          /W4>)
+          /W4>>)
 
 # The target_sources always seem to be made absolute and cannot be used for
 # exporting the interface library.

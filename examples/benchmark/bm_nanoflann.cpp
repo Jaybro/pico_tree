@@ -27,7 +27,7 @@ using nano_kd_tree_rt = nanoflann::KDTreeSingleIndexAdaptor<
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmNanoflann, BuildCt)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
+  std::size_t max_leaf_size = static_cast<std::size_t>(state.range(0));
   nano_adaptor_type adaptor(points_tree_);
   for (auto _ : state) {
     nano_kd_tree_ct<nano_adaptor_type> tree(
@@ -39,7 +39,7 @@ BENCHMARK_DEFINE_F(BmNanoflann, BuildCt)(benchmark::State& state) {
 }
 
 BENCHMARK_DEFINE_F(BmNanoflann, BuildRt)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
+  std::size_t max_leaf_size = static_cast<std::size_t>(state.range(0));
   nano_adaptor_type adaptor(points_tree_);
   for (auto _ : state) {
     nano_kd_tree_rt<nano_adaptor_type> tree(
@@ -66,8 +66,8 @@ BENCHMARK_REGISTER_F(BmNanoflann, BuildRt)
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmNanoflann, KnnCt)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
-  int knn_count = state.range(1);
+  std::size_t max_leaf_size = static_cast<std::size_t>(state.range(0));
+  std::size_t knn_count = static_cast<std::size_t>(state.range(1));
   nano_adaptor_type adaptor(points_tree_);
   nano_kd_tree_ct<nano_adaptor_type> tree(
       point_type::dim,
@@ -121,7 +121,7 @@ BENCHMARK_REGISTER_F(BmNanoflann, KnnCt)
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmNanoflann, RadiusCt)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
+  std::size_t max_leaf_size = static_cast<std::size_t>(state.range(0));
   scalar_type radius =
       static_cast<scalar_type>(state.range(1)) / scalar_type(10.0);
   scalar_type squared = radius * radius;

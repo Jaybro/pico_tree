@@ -35,7 +35,7 @@ struct L2_3D {
   ResultType operator()(
       Iterator1_ a,
       Iterator2_ b,
-      size_t size,
+      [[maybe_unused]] size_t size,
       ResultType /*worst_dist*/ = -1) const {
     ResultType result = ResultType();
     ResultType diff;
@@ -71,7 +71,7 @@ Scalar_* raw_copy(std::vector<pico_tree::point<Scalar_, Dim_>> const& points) {
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmOpenCvFlann, BuildRt)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
+  int max_leaf_size = static_cast<int>(state.range(0));
 
   // Reorder will change the order of the input to fit the generated indices,
   // but it will replace (delete) the original input. It is set to true because
@@ -98,8 +98,8 @@ BENCHMARK_REGISTER_F(BmOpenCvFlann, BuildRt)
 // ****************************************************************************
 
 BENCHMARK_DEFINE_F(BmOpenCvFlann, KnnCt)(benchmark::State& state) {
-  int max_leaf_size = state.range(0);
-  int knn_count = state.range(1);
+  int max_leaf_size = static_cast<int>(state.range(0));
+  int knn_count = static_cast<int>(state.range(1));
 
   // Reorder will change the order of the input to fit the generated indices,
   // but it will replace (and delete) the original input. The reorder option
