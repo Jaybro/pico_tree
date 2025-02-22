@@ -20,7 +20,7 @@ using kd_tree = pico_tree::kd_tree<space<Point_>>;
 
 template <typename Point_>
 void query_range(
-    int const point_count,
+    std::size_t const point_count,
     typename Point_::scalar_type const area_size,
     typename Point_::scalar_type const min_v,
     typename Point_::scalar_type const max_v) {
@@ -33,7 +33,7 @@ void query_range(
 
 template <typename Point_>
 void query_radius(
-    int const point_count,
+    std::size_t const point_count,
     typename Point_::scalar_type const area_size,
     typename Point_::scalar_type const radius) {
   std::vector<Point_> random =
@@ -45,9 +45,9 @@ void query_radius(
 
 template <typename Point_>
 void query_knn(
-    int const point_count,
+    std::size_t const point_count,
     typename Point_::scalar_type const area_size,
-    int const k) {
+    pico_tree::size_t k) {
   std::vector<Point_> random =
       pico_tree::generate_random_n<Point_>(point_count, area_size);
   kd_tree<Point_> tree1(random, pico_tree::max_leaf_size_t(8));
@@ -57,7 +57,7 @@ void query_knn(
   // "Test" move assignment.
   tree1 = std::move(tree2);
 
-  test_knn(tree1, static_cast<typename kd_tree<Point_>::index_type>(k));
+  test_knn(tree1, k);
 }
 
 }  // namespace
@@ -102,7 +102,7 @@ TEST(KdTreeTest, WriteRead) {
   using point_type = pico_tree::point_2f;
   using index_type = int;
   using scalar_type = typename point_type::scalar_type;
-  index_type point_count = 100;
+  std::size_t point_count = 100;
   scalar_type area_size = 2;
   std::vector<point_type> random =
       pico_tree::generate_random_n<point_type>(point_count, area_size);

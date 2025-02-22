@@ -5,11 +5,62 @@
 #include <pico_tree/metric.hpp>
 #include <pico_understory/metric.hpp>
 
+namespace {
+
+inline constexpr float abs_error = 0.00001f;
+
+}
+
 template <typename Metric_, typename P0_, typename P1_>
 inline auto distance(Metric_ const& metric, P0_ const& p0, P1_ const& p1) {
   auto w0 = pico_tree::internal::point_wrapper<P0_>(p0);
   auto w1 = pico_tree::internal::point_wrapper<P0_>(p1);
   return metric(w0.begin(), w0.end(), w1.begin());
+}
+
+TEST(MetricTest, AngleDistance) {
+  float pi = pico_tree::internal::pi<float>;
+  EXPECT_NEAR(
+      pico_tree::internal::angle_distance(-0.1f, +0.1f), 0.2f, abs_error);
+  EXPECT_NEAR(
+      pico_tree::internal::angle_distance(+0.1f, -0.1f), 0.2f, abs_error);
+  EXPECT_NEAR(
+      pico_tree::internal::angle_distance(-pi + 0.1f, pi), 0.1f, abs_error);
+  float x = -pi;
+  float y = pi - 0.1f;
+  EXPECT_NEAR(
+      pico_tree::internal::squared_angle_distance(x, y),
+      pico_tree::internal::angle_distance(x, y) *
+          pico_tree::internal::angle_distance(x, y),
+      abs_error);
+}
+
+TEST(MetricTest, AngleDistanceBox) {
+  float pi = pico_tree::internal::pi<float>;
+  EXPECT_NEAR(
+      pico_tree::internal::angle_distance_box(-0.2f, -0.1f, +0.1f),
+      0.1f,
+      abs_error);
+  EXPECT_NEAR(
+      pico_tree::internal::angle_distance_box(+0.2f, -0.1f, +0.1f),
+      0.1f,
+      abs_error);
+  EXPECT_NEAR(
+      pico_tree::internal::angle_distance_box(0.0f, -0.1f, +0.1f),
+      0.0f,
+      abs_error);
+  EXPECT_NEAR(
+      pico_tree::internal::angle_distance_box(-pi + 0.1f, pi - 0.1f, pi),
+      0.1f,
+      abs_error);
+  float x = pi - 0.1f;
+  float min = -pi;
+  float max = -pi + 0.1f;
+  EXPECT_NEAR(
+      pico_tree::internal::squared_angle_distance_box(x, min, max),
+      pico_tree::internal::angle_distance_box(x, min, max) *
+          pico_tree::internal::angle_distance_box(x, min, max),
+      abs_error);
 }
 
 TEST(MetricTest, L1) {
@@ -64,7 +115,23 @@ TEST(MetricTest, SO2) {
 
   EXPECT_FLOAT_EQ(distance(metric, p0, p1), 0.1f);
   EXPECT_FLOAT_EQ(metric(-0.1f), 0.1f);
-  EXPECT_FLOAT_EQ(metric(-0.1f, -0.3f, -0.2f, 0), std::abs(-0.1f - -0.2f));
-  EXPECT_FLOAT_EQ(metric(-0.4f, -0.3f, -0.2f, 0), std::abs(-0.4f - -0.3f));
-  EXPECT_FLOAT_EQ(metric(-0.25f, -0.3f, -0.2f, 0), 0.0f);
+  float pi = pico_tree::internal::pi<float>;
+  EXPECT_NEAR(metric(-pi + 0.1f, pi - 0.1f, pi, 0), 0.1f, abs_error);
+}
+
+TEST(MetricTest, SE2Squared) {
+  // These two points are the concatenation of the points of
+  // MetricTest.L2Squared and MetricTest.SO2, where the third coordinate is the
+  // SO2 angle.
+  pico_tree::point_3f p0{2.0f, 4.0f, 1.0f};
+  pico_tree::point_3f p1{10.0f, 1.0f, 1.1f};
+
+  pico_tree::metric_se2_squared metric;
+
+  // This is the same as the sum of distances from MetricTest.L2Squared and
+  // MetricTest.SO2 (squared).
+  EXPECT_FLOAT_EQ(distance(metric, p0, p1), 73.0f + 0.01f);
+  EXPECT_FLOAT_EQ(metric(-0.1f), 0.01f);
+  float pi = pico_tree::internal::pi<float>;
+  EXPECT_NEAR(metric(-pi + 0.1f, pi - 0.1f, pi, 2), 0.01f, abs_error);
 }

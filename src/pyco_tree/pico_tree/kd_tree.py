@@ -2,6 +2,7 @@ import pico_tree._pyco_tree as _pt
 from .metric import Metric
 
 import numpy as np
+import numpy.typing as npt
 
 __all__ = ['KdTree']
 
@@ -28,22 +29,22 @@ _lut_xd = {Metric.L1.value: {'f': _pt.KdTreeXfL1,
 
 
 def _build_kd_tree(
-        pts: np.ndarray, metric: Metric, max_leaf_size: int, lut: dict):
+        pts: npt.NDArray, metric: Metric, max_leaf_size: int, lut: dict):
     if pts.dtype != np.float32 and pts.dtype != np.float64:
         raise TypeError(
-            "pts array format not supported: exptected float32 or float64")
+            "pts array format not supported: expected float32 or float64")
 
     return lut[metric.value][pts.dtype.char](pts, max_leaf_size)
 
 
-def KdTree(pts: np.ndarray, metric: Metric, max_leaf_size: int):
+def KdTree(pts: npt.NDArray, metric: Metric, max_leaf_size: int):
     """
     Create a KdTree. A KdTree is a binary tree that partitions space
     using hyper planes.
 
     Args:
-        pts (np.ndarray): Input point set represented by a numpy
-            ndarray of two dimensions.
+        pts (NDArray): Input point set represented by a numpy NDArray of two
+        dimensions.
         metric (Metric): Reference to a distance function.
         max_leaf_size (int): The maximum number of points contained by
             a leaf node.
@@ -52,7 +53,7 @@ def KdTree(pts: np.ndarray, metric: Metric, max_leaf_size: int):
         A KdTree instance.
 
     Raises:
-        TypeError: Invalid numpy ndarray argument.
+        TypeError: Invalid numpy NDArray argument.
     """
     if pts.ndim != 2:
         raise TypeError("pts.ndim should equal 2")

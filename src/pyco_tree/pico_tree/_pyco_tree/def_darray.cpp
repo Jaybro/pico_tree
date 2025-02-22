@@ -11,7 +11,7 @@ void def_darray(pybind11::module& m) {
       m,
       "DArray",
       R"ptdoc(
-A class whos instance represents a dynamic array of numpy arrays.
+A class whose instance represents a dynamic array of numpy arrays.
 Resizing an array and its contents is not possible but the values of
 the numpy arrays may be modified. The numpy arrays always have a single
 dimension and they don't have to be of equal size.

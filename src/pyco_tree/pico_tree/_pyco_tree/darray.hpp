@@ -90,7 +90,7 @@ class darray_impl : public darray_impl_base {
 
 class darray {
   template <typename T_>
-  //! \brief Wraps a type T_ and exposes it as a poiner to type T_.
+  //! \brief Wraps a type T_ and exposes it as a pointer to type T_.
   //! \details In some cases we are dependent on having a pointer interface for
   //! a variable that would otherwise go out of scope.
   class pointer_interface {
@@ -203,7 +203,7 @@ class darray {
     } else if (dtype.equal(pybind11::dtype::of<int>())) {
       reset(std::vector<std::vector<int>>());
     } else {
-      throw std::invalid_argument("dtype not supported.");
+      throw std::invalid_argument("dtype not supported");
     }
   }
 
@@ -227,14 +227,14 @@ class darray {
   template <typename T_>
   std::vector<std::vector<T_>> const& data() const {
     if (!impl_) {
-      throw std::runtime_error("Array is uninitialized.");
+      throw std::runtime_error("array is uninitialized");
     }
 
     internal::darray_impl<T_> const* ptr =
         dynamic_cast<internal::darray_impl<T_> const*>(impl_.get());
 
     if (ptr == nullptr) {
-      throw std::runtime_error("Incorrect data type requested.");
+      throw std::runtime_error("incorrect data type requested");
     }
 
     return ptr->data();
@@ -243,14 +243,14 @@ class darray {
   template <typename T_>
   std::vector<std::vector<T_>>& data() {
     if (!impl_) {
-      throw std::runtime_error("Array is uninitialized.");
+      throw std::runtime_error("array is uninitialized");
     }
 
     internal::darray_impl<T_>* ptr =
         dynamic_cast<internal::darray_impl<T_>*>(impl_.get());
 
     if (ptr == nullptr) {
-      throw std::runtime_error("Incorrect data type requested.");
+      throw std::runtime_error("incorrect data type requested");
     }
 
     return ptr->data();

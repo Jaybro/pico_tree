@@ -55,7 +55,7 @@ void basic_matrix() {
 
     pico_tree::kd_tree<pico_tree::opencv_mat_map<scalar, dim>> tree(
         random, pico_tree::max_leaf_size_t(10));
-    pico_tree::point_map<scalar, dim> p = tree.points()[random.rows / 2];
+    pico_tree::point_map<scalar, dim> p = tree.space()[random.rows / 2];
 
     pico_tree::neighbor<index, scalar> nn;
     pico_tree::scoped_timer t("pico_tree cv mat", run_count);
@@ -66,11 +66,12 @@ void basic_matrix() {
 
   // Single column cv::Mat based on a vector of points.
   {
-    using point = cv::Vec<scalar, 3>;
+    constexpr int dim = 3;
+    using point = cv::Vec<scalar, dim>;
     std::vector<point> random =
         generate_random_vec_n<point>(num_points, point_area);
 
-    pico_tree::kd_tree<pico_tree::opencv_mat_map<scalar, 3>> tree(
+    pico_tree::kd_tree<pico_tree::opencv_mat_map<scalar, dim>> tree(
         cv::Mat(random), pico_tree::max_leaf_size_t(10));
 
     point p = random[random.size() / 2];

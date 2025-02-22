@@ -36,24 +36,20 @@ struct string_traits<pico_tree::metric_linf> {
   static std::string type_string() { return "LInf"; }
 };
 
-template <typename T_>
-bool is_row_major(py::array_t<T_, 0> const& array) {
+inline bool is_row_major(py::array const& array) {
   return (array.flags() & py::array::c_style) > 0;
 }
 
-template <typename T_>
-bool is_col_major(py::array_t<T_, 0> const& array) {
+inline bool is_col_major(py::array const& array) {
   return (array.flags() & py::array::f_style) > 0;
 }
 
-template <typename T_>
-bool is_contiguous(py::array_t<T_, 0> const& array) {
+inline bool is_contiguous(py::array const& array) {
   return is_row_major(array) || is_col_major(array);
 }
 
-template <typename T_>
 struct array_layout {
-  array_layout(py::array_t<T_, 0> const& array)
+  array_layout(py::array const& array)
       : info(array.request()),
         row_major(is_row_major(array)),
         index_inner(row_major ? 1 : 0),

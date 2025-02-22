@@ -27,7 +27,7 @@ class kd_tree : public pico_tree::kd_tree<Space_, Metric_> {
  public:
   using base::dim;
   using base::metric;
-  using base::points;
+  using base::space;
   using typename base::index_type;
   using typename base::metric_type;
   using typename base::neighbor_type;
@@ -145,7 +145,7 @@ class kd_tree : public pico_tree::kd_tree<Space_, Metric_> {
     auto query = make_map<dim>(boxes);
 
     if (query.size() % 2 != 0) {
-      throw std::invalid_argument("Query min and max don't have equal size.");
+      throw std::invalid_argument("query min and max don't have equal size");
     }
 
     std::size_t box_count = query.size() / std::size_t(2);
@@ -166,13 +166,13 @@ class kd_tree : public pico_tree::kd_tree<Space_, Metric_> {
     return indices;
   }
 
-  inline scalar_type const* data() const { return points().data(); }
+  inline scalar_type const* data() const { return space().data(); }
 
-  inline int sdim() const { return static_cast<int>(points().sdim()); }
+  inline int sdim() const { return static_cast<int>(space().sdim()); }
 
-  inline size_type npts() const { return points().size(); }
+  inline size_type npts() const { return space().size(); }
 
-  inline bool row_major() const { return points().row_major(); }
+  inline bool row_major() const { return space().row_major(); }
 
   inline scalar_type metric(scalar_type v) const { return metric()(v); }
 

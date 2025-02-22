@@ -40,25 +40,26 @@ using KdTreeXdL1 = kd_tree_l1<space_xd>;
 using KdTreeXdL2Squared = kd_tree_l2_squared<space_xd>;
 using KdTreeXdLInf = kd_tree_linf<space_xd>;
 
-template <typename kd_tree>
+template <typename KdTree_>
 void def_kd_tree(std::string const& name, py::module& m) {
+  using kd_tree = KdTree_;
   using index = typename kd_tree::index_type;
   using scalar = typename kd_tree::scalar_type;
-  using size_t = pico_tree::size_t;
+  using size_t = typename kd_tree::size_type;
   using metric = typename kd_tree::metric_type;
   using neighbor = typename kd_tree::neighbor_type;
   using neighborhoods = darray;
 
   py::class_<kd_tree>(m, name.c_str(), py::buffer_protocol())
       .def(
-          py::init<py::array_t<scalar, 0>, index>(),
+          py::init<py::array_t<scalar, 0>, size_t>(),
           // We keep the input points alive until the kd_tree is gone.
           // Nurse: 1 = Implicit first argument: kd_tree.
           // Patient: 2 = Second function argument: NumPy array.
           py::keep_alive<1, 2>(),
           py::arg("pts"),
           py::arg("max_leaf_size"),
-          "Create a new kd_tree from given points and maximum leaf size.")
+          "Create a new KdTree from given points and maximum leaf size.")
       // The kd_tree can be used as a read-only buffer. It helps to check how
       // the data is interpreted.
       .def_buffer([](kd_tree& t) -> py::buffer_info {
@@ -89,7 +90,7 @@ void def_kd_tree(std::string const& name, py::module& m) {
       .def(
           "__repr__",
           [](kd_tree const& t) {
-            return "kd_tree(metric=" + string_traits<metric>::type_string() +
+            return "KdTree(metric=" + string_traits<metric>::type_string() +
                    ", dtype=" + string_traits<scalar>::type_string() +
                    ", sdim=" + std::to_string(t.sdim()) +
                    ", npts=" + std::to_string(t.npts()) + ")";
@@ -107,9 +108,9 @@ void def_kd_tree(std::string const& name, py::module& m) {
           [](kd_tree const&) { return py::dtype::of<neighbor>(); },
           "Get the dtype of neighbors returned by this tree.")
       .def_property_readonly(
-          "sdim", &kd_tree::sdim, "Get the spatial dimension of the kd_tree.")
+          "sdim", &kd_tree::sdim, "Get the spatial dimension of the KdTree.")
       .def_property_readonly(
-          "npts", &kd_tree::npts, "Get the number of points of the kd_tree.")
+          "npts", &kd_tree::npts, "Get the number of points of the KdTree.")
       // Because of the ambiguity that arises from function overloading, we have
       // to show which function we mean by using a static_cast.
       .def(

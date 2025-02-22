@@ -13,7 +13,7 @@ inline std::fstream open_stream(
   std::fstream stream(filename, mode);
 
   if (!stream.is_open()) {
-    throw std::runtime_error("Unable to open file: " + filename);
+    throw std::runtime_error("unable to open file: " + filename);
   }
 
   return stream;
@@ -30,7 +30,9 @@ class stream_wrapper {
   //! \tparam T_ Type of the value.
   template <typename T_>
   inline void read(T_& value) {
-    stream_.read(reinterpret_cast<char*>(&value), sizeof(T_));
+    stream_.read(
+        reinterpret_cast<char*>(&value),
+        static_cast<std::streamsize>(sizeof(T_)));
   }
 
   //! \brief Reads a vector of values from the stream_wrapper.
@@ -48,14 +50,18 @@ class stream_wrapper {
   //! \tparam T_ Type of a value.
   template <typename T_>
   inline void read(std::size_t size, T_* values) {
-    stream_.read(reinterpret_cast<char*>(values), sizeof(T_) * size);
+    stream_.read(
+        reinterpret_cast<char*>(values),
+        static_cast<std::streamsize>(sizeof(T_) * size));
   }
 
   //! \brief Writes a single value to the stream_wrapper.
   //! \tparam T_ Type of the value.
   template <typename T_>
   inline void write(T_ const& value) {
-    stream_.write(reinterpret_cast<char const*>(&value), sizeof(T_));
+    stream_.write(
+        reinterpret_cast<char const*>(&value),
+        static_cast<std::streamsize>(sizeof(T_)));
   }
 
   //! \brief Writes a vector of values to the stream_wrapper.
@@ -65,14 +71,17 @@ class stream_wrapper {
   inline void write(std::vector<T_> const& values) {
     write(values.size());
     stream_.write(
-        reinterpret_cast<char const*>(&values[0]), sizeof(T_) * values.size());
+        reinterpret_cast<char const*>(&values[0]),
+        static_cast<std::streamsize>(sizeof(T_) * values.size()));
   }
 
   //! \brief Writes an array of values to the stream_wrapper.
   //! \tparam T_ Type of a value.
   template <typename T_>
   inline void write(T_ const* values, std::size_t size) {
-    stream_.write(reinterpret_cast<char const*>(values), sizeof(T_) * size);
+    stream_.write(
+        reinterpret_cast<char const*>(values),
+        static_cast<std::streamsize>(sizeof(T_) * size));
   }
 
  private:

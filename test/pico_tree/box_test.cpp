@@ -52,7 +52,7 @@ using BoxTestTypes = testing::Types<
 TYPED_TEST_SUITE(BoxTest, BoxTestTypes);
 
 TYPED_TEST(BoxTest, size) {
-  size_t dim = TypeParam::dimension;
+  size_t dim = TypeParam::dim;
   if (dim != dynamic_size) {
     EXPECT_EQ(this->box_.size(), dim);
   } else {
@@ -82,7 +82,7 @@ TYPED_TEST(BoxTest, Fit) {
   using scalar_type = typename TypeParam::scalar_type;
 
   this->box_.fill_inverse_max();
-  size_t dim = dimension(TypeParam::dimension);
+  size_t dim = dimension(TypeParam::dim);
 
   // Fit a point.
   std::vector<scalar_type> p(dim, scalar_type(0));

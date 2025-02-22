@@ -33,15 +33,15 @@ class py_array_map
 };
 
 template <pico_tree::size_t Dim_, typename Scalar_>
-py_array_map<Scalar_, Dim_> make_map(py::array_t<Scalar_, 0> const pts) {
-  array_layout<Scalar_> layout(pts);
+py_array_map<Scalar_, Dim_> make_map(py::array_t<Scalar_, 0> const space) {
+  array_layout layout(space);
 
   if (layout.info.ndim != 2) {
-    throw std::runtime_error("Array: ndim not 2.");
+    throw std::runtime_error("array ndim not 2");
   }
 
-  if (!is_contiguous(pts)) {
-    throw std::runtime_error("Array: Array not contiguous.");
+  if (!is_contiguous(space)) {
+    throw std::runtime_error("array not contiguous");
   }
 
   // We always want the memory layout to look like x,y,z,x,y,z,...,x,y,z.
@@ -50,7 +50,7 @@ py_array_map<Scalar_, Dim_> make_map(py::array_t<Scalar_, 0> const pts) {
   if (!is_dim_compatible<Dim_>(static_cast<pico_tree::size_t>(
           layout.info.shape[layout.index_inner]))) {
     throw std::runtime_error(
-        "Array: Incompatible kd_tree sdim and Array inner stride.");
+        "incompatible kd_tree sdim and array inner stride");
   }
 
   return py_array_map<Scalar_, Dim_>(

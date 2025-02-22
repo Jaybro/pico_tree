@@ -22,7 +22,7 @@ class box_base {
  public:
   using scalar_type = typename box_traits<Derived_>::scalar_type;
   using size_type = size_t;
-  static constexpr size_type dim = box_traits<Derived_>::dimension;
+  static constexpr size_type dim = box_traits<Derived_>::dim;
   static_assert(dim == dynamic_size || dim > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
   //! \brief Returns true if \p x is contained. A point on the edge is
@@ -55,6 +55,13 @@ class box_base {
       min(i) = std::numeric_limits<scalar_type>::max();
       max(i) = std::numeric_limits<scalar_type>::lowest();
     }
+  }
+
+  //! \copydoc fill_inverse_max
+  static constexpr Derived_ make_inverse_max(size_type size = dim) {
+    Derived_ box(size);
+    box.fill_inverse_max();
+    return box;
   }
 
   //! \brief See which axis of the box is the longest.
@@ -189,11 +196,11 @@ class box : public box_base<box<Scalar_, Dim_>> {
  public:
   using scalar_type = Scalar_;
   using typename box_base<box<Scalar_, Dim_>>::size_type;
-  static size_type constexpr dimension = Dim_;
+  static size_type constexpr dim = Dim_;
 
   using box_base<box<Scalar_, Dim_>>::box_base;
 
-  constexpr box() : storage_(dimension) {}
+  constexpr box() : storage_(dim) {}
 
   constexpr explicit box(size_type size) : storage_(size) {}
 
@@ -254,10 +261,10 @@ class box_map : public box_base<box_map<Scalar_, Dim_>> {
   using scalar_type = std::remove_cv_t<Scalar_>;
   using element_type = Scalar_;
   using typename box_base<box_map<Scalar_, Dim_>>::size_type;
-  static size_type constexpr dimension = Dim_;
+  static size_type constexpr dim = Dim_;
 
   constexpr box_map(element_type* min, element_type* max)
-      : storage_(min, max, dimension) {}
+      : storage_(min, max, dim) {}
 
   constexpr box_map(element_type* min, element_type* max, size_type size)
       : storage_(min, max, size) {}
@@ -283,13 +290,13 @@ class box_map : public box_base<box_map<Scalar_, Dim_>> {
 template <typename Scalar_, size_t Dim_>
 struct box_traits<box<Scalar_, Dim_>> {
   using scalar_type = std::remove_cv_t<Scalar_>;
-  static size_t constexpr dimension = Dim_;
+  static size_t constexpr dim = Dim_;
 };
 
 template <typename Scalar_, size_t Dim_>
 struct box_traits<box_map<Scalar_, Dim_>> {
   using scalar_type = std::remove_cv_t<Scalar_>;
-  static size_t constexpr dimension = Dim_;
+  static size_t constexpr dim = Dim_;
 };
 
 }  // namespace pico_tree::internal

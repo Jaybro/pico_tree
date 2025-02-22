@@ -41,7 +41,7 @@ class kd_tree {
   using space_type = Space_;
   //! \brief The metric used for various searches.
   using metric_type = Metric_;
-  //! \brief Neighbor type of various search resuls.
+  //! \brief Neighbor type of various search results.
   using neighbor_type = neighbor<index_type, scalar_type>;
 
   //! \brief Creates a kd_tree given \p space and \p stop_condition.
@@ -58,7 +58,7 @@ class kd_tree {
   //! \param space The input point set.
   //! \param stop_condition One of max_leaf_size_t or max_leaf_depth_t.
   //! \param start_bounds One of bounds_from_space_t or bounds_t<Point_>.
-  //! \param splitter_rule_t One of median_max_side_t, midpoint_max_side_t, or
+  //! \param rule One of median_max_side_t, midpoint_max_side_t, or
   //! sliding_midpoint_max_side_t.
   template <
       typename Stop_,
@@ -92,6 +92,16 @@ class kd_tree {
   //! on their selection by visitor \p visitor .
   template <typename P_, typename V_>
   inline void search_nearest(P_ const& x, V_& visitor) const {
+    static_assert(
+        std::is_same_v<
+            scalar_type,
+            typename internal::point_wrapper<P_>::scalar_type>,
+        "POINT_AND_TREE_SCALAR_TYPES_DIFFER");
+    static_assert(
+        dim == internal::point_wrapper<P_>::dim || dim == dynamic_size ||
+            internal::point_wrapper<P_>::dim == dynamic_size,
+        "POINT_AND_TREE_DIMS_DIFFER");
+
     internal::point_wrapper<P_> p(x);
     search_nearest(p, visitor, typename Metric_::space_category());
   }
@@ -290,29 +300,29 @@ class kd_tree {
   }
 
   //! \brief Point set used by the tree.
-  inline space_type const& points() const { return space_; }
+  inline space_type const& space() const { return space_; }
 
   //! \brief Metric used for search queries.
   inline metric_type const& metric() const { return metric_; }
 
   //! \brief Loads the tree in binary from file.
-  static kd_tree load(space_type points, std::string const& filename) {
+  static kd_tree load(space_type space, std::string const& filename) {
     std::fstream stream =
         internal::open_stream(filename, std::ios::in | std::ios::binary);
-    return load(std::move(points), stream);
+    return load(std::move(space), stream);
   }
 
   //! \brief Loads the tree in binary from \p stream .
-  //! \details This is considered a convinience function to be able to save and
+  //! \details This is considered a convenience function to be able to save and
   //! load a kd_tree on a single machine.
   //! \li Does not take memory endianness into account.
   //! \li Does not check if the stored tree structure is valid for the given
   //! point set.
   //! \li Does not check if the stored tree structure is valid for the given
   //! template arguments.
-  static kd_tree load(space_type points, std::iostream& stream) {
+  static kd_tree load(space_type space, std::iostream& stream) {
     internal::stream_wrapper s(stream);
-    return kd_tree(std::move(points), s);
+    return kd_tree(std::move(space), s);
   }
 
   //! \brief Saves the tree in binary to file.
@@ -323,10 +333,10 @@ class kd_tree {
   }
 
   //! \brief Saves the tree in binary to \p stream .
-  //! \details This is considered a convinience function to be able to save and
+  //! \details This is considered a convenience function to be able to save and
   //! load a kd_tree on a single machine.
   //! \li Does not take memory endianness into account.
-  //! \li Stores the tree structure but not the points.
+  //! \li Stores the tree structure but not the space.
   static void save(kd_tree const& tree, std::iostream& stream) {
     internal::stream_wrapper s(stream);
     kd_tree_data_type::save(tree.data_, s);

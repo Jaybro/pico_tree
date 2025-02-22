@@ -93,7 +93,7 @@ void search_s1() {
   std::cout << "Closest angles (index, distance, value): " << std::endl;
   for (auto const& nn : knn) {
     std::cout << "  " << nn.index << ", " << nn.distance << ", "
-              << tree.points()[nn.index] << std::endl;
+              << tree.space()[nn.index] << std::endl;
   }
 }
 

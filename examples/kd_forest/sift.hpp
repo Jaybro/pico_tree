@@ -9,7 +9,7 @@ class sift {
 
   static std::vector<vector_float> read_vectors(std::string const& filename) {
     if (!std::filesystem::exists(filename)) {
-      throw std::runtime_error(filename + " doesn't exist.");
+      throw std::runtime_error(filename + " doesn't exist");
     }
 
     std::vector<vector_float> vectors;

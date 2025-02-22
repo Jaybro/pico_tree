@@ -13,16 +13,18 @@ namespace internal {
 
 template <typename T_>
 inline std::string format_string() {
+  static_assert(
+      std::is_same_v<T_, unsigned char> || std::is_same_v<T_, std::byte> ||
+          std::is_same_v<T_, float> || std::is_same_v<T_, int>,
+      "TYPE_NOT_ONE_OF_UNSIGNED_CHAR_FLOAT_OR_INT");
+
   if constexpr (
       std::is_same_v<T_, unsigned char> || std::is_same_v<T_, std::byte>) {
     return "bvecs";
   } else if constexpr (std::is_same_v<T_, float>) {
     return "fvecs";
-  } else if constexpr (std::is_same_v<T_, int>) {
+  } else {  // if constexpr (std::is_same_v<T_, int>)
     return "ivecs";
-  } else {
-    throw std::runtime_error(
-        "Type shoule be one of unsigned char, float, or int.");
   }
 }
 
@@ -45,8 +47,7 @@ void read_xvecs(
           filename_lower.size() - format_string.size(),
           format_string.size(),
           format_string) != 0) {
-    throw std::runtime_error(
-        "Filename expected to end with ." + format_string + ".");
+    throw std::runtime_error("filename expected to end with ." + format_string);
   }
 
   std::fstream fstream =

@@ -14,7 +14,11 @@ TEST(OpenCvTraitsTest, Interface) {
   pico_tree::opencv_mat_map<scalar_type, dim> space(matrix);
 
   check_space_adaptor<dim>(
-      space, matrix.cols, matrix.rows, matrix.rows - 1, row.ptr<scalar_type>());
+      space,
+      static_cast<pico_tree::size_t>(matrix.cols),
+      static_cast<pico_tree::size_t>(matrix.rows),
+      static_cast<pico_tree::size_t>(matrix.rows - 1),
+      row.ptr<scalar_type>());
 
   static_assert(space.sdim() == dim);
 }

@@ -1,3 +1,5 @@
+
+
 #pragma once
 
 #include <algorithm>
@@ -329,16 +331,10 @@ class build_kd_tree_impl {
         indices_(indices),
         allocator_(allocator) {}
 
-  //! \brief Creates the full set of nodes for a kd_tree.
-  inline node_type* operator()(box_type const& root_box) {
-    box_type box(root_box);
-    return split_indices(0, indices_.begin(), indices_.end(), box);
-  }
-
- private:
-  //! \brief Creates a tree node for a range of indices, splits the range in
-  //! two and recursively does the same for each sub set of indices until the
-  //! index range size is less than or equal to max_leaf_size_.
+  //! \brief Creates a tree for a range of indices and returns its root node.
+  //! Each time a node is created, its corresponding index range is split in
+  //! two. This happens recursively for each sub set of indices until the stop
+  //! condition is reached.
   //! \details While descending the tree we split nodes based on the root box
   //! until leaf nodes are reached. Inside the leaf nodes the boxes are updated
   //! to be the bounding boxes of the points they contain. While unwinding the
@@ -346,27 +342,32 @@ class build_kd_tree_impl {
   //! merging leaf nodes. Since the updated split information based on the leaf
   //! nodes can have smaller bounding boxes than the original ones, we can
   //! improve query times.
+  inline node_type* operator()(box_type const& root_box) {
+    box_type box(root_box);
+    return create_node(0, indices_.begin(), indices_.end(), box);
+  }
+
+ private:
   template <typename RandomAccessIterator_>
-  inline node_type* split_indices(
+  inline node_type* create_node(
       index_type const depth,
       RandomAccessIterator_ begin,
       RandomAccessIterator_ end,
       box_type& box) const {
     node_type* node = allocator_.allocate();
-    //
+
     if (is_leaf(depth, begin, end)) {
-      node->data.leaf.begin_idx =
-          static_cast<index_type>(begin - indices_.begin());
-      node->data.leaf.end_idx = static_cast<index_type>(end - indices_.begin());
-      node->left = nullptr;
-      node->right = nullptr;
-      // Keep the original box in case it was empty. This can only happen with
+      node->set_leaf(
+          static_cast<index_type>(begin - indices_.begin()),
+          static_cast<index_type>(end - indices_.begin()));
+      // Keep the original box in case it is empty. This can only happen with
       // the midpoint split.
-      // TODO Optimize node usage for midpoint split (avoid empty nodes).
       if constexpr (std::is_same_v<Rule_, midpoint_max_side_t>) {
-        if (end > begin) {
+        if (begin < end) {
           compute_bounding_box(begin, end, box);
         }
+      } else {
+        compute_bounding_box(begin, end, box);
       }
     } else {
       // split equals end for the left branch and begin for the right branch.
@@ -381,8 +382,8 @@ class build_kd_tree_impl {
       box.max(split_dim) = split_val;
       right.min(split_dim) = split_val;
 
-      node->left = split_indices(depth + 1, begin, split, box);
-      node->right = split_indices(depth + 1, split, end, right);
+      node->left = create_node(depth + 1, begin, split, box);
+      node->right = create_node(depth + 1, split, end, right);
 
       node->set_branch(box, right, split_dim);
 
@@ -414,10 +415,11 @@ class build_kd_tree_impl {
       return (end - begin) <= stop_value_;
     } else {
       // Either stop when the depth is reached or when the amount of points that
-      // remain are equal or less than 1. In the latter case the data cannot be
-      // split any further and stopping here also prevents problems for the
-      // sliding_midpoint_max_side_t splitter rule where none of the branches is
-      // allowed to be empty.
+      // remain <= 1. In the latter case it becomes impossible to split a branch
+      // further. A forced split for a leaf size is 1 would just add another
+      // empty node, but it would also be a problem for the
+      // sliding_midpoint_max_side_t splitter rule, where none of the resulting
+      // branches is allowed to be empty.
       return (depth == stop_value_) || ((end - begin) <= 1);
     }
   }
@@ -502,12 +504,10 @@ class build_kd_tree {
       SpaceWrapper_ space, bounds_t<Point_> const& bounds) const {
     internal::point_wrapper<Point_> min(bounds.min());
     internal::point_wrapper<Point_> max(bounds.max());
-    box_type box(space.sdim());
-
-    box.fill_inverse_max();
-    box.fit(min.begin());
-    box.fit(max.begin());
-    return box;
+    box_type bbox = box_type::make_inverse_max(space.sdim());
+    bbox.fit(min.begin());
+    bbox.fit(max.begin());
+    return bbox;
   }
 };
 

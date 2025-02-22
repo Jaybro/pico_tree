@@ -46,9 +46,9 @@ class SpaceMapTest<space_map<Point_>> : public testing::Test {
 template <typename Scalar_, size_t Dim_>
 class SpaceMapTest<space_map<point_map<Scalar_, Dim_>>> : public testing::Test {
  public:
-  static constexpr size_t Sdim = dimension(Dim_);
+  static constexpr size_t dim = dimension(Dim_);
 
-  SpaceMapTest() : map_(coords_.data(), coords_.size() / Sdim, Sdim) {
+  SpaceMapTest() : map_(coords_.data(), coords_.size() / dim, dim) {
     std::size_t count = 0;
     for (auto& coord : coords_) {
       coord = Scalar_(count);
@@ -57,15 +57,15 @@ class SpaceMapTest<space_map<point_map<Scalar_, Dim_>>> : public testing::Test {
   }
 
   point_map<Scalar_ const, Dim_> point_at(std::size_t index) const {
-    return {coords_.data() + index * Sdim, Sdim};
+    return {coords_.data() + index * dim, dim};
   }
 
-  std::size_t size() const { return coords_.size() / Sdim; }
+  std::size_t size() const { return coords_.size() / dim; }
 
-  constexpr std::size_t sdim() const { return Sdim; }
+  constexpr std::size_t sdim() const { return dim; }
 
  protected:
-  std::array<Scalar_, 2 * Sdim> coords_;
+  std::array<Scalar_, 2 * dim> coords_;
   space_map<point_map<Scalar_, Dim_>> map_;
 };
 

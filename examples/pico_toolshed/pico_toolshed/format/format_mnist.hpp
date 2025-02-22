@@ -41,8 +41,7 @@ inline void read_mnist_images(
   big_endian<std::int32_t> magic_number;
   wrapper.read(magic_number);
   if (magic_number() != mnist_images::header::magic_number) {
-    throw std::runtime_error(
-        "Incorrect signature: Expected MNIST images magic number.");
+    throw std::runtime_error("expected mnist images signature");
   }
 
   mnist_images::header header;
@@ -52,7 +51,7 @@ inline void read_mnist_images(
   header.image_height = big_endian<std::int32_t>{header.image_height};
 
   if (header.image_width * header.image_height != 28 * 28) {
-    throw std::runtime_error("Unexpected MNIST image dimensions.");
+    throw std::runtime_error("unexpected mnist image dimensions");
   }
 
   images.resize(header.image_count);
@@ -69,8 +68,7 @@ inline void read_mnist_labels(
   big_endian<std::int32_t> magic_number;
   wrapper.read(magic_number);
   if (magic_number() != mnist_labels::header::magic_number) {
-    throw std::runtime_error(
-        "Incorrect signature: Expected MNIST labels magic number.");
+    throw std::runtime_error("unexpected minst labels magic number.");
   }
 
   mnist_labels::header header;

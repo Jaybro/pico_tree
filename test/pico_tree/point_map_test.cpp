@@ -22,14 +22,14 @@ class PointMapTest : public testing::Test {};
 template <typename Scalar_, size_t Dim_>
 class PointMapTest<point_map<Scalar_, Dim_>> : public testing::Test {
  public:
-  static constexpr size_t Sdim = dimension(Dim_);
+  static constexpr size_t dim = dimension(Dim_);
 
-  PointMapTest() : map_(scalars_.data(), Sdim) {
+  PointMapTest() : map_(scalars_.data(), dim) {
     std::iota(scalars_.begin(), scalars_.end(), Scalar_(0.0));
   }
 
  protected:
-  std::array<Scalar_, Sdim> scalars_;
+  std::array<Scalar_, dim> scalars_;
   point_map<Scalar_, Dim_> map_;
 };
 

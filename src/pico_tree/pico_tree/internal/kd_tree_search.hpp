@@ -52,17 +52,16 @@ class search_nearest_euclidean {
   inline void search_nearest(
       node_type const* const node, scalar_type node_box_distance) {
     if (node->is_leaf()) {
-      for (index_type i = node->data.leaf.begin_idx;
-           i < node->data.leaf.end_idx;
-           ++i) {
-        visitor_(
-            indices_[i],
-            metric_(query_.begin(), query_.end(), space_[indices_[i]]));
+      auto begin = indices_.begin() + node->data.leaf.begin_idx;
+      auto const end = indices_.begin() + node->data.leaf.end_idx;
+      for (; begin < end; ++begin) {
+        visitor_(*begin, metric_(query_.begin(), query_.end(), space_[*begin]));
       }
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      scalar_type const v = query_[node->data.branch.split_dim];
+      size_t const split_dim = static_cast<size_t>(node->data.branch.split_dim);
+      scalar_type const v = query_[split_dim];
       scalar_type new_offset;
       node_type const* node_1st;
       node_type const* node_2nd;
@@ -91,17 +90,16 @@ class search_nearest_euclidean {
       // Calculate the distance to node_2nd.
       // NOTE: This method only works with Lp norms to which the exponent is not
       // applied.
-      scalar_type const old_offset =
-          node_box_offset_[node->data.branch.split_dim];
+      scalar_type const old_offset = node_box_offset_[split_dim];
       node_box_distance = node_box_distance - old_offset + new_offset;
 
       // The value visitor->max() contains the current nearest neighbor distance
       // or otherwise current maximum search distance. When testing against the
       // split value we determine if we should go into the neighboring node.
       if (visitor_.max() >= node_box_distance) {
-        node_box_offset_[node->data.branch.split_dim] = new_offset;
+        node_box_offset_[split_dim] = new_offset;
         search_nearest(node_2nd, node_box_distance);
-        node_box_offset_[node->data.branch.split_dim] = old_offset;
+        node_box_offset_[split_dim] = old_offset;
       }
     }
   }
@@ -152,17 +150,16 @@ class search_nearest_topological {
   inline void search_nearest(
       node_type const* const node, scalar_type node_box_distance) {
     if (node->is_leaf()) {
-      for (index_type i = node->data.leaf.begin_idx;
-           i < node->data.leaf.end_idx;
-           ++i) {
-        visitor_(
-            indices_[i],
-            metric_(query_.begin(), query_.end(), space_[indices_[i]]));
+      auto begin = indices_.begin() + node->data.leaf.begin_idx;
+      auto const end = indices_.begin() + node->data.leaf.end_idx;
+      for (; begin < end; ++begin) {
+        visitor_(*begin, metric_(query_.begin(), query_.end(), space_[*begin]));
       }
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      scalar_type const v = query_[node->data.branch.split_dim];
+      size_t const split_dim = static_cast<size_t>(node->data.branch.split_dim);
+      scalar_type const v = query_[split_dim];
       // Determine the distance to the boxes of the children of this node.
       scalar_type const d1 = metric_(
           v,
@@ -191,17 +188,16 @@ class search_nearest_topological {
 
       search_nearest(node_1st, node_box_distance);
 
-      scalar_type const old_offset =
-          node_box_offset_[node->data.branch.split_dim];
+      scalar_type const old_offset = node_box_offset_[split_dim];
       node_box_distance = node_box_distance - old_offset + new_offset;
 
       // The value visitor->max() contains the current nearest neighbor distance
       // or otherwise current maximum search distance. When testing against the
       // split value we determine if we should go into the neighboring node.
       if (visitor_.max() >= node_box_distance) {
-        node_box_offset_[node->data.branch.split_dim] = new_offset;
+        node_box_offset_[split_dim] = new_offset;
         search_nearest(node_2nd, node_box_distance);
-        node_box_offset_[node->data.branch.split_dim] = old_offset;
+        node_box_offset_[split_dim] = old_offset;
       }
     }
   }
@@ -252,42 +248,39 @@ class search_box_euclidean {
   template <typename Node_>
   inline void operator()(Node_ const* const node) {
     if (node->is_leaf()) {
-      for (index_type i = node->data.leaf.begin_idx;
-           i < node->data.leaf.end_idx;
-           ++i) {
-        if (query_.contains(space_[indices_[i]])) {
-          idxs_.push_back(indices_[i]);
+      auto begin = indices_.begin() + node->data.leaf.begin_idx;
+      auto const end = indices_.begin() + node->data.leaf.end_idx;
+      for (; begin < end; ++begin) {
+        if (query_.contains(space_[*begin])) {
+          idxs_.push_back(*begin);
         }
       }
     } else {
-      scalar_type old_value = box_.max(node->data.branch.split_dim);
-      box_.max(node->data.branch.split_dim) = node->data.branch.left_max;
+      size_t const split_dim = static_cast<size_t>(node->data.branch.split_dim);
+      scalar_type old_value = box_.max(split_dim);
+      box_.max(split_dim) = node->data.branch.left_max;
 
       // Check if the left node is fully contained. If true, report all its
       // indices. Else, if its partially contained, continue the range search
       // down the left node.
       if (query_.contains(box_)) {
         report_node(node->left);
-      } else if (
-          query_.min(node->data.branch.split_dim) <
-          node->data.branch.left_max) {
+      } else if (query_.min(split_dim) <= node->data.branch.left_max) {
         operator()(node->left);
       }
 
-      box_.max(node->data.branch.split_dim) = old_value;
-      old_value = box_.min(node->data.branch.split_dim);
-      box_.min(node->data.branch.split_dim) = node->data.branch.right_min;
+      box_.max(split_dim) = old_value;
+      old_value = box_.min(split_dim);
+      box_.min(split_dim) = node->data.branch.right_min;
 
       // Same as the left side.
       if (query_.contains(box_)) {
         report_node(node->right);
-      } else if (
-          query_.max(node->data.branch.split_dim) >
-          node->data.branch.right_min) {
+      } else if (query_.max(split_dim) >= node->data.branch.right_min) {
         operator()(node->right);
       }
 
-      box_.min(node->data.branch.split_dim) = old_value;
+      box_.min(split_dim) = old_value;
     }
   }
 

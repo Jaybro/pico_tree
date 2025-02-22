@@ -14,7 +14,7 @@ using space = std::reference_wrapper<std::vector<Point_>>;
 
 TEST(KdTreeTest, SplitterMedian) {
   using point_type = pico_tree::point_2f;
-  using index_type = int;
+  using index_type = std::size_t;
   using scalar_type = typename point_type::scalar_type;
   using space_type = space<point_type>;
   using splitter_type = pico_tree::internal::splitter_median_max_side<
@@ -113,7 +113,7 @@ TEST(KdTreeTest, SplitterMidpoint) {
   EXPECT_EQ(split_val, (box.max(1) + box.min(1)) / scalar_type{2.0});
 
   // Clean middle split. A general case where the split value falls somewhere
-  // inbetween the range of numbers.
+  // in between the range of numbers.
   box.max(1) = scalar_type{5.0};
   splitter(0, idx4.begin(), idx4.end(), box, split, split_dim, split_val);
 
@@ -178,7 +178,7 @@ TEST(KdTreeTest, SplitterSlidingMidpoint) {
   EXPECT_EQ(idx4[3], 2);
 
   // Clean middle split. A general case where the split value falls somewhere
-  // inbetween the range of numbers.
+  // in between the range of numbers.
   box.max(1) = scalar_type{5.0};
   splitter(0, idx4.begin(), idx4.end(), box, split, split_dim, split_val);
 

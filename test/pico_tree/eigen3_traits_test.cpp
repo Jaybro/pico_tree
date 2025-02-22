@@ -12,16 +12,16 @@ void check_eigen_adaptor_interface() {
   check_space_adaptor<static_cast<pico_tree::size_t>(
       ColMatrix_::RowsAtCompileTime)>(
       std::cref(col_matrix),
-      col_matrix.rows(),
-      col_matrix.cols(),
-      col_matrix.cols() - 1,
+      static_cast<pico_tree::size_t>(col_matrix.rows()),
+      static_cast<pico_tree::size_t>(col_matrix.cols()),
+      static_cast<pico_tree::size_t>(col_matrix.cols() - 1),
       col_matrix.col(col_matrix.cols() - 1).data());
   check_space_adaptor<static_cast<pico_tree::size_t>(
       RowMatrix_::ColsAtCompileTime)>(
       std::cref(row_matrix),
-      row_matrix.cols(),
-      row_matrix.rows(),
-      row_matrix.rows() - 1,
+      static_cast<pico_tree::size_t>(row_matrix.cols()),
+      static_cast<pico_tree::size_t>(row_matrix.rows()),
+      static_cast<pico_tree::size_t>(row_matrix.rows() - 1),
       row_matrix.row(row_matrix.rows() - 1).data());
 }
 

@@ -18,10 +18,10 @@ class space_wrapper {
   using space_type = Space_;
   using point_type = typename space_traits_type::point_type;
   using point_traits_type = point_traits<point_type>;
-  using size_type = size_t;
 
  public:
   using scalar_type = typename space_traits_type::scalar_type;
+  using size_type = size_t;
   static size_type constexpr dim = space_traits_type::dim;
 
   explicit space_wrapper(space_type const& space) : space_(space) {}
@@ -32,12 +32,11 @@ class space_wrapper {
   }
 
   inline box<scalar_type, dim> compute_bounding_box() const {
-    box<scalar_type, dim> box(sdim());
-    box.fill_inverse_max();
+    auto bbox = box<scalar_type, dim>::make_inverse_max(sdim());
     for (size_type i = 0; i < size(); ++i) {
-      box.fit(operator[](i));
+      bbox.fit(operator[](i));
     }
-    return box;
+    return bbox;
   }
 
   inline size_type size() const { return space_traits_type::size(space_); }

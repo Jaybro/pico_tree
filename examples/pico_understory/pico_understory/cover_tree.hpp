@@ -188,7 +188,7 @@ class cover_tree {
   }
 
   //! \brief Point set used by the tree.
-  inline space_type const& points() const { return space_; }
+  inline space_type const& space() const { return space_; }
 
   //! \brief Metric used for search queries.
   inline metric_type const& metric() const { return metric_; }

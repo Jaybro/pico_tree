@@ -15,10 +15,23 @@ template <typename Point_>
 class point_wrapper {
   using point_traits_type = point_traits<Point_>;
   using point_type = Point_;
+
+ public:
   using scalar_type = typename point_traits_type::scalar_type;
   using size_type = size_t;
   static constexpr size_type dim = point_traits_type::dim;
 
+  inline explicit point_wrapper(point_type const& point) : point_(point) {}
+
+  inline scalar_type const& operator[](std::size_t index) const {
+    return data()[index];
+  }
+
+  inline auto begin() const { return data(); }
+
+  inline auto end() const { return data() + size(); }
+
+ private:
   inline scalar_type const* data() const {
     return point_traits_type::data(point_);
   }
@@ -31,18 +44,6 @@ class point_wrapper {
     }
   }
 
- public:
-  inline explicit point_wrapper(point_type const& point) : point_(point) {}
-
-  inline scalar_type const& operator[](std::size_t index) const {
-    return data()[index];
-  }
-
-  inline auto begin() const { return data(); }
-
-  inline auto end() const { return data() + size(); }
-
- private:
   point_type const& point_;
 };
 

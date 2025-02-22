@@ -10,13 +10,23 @@ struct kd_tree_node_base {
   //! \brief Returns if the current node is a leaf.
   inline bool is_leaf() const { return left == nullptr && right == nullptr; }
 
+  template <typename Index_>
+  inline void set_leaf(Index_ begin_idx, Index_ end_idx) {
+    derived().data.leaf.begin_idx = begin_idx;
+    derived().data.leaf.end_idx = end_idx;
+    left = nullptr;
+    right = nullptr;
+  }
+
+  inline Derived_& derived() { return *static_cast<Derived_*>(this); }
+
   //! \brief Left child.
   Derived_* left;
   //! \brief Right child.
   Derived_* right;
 };
 
-//! \brief Tree leaf.
+//! \brief Tree leaf data.
 template <typename Index_>
 struct kd_tree_leaf {
   //! \brief Begin of an index range.
@@ -25,9 +35,9 @@ struct kd_tree_leaf {
   Index_ end_idx;
 };
 
-//! \brief Tree branch.
+//! \brief Tree branch data that stores one boundary per child.
 template <typename Scalar_>
-struct kd_tree_branch_split {
+struct kd_tree_branch_single {
   //! \brief Split coordinate / index of the kd_tree spatial dimension.
   int split_dim;
   //! \brief Maximum coordinate value of the left node box for split_dim.
@@ -36,12 +46,11 @@ struct kd_tree_branch_split {
   Scalar_ right_min;
 };
 
-//! \brief Tree branch.
-//! \details This branch version allows identifications (wrapping around) by
-//! storing the boundaries of the box that corresponds to the current node. The
-//! split value allows arbitrary splitting techniques.
+//! \brief Tree branch data that stores two boundaries per child.
+//! \details Storing both boundaries per child allows the use of identifications
+//! (wrapping around).
 template <typename Scalar_>
-struct kd_tree_branch_range {
+struct kd_tree_branch_double {
   //! \brief Split coordinate / index of the kd_tree spatial dimension.
   int split_dim;
   //! \brief Minimum coordinate value of the left node box for split_dim.
@@ -80,7 +89,7 @@ struct kd_tree_node_euclidean
   }
 
   //! \brief Node data as a union of a leaf and branch.
-  kd_tree_node_data<kd_tree_leaf<Index_>, kd_tree_branch_split<Scalar_>> data;
+  kd_tree_node_data<kd_tree_leaf<Index_>, kd_tree_branch_single<Scalar_>> data;
 };
 
 //! \brief kd_tree node for a topological space.
@@ -101,7 +110,7 @@ struct kd_tree_node_topological
   }
 
   //! \brief Node data as a union of a leaf and branch.
-  kd_tree_node_data<kd_tree_leaf<Index_>, kd_tree_branch_range<Scalar_>> data;
+  kd_tree_node_data<kd_tree_leaf<Index_>, kd_tree_branch_double<Scalar_>> data;
 };
 
 }  // namespace pico_tree::internal
