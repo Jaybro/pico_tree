@@ -11,23 +11,24 @@ void write_bin(std::string const& filename, std::vector<T_> const& v) {
     return;
   }
 
-  std::size_t const element_size = sizeof(T_);
   std::fstream stream =
       internal::open_stream(filename, std::ios::out | std::ios::binary);
-  stream.write(reinterpret_cast<char const*>(&v[0]), element_size * v.size());
+  internal::stream_wrapper wrapper(stream);
+  wrapper.write(v.data(), v.size());
 }
 
 template <typename T_>
 void read_bin(std::string const& filename, std::vector<T_>& v) {
   std::fstream stream =
       internal::open_stream(filename, std::ios::in | std::ios::binary);
+  internal::stream_wrapper wrapper(stream);
 
   auto bytes = std::filesystem::file_size(filename);
   std::size_t const element_size = sizeof(T_);
   std::size_t const element_count =
       static_cast<std::size_t>(bytes) / element_size;
   v.resize(element_count);
-  stream.read(reinterpret_cast<char*>(&v[0]), element_size * element_count);
+  wrapper.read(element_count, v.data());
 }
 
 }  // namespace pico_tree

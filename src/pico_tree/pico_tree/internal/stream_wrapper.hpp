@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <string>
 #include <vector>
 
 namespace pico_tree::internal {
@@ -46,6 +47,15 @@ class stream_wrapper {
     read(size, values.data());
   }
 
+  //! \brief Reads a string from the stream_wrapper.
+  //! \details Reads the size of the string followed by all its elements.
+  inline void read(std::string& values) {
+    typename std::string::size_type size;
+    read(size);
+    values.resize(size);
+    read(size, values.data());
+  }
+
   //! \brief Reads an array of values from the stream_wrapper.
   //! \tparam T_ Type of a value.
   template <typename T_>
@@ -70,9 +80,14 @@ class stream_wrapper {
   template <typename T_>
   inline void write(std::vector<T_> const& values) {
     write(values.size());
-    stream_.write(
-        reinterpret_cast<char const*>(&values[0]),
-        static_cast<std::streamsize>(sizeof(T_) * values.size()));
+    write(values.data(), values.size());
+  }
+
+  //! \brief Writes a string to the stream_wrapper.
+  //! \details Writes the size of the string followed by all its elements.
+  inline void write(std::string const& values) {
+    write(values.size());
+    write(values.data(), values.size());
   }
 
   //! \brief Writes an array of values to the stream_wrapper.

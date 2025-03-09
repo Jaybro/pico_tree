@@ -55,10 +55,14 @@ struct array_layout {
         index_inner(row_major ? 1 : 0),
         index_outer(row_major ? 0 : 1) {}
 
+  inline py::ssize_t inner_stride() const { return info.shape[index_inner]; }
+
+  inline py::ssize_t outer_stride() const { return info.shape[index_outer]; }
+
   py::buffer_info info;
   bool row_major;
-  py::ssize_t index_inner;
-  py::ssize_t index_outer;
+  std::size_t index_inner;
+  std::size_t index_outer;
 };
 
 template <pico_tree::size_t Dim_>

@@ -40,7 +40,7 @@ class build_cover_tree_impl {
     std::shuffle(indices.begin(), indices.end(), g);
 
     node_type* node = insert_first_two(indices);
-    for (index_type i = 2; i < static_cast<index_type>(npts); ++i) {
+    for (size_t i = 2; i < npts; ++i) {
       node = insert(node, create_node(indices[i]));
     }
 

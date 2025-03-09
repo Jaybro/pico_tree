@@ -68,17 +68,16 @@ class priority_search_nearest_euclidean {
   inline void search_nearest(
       node_type const* const node, scalar_type node_box_distance) {
     if (node->is_leaf()) {
-      for (index_type i = node->data.leaf.begin_idx;
-           i < node->data.leaf.end_idx;
-           ++i) {
-        visitor_(
-            indices_[i],
-            metric_(query_.begin(), query_.end(), space_[indices_[i]]));
+      auto begin = indices_.begin() + node->data.leaf.begin_idx;
+      auto const end = indices_.begin() + node->data.leaf.end_idx;
+      for (; begin < end; ++begin) {
+        visitor_(*begin, metric_(query_.begin(), query_.end(), space_[*begin]));
       }
     } else {
       // Go left or right and then check if we should still go down the other
       // side based on the current minimum distance.
-      scalar_type const v = query_[node->data.branch.split_dim];
+      scalar_type const v =
+          query_[static_cast<size_t>(node->data.branch.split_dim)];
       scalar_type old_offset;
       scalar_type new_offset;
       node_type const* node_1st;

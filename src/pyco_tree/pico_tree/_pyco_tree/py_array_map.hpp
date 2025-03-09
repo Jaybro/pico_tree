@@ -3,6 +3,7 @@
 #include <pybind11/numpy.h>
 
 #include <pico_tree/map_traits.hpp>
+#include <stdexcept>
 
 #include "core.hpp"
 
@@ -33,30 +34,30 @@ class py_array_map
 };
 
 template <pico_tree::size_t Dim_, typename Scalar_>
-py_array_map<Scalar_, Dim_> make_map(py::array_t<Scalar_, 0> const space) {
+py_array_map<Scalar_, Dim_> make_map(py::array const space) {
   array_layout layout(space);
 
   if (layout.info.ndim != 2) {
-    throw std::runtime_error("array ndim not 2");
+    throw std::invalid_argument("array ndim not 2");
   }
 
   if (!is_contiguous(space)) {
-    throw std::runtime_error("array not contiguous");
+    throw std::invalid_argument("array not contiguous");
   }
 
   // We always want the memory layout to look like x,y,z,x,y,z,...,x,y,z.
   // This means that the shape of the inner dimension should equal the spatial
   // dimension of the kd_tree.
-  if (!is_dim_compatible<Dim_>(static_cast<pico_tree::size_t>(
-          layout.info.shape[layout.index_inner]))) {
-    throw std::runtime_error(
+  if (!is_dim_compatible<Dim_>(
+          static_cast<pico_tree::size_t>(layout.inner_stride()))) {
+    throw std::invalid_argument(
         "incompatible kd_tree sdim and array inner stride");
   }
 
   return py_array_map<Scalar_, Dim_>(
       static_cast<Scalar_*>(layout.info.ptr),
-      static_cast<pico_tree::size_t>(layout.info.shape[layout.index_outer]),
-      static_cast<pico_tree::size_t>(layout.info.shape[layout.index_inner]),
+      static_cast<pico_tree::size_t>(layout.outer_stride()),
+      static_cast<pico_tree::size_t>(layout.inner_stride()),
       layout.row_major);
 }
 
@@ -64,9 +65,9 @@ py_array_map<Scalar_, Dim_> make_map(py::array_t<Scalar_, 0> const space) {
 
 namespace pico_tree {
 
-template <typename Scalar_, pico_tree::size_t Dim_>
+template <typename Scalar_, size_t Dim_>
 struct space_traits<pyco_tree::py_array_map<Scalar_, Dim_>>
-    : public space_traits<space_map<pico_tree::point_map<Scalar_, Dim_>>> {
+    : public space_traits<space_map<point_map<Scalar_, Dim_>>> {
   using space_type = pyco_tree::py_array_map<Scalar_, Dim_>;
 };
 

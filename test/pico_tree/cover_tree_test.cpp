@@ -18,7 +18,7 @@ using cover_tree = pico_tree::cover_tree<space<Point_>>;
 
 template <typename Point_>
 void query_radius(
-    int const point_count,
+    std::size_t const point_count,
     typename Point_::scalar_type const area_size,
     typename Point_::scalar_type const radius) {
   using scalar_type = typename Point_::scalar_type;
@@ -32,10 +32,9 @@ void query_radius(
 
 template <typename Point_>
 void query_knn(
-    int const point_count,
+    std::size_t const point_count,
     typename Point_::scalar_type const area_size,
-    int const k) {
-  using index_type = int;
+    pico_tree::size_t const k) {
   using scalar_type = typename Point_::scalar_type;
 
   std::vector<Point_> random =
@@ -45,7 +44,7 @@ void query_knn(
   // This line compile time "tests" the move capability of the tree.
   auto tree2 = std::move(tree);
 
-  test_knn(tree2, static_cast<index_type>(k));
+  test_knn(tree2, k);
 }
 
 }  // namespace

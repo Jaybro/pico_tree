@@ -56,7 +56,9 @@ class darray_impl : public darray_impl_base {
     //  * PyArray_NewFromDescr(...)
     //  * https://numpy.org/doc/1.13/reference/c-api.array.html
     return pybind11::array_t<T_, 0>(
-        array_[i].size(), array_[i].data(), pybind11::none());
+        static_cast<py::ssize_t>(array_[i].size()),
+        array_[i].data(),
+        pybind11::none());
   }
 
   std::unique_ptr<darray_impl_base> copy(
@@ -69,7 +71,7 @@ class darray_impl : public darray_impl_base {
       begin += step;
     }
 
-    return std::unique_ptr<darray_impl_base>(new darray_impl(std::move(array)));
+    return std::make_unique<darray_impl>(std::move(array));
   }
 
   std::size_t size() const override { return array_.size(); }
@@ -126,19 +128,19 @@ class darray {
 
     //! \private
     value_type operator[](difference_type const i) {
-      return array_->operator[](i);
+      return array_->operator[](static_cast<size_type>(index_ + i));
     }
 
     //! \private
     pointer operator->() {
       // A pointer interface.
-      return pointer(array_->operator[](index_));
+      return pointer(array_->operator[](static_cast<size_type>(index_)));
     }
 
     //! \private
     reference operator*() {
       // A reference is just a copy.
-      return array_->operator[](index_);
+      return array_->operator[](static_cast<size_type>(index_));
     }
 
     //! \private

@@ -54,7 +54,7 @@ inline void read_mnist_images(
     throw std::runtime_error("unexpected mnist image dimensions");
   }
 
-  images.resize(header.image_count);
+  images.resize(static_cast<std::size_t>(header.image_count));
   wrapper.read(images.size(), images.data());
 }
 
@@ -75,7 +75,7 @@ inline void read_mnist_labels(
   wrapper.read(header);
   header.label_count = big_endian<std::int32_t>{header.label_count};
 
-  labels.resize(header.label_count);
+  labels.resize(static_cast<std::size_t>(header.label_count));
   wrapper.read(labels.size(), labels.data());
 }
 

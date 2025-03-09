@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import pico_tree as pt
+import os
 import numpy as np
+import pico_tree as pt
 from pathlib import Path
 from time import perf_counter
 # from scipy.spatial import KDTree as spKDTree
@@ -9,7 +10,7 @@ from time import perf_counter
 # from pykdtree.kdtree import KDTree as pyKDTree
 
 
-def tree_creation_and_query_types():
+def kd_tree_creation_and_query():
     print("*** KdTree Creation And Basic Information ***")
     # An input array must have a dimension of two and it must be
     # contiguous. A C contiguous array contains points in its rows and
@@ -71,9 +72,9 @@ def tree_creation_and_query_types():
     print()
 
     print("*** Box Search ***")
-    # A box search returns the same data structure as a radius search.
-    # However, instead of containing neighbors it simply contains
-    # indices.
+    # A box search returns the same data structure as a radius
+    # search. However, instead of containing neighbors it simply
+    # contains indices.
     # An array of input boxes is defined as follows:
     #   [min_0, max_0, min_1, max_1, ...]
     boxes = np.array(
@@ -106,6 +107,31 @@ def tree_creation_and_query_types():
     print()
 
 
+def kd_tree_file_io():
+    # The save_kd_tree and load_kd_tree functions are considered
+    # convenience functions to save and load a kd_tree on a single
+    # machine. Take the following into account when using them:
+    # * Does not take memory endianness into account.
+    # * Does not check if the stored tree structure is valid for the
+    #   given point set.
+
+    a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float64, order='C')
+    t1 = pt.KdTree(a, pt.Metric.L2Squared, 10)
+
+    filename = "tree.bin"
+    # The save_kd_tree *only* saves the tree structure, not the point
+    # set that was used to create the KdTree.
+    pt.save_kd_tree(t1, filename)
+    # Loading the KdTree requires the original point set with which the
+    # KdTree was originally created.
+    t2 = pt.load_kd_tree(a, filename)
+    os.remove(filename)
+
+    print(t1)
+    print(t2)
+    print()
+
+
 def array_initialization():
     print("*** Array Initialization ***")
     p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float64)
@@ -126,7 +152,7 @@ def array_initialization():
     print()
 
 
-def performance_test_pico_tree():
+def kd_tree_performance_test():
     print("*** Performance against scans.bin ***")
     # The benchmark documentation, docs/benchmark.md section "Running a
     # new benchmark", explains how to generate a scans.bin file from an
@@ -175,9 +201,10 @@ def performance_test_pico_tree():
 
 
 def main():
-    tree_creation_and_query_types()
+    kd_tree_creation_and_query()
+    kd_tree_file_io()
     array_initialization()
-    performance_test_pico_tree()
+    kd_tree_performance_test()
 
 
 if __name__ == "__main__":

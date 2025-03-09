@@ -4,11 +4,8 @@
 #include <pico_tree/vector_traits.hpp>
 #include <random>
 
-using index = int;
-using scalar = float;
-
-index const num_points = 1024 * 1024 * 2;
-scalar const point_area = 1000.0;
+std::size_t const num_points = 1024 * 1024 * 2;
+float const point_area = 1000.0;
 std::size_t const run_count = 1024 * 1024;
 
 template <typename Vec_>
@@ -30,6 +27,8 @@ std::vector<Vec_> generate_random_vec_n(
 
 // This example shows to build a kd_tree from a vector of cv::Point3.
 void basic_vector() {
+  using index = int;
+  using scalar = float;
   using point = cv::Vec<scalar, 3>;
   std::vector<point> random =
       generate_random_vec_n<point>(num_points, point_area);
@@ -47,6 +46,9 @@ void basic_vector() {
 
 // This example shows to build a kd_tree using a cv::Mat.
 void basic_matrix() {
+  using index = int;
+  using scalar = float;
+
   // Multiple columns based on the number of coordinates in a point.
   {
     constexpr int dim = 3;
@@ -55,7 +57,7 @@ void basic_matrix() {
 
     pico_tree::kd_tree<pico_tree::opencv_mat_map<scalar, dim>> tree(
         random, pico_tree::max_leaf_size_t(10));
-    pico_tree::point_map<scalar, dim> p = tree.space()[random.rows / 2];
+    pico_tree::point_map<scalar, dim> p = tree.space()[tree.space().size() / 2];
 
     pico_tree::neighbor<index, scalar> nn;
     pico_tree::scoped_timer t("pico_tree cv mat", run_count);

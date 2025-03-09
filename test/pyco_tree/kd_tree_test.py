@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
-import unittest
+import copy
 import numpy as np
+import os
 import pico_tree as pt
+import unittest
 
 
 class KdTreeTest(unittest.TestCase):
@@ -17,7 +19,7 @@ class KdTreeTest(unittest.TestCase):
 
         # Non-contiguous arrays are not supported.
         a = a[::2]
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             t = pt.KdTree(a, pt.Metric.L2Squared, 10)
 
         # Col major input check.
@@ -35,7 +37,7 @@ class KdTreeTest(unittest.TestCase):
         self.assertEqual(a[0][0], memoryview(t)[0, 0])
 
         # The tree must have a dimension of two.
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             a = np.array([[[2, 1]], [[4, 3]], [[8, 7]]], dtype=np.float32)
             t = pt.KdTree(a, pt.Metric.L2Squared, 10)
 
@@ -62,7 +64,7 @@ class KdTreeTest(unittest.TestCase):
             self.assertAlmostEqual(nns[i][0][1], 0)
 
         # Test that the memory is re-used
-        data = nns.ctypes.data
+        data = copy.deepcopy(nns.ctypes.data)
         t.search_knn(a, k, nns)
         self.assertEqual(nns.ctypes.data, data)
 
@@ -81,7 +83,7 @@ class KdTreeTest(unittest.TestCase):
             self.assertAlmostEqual(nns[i][0][1], 0)
 
         # Test that the memory is re-used
-        data = nns.ctypes.data
+        data = copy.deepcopy(nns.ctypes.data)
         t.search_knn(a, k, s, nns)
         self.assertEqual(nns.ctypes.data, data)
 
@@ -109,7 +111,7 @@ class KdTreeTest(unittest.TestCase):
         # In case the size of an array equals zero, its memory address is
         # random. See darray.hpp for more details.
         def addresses(nns):
-            return [x.ctypes.data if len(x) else 0 for x in nns]
+            return [copy.deepcopy(x.ctypes.data) if len(x) else 0 for x in nns]
 
         datas = addresses(nns)
         t.search_radius(a, radius, nns)
@@ -140,7 +142,7 @@ class KdTreeTest(unittest.TestCase):
         # In case the size of an array equals zero, its memory address is
         # random. See darray.hpp for more details.
         def addresses(nns):
-            return [x.ctypes.data if len(x) else 0 for x in nns]
+            return [copy.deepcopy(x.ctypes.data) if len(x) else 0 for x in nns]
 
         datas = addresses(nns)
         t.search_radius(a, radius, s, nns)
@@ -168,7 +170,7 @@ class KdTreeTest(unittest.TestCase):
         # In case the size of an array equals zero, its memory address is
         # random. See darray.hpp for more details.
         def addresses(nns):
-            return [x.ctypes.data if len(x) else 0 for x in nns]
+            return [copy.deepcopy(x.ctypes.data) if len(x) else 0 for x in nns]
 
         datas = addresses(nns)
         t.search_box(boxes, nns)
@@ -216,6 +218,24 @@ class KdTreeTest(unittest.TestCase):
         d = pt.DArray(np.dtype(np.int32))
         self.assertEqual(d.dtype, t.dtype_index)
         self.assertFalse(d)
+
+    def test_file_io(self):
+        a = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float64, order='C')
+        t1 = pt.KdTree(a, pt.Metric.L2Squared, 10)
+
+        filename = "tree.bin"
+        pt.save_kd_tree(t1, filename)
+        t2 = pt.load_kd_tree(a, filename)
+        os.remove(filename)
+
+        k = 2
+        nns1 = t1.search_knn(a, k)
+        nns2 = t2.search_knn(a, k)
+
+        # Check that the correct metric is read from file.
+        self.assertEqual(t1.__repr__(), t2.__repr__())
+        self.assertEqual(t1.dtype_scalar, t2.dtype_scalar)
+        self.assertTrue(np.array_equal(nns1, nns2))
 
 
 if __name__ == '__main__':

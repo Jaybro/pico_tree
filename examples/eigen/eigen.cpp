@@ -84,14 +84,16 @@ void col_major_support() {
   using kd_tree = pico_tree::kd_tree<map>;
   using neighbor = typename kd_tree::neighbor_type;
   using scalar = typename point::Scalar;
-  constexpr int dim = point::RowsAtCompileTime;
+  constexpr Eigen::Index dim = point::RowsAtCompileTime;
 
   auto points = generate_random_eigen_n<point>(num_points, point_area);
   point p = point::Random() * point_area / scalar(2.0);
 
   std::cout << "Eigen RowMajor: " << map::IsRowMajor << std::endl;
 
-  kd_tree tree(map(points.data()->data(), dim, points.size()), max_leaf_count);
+  kd_tree tree(
+      map(points.data()->data(), dim, static_cast<Eigen::Index>(num_points)),
+      max_leaf_count);
 
   std::vector<neighbor> knn;
   pico_tree::scoped_timer t("pico_tree col major", run_count);
@@ -108,14 +110,16 @@ void row_major_support() {
   using kd_tree = pico_tree::kd_tree<map>;
   using neighbor = typename kd_tree::neighbor_type;
   using scalar = typename point::Scalar;
-  constexpr int dim = point::ColsAtCompileTime;
+  constexpr Eigen::Index dim = point::ColsAtCompileTime;
 
   auto points = generate_random_eigen_n<point>(num_points, point_area);
   point p = point::Random() * point_area / scalar(2.0);
 
   std::cout << "Eigen RowMajor: " << point::IsRowMajor << std::endl;
 
-  kd_tree tree(map(points.data()->data(), points.size(), dim), max_leaf_count);
+  kd_tree tree(
+      map(points.data()->data(), static_cast<Eigen::Index>(num_points), dim),
+      max_leaf_count);
 
   std::vector<neighbor> knn;
   pico_tree::scoped_timer t("pico_tree row major", run_count);
