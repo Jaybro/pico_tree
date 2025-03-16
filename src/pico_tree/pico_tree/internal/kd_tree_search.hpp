@@ -165,12 +165,14 @@ class search_nearest_topological {
           v,
           node->data.branch.left_min,
           node->data.branch.left_max,
-          node->data.branch.split_dim);
+          node->data.branch.split_dim,
+          euclidean_space_tag{});
       scalar_type const d2 = metric_(
           v,
           node->data.branch.right_min,
           node->data.branch.right_max,
-          node->data.branch.split_dim);
+          node->data.branch.split_dim,
+          euclidean_space_tag{});
       node_type const* node_1st;
       node_type const* node_2nd;
       scalar_type new_offset;
@@ -210,27 +212,28 @@ class search_nearest_topological {
   Visitor_& visitor_;
 };
 
-//! \brief A functor that provides range searches for Euclidean spaces. Query
-//! time is bounded by O(n^(1-1/dimension)+k).
+//! \brief A functor that provides range searches for both Euclidean and
+//! topological spaces. Query time is bounded by O(n^(1-1/dimension)+k).
 //! \details Many tree nodes are excluded by checking if they intersect with the
 //! box of the query. We don't store the bounding box of each node but calculate
 //! them at run time. This slows down search_box in favor of having faster
 //! nearest neighbor searches.
 template <typename SpaceWrapper_, typename Metric_, typename Index_>
-class search_box_euclidean {
- public:
-  // TODO Perhaps we can support it for both topological and Euclidean spaces.
-  static_assert(
-      std::is_same_v<typename Metric_::space_category, euclidean_space_tag>,
-      "SEARCH_BOX_ONLY_SUPPORTED_FOR_EUCLIDEAN_SPACES");
+class search_box {
+  using space_category = typename Metric_::space_category;
+  static constexpr bool is_euclidean_space_v =
+      std::is_same_v<space_category, euclidean_space_tag>;
 
+ public:
   using index_type = Index_;
   using scalar_type = typename SpaceWrapper_::scalar_type;
   static size_t constexpr dim = SpaceWrapper_::dim;
   using box_type = box<scalar_type, dim>;
   using box_map_type = box_map<scalar_type const, dim>;
+  using node_type = typename kd_tree_space_tag_traits<
+      space_category>::template node_type<index_type, scalar_type>;
 
-  inline search_box_euclidean(
+  inline search_box(
       SpaceWrapper_ space,
       Metric_ metric,
       std::vector<index_type> const& indices,
@@ -245,13 +248,12 @@ class search_box_euclidean {
         idxs_(idxs) {}
 
   //! \brief Range search starting from \p node.
-  template <typename Node_>
-  inline void operator()(Node_ const* const node) {
+  inline void operator()(node_type const* const node) {
     if (node->is_leaf()) {
       auto begin = indices_.begin() + node->data.leaf.begin_idx;
       auto const end = indices_.begin() + node->data.leaf.end_idx;
       for (; begin < end; ++begin) {
-        if (query_.contains(space_[*begin])) {
+        if (contains(*begin)) {
           idxs_.push_back(*begin);
         }
       }
@@ -265,7 +267,7 @@ class search_box_euclidean {
       // down the left node.
       if (query_.contains(box_)) {
         report_node(node->left);
-      } else if (query_.min(split_dim) <= node->data.branch.left_max) {
+      } else if (intersects_left(split_dim, node)) {
         operator()(node->left);
       }
 
@@ -276,7 +278,7 @@ class search_box_euclidean {
       // Same as the left side.
       if (query_.contains(box_)) {
         report_node(node->right);
-      } else if (query_.max(split_dim) >= node->data.branch.right_min) {
+      } else if (intersects_right(split_dim, node)) {
         operator()(node->right);
       }
 
@@ -285,9 +287,61 @@ class search_box_euclidean {
   }
 
  private:
+  // TODO We could add an extra class layer to the box_base, box, and box_map
+  // hierarchy, to support topological boxes. However, this is a lot more
+  // code/work and we currently only use this feature here and in a unit test.
+  bool contains(scalar_type const* const p) const {
+    for (size_t i = 0; i < query_.size(); ++i) {
+      if (metric_(
+              p[i],
+              query_.min(i),
+              query_.max(i),
+              static_cast<int>(i),
+              topological_space_tag{}) > scalar_type(0.0)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool contains(index_type const idx) const {
+    if constexpr (is_euclidean_space_v) {
+      return query_.contains(space_[idx]);
+    } else {
+      return contains(space_[idx]);
+    }
+  }
+
+  bool contains() const {
+    if constexpr (is_euclidean_space_v) {
+      return query_.contains(box_);
+    } else {
+      return contains(box_.min()) && contains(box_.max());
+    }
+  }
+
+  bool intersects_left(
+      size_t const split_dim, node_type const* const node) const {
+    if constexpr (is_euclidean_space_v) {
+      return query_.min(split_dim) <= node->data.branch.left_max;
+    } else {
+      return query_.min(split_dim) <= node->data.branch.left_max ||
+             query_.max(split_dim) >= node->data.branch.left_min;
+    }
+  }
+
+  bool intersects_right(
+      size_t const split_dim, node_type const* const node) const {
+    if constexpr (is_euclidean_space_v) {
+      return query_.max(split_dim) >= node->data.branch.right_min;
+    } else {
+      return query_.max(split_dim) >= node->data.branch.right_min ||
+             query_.min(split_dim) <= node->data.branch.right_max;
+    }
+  }
+
   //! \brief Reports all indices contained by \p node.
-  template <typename Node_>
-  inline void report_node(Node_ const* const node) const {
+  inline void report_node(node_type const* const node) const {
     index_type begin;
     index_type end;
 
@@ -309,8 +363,7 @@ class search_box_euclidean {
         std::back_inserter(idxs_));
   }
 
-  template <typename Node_>
-  inline index_type report_left(Node_ const* const node) const {
+  inline index_type report_left(node_type const* const node) const {
     if (node->is_leaf()) {
       return node->data.leaf.begin_idx;
     } else {
@@ -318,8 +371,7 @@ class search_box_euclidean {
     }
   }
 
-  template <typename Node_>
-  inline index_type report_right(Node_ const* const node) const {
+  inline index_type report_right(node_type const* const node) const {
     if (node->is_leaf()) {
       return node->data.leaf.end_idx;
     } else {

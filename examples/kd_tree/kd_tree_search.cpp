@@ -73,23 +73,25 @@ void search_r3() {
   }
 }
 
-// Search on the circle.
+// This example shows how to search on the unit circle. Point coordinates must
+// lie within the range of [0...1]. Point coordinates wrap at 0 or 1. A point
+// with a coordinate value of 0 is considered the same as one with a coordinate
+// value of 1.
 void search_s1() {
   using point = pico_tree::point_1f;
+  using scalar = typename pico_tree::point_1f::scalar_type;
   using space = std::vector<point>;
   using neighbor =
       pico_tree::kd_tree<space, pico_tree::metric_so2>::neighbor_type;
 
-  const auto pi = typename point::scalar_type(3.1415926537);
-
   pico_tree::kd_tree<space, pico_tree::metric_so2> tree(
-      pico_tree::generate_random_n<point>(512, -pi, pi),
+      pico_tree::generate_random_n<point>(512, scalar(0.0), scalar(1.0)),
       pico_tree::max_leaf_size_t(10));
 
   std::array<neighbor, 8> knn;
-  tree.search_knn(point{pi}, knn.begin(), knn.end());
+  tree.search_knn(point{1.0}, knn.begin(), knn.end());
 
-  // These prints show that wrapping around near point -PI ~ PI is supported.
+  // These prints show that wrapping near values 0 ~ 1 is supported.
   std::cout << "Closest angles (index, distance, value): " << std::endl;
   for (auto const& nn : knn) {
     std::cout << "  " << nn.index << ", " << nn.distance << ", "

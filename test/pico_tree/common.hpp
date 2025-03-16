@@ -4,6 +4,7 @@
 #include <pico_tree/core.hpp>
 #include <pico_tree/internal/space_wrapper.hpp>
 #include <pico_tree/map_traits.hpp>
+#include <pico_tree/metric.hpp>
 
 inline void float_eq(float val1, float val2) { EXPECT_FLOAT_EQ(val1, val2); }
 
@@ -76,6 +77,33 @@ void search_knn(
   std::sort(knn.begin(), knn.end());
 }
 
+template <typename Scalar_, typename Metric_>
+bool contains(
+    Scalar_ v,
+    Scalar_ min,
+    Scalar_ max,
+    [[maybe_unused]] pico_tree::size_t dim,
+    [[maybe_unused]] Metric_ metric,
+    pico_tree::euclidean_space_tag) {
+  return min <= v && v <= max;
+}
+
+template <typename Scalar_, typename Metric_>
+bool contains(
+    Scalar_ v,
+    Scalar_ min,
+    Scalar_ max,
+    pico_tree::size_t dim,
+    Metric_ metric,
+    pico_tree::topological_space_tag) {
+  return metric(
+             v,
+             min,
+             max,
+             static_cast<int>(dim),
+             pico_tree::topological_space_tag{}) == Scalar_(0.0);
+}
+
 template <typename Tree_>
 void test_box(
     Tree_ const& tree,
@@ -84,6 +112,9 @@ void test_box(
   using point_type =
       typename pico_tree::space_traits<typename Tree_::space_type>::point_type;
   using index_type = typename Tree_::index_type;
+  // TODO Because of the min_v and max_v arguments, test_box only works on so^n
+  // topological metrics.
+  using metric_type = typename Tree_::metric_type;
 
   pico_tree::internal::space_wrapper<typename Tree_::space_type> space(
       tree.space());
@@ -95,22 +126,32 @@ void test_box(
   std::vector<index_type> idxs;
   tree.search_box(min, max, idxs);
 
+  metric_type metric;
+  std::size_t count = 0;
+
   for (auto j : idxs) {
     for (pico_tree::size_t d = 0; d < space.sdim(); ++d) {
-      auto v = space[j][d];
-      EXPECT_GE(v, min_v);
-      EXPECT_LE(v, max_v);
+      EXPECT_TRUE(contains(
+          space[j][d],
+          min_v,
+          max_v,
+          d,
+          metric,
+          typename metric_type::space_category{}));
     }
   }
-
-  std::size_t count = 0;
 
   for (pico_tree::size_t j = 0; j < space.size(); ++j) {
     bool contained = true;
 
     for (pico_tree::size_t d = 0; d < space.sdim(); ++d) {
-      auto v = space[j][d];
-      if ((v < min_v) || (v > max_v)) {
+      if (!contains(
+              space[j][d],
+              min_v,
+              max_v,
+              d,
+              metric,
+              typename metric_type::space_category{})) {
         contained = false;
         break;
       }

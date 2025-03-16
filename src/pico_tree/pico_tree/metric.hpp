@@ -6,12 +6,9 @@ namespace pico_tree {
 
 namespace internal {
 
-//! \brief Mathematical constant pi. It is defined as the ratio of a circle's
-//! circumference to its diameter. Only available from C++20.
+//! \brief Simply the number one as a constant.
 template <typename T_>
-inline T_ constexpr pi = T_(3.14159265358979323846l);
-template <typename T_>
-inline T_ constexpr two_pi = T_(6.28318530717958647693l);
+inline T_ constexpr one_v = T_(1.0);
 
 //! \brief Calculates the square of a number.
 template <typename Scalar_>
@@ -67,52 +64,65 @@ constexpr Scalar_ squared_distance_box(Scalar_ x, Scalar_ min, Scalar_ max) {
   return squared(distance_box(x, min, max));
 }
 
-//! \brief Calculates the angular distance between two coordinates. The values
-//! for \p x or \py y must lie within the range of [-pi...pi].
+//! \brief Calculates the distance between two coordinates on the unit circle
+//! s1. The values for \p x or \p y must lie within the range of [0...1].
 template <typename Scalar_>
-constexpr Scalar_ angle_distance(Scalar_ x, Scalar_ y) {
+constexpr Scalar_ s1_distance(Scalar_ x, Scalar_ y) {
   Scalar_ const d = std::abs(x - y);
-  return std::min(d, internal::two_pi<Scalar_> - d);
+  return std::min(d, one_v<Scalar_> - d);
 }
 
-//! \brief Calculates the squared angular distance between two coordinates.
-//! \see angle_distance
+//! \brief Calculates the squared s1_distance between two coordinates.
+//! \see s1_distance
 template <typename Scalar_>
-constexpr Scalar_ squared_angle_distance(Scalar_ x, Scalar_ y) {
-  return squared(angle_distance(x, y));
+constexpr Scalar_ squared_s1_distance(Scalar_ x, Scalar_ y) {
+  return squared(s1_distance(x, y));
 }
 
-//! \brief Calculates the angular distance between coordinate \p x and the box
-//! defined by [ \p min, \p max ].
+//! \private
 template <typename Scalar_>
-constexpr Scalar_ angle_distance_box(Scalar_ x, Scalar_ min, Scalar_ max) {
+constexpr Scalar_ s1_distance_box_euclidean(
+    Scalar_ x, Scalar_ min, Scalar_ max) {
   // The box of a kd_tree node cannot wrap around the identification of PI ~
   // -PI. This means we don't have to check if the minimum is larger than the
   // maximum to see which range is inside the box.
   if (x < min || x > max) {
-    return std::min(angle_distance(x, min), angle_distance(x, max));
+    return std::min(s1_distance(x, min), s1_distance(x, max));
   } else {
     return Scalar_(0.0);
   }
 }
 
-//! \brief Calculates the squared angular distance between a coordinate and a
-//! box.
+//! \private
 template <typename Scalar_>
-constexpr Scalar_ squared_angle_distance_box(
+constexpr Scalar_ s1_distance_box_topological(
     Scalar_ x, Scalar_ min, Scalar_ max) {
-  return squared(angle_distance_box(x, min, max));
+  if (min <= max) {
+    return s1_distance_box_euclidean(x, min, max);
+  } else {
+    if (x < max || x > min) {
+      return Scalar_(0.0);
+    } else {
+      return std::min(s1_distance(x, min), s1_distance(x, max));
+    }
+  }
 }
 
-//! \brief Calculates the squared angular distance between two coordinates.
-//! \details The circle S1 is represented by the range [-PI, PI] / -PI ~ PI.
-struct angle_distance_fn {
-  template <typename Scalar_>
-  constexpr Scalar_ operator()(Scalar_ x, Scalar_ y) const {
-    return angle_distance(x, y);
-  }
-};
+//! \private
+template <typename Scalar_>
+constexpr Scalar_ squared_s1_distance_box_euclidean(
+    Scalar_ x, Scalar_ min, Scalar_ max) {
+  return squared(s1_distance_box_euclidean(x, min, max));
+}
 
+//! \private
+template <typename Scalar_>
+constexpr Scalar_ squared_s1_distance_box_topological(
+    Scalar_ x, Scalar_ min, Scalar_ max) {
+  return squared(s1_distance_box_topological(x, min, max));
+}
+
+//! \private
 template <
     typename InputIterator1_,
     typename InputSentinel1_,
@@ -256,10 +266,11 @@ struct metric_linf {
   }
 };
 
-//! \brief The metric_so2 measures distances on the unit circle S1. It is the
-//! intrinsic metric of points in R2 on S1 given by the great-circle distance.
-//! \details Named after the Special Orthogonal Group of dimension 2. The circle
-//! S1 is represented by the range [-PI, PI] / -PI ~ PI.
+//! \brief The metric_so2 measures distances on the unit circle S1. The
+//! coordinate of each point is expected to be within the range [0...1].
+//! \details  It is the intrinsic metric of points in R2 on S1 given by the
+//! great-circle distance. Named after the Special Orthogonal Group of
+//! dimension 2. The circle S1 is represented by the range [0...1] / 0 ~ 1.
 //!
 //! For more details:
 //! * https://en.wikipedia.org/wiki/Intrinsic_metric
@@ -274,7 +285,7 @@ struct metric_so2 {
       typename InputIterator2_>
   constexpr auto operator()(
       InputIterator1_ begin1, InputSentinel1_, InputIterator2_ begin2) const {
-    return internal::angle_distance(*begin1, *begin2);
+    return internal::s1_distance(*begin1, *begin2);
   }
 
   //! \brief Calculates the distance between coordinate \p x and the box defined
@@ -284,8 +295,22 @@ struct metric_so2 {
   //! \see metric_se2_squared
   template <typename Scalar_>
   constexpr Scalar_ operator()(
-      Scalar_ x, Scalar_ min, Scalar_ max, [[maybe_unused]] int dim) const {
-    return internal::angle_distance_box(x, min, max);
+      Scalar_ x,
+      Scalar_ min,
+      Scalar_ max,
+      [[maybe_unused]] int dim,
+      euclidean_space_tag) const {
+    return internal::s1_distance_box_euclidean(x, min, max);
+  }
+
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(
+      Scalar_ x,
+      Scalar_ min,
+      Scalar_ max,
+      [[maybe_unused]] int dim,
+      topological_space_tag) const {
+    return internal::s1_distance_box_topological(x, min, max);
   }
 
   //! \brief Returns the absolute value of \p x.
@@ -296,7 +321,8 @@ struct metric_so2 {
 };
 
 //! \brief The metric_se2_squared measures distances in Euclidean space between
-//! Euclidean motions.
+//! Euclidean motions. The third coordinate of each point is expected to be
+//! within the range [0...1].
 //! \details Named after the Special Euclidean group of dimension 2.
 //! For more details:
 //! * https://en.wikipedia.org/wiki/Euclidean_group
@@ -312,18 +338,29 @@ struct metric_se2_squared {
       InputIterator1_ begin1, InputSentinel1_, InputIterator2_ begin2) const {
     return internal::sum(
                begin1, begin1 + 2, begin2, internal::squared_distance_fn()) +
-           internal::squared_angle_distance(*(begin1 + 2), *(begin2 + 2));
+           internal::squared_s1_distance(*(begin1 + 2), *(begin2 + 2));
   }
 
   //! \brief Calculates the squared distance between coordinate \p x and the box
   //! defined by [ \p min, \p max ].
   template <typename Scalar_>
   constexpr Scalar_ operator()(
-      Scalar_ x, Scalar_ min, Scalar_ max, int dim) const {
+      Scalar_ x, Scalar_ min, Scalar_ max, int dim, euclidean_space_tag) const {
     if (dim < 2) {
       return internal::squared_distance_box(x, min, max);
     } else {
-      return internal::squared_angle_distance_box(x, min, max);
+      return internal::squared_s1_distance_box_euclidean(x, min, max);
+    }
+  }
+
+  template <typename Scalar_>
+  constexpr Scalar_ operator()(
+      Scalar_ x, Scalar_ min, Scalar_ max, int dim, topological_space_tag)
+      const {
+    if (dim < 2) {
+      return internal::squared_distance_box(x, min, max);
+    } else {
+      return internal::squared_s1_distance_box_topological(x, min, max);
     }
   }
 

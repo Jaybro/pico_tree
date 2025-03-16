@@ -71,8 +71,12 @@ class kd_tree {
       splitter_rule_t<Rule_> const& rule = Rule_{})
       : space_(std::move(space)),
         metric_(),
-        data_(internal::build_kd_tree<kd_tree_data_type, dim>()(
-            space_wrapper_type(space_), stop_condition, start_bounds, rule)) {}
+        data_(
+            internal::build_kd_tree<kd_tree_data_type, dim>()(
+                space_wrapper_type(space_),
+                stop_condition,
+                start_bounds,
+                rule)) {}
 
   //! \brief The kd_tree cannot be copied.
   //! \details The kd_tree uses pointers to nodes and copying pointers is not
@@ -287,7 +291,7 @@ class kd_tree {
     // now it is assumed that this check is not worth it: If there is any
     // overlap then the search is slower. So unless many queries don't intersect
     // there is no point in adding it.
-    internal::search_box_euclidean<space_wrapper_type, Metric_, index_type>(
+    internal::search_box<space_wrapper_type, Metric_, index_type>(
         space,
         metric_,
         data_.indices,

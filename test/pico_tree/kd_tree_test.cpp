@@ -84,18 +84,17 @@ TEST(KdTreeTest, QueryKnn10) {
 
 TEST(KdTreeTest, QuerySo2Knn4) {
   using point_type = pico_tree::point_1f;
+  using scalar_type = typename point_type::scalar_type;
   using space_type = space<point_type>;
 
-  const auto pi =
-      pico_tree::internal::pi<typename kd_tree<point_type>::scalar_type>;
-  std::vector<point_type> random =
-      pico_tree::generate_random_n<point_type>(256 * 256, -pi, pi);
+  std::vector<point_type> random = pico_tree::generate_random_n<point_type>(
+      256 * 256, scalar_type(0.0), scalar_type(1.0));
   pico_tree::kd_tree<space_type, pico_tree::metric_so2> tree(
       random, pico_tree::max_leaf_size_t(10));
-  test_knn(
-      tree,
-      static_cast<typename kd_tree<point_type>::index_type>(8),
-      point_type{pi});
+
+  test_knn(tree, 8, point_type{1.0});
+  test_box(tree, scalar_type(0.90), scalar_type(1.00));
+  test_box(tree, scalar_type(0.95), scalar_type(0.05));
 }
 
 TEST(KdTreeTest, WriteRead) {
