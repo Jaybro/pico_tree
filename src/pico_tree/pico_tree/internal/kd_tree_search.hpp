@@ -77,11 +77,11 @@ class search_nearest_euclidean {
           0) {
         node_1st = node->left;
         node_2nd = node->right;
-        new_offset = metric_(node->data.branch.right_min, v);
+        new_offset = metric_(node->data.branch.right_min - v);
       } else {
         node_1st = node->right;
         node_2nd = node->left;
-        new_offset = metric_(node->data.branch.left_max, v);
+        new_offset = metric_(node->data.branch.left_max - v);
       }
 
       // The distance and offset for node_1st is the same as that of its parent.
@@ -161,18 +161,16 @@ class search_nearest_topological {
       size_t const split_dim = static_cast<size_t>(node->data.branch.split_dim);
       scalar_type const v = query_[split_dim];
       // Determine the distance to the boxes of the children of this node.
-      scalar_type const d1 = metric_(
-          v,
+      scalar_type const d1 = box_distance(
           node->data.branch.left_min,
           node->data.branch.left_max,
-          node->data.branch.split_dim,
-          euclidean_space_tag{});
-      scalar_type const d2 = metric_(
           v,
+          node->data.branch.split_dim);
+      scalar_type const d2 = box_distance(
           node->data.branch.right_min,
           node->data.branch.right_max,
-          node->data.branch.split_dim,
-          euclidean_space_tag{});
+          v,
+          node->data.branch.split_dim);
       node_type const* node_1st;
       node_type const* node_2nd;
       scalar_type new_offset;
@@ -204,6 +202,24 @@ class search_nearest_topological {
     }
   }
 
+  scalar_type box_distance(
+      scalar_type min, scalar_type max, scalar_type v, int dim) const {
+    scalar_type d;
+    auto bd = [&](auto one_space) { d = box_distance(min, max, v, one_space); };
+    metric_.apply_one_space(dim, bd);
+    return metric_(d);
+  }
+
+  scalar_type box_distance(
+      scalar_type min, scalar_type max, scalar_type v, one_space_r1) const {
+    return segment_r1<scalar_type>(min, max).distance(v);
+  }
+
+  scalar_type box_distance(
+      scalar_type min, scalar_type max, scalar_type v, one_space_s1) const {
+    return segment_s1<scalar_type>(min, max).distance(v);
+  }
+
   SpaceWrapper_ space_;
   Metric_ metric_;
   std::vector<index_type> const& indices_;
@@ -229,7 +245,10 @@ class search_box {
   using scalar_type = typename SpaceWrapper_::scalar_type;
   static size_t constexpr dim = SpaceWrapper_::dim;
   using box_type = box<scalar_type, dim>;
-  using box_map_type = box_map<scalar_type const, dim>;
+  using box_map_type = std::conditional_t<
+      is_euclidean_space_v,
+      box_map<scalar_type const, dim>,
+      metric_box_map<scalar_type const, dim, Metric_>>;
   using node_type = typename kd_tree_space_tag_traits<
       space_category>::template node_type<index_type, scalar_type>;
 
@@ -287,38 +306,11 @@ class search_box {
   }
 
  private:
-  // TODO We could add an extra class layer to the box_base, box, and box_map
-  // hierarchy, to support topological boxes. However, this is a lot more
-  // code/work and we currently only use this feature here and in a unit test.
-  bool contains(scalar_type const* const p) const {
-    for (size_t i = 0; i < query_.size(); ++i) {
-      if (metric_(
-              p[i],
-              query_.min(i),
-              query_.max(i),
-              static_cast<int>(i),
-              topological_space_tag{}) > scalar_type(0.0)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   bool contains(index_type const idx) const {
-    if constexpr (is_euclidean_space_v) {
-      return query_.contains(space_[idx]);
-    } else {
-      return contains(space_[idx]);
-    }
+    return query_.contains(space_[idx]);
   }
 
-  bool contains() const {
-    if constexpr (is_euclidean_space_v) {
-      return query_.contains(box_);
-    } else {
-      return contains(box_.min()) && contains(box_.max());
-    }
-  }
+  bool contains() const { return query_.contains(box_); }
 
   bool intersects_left(
       size_t const split_dim, node_type const* const node) const {

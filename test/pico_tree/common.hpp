@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <pico_tree/core.hpp>
+#include <pico_tree/internal/point_wrapper.hpp>
 #include <pico_tree/internal/space_wrapper.hpp>
 #include <pico_tree/map_traits.hpp>
 #include <pico_tree/metric.hpp>
@@ -77,33 +78,6 @@ void search_knn(
   std::sort(knn.begin(), knn.end());
 }
 
-template <typename Scalar_, typename Metric_>
-bool contains(
-    Scalar_ v,
-    Scalar_ min,
-    Scalar_ max,
-    [[maybe_unused]] pico_tree::size_t dim,
-    [[maybe_unused]] Metric_ metric,
-    pico_tree::euclidean_space_tag) {
-  return min <= v && v <= max;
-}
-
-template <typename Scalar_, typename Metric_>
-bool contains(
-    Scalar_ v,
-    Scalar_ min,
-    Scalar_ max,
-    pico_tree::size_t dim,
-    Metric_ metric,
-    pico_tree::topological_space_tag) {
-  return metric(
-             v,
-             min,
-             max,
-             static_cast<int>(dim),
-             pico_tree::topological_space_tag{}) == Scalar_(0.0);
-}
-
 template <typename Tree_>
 void test_box(
     Tree_ const& tree,
@@ -111,10 +85,18 @@ void test_box(
     typename Tree_::scalar_type const max_v) {
   using point_type =
       typename pico_tree::space_traits<typename Tree_::space_type>::point_type;
+  using scalar_type = typename Tree_::scalar_type;
   using index_type = typename Tree_::index_type;
+  constexpr pico_tree::size_t dim = Tree_::dim;
   // TODO Because of the min_v and max_v arguments, test_box only works on so^n
   // topological metrics.
   using metric_type = typename Tree_::metric_type;
+  using box_map_type = std::conditional_t<
+      std::is_same_v<
+          typename metric_type::space_category,
+          pico_tree::euclidean_space_tag>,
+      pico_tree::internal::box_map<scalar_type const, dim>,
+      pico_tree::internal::metric_box_map<scalar_type const, dim, metric_type>>;
 
   pico_tree::internal::space_wrapper<typename Tree_::space_type> space(
       tree.space());
@@ -122,42 +104,22 @@ void test_box(
   point_type min, max;
   min.fill(min_v);
   max.fill(max_v);
+  box_map_type box_map(
+      pico_tree::internal::point_wrapper<point_type>(min).begin(),
+      pico_tree::internal::point_wrapper<point_type>(max).begin(),
+      space.sdim());
 
   std::vector<index_type> idxs;
   tree.search_box(min, max, idxs);
 
-  metric_type metric;
   std::size_t count = 0;
 
   for (auto j : idxs) {
-    for (pico_tree::size_t d = 0; d < space.sdim(); ++d) {
-      EXPECT_TRUE(contains(
-          space[j][d],
-          min_v,
-          max_v,
-          d,
-          metric,
-          typename metric_type::space_category{}));
-    }
+    EXPECT_TRUE(box_map.contains(space[j]));
   }
 
   for (pico_tree::size_t j = 0; j < space.size(); ++j) {
-    bool contained = true;
-
-    for (pico_tree::size_t d = 0; d < space.sdim(); ++d) {
-      if (!contains(
-              space[j][d],
-              min_v,
-              max_v,
-              d,
-              metric,
-              typename metric_type::space_category{})) {
-        contained = false;
-        break;
-      }
-    }
-
-    if (contained) {
+    if (box_map.contains(space[j])) {
       count++;
     }
   }

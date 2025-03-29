@@ -18,7 +18,7 @@ void array_of_scalars() {
     data[i] = static_cast<double>(i);
   }
 
-  // If dim equals pico_tree::dynamic_size, then space_map will need a 3rd
+  // If dim equals pico_tree::dynamic_extent, then space_map will need a 3rd
   // argument: The spatial dimension known at run time.
   pico_tree::space_map<pico_tree::point_map<double, dim>> map(
       data.get(), count);
@@ -26,7 +26,7 @@ void array_of_scalars() {
   pico_tree::kd_tree<pico_tree::space_map<pico_tree::point_map<double, dim>>>
       tree(map, pico_tree::max_leaf_size_t(3));
 
-  // If dim equals pico_tree::dynamic_size, then point_map will need a 2nd
+  // If dim equals pico_tree::dynamic_extent, then point_map will need a 2nd
   // argument: The spatial dimension known at run time.
   std::size_t index = 2;
   pico_tree::point_map<double, dim> query(data.get() + index * dim);

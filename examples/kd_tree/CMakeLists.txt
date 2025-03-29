@@ -12,6 +12,8 @@ add_demo_executable(kd_tree_search)
 
 add_demo_executable(kd_tree_dynamic_arrays)
 
+add_demo_executable(kd_tree_custom_metric)
+
 add_demo_executable(kd_tree_custom_point_type)
 
 add_demo_executable(kd_tree_custom_space_type)

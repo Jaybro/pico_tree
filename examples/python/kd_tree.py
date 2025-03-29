@@ -10,12 +10,18 @@ from time import perf_counter
 # from pykdtree.kdtree import KDTree as pyKDTree
 
 
-def kd_tree_creation_and_query():
+def kd_tree_creation():
     print("*** KdTree Creation And Basic Information ***")
     # An input array must have a dimension of two and it must be
     # contiguous. A C contiguous array contains points in its rows and
     # an F contiguous array contains points in its columns.
     p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
+    # Metric.L1: The sum of absolute differences.
+    t = pt.KdTree(p, pt.Metric.L1, 10)
+    print(f"{t}")
+    # Metric.LPInf: The max of absolute differences.
+    t = pt.KdTree(p, pt.Metric.LPInf, 10)
+    print(f"{t}")
     # Both the in and output distances are squared when using
     # Metric.L2Squared.
     t = pt.KdTree(p, pt.Metric.L2Squared, 1)
@@ -25,6 +31,11 @@ def kd_tree_creation_and_query():
     value = -2.0
     print(f"Metric applied to {value}: {t.metric(value)}")
     print()
+
+
+def kd_tree_query():
+    p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float32)
+    t = pt.KdTree(p, pt.Metric.L2Squared, 1)
 
     print("*** Nearest Neighbor Search ***")
     # Nearest neighbors via return.
@@ -135,11 +146,7 @@ def kd_tree_file_io():
 def array_initialization():
     print("*** Array Initialization ***")
     p = np.array([[2, 1], [4, 3], [8, 7]], dtype=np.float64)
-    # Metric.L1: The sum of absolute differences.
-    t = pt.KdTree(p, pt.Metric.L1, 10)
-    # Metric.LInf: The max of absolute differences.
-    t = pt.KdTree(p, pt.Metric.LInf, 10)
-
+    t = pt.KdTree(p, pt.Metric.L2Squared, 1)
     # This type of forward initialization of arrays may be useful to
     # streamline loops that depend on them and where reusing memory is
     # desired. E.g.: ICP.
@@ -201,7 +208,8 @@ def kd_tree_performance_test():
 
 
 def main():
-    kd_tree_creation_and_query()
+    kd_tree_creation()
+    kd_tree_query()
     kd_tree_file_io()
     array_initialization()
     kd_tree_performance_test()

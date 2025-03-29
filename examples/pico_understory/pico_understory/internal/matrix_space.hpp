@@ -16,7 +16,7 @@ struct matrix_space_storage {
 };
 
 template <typename Scalar_>
-struct matrix_space_storage<Scalar_, dynamic_size> {
+struct matrix_space_storage<Scalar_, dynamic_extent> {
   constexpr matrix_space_storage(size_t size, size_t sdim)
       : size(size), sdim(sdim), elems(size * sdim) {}
 

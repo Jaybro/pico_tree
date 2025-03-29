@@ -17,7 +17,7 @@ template <>
 struct point_traits<PointXYZ> {
   using point_type = PointXYZ;
   using scalar_type = float;
-  // Spatial dimension. Set to pico_tree::dynamic_size when the dimension is
+  // Spatial dimension. Set to pico_tree::dynamic_extent when the dimension is
   // only known at run-time.
   static constexpr pico_tree::size_t dim = 3;
 

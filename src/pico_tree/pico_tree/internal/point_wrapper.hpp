@@ -37,7 +37,7 @@ class point_wrapper {
   }
 
   constexpr size_type size() const {
-    if constexpr (dim != dynamic_size) {
+    if constexpr (dim != dynamic_extent) {
       return dim;
     } else {
       return point_traits_type::size(point_);

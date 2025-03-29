@@ -24,7 +24,7 @@ class space_wrapper {
   using size_type = size_t;
   static size_type constexpr dim = space_traits_type::dim;
 
-  explicit space_wrapper(space_type const& space) : space_(space) {}
+  inline explicit space_wrapper(space_type const& space) : space_(space) {}
 
   template <typename Index_>
   inline scalar_type const* operator[](Index_ const index) const {
@@ -42,7 +42,7 @@ class space_wrapper {
   inline size_type size() const { return space_traits_type::size(space_); }
 
   constexpr size_type sdim() const {
-    if constexpr (dim != dynamic_size) {
+    if constexpr (dim != dynamic_extent) {
       return dim;
     } else {
       return space_traits_type::sdim(space_);

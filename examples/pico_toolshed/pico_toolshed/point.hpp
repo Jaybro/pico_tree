@@ -12,7 +12,7 @@ template <typename Scalar_, std::size_t Dim_>
 struct point : public pico_tree::internal::point<Scalar_, Dim_> {
   // Dynamic capability disabled.
   static_assert(
-      Dim_ != pico_tree::dynamic_size && Dim_ > 0,
+      Dim_ != pico_tree::dynamic_extent && Dim_ > 0,
       "DIM_MUST_NOT_BE_DYNAMIC_AND_>_0");
 
   using pico_tree::internal::point<Scalar_, Dim_>::elems_;

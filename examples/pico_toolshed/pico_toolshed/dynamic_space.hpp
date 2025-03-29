@@ -55,7 +55,7 @@ template <typename Space_>
 struct space_traits<dynamic_space<Space_>> : public space_traits<Space_> {
   using space_type = dynamic_space<Space_>;
   using size_type = pico_tree::size_t;
-  static size_type constexpr dim = pico_tree::dynamic_size;
+  static size_type constexpr dim = pico_tree::dynamic_extent;
 
   inline static size_type sdim(space_type const& space) { return space.sdim(); }
 };

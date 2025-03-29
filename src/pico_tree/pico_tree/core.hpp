@@ -16,7 +16,7 @@ using size_t = std::size_t;
 //! the spatial dimension of the search problem when it can only be known at
 //! run-time. In this case the dimension of the problem is provided by the point
 //! adaptor.
-inline size_t constexpr dynamic_size = static_cast<size_t>(-1);
+inline size_t constexpr dynamic_extent = static_cast<size_t>(-1);
 
 //! \brief A Neighbor is a point reference with a corresponding distance to
 //! another point.

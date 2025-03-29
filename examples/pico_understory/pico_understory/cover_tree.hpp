@@ -48,7 +48,7 @@ class cover_tree {
   using index_type = Index_;
   //! \brief scalar_type type.
   using scalar_type = typename space_wrapper_type::scalar_type;
-  //! \brief cover_tree dimension. It equals pico_tree::dynamic_size in case
+  //! \brief cover_tree dimension. It equals pico_tree::dynamic_extent in case
   //! dim is only known at run-time.
   static constexpr int dim = space_wrapper_type::dim;
   //! \brief Point set or adaptor type.
@@ -76,8 +76,9 @@ class cover_tree {
   cover_tree(space_type space, scalar_type base)
       : space_(std::move(space)),
         metric_(),
-        data_(build_cover_tree_type()(
-            space_wrapper_type(space_), metric_, base)) {}
+        data_(
+            build_cover_tree_type()(
+                space_wrapper_type(space_), metric_, base)) {}
 
   //! \brief Searches for the nearest neighbor of point \p x.
   template <typename P_>

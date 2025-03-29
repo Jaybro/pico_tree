@@ -109,11 +109,11 @@ void space_type_deduction() {
   // space type when we want to change any of the other template arguments, such
   // as the metric type. In this case we can use the make_kd_tree method to make
   // life a bit easier.
-  auto tree2 = pico_tree::make_kd_tree<pico_tree::metric_linf>(
+  auto tree2 = pico_tree::make_kd_tree<pico_tree::metric_lpinf>(
       std::ref(points), max_leaf_size);
 
-  using kd_tree2_type =
-      pico_tree::kd_tree<std::reference_wrapper<space>, pico_tree::metric_linf>;
+  using kd_tree2_type = pico_tree::
+      kd_tree<std::reference_wrapper<space>, pico_tree::metric_lpinf>;
 
   static_assert(std::is_same_v<decltype(tree2), kd_tree2_type>);
 

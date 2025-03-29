@@ -42,7 +42,7 @@ constexpr int eigen_vector_dim() {
 }
 
 constexpr size_t eigen_dim_to_pico_dim(int dim) {
-  return dim == Eigen::Dynamic ? dynamic_size : static_cast<size_t>(dim);
+  return dim == Eigen::Dynamic ? dynamic_extent : static_cast<size_t>(dim);
 }
 
 //! \brief eigen_point_traits provides an interface for the different point

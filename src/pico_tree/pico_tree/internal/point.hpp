@@ -26,7 +26,7 @@ struct point_storage_traits {
 //! \details The specialized class doesn't knows its dimension at compile-time
 //! and uses an std::vector for storing its data so it can be resized.
 template <typename Scalar_>
-struct point_storage_traits<Scalar_, dynamic_size> {
+struct point_storage_traits<Scalar_, dynamic_extent> {
   using type = std::vector<Scalar_>;
 
   static constexpr auto from_size(size_t size) { return type(size); }
@@ -39,7 +39,8 @@ struct point_storage_traits<Scalar_, dynamic_size> {
 //! principle but gives us aggregate initialization in return.
 template <typename Scalar_, size_t Dim_>
 struct point {
-  static_assert(Dim_ == dynamic_size || Dim_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
+  static_assert(
+      Dim_ == dynamic_extent || Dim_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
   //! \private Using Pst__ is considered undefined behavior.
   using Pst__ = point_storage_traits<Scalar_, Dim_>;

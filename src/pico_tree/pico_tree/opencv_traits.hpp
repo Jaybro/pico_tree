@@ -126,7 +126,7 @@ class opencv_mat_map : private space_map<point_map<Scalar_, Dim_>> {
 //! \brief Provides an interface for cv::Mat. Each row is considered a point.
 //! \tparam Scalar_ Point coordinate type.
 //! \tparam Dim_ The spatial dimension of each point. Set to
-//! pico_tree::dynamic_size when the dimension is only known at run-time.
+//! pico_tree::dynamic_extent when the dimension is only known at run-time.
 template <typename Scalar_, size_t Dim_>
 struct space_traits<opencv_mat_map<Scalar_, Dim_>> {
   //! \brief The space_type of these traits.

@@ -29,7 +29,7 @@ class kd_forest {
   using index_type = Index_;
   //! \brief Scalar type.
   using scalar_type = typename space_wrapper_type::scalar_type;
-  //! \brief kd_tree dimension. It equals pico_tree::dynamic_size in case
+  //! \brief kd_tree dimension. It equals pico_tree::dynamic_extent in case
   //! dim is only known at run-time.
   static size_type constexpr dim = space_wrapper_type::dim;
   //! \brief Point set or adaptor type.
@@ -42,12 +42,13 @@ class kd_forest {
   kd_forest(space_type space, size_type max_leaf_size, size_type forest_size)
       : space_(std::move(space)),
         metric_(),
-        data_(internal::build_rkd_tree<rkd_tree_data_type, dim>()(
-            space_wrapper_type(space_),
-            max_leaf_size_t(max_leaf_size),
-            bounds_from_space,
-            sliding_midpoint_max_side,
-            forest_size)) {}
+        data_(
+            internal::build_rkd_tree<rkd_tree_data_type, dim>()(
+                space_wrapper_type(space_),
+                max_leaf_size_t(max_leaf_size),
+                bounds_from_space,
+                sliding_midpoint_max_side,
+                forest_size)) {}
 
   //! \brief The kd_forest cannot be copied.
   //! \details The kd_forest uses pointers to nodes and copying pointers is not

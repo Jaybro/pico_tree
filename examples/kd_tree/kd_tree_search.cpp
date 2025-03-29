@@ -92,10 +92,11 @@ void search_s1() {
   tree.search_knn(point{1.0}, knn.begin(), knn.end());
 
   // These prints show that wrapping near values 0 ~ 1 is supported.
-  std::cout << "Closest angles (index, distance, value): " << std::endl;
+  std::cout << "Closest points (index, distance, point): " << std::endl;
   for (auto const& nn : knn) {
-    std::cout << "  " << nn.index << ", " << nn.distance << ", "
-              << tree.space()[static_cast<std::size_t>(nn.index)] << std::endl;
+    std::cout << "  " << nn.index << ", " << nn.distance << ", ["
+              << tree.space()[static_cast<std::size_t>(nn.index)] << "]"
+              << std::endl;
   }
 }
 

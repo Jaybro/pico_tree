@@ -14,7 +14,7 @@ namespace py = pybind11;
 
 namespace pyco_tree {
 
-enum class metric_t : int { l1, l2_squared, linf };
+enum class metric_t : int { l1, l2_squared, lpinf };
 
 namespace internal {
 
@@ -393,8 +393,9 @@ std::unique_ptr<kd_tree_base> make_kd_tree_from_metric(
       return std::make_unique<
           kd_tree_impl<space_type, pico_tree::metric_l2_squared>>(
           std::move(space), std::forward<Arg_>(arg));
-    case metric_t::linf:
-      return std::make_unique<kd_tree_impl<space_type, pico_tree::metric_linf>>(
+    case metric_t::lpinf:
+      return std::make_unique<
+          kd_tree_impl<space_type, pico_tree::metric_lpinf>>(
           std::move(space), std::forward<Arg_>(arg));
   }
 
@@ -417,7 +418,7 @@ std::unique_ptr<kd_tree_base> make_kd_tree_from_dim(
       return make_kd_tree_from_metric<Scalar_, 3>(
           std::move(space), metric, std::forward<Arg_>(arg));
     default:
-      return make_kd_tree_from_metric<Scalar_, pico_tree::dynamic_size>(
+      return make_kd_tree_from_metric<Scalar_, pico_tree::dynamic_extent>(
           std::move(space), metric, std::forward<Arg_>(arg));
   }
 }
@@ -590,8 +591,8 @@ class pkd_header {
     } else if (
         s == string_traits<pico_tree::metric_l2_squared>::type_string()) {
       return metric_t::l2_squared;
-    } else if (s == string_traits<pico_tree::metric_linf>::type_string()) {
-      return metric_t::linf;
+    } else if (s == string_traits<pico_tree::metric_lpinf>::type_string()) {
+      return metric_t::lpinf;
     }
 
     throw std::runtime_error("unexpected metric string");

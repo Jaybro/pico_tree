@@ -6,6 +6,8 @@
 #include "pico_tree/internal/point_wrapper.hpp"
 #include "pico_tree/internal/search_visitor.hpp"
 #include "pico_tree/internal/space_wrapper.hpp"
+#include "pico_tree/internal/type_traits.hpp"
+#include "pico_tree/metric.hpp"
 
 namespace pico_tree {
 
@@ -19,7 +21,12 @@ template <
     typename Metric_ = metric_l2_squared,
     typename Index_ = int>
 class kd_tree {
-  using space_wrapper_type = internal::space_wrapper<Space_>;
+  static_assert(
+      std::is_same_v<std::remove_cv_t<Space_>, Space_>,
+      "SPACE_TYPE_MUST_BE_NON-CONST_NON-VOLATILE");
+
+  using space_wrapper_type =
+      internal::space_wrapper<internal::remove_reference_wrapper_t<Space_>>;
   //! \brief Node type based on Metric_::space_category.
   using node_type = typename internal::kd_tree_space_tag_traits<
       typename Metric_::space_category>::
@@ -34,7 +41,7 @@ class kd_tree {
   using index_type = Index_;
   //! \brief Scalar type.
   using scalar_type = typename space_wrapper_type::scalar_type;
-  //! \brief kd_tree dimension. It equals pico_tree::dynamic_size in case
+  //! \brief kd_tree dimension. It equals pico_tree::dynamic_extent in case
   //! dim is only known at run-time.
   static size_type constexpr dim = space_wrapper_type::dim;
   //! \brief Point set or adaptor type.
@@ -102,8 +109,8 @@ class kd_tree {
             typename internal::point_wrapper<P_>::scalar_type>,
         "POINT_AND_TREE_SCALAR_TYPES_DIFFER");
     static_assert(
-        dim == internal::point_wrapper<P_>::dim || dim == dynamic_size ||
-            internal::point_wrapper<P_>::dim == dynamic_size,
+        dim == internal::point_wrapper<P_>::dim || dim == dynamic_extent ||
+            internal::point_wrapper<P_>::dim == dynamic_extent,
         "POINT_AND_TREE_DIMS_DIFFER");
 
     internal::point_wrapper<P_> p(x);
@@ -291,12 +298,16 @@ class kd_tree {
     // now it is assumed that this check is not worth it: If there is any
     // overlap then the search is slower. So unless many queries don't intersect
     // there is no point in adding it.
-    internal::search_box<space_wrapper_type, Metric_, index_type>(
+    using search_box_type =
+        internal::search_box<space_wrapper_type, Metric_, index_type>;
+    using box_map_type = typename search_box_type::box_map_type;
+
+    search_box_type(
         space,
         metric_,
         data_.indices,
         data_.root_box,
-        internal::box_map<scalar_type const, dim>(
+        box_map_type(
             internal::point_wrapper<P_>(min).begin(),
             internal::point_wrapper<P_>(max).begin(),
             space.sdim()),

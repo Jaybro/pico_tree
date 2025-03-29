@@ -14,7 +14,7 @@ struct space_traits<std::deque<std::array<Scalar_, Dim_>>> {
   using space_type = std::deque<std::array<Scalar_, Dim_>>;
   using point_type = std::array<Scalar_, Dim_>;
   using scalar_type = Scalar_;
-  // Spatial dimension. Set to pico_tree::dynamic_size when the dimension is
+  // Spatial dimension. Set to pico_tree::dynamic_extent when the dimension is
   // only known at run-time.
   static constexpr pico_tree::size_t dim = Dim_;
 

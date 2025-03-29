@@ -10,7 +10,7 @@ namespace {
 constexpr size_t dynamic_box_dim = 4;
 
 inline size_t constexpr dimension(size_t d) {
-  return d != dynamic_size ? d : dynamic_box_dim;
+  return d != dynamic_extent ? d : dynamic_box_dim;
 }
 
 }  // namespace
@@ -44,16 +44,16 @@ class BoxTest<box_map<Scalar_, Dim_>> : public testing::Test {
 using BoxTestTypes = testing::Types<
     box<float, 2>,
     box<double, 3>,
-    box<float, dynamic_size>,
+    box<float, dynamic_extent>,
     box_map<float, 2>,
     box_map<double, 3>,
-    box_map<float, dynamic_size>>;
+    box_map<float, dynamic_extent>>;
 
 TYPED_TEST_SUITE(BoxTest, BoxTestTypes);
 
 TYPED_TEST(BoxTest, size) {
   size_t dim = TypeParam::dim;
-  if (dim != dynamic_size) {
+  if (dim != dynamic_extent) {
     EXPECT_EQ(this->box_.size(), dim);
   } else {
     EXPECT_EQ(this->box_.size(), dynamic_box_dim);
@@ -96,7 +96,7 @@ TYPED_TEST(BoxTest, Fit) {
   std::vector<scalar_type> min(dim, scalar_type(-1));
   std::vector<scalar_type> max(dim, scalar_type(+1));
   this->box_.fit(
-      box_map<scalar_type, dynamic_size>(min.data(), max.data(), dim));
+      box_map<scalar_type, dynamic_extent>(min.data(), max.data(), dim));
   for (size_t i = 0; i < this->box_.size(); ++i) {
     EXPECT_EQ(this->box_.min(i), min[i]);
     EXPECT_EQ(this->box_.max(i), max[i]);

@@ -26,7 +26,7 @@ struct space_traits<std::vector<Point_, Allocator_>> {
   static size_type constexpr dim = point_traits<Point_>::dim;
 
   static_assert(
-      dim != dynamic_size, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
+      dim != dynamic_extent, "VECTOR_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
 
   //! \brief Returns the point at \p idx from \p space.
   template <typename Index_>

@@ -4,8 +4,8 @@
 
 namespace pyco_tree {
 
-using space_xf = py_array_map<float, pico_tree::dynamic_size>;
-using space_xd = py_array_map<double, pico_tree::dynamic_size>;
+using space_xf = py_array_map<float, pico_tree::dynamic_extent>;
+using space_xd = py_array_map<double, pico_tree::dynamic_extent>;
 using space_2f = py_array_map<float, 2>;
 using space_2d = py_array_map<double, 2>;
 using space_3f = py_array_map<float, 3>;

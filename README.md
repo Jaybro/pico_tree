@@ -6,14 +6,14 @@ PicoTree is a C++ header only library with [Python bindings](https://github.com/
 
 |                                     | Build C++ | Build Python  | Knn C++    | Knn Python  |
 | ----------------------------------- | --------- | ------------- | ---------- | ----------- |
-| [nanoflann][nano] v1.5.0            | 2.9s      | ...           | 3.2s       | ...         |
-| [SciPy KDTree][spkd] 1.11.0         | ...       | 4.5s          | ...        | 563.6s      |
-| [Scikit-learn KDTree][skkd] 1.2.2   | ...       | 6.2s          | ...        | 42.2s       |
-| [pykdtree][pykd] 1.3.7              | ...       | 1.0s          | ...        | 6.6s        |
-| [OpenCV FLANN][cvfn] 4.6.0          | 1.9s      | ...           | 4.7s       | ...         |
-| PicoTree KdTree v0.8.3              | 0.9s      | 1.0s          | 2.8s       | 3.1s        |
+| [nanoflann][nano] v1.7.1            | 1.42s     | ...           | 1.40s      | ...         |
+| [SciPy KDTree][spkd] 1.15.2         | ...       | 1.37s         | ...        | 212.04s     |
+| [Scikit-learn KDTree][skkd] 1.6.1   | ...       | 3.60s         | ...        | 11.90s      |
+| [pykdtree][pykd] 1.3.7              | ...       | 0.43s         | ...        | 2.95s       |
+| [OpenCV FLANN][cvfn] 4.11.0         | 0.99s     | ...           | 2.30s      | ...         |
+| PicoTree KdTree v1.0.0              | 0.54s     | 0.54s         | 1.13s      | 1.64s       |
 
-Two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863 were used to generate these numbers. The first point cloud was the input to the build algorithm and the second to the query algorithm. All benchmarks were run on a single thread with the following parameters: `max_leaf_size=10` and `knn=1`. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
+These numbers were generated on an Intel Core i9-14900HX using two [LiDAR](./docs/benchmark.md) based point clouds of sizes 7733372 and 7200863. The first point cloud was the input to the build algorithm and the second to the query algorithm. All benchmarks were run on a single thread with the following parameters: `max_leaf_size=10` and `knn=1`. A more detailed [C++ comparison](./docs/benchmark.md) of PicoTree is available with respect to [nanoflann][nano].
 
 [nano]: https://github.com/jlblancoc/nanoflann
 [spkd]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.html
@@ -26,12 +26,18 @@ Available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license.
 # Capabilities
 
 KdTree:
-* Nearest neighbor, approximate nearest neighbor, radius, box, and customizable nearest neighbor searches.
-* Different [metric spaces](https://en.wikipedia.org/wiki/Metric_space):
-  * Support for topological spaces with identifications. E.g., points on the circle `[-pi, pi]`.
-  * Available distance functions: `metric_l1`, `metric_l2_squared`, `metric_linf`, `metric_so2`, and `metric_se2_squared`.
-  * Metrics can be customized.
-* Multiple tree splitting rules: `median_max_side_t`, `midpoint_max_side_t` and `sliding_midpoint_max_side_t`.
+* Search functions:
+  * Exact nearest neighbor, radius and box searches.
+  * Approximate nearest neighbor and radius searches.
+  * Custom nearest neighbor searches.
+* [Metric spaces](https://en.wikipedia.org/wiki/Metric_space):
+  * Support for spaces with identifications. E.g., points on the circle S<sup>1</sup> `[0, 1]`.
+  * Available distance functions: `metric_l1`, `metric_l2_squared`, `metric_lpinf`, `metric_lninf`, `metric_so2`, and `metric_se2_squared`.
+  * Custom metrics.
+* Multiple build options:
+  * Tree splitting rules: `median_max_side_t`, `midpoint_max_side_t` and `sliding_midpoint_max_side_t`.
+  * Tree split stop conditions: `max_leaf_size_t` and `max_leaf_depth_t`.
+  * Custom starting bounding box.
 * Compile time and run time known dimensions.
 * Static tree builds.
 * Thread safe queries.
@@ -59,6 +65,7 @@ PicoTree can interface with different types of points and point sets through tra
 * Supporting a [custom point type](./examples/kd_tree/kd_tree_custom_point_type.cpp).
 * Supporting a [custom space type](./examples/kd_tree/kd_tree_custom_space_type.cpp).
 * Creating a [custom search visitor](./examples/kd_tree/kd_tree_custom_search_visitor.cpp).
+* Creating a [custom metric](./examples/kd_tree/kd_tree_custom_metric.cpp).
 * [Saving and loading](./examples/kd_tree/kd_tree_save_and_load.cpp) a KdTree to and from a file.
 * Support for [Eigen](./examples/eigen/eigen.cpp) and [OpenCV](./examples/opencv/opencv.cpp) data types.
 * [Running the KdTree and KdForest](./examples/kd_forest/kd_forest.cpp) on the [MNIST](http://yann.lecun.com/exdb/mnist/) and [SIFT](http://corpus-texmex.irisa.fr/) datasets.

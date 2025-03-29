@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "pico_tree/core.hpp"
+#include "pico_tree/internal/segment.hpp"
 
 namespace pico_tree::internal {
 
@@ -23,7 +24,7 @@ class box_base {
   using scalar_type = typename box_traits<Derived_>::scalar_type;
   using size_type = size_t;
   static constexpr size_type dim = box_traits<Derived_>::dim;
-  static_assert(dim == dynamic_size || dim > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
+  static_assert(dim == dynamic_extent || dim > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
   //! \brief Returns true if \p x is contained. A point on the edge is
   //! considered inside the box.
@@ -155,6 +156,7 @@ class box_base {
   constexpr box_base& operator=(box_base&&) = default;
 };
 
+//! \brief Storage container for the box class.
 template <typename Scalar_, size_t Dim_>
 struct box_storage {
   constexpr explicit box_storage(size_t) {}
@@ -172,10 +174,10 @@ struct box_storage {
   static size_t constexpr size = Dim_;
 };
 
-//! \details This specialization supports a compile time known spatial
-//! dimension.
+//! \brief Storage container for the box class.
+//! \details A specialization with a run-time known spatial dimension.
 template <typename Scalar_>
-struct box_storage<Scalar_, dynamic_size> {
+struct box_storage<Scalar_, dynamic_extent> {
   constexpr explicit box_storage(size_t size) : coords(size * 2), size(size) {}
 
   constexpr Scalar_ const* min() const noexcept { return coords.data(); }
@@ -230,6 +232,7 @@ class box : public box_base<box<Scalar_, Dim_>> {
   box_storage<Scalar_, Dim_> storage_;
 };
 
+//! \brief Storage container for the box_map class.
 template <typename Scalar_, size_t Dim_>
 struct box_map_storage {
   constexpr box_map_storage(Scalar_* min, Scalar_* max, size_t)
@@ -240,9 +243,10 @@ struct box_map_storage {
   static size_t constexpr size = Dim_;
 };
 
-//! \details This specialization supports a run time known spatial dimension.
+//! \brief Storage container for the box_map class.
+//! \details A specialization with a run-time known spatial dimension.
 template <typename Scalar_>
-struct box_map_storage<Scalar_, dynamic_size> {
+struct box_map_storage<Scalar_, dynamic_extent> {
   constexpr box_map_storage(Scalar_* min, Scalar_* max, size_t size)
       : min(min), max(max), size(size) {}
 
@@ -253,8 +257,6 @@ struct box_map_storage<Scalar_, dynamic_size> {
 
 //! \brief An axis aligned box represented by a min and max coordinate. It maps
 //! raw pointers.
-//! \details This specialization supports a compile time known spatial
-//! dimension.
 template <typename Scalar_, size_t Dim_>
 class box_map : public box_base<box_map<Scalar_, Dim_>> {
  public:
@@ -285,6 +287,92 @@ class box_map : public box_base<box_map<Scalar_, Dim_>> {
 
  private:
   box_map_storage<Scalar_, Dim_> storage_;
+};
+
+// TODO Perhaps this could be part of te box class hierarchy.
+//! \brief An axis aligned box represented by a min and max coordinate that
+//! supports a topological space. It maps raw pointers.
+//! \details This class is only used for storing the query box during a
+//! search_box call.
+//!
+//! The Metric_ template parameter is used to determine the type of space.
+template <typename Scalar_, size_t Dim_, typename Metric_>
+class metric_box_map {
+ public:
+  using scalar_type = std::remove_cv_t<Scalar_>;
+  using element_type = Scalar_;
+  using size_type = size_t;
+  static size_type constexpr dim = Dim_;
+
+  constexpr metric_box_map(element_type* min, element_type* max)
+      : storage_(min, max, dim) {}
+
+  constexpr metric_box_map(element_type* min, element_type* max, size_type size)
+      : storage_(min, max, size) {}
+
+  constexpr metric_box_map(metric_box_map const&) = delete;
+
+  constexpr metric_box_map& operator=(metric_box_map const&) = delete;
+
+  bool contains(scalar_type const* const p) const {
+    for (std::size_t i = 0; i < size(); ++i) {
+      if (!contains(min(i), max(i), p[i], static_cast<int>(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // The input box is always one of the cells of the kd_tree. This means that
+  // the min coordinate of the input box is always smaller than its max
+  // coordinate.
+  template <typename OtherDerived_>
+  bool contains(box_base<OtherDerived_> const& x) const {
+    for (std::size_t i = 0; i < size(); ++i) {
+      if (!contains(
+              min(i),
+              max(i),
+              segment_r1<scalar_type>(x.min(i), x.max(i)),
+              static_cast<int>(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  constexpr element_type* min() const noexcept { return storage_.min; }
+
+  constexpr element_type* max() const noexcept { return storage_.max; }
+
+  constexpr element_type& min(size_type i) const { return storage_.min[i]; }
+
+  constexpr element_type& max(size_type i) const { return storage_.max[i]; }
+
+  constexpr size_type size() const noexcept { return storage_.size; }
+
+ private:
+  template <typename T_>
+  bool contains(scalar_type min, scalar_type max, T_ const& v, int dim) const {
+    bool contains;
+    auto bd = [&](auto one_space) {
+      contains = make_segment(min, max, one_space).contains(v);
+    };
+    metric_.apply_one_space(dim, bd);
+    return contains;
+  }
+
+  segment_r1<scalar_type> make_segment(
+      scalar_type min, scalar_type max, one_space_r1) const {
+    return segment_r1<scalar_type>(min, max);
+  }
+
+  segment_s1<scalar_type> make_segment(
+      scalar_type min, scalar_type max, one_space_s1) const {
+    return segment_s1<scalar_type>(min, max);
+  }
+
+  box_map_storage<Scalar_, Dim_> storage_;
+  Metric_ metric_;
 };
 
 template <typename Scalar_, size_t Dim_>

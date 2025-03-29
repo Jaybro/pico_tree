@@ -11,7 +11,7 @@ namespace {
 size_t constexpr dynamic_map_dim = 4;
 
 constexpr size_t dimension(size_t d) {
-  return d != dynamic_size ? d : dynamic_map_dim;
+  return d != dynamic_extent ? d : dynamic_map_dim;
 }
 
 }  // namespace
@@ -36,7 +36,7 @@ class PointMapTest<point_map<Scalar_, Dim_>> : public testing::Test {
 using PointMapTypes = testing::Types<
     point_map<float, 2>,
     point_map<double, 3>,
-    point_map<float, dynamic_size>>;
+    point_map<float, dynamic_extent>>;
 
 TYPED_TEST_SUITE(PointMapTest, PointMapTypes);
 

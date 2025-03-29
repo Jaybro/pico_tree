@@ -18,13 +18,8 @@ class metric_l2 {
       InputSentinel1_ end1,
       OutputIterator2_ begin2) const {
     return std::sqrt(
-        internal::sum(begin1, end1, begin2, internal::squared_distance_fn()));
-  }
-
-  //! \brief Calculates the distance between two coordinates.
-  template <typename Scalar_>
-  constexpr Scalar_ operator()(Scalar_ const x, Scalar_ const y) const {
-    return std::abs(x - y);
+        internal::sum(
+            begin1, end1, begin2, internal::squared_r1_distance_fn()));
   }
 
   //! \brief Returns the absolute value of \p x.

@@ -97,18 +97,18 @@ class priority_search_nearest_euclidean {
         if (v > node->data.branch.left_min) {
           old_offset = scalar_type(0);
         } else {
-          old_offset = metric_(node->data.branch.left_min, v);
+          old_offset = metric_(node->data.branch.left_min - v);
         }
-        new_offset = metric_(node->data.branch.right_min, v);
+        new_offset = metric_(node->data.branch.right_min - v);
       } else {
         node_1st = node->right;
         node_2nd = node->left;
         if (v < node->data.branch.right_max) {
           old_offset = scalar_type(0);
         } else {
-          old_offset = metric_(node->data.branch.right_max, v);
+          old_offset = metric_(node->data.branch.right_max - v);
         }
-        new_offset = metric_(node->data.branch.left_max, v);
+        new_offset = metric_(node->data.branch.left_max - v);
       }
 
       // The distance and offset for node_1st is the same as that of its parent.

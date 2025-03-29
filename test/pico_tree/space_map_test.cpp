@@ -11,7 +11,7 @@ namespace {
 size_t constexpr dynamic_map_dim = 4;
 
 constexpr size_t dimension(size_t d) {
-  return d != dynamic_size ? d : dynamic_map_dim;
+  return d != dynamic_extent ? d : dynamic_map_dim;
 }
 
 }  // namespace
@@ -73,7 +73,7 @@ using SpaceMapTypes = testing::Types<
     space_map<std::array<float, 2>>,
     space_map<std::array<double, 3>>,
     space_map<point_map<float, 2>>,
-    space_map<point_map<double, dynamic_size>>>;
+    space_map<point_map<double, dynamic_extent>>>;
 
 TYPED_TEST_SUITE(SpaceMapTest, SpaceMapTypes);
 

@@ -18,7 +18,7 @@ struct map_storage {
 };
 
 template <typename Element_>
-struct map_storage<Element_, dynamic_size> {
+struct map_storage<Element_, dynamic_extent> {
   constexpr map_storage(Element_* data, size_t size) noexcept
       : data(data), size(size) {}
 
@@ -33,7 +33,7 @@ class map {
   static_assert(
       !std::is_abstract_v<Element_>, "ELEMENT_CANNOT_BE_AN_ABSTRACT_TYPE");
   static_assert(
-      Extent_ == dynamic_size || Extent_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
+      Extent_ == dynamic_extent || Extent_ > 0, "DIM_MUST_BE_DYNAMIC_OR_>_0");
 
   using element_type = Element_;
   using value_type = std::remove_cv_t<Element_>;
@@ -74,7 +74,7 @@ struct space_map_matrix_storage {
 };
 
 template <typename Scalar_>
-struct space_map_matrix_storage<Scalar_, dynamic_size> {
+struct space_map_matrix_storage<Scalar_, dynamic_extent> {
   constexpr space_map_matrix_storage(Scalar_* data, size_t size, size_t sdim)
       : data(data), size(size), sdim(sdim) {}
 
@@ -109,8 +109,8 @@ class point_map : protected internal::map<Scalar_, Dim_> {
 //! \brief The space_map class provides a space interface for an array of
 //! points.
 template <typename Point_>
-class space_map : protected internal::map<Point_, dynamic_size> {
-  using base = internal::map<Point_, dynamic_size>;
+class space_map : protected internal::map<Point_, dynamic_extent> {
+  using base = internal::map<Point_, dynamic_extent>;
 
  public:
   using point_type = typename base::value_type;
@@ -120,14 +120,14 @@ class space_map : protected internal::map<Point_, dynamic_size> {
   static size_type constexpr dim = point_traits<point_type>::dim;
 
   static_assert(
-      dim != dynamic_size, "SPACE_MAP_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
+      dim != dynamic_extent, "SPACE_MAP_OF_POINT_DOES_NOT_SUPPORT_DYNAMIC_DIM");
 
-  using internal::map<Point_, dynamic_size>::operator[];
-  using internal::map<Point_, dynamic_size>::data;
-  using internal::map<Point_, dynamic_size>::size;
+  using internal::map<Point_, dynamic_extent>::operator[];
+  using internal::map<Point_, dynamic_extent>::data;
+  using internal::map<Point_, dynamic_extent>::size;
 
   constexpr space_map(point_element_type* data, size_type size) noexcept
-      : internal::map<Point_, dynamic_size>::map(data, size) {}
+      : internal::map<Point_, dynamic_extent>::map(data, size) {}
 
   constexpr size_type sdim() const { return dim; }
 };

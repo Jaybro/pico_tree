@@ -17,10 +17,12 @@ include_directories(${CMAKE_CURRENT_LIST_DIR})
 set(TEST_TARGET_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/box_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cover_tree_test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/distance_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kd_tree_builder_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kd_tree_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/metric_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/point_map_test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/segment_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/space_map_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/space_map_traits_test.cpp
     ${CMAKE_CURRENT_LIST_DIR}/vector_traits_test.cpp

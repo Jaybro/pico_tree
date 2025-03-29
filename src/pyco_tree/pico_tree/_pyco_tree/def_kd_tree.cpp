@@ -14,7 +14,7 @@ void def_kd_tree(py::module& m) {
   py::enum_<metric_t>(m, "Metric")
       .value("L1", metric_t::l1)
       .value("L2Squared", metric_t::l2_squared)
-      .value("LInf", metric_t::linf);
+      .value("LPInf", metric_t::lpinf);
 
   py::class_<kd_tree>(m, "KdTree", py::buffer_protocol())
       .def(

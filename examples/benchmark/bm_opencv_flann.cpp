@@ -99,7 +99,7 @@ BENCHMARK_REGISTER_F(BmOpenCvFlann, BuildRt)
 
 BENCHMARK_DEFINE_F(BmOpenCvFlann, KnnCt)(benchmark::State& state) {
   int max_leaf_size = static_cast<int>(state.range(0));
-  int knn_count = static_cast<int>(state.range(1));
+  std::size_t knn_count = static_cast<std::size_t>(state.range(1));
 
   // Reorder will change the order of the input to fit the generated indices,
   // but it will replace (and delete) the original input. The reorder option
@@ -126,7 +126,12 @@ BENCHMARK_DEFINE_F(BmOpenCvFlann, KnnCt)(benchmark::State& state) {
 
     for (auto& p : points_test_) {
       fl::Matrix<scalar_type> query(p.data(), 1, 3);
-      tree.knnSearch(query, mat_indices, mat_distances, knn_count, psearch);
+      tree.knnSearch(
+          query,
+          mat_indices,
+          mat_distances,
+          static_cast<int>(knn_count),
+          psearch);
     }
   }
 }

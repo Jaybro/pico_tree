@@ -32,8 +32,8 @@ struct string_traits<pico_tree::metric_l2_squared> {
 };
 
 template <>
-struct string_traits<pico_tree::metric_linf> {
-  static std::string type_string() { return "LInf"; }
+struct string_traits<pico_tree::metric_lpinf> {
+  static std::string type_string() { return "LPInf"; }
 };
 
 inline bool is_row_major(py::array const& array) {
@@ -71,7 +71,7 @@ inline bool is_dim_compatible(pico_tree::size_t d) {
 }
 
 template <>
-inline bool is_dim_compatible<pico_tree::dynamic_size>(pico_tree::size_t) {
+inline bool is_dim_compatible<pico_tree::dynamic_extent>(pico_tree::size_t) {
   return true;
 }
 

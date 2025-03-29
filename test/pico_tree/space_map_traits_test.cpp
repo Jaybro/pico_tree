@@ -10,7 +10,7 @@ TEST(SpaceMapTraitsTest, PointMap) {
   std::vector<double> scalars = {1.0, 2.0, 3.0, 4.0};
   pico_tree::space_map<pico_tree::point_map<double, dim>> map_ct(
       scalars.data(), scalars.size() / dim);
-  pico_tree::space_map<pico_tree::point_map<double, pico_tree::dynamic_size>>
+  pico_tree::space_map<pico_tree::point_map<double, pico_tree::dynamic_extent>>
       map_rt(scalars.data(), scalars.size() / dim, dim);
 
   check_space_adaptor<dim>(
@@ -19,7 +19,7 @@ TEST(SpaceMapTraitsTest, PointMap) {
       map_ct.size(),
       static_cast<pico_tree::size_t>(0),
       map_ct[0].data());
-  check_space_adaptor<pico_tree::dynamic_size>(
+  check_space_adaptor<pico_tree::dynamic_extent>(
       map_rt,
       map_rt.sdim(),
       map_rt.size(),

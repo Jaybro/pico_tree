@@ -129,7 +129,7 @@ TEST(KdTreeTest, WriteRead) {
 
   {
     static_assert(
-        pico_tree::kd_tree<space_type>::dim == pico_tree::dynamic_size,
+        pico_tree::kd_tree<space_type>::dim == pico_tree::dynamic_extent,
         "KD_TREE_DIM_NOT_DYNAMIC");
     // The points are not stored.
     pico_tree::kd_tree<space_type> tree(drandom, pico_tree::max_leaf_size_t(1));

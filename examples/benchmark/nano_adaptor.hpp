@@ -21,7 +21,8 @@ class nano_adaptor {
 
   //! \brief Returns the dim'th component of the idx'th point in the class:
   inline scalar_type kdtree_get_pt(Index_ const idx, Index_ const dim) const {
-    return points_[idx].data()[dim];
+    return points_[static_cast<typename std::vector<Point_>::size_type>(idx)]
+        .data()[dim];
   }
 
   // Optional bounding-box computation: return false to default to a standard

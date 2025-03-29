@@ -1,3 +1,4 @@
+#include <limits>
 #include <pico_toolshed/point.hpp>
 #include <pico_toolshed/scoped_timer.hpp>
 #include <pico_tree/kd_tree.hpp>
