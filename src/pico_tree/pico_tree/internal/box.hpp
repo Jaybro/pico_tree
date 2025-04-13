@@ -357,7 +357,7 @@ class metric_box_map {
     auto bd = [&](auto one_space) {
       contains = make_segment(min, max, one_space).contains(v);
     };
-    metric_.apply_one_space(dim, bd);
+    metric_.apply_dim_space(dim, bd);
     return contains;
   }
 

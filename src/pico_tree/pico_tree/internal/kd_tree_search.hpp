@@ -206,7 +206,7 @@ class search_nearest_topological {
       scalar_type min, scalar_type max, scalar_type v, int dim) const {
     scalar_type d;
     auto bd = [&](auto one_space) { d = box_distance(min, max, v, one_space); };
-    metric_.apply_one_space(dim, bd);
+    metric_.apply_dim_space(dim, bd);
     return metric_(d);
   }
 

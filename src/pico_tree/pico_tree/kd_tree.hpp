@@ -50,6 +50,8 @@ class kd_tree {
   using metric_type = Metric_;
   //! \brief Neighbor type of various search results.
   using neighbor_type = neighbor<index_type, scalar_type>;
+  //! \brief Leaf index range type.
+  using leaf_range_type = typename kd_tree_data_type::leaf_range_type;
 
   //! \brief Creates a kd_tree given \p space and \p stop_condition.
   //! \details The kd_tree takes \p space by value. This allows it to take
@@ -269,7 +271,8 @@ class kd_tree {
   //! within radius \p radius and stores the results in output vector \p n.
   //! \see template <typename P_, typename RandomAccessIterator_> void
   //! search_radius(P_ const&, scalar_type, std::vector<neighbor_type>&, bool)
-  //! const \see template <typename P_, typename RandomAccessIterator_> void
+  //! const
+  //! \see template <typename P_, typename RandomAccessIterator_> void
   //! search_nn(P_ const&, scalar_type, neighbor_type&) const
   template <typename P_>
   inline void search_radius(
@@ -312,6 +315,15 @@ class kd_tree {
             internal::point_wrapper<P_>(max).begin(),
             space.sdim()),
         idxs)(data_.root_node);
+  }
+
+  //! \brief Returns the index range for all non-empty leaves in the kd_tree.
+  //! \details The leaf order follows from a depth-first traversal of the
+  //! kd_tree. If the input bounds is a hyper cube, then the leaf order is
+  //! identical to that of the N-order curve (a rotated version of the Z-order
+  //! curve that splits nodes in reversed order).
+  inline std::vector<leaf_range_type> leaf_ranges() const {
+    return data_.leaf_ranges();
   }
 
   //! \brief Point set used by the tree.

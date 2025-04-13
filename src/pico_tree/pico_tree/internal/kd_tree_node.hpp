@@ -29,6 +29,9 @@ struct kd_tree_node_base {
 //! \brief Tree leaf data.
 template <typename Index_>
 struct kd_tree_leaf {
+  //! \brief Returns true if the leaf is empty.
+  constexpr bool empty() const { return begin_idx == end_idx; }
+
   //! \brief Begin of an index range.
   Index_ begin_idx;
   //! \brief End of an index range.

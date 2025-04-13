@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iterator>
+#include <vector>
+
 #include "pico_tree/core.hpp"
 #include "pico_tree/internal/memory.hpp"
 #include "pico_tree/internal/stream_wrapper.hpp"
@@ -9,6 +12,24 @@ namespace pico_tree::internal {
 //! \brief The data structure that represents a kd_tree.
 template <typename Node_, size_t Dim_>
 class kd_tree_data {
+  template <typename Iterator_>
+  class iterator_range {
+   public:
+    using iterator_type = Iterator_;
+    using difference_type =
+        typename std::iterator_traits<Iterator_>::difference_type;
+
+    constexpr iterator_range(Iterator_ begin, Iterator_ end)
+        : begin_(begin), end_(end) {}
+
+    constexpr Iterator_ begin() const { return begin_; }
+    constexpr Iterator_ end() const { return end_; }
+
+   private:
+    Iterator_ begin_;
+    Iterator_ end_;
+  };
+
  public:
   using index_type = typename Node_::index_type;
   using scalar_type = typename Node_::scalar_type;
@@ -16,6 +37,8 @@ class kd_tree_data {
   using box_type = internal::box<scalar_type, dim>;
   using node_type = Node_;
   using node_allocator_type = chunk_allocator<node_type, 256>;
+  using leaf_range_type =
+      iterator_range<typename std::vector<index_type>::const_iterator>;
 
   static kd_tree_data load(stream_wrapper& stream) {
     typename box_type::size_type sdim;
@@ -34,6 +57,12 @@ class kd_tree_data {
     data.write(stream);
   }
 
+  inline std::vector<leaf_range_type> leaf_ranges() const {
+    std::vector<leaf_range_type> ranges;
+    insert_leaf_range(root_node, ranges);
+    return ranges;
+  }
+
   //! \brief Sorted indices that refer to points inside points_.
   std::vector<index_type> indices;
   //! \brief Bounding box of the root node.
@@ -44,6 +73,19 @@ class kd_tree_data {
   node_type* root_node;
 
  private:
+  inline void insert_leaf_range(
+      node_type const* const node, std::vector<leaf_range_type>& ranges) const {
+    if (node->is_leaf() && !node->data.leaf.empty()) {
+      using difference_type = typename leaf_range_type::difference_type;
+      ranges.push_back(leaf_range_type(
+          indices.begin() + difference_type(node->data.leaf.begin_idx),
+          indices.begin() + difference_type(node->data.leaf.end_idx)));
+    } else {
+      insert_leaf_range(node->left, ranges);
+      insert_leaf_range(node->right, ranges);
+    }
+  }
+
   //! \brief Recursively reads the Node and its descendants.
   inline node_type* read_node(stream_wrapper& stream) {
     node_type* node = allocator.allocate();

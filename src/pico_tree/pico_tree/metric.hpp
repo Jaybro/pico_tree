@@ -214,7 +214,7 @@ struct metric_so2 {
   }
 
   template <typename UnaryPredicate_>
-  void apply_one_space([[maybe_unused]] int dim, UnaryPredicate_ p) const {
+  void apply_dim_space([[maybe_unused]] int dim, UnaryPredicate_ p) const {
     p(one_space_s1{});
   }
 };
@@ -247,7 +247,7 @@ struct metric_se2_squared {
   }
 
   template <typename UnaryPredicate_>
-  void apply_one_space(int dim, UnaryPredicate_ p) const {
+  void apply_dim_space(int dim, UnaryPredicate_ p) const {
     if (dim < 2) {
       p(one_space_r1{});
     } else {

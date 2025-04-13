@@ -5,13 +5,13 @@
 // This example shows how to create a custom metric for the kd_tree. The kd_tree
 // does not support metrics that "normalize" the distance between two points for
 // performance reasons. This means that, for example, the L2 metric is not
-// supported, but there is support for the L1 or L2^2 metric.
+// supported, but that there is support for the L1 or L2^2 metric.
 //
 // There are two different categories of metrics: Euclidean and topological. A
 // Euclidean metric supports any R^n space where all axes are orthogonal with
 // respect to each other. A topological space is the same, but it allows
-// wrapping of coordinate values along any of the axes. An implementation for
-// both is provided below.
+// wrapping of coordinate values along any of the axes. An implementation of a
+// custom metric is provided for both below.
 
 // The LP^P metric is a generalization of the L2^2 metric.
 template <std::size_t P_>
@@ -72,7 +72,7 @@ struct metric_t2_squared {
   }
 
   template <typename UnaryPredicate_>
-  void apply_one_space([[maybe_unused]] int dim, UnaryPredicate_ p) const {
+  void apply_dim_space([[maybe_unused]] int dim, UnaryPredicate_ p) const {
     p(pico_tree::one_space_s1{});
   }
 };

@@ -144,3 +144,35 @@ TEST(KdTreeTest, WriteRead) {
 
   EXPECT_TRUE(std::filesystem::remove(filename));
 }
+
+TEST(KdTreeTest, LeafRanges) {
+  using point_type = pico_tree::point_2f;
+  using scalar_type = typename point_type::scalar_type;
+  using index_type = int;
+  std::size_t point_count = 100;
+  scalar_type area_size = 2;
+  std::vector<point_type> random =
+      pico_tree::generate_random_n<point_type>(point_count, area_size);
+
+  kd_tree<point_type> tree(random, pico_tree::max_leaf_depth_t(2));
+
+  auto leaf_ranges = tree.leaf_ranges();
+  EXPECT_EQ(leaf_ranges.size(), 4);
+  if (!leaf_ranges.empty()) {
+    std::ptrdiff_t sum_range_point_count = 0;
+    index_type index_sum = 0;
+    for (auto const& r : leaf_ranges) {
+      sum_range_point_count += std::distance(r.begin(), r.end());
+      for (int i : r) {
+        index_sum += i;
+      }
+    }
+    EXPECT_EQ(static_cast<std::size_t>(sum_range_point_count), point_count);
+    EXPECT_EQ(
+        static_cast<std::size_t>(index_sum),
+        (point_count - 1) * point_count / 2);
+    EXPECT_EQ(
+        std::distance(leaf_ranges.front().begin(), leaf_ranges.back().end()),
+        point_count);
+  }
+}
