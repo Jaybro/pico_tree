@@ -17,7 +17,7 @@ endif()
 # ##############################################################################
 # PicoTree, examples, unit tests and documentation.
 # ##############################################################################
-set(PROJECT_PACKAGE_NAME "PicoTree")
+
 add_subdirectory(src)
 
 # Ignored when running cmake from setup.py using scikit-build.

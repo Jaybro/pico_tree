@@ -4,6 +4,7 @@ include(GNUInstallDirs)
 # PicoTree library.
 ################################################################################
 
+set(PROJECT_PACKAGE_NAME "PicoTree")
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_PACKAGE_NAME}::${PROJECT_PACKAGE_NAME} ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} INTERFACE
@@ -48,9 +49,8 @@ if(NOT SKBUILD)
         FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_PACKAGE_TARGETS_FILE_NAME}"
         NAMESPACE ${PROJECT_PACKAGE_NAME}::)
 
-    # The config mode search procedure uses this path for both Unix and Windows.
     set(PACKAGE_INSTALL_DESTINATION
-        ${PROJECT_PACKAGE_NAME}/share/cmake/${PROJECT_PACKAGE_NAME})
+        ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_PACKAGE_NAME}/cmake)
 
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(
