@@ -121,8 +121,8 @@ $ pip install ./pico_tree
 # References
 
 * J. L. Bentley, [Multidimensional binary search trees used for associative searching](https://dl.acm.org/doi/pdf/10.1145/361002.361007), Communications of the ACM, vol. 18, no. 9, pp. 509–517, 1975.
-* S. Arya and D. M. Mount, [Algorithms for fast vector quantization](https://www.cs.umd.edu/~mount/Papers/DCC.pdf), In IEEE Data Compression Conference, pp. 381–390, March 1993.
-* S. Maneewongvatana and D. M. Mount, [It's okay to be skinny, if your friends are fat](http://www.cs.umd.edu/~mount/Papers/cgc99-smpack.pdf), 4th Annual CGC Workshop on Computational Geometry, 1999.
+* S. Arya and D. M. Mount, [Algorithms for fast vector quantization](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=5690df491a0f5efe38e1640f25440006de479008), In IEEE Data Compression Conference, pp. 381–390, March 1993.
+* S. Maneewongvatana and D. M. Mount, [It's okay to be skinny, if your friends are fat](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=97f9ac624385c6dbcb28031e53cc08e02331c778), 4th Annual CGC Workshop on Computational Geometry, 1999.
 * S. Arya and H. Y. Fu, [Expected-case complexity of approximate nearest neighbor searching](https://www.cse.ust.hk/faculty/arya/pub/exp.pdf), InProceedings of the 11th ACM-SIAM Symposium on Discrete Algorithms, 2000.
 * N. Sample, M. Haines, M. Arnold and T. Purcell, [Optimizing Search Strategies in k-d Trees](http://infolab.stanford.edu/~nsample/pubs/samplehaines.pdf), In: 5th WSES/IEEE World Multiconference on Circuits, Systems, Communications & Computers (CSCC 2001), July 2001.
 * A. Yershova and S. M. LaValle, [Improving Motion-Planning Algorithms by Efficient Nearest-Neighbor Searching](http://msl.cs.uiuc.edu/~lavalle/papers/YerLav06.pdf), In IEEE Transactions on Robotics, vol. 23, no. 1, pp. 151-157, Feb. 2007.

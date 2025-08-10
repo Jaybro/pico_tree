@@ -1,3 +1,3 @@
-add_executable(eigen eigen.cpp)
-set_default_target_properties(eigen)
-target_link_libraries(eigen PUBLIC pico_toolshed Eigen3::Eigen)
+add_executable(eigen_space_type eigen_space_type.cpp)
+set_default_target_properties(eigen_space_type)
+target_link_libraries(eigen_space_type PUBLIC pico_toolshed Eigen3::Eigen)

@@ -1,3 +1,3 @@
-add_executable(opencv opencv.cpp)
-set_default_target_properties(opencv)
-target_link_libraries(opencv PUBLIC pico_toolshed ${OpenCV_LIBS})
+add_executable(opencv_space_type opencv_space_type.cpp)
+set_default_target_properties(opencv_space_type)
+target_link_libraries(opencv_space_type PUBLIC pico_toolshed ${OpenCV_LIBS})
